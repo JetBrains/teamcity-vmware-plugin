@@ -1,0 +1,16 @@
+<component name="libraryTable">
+  <library name="org.testng:testng:6.8.8" type="repository">
+    <properties maven-id="org.testng:testng:6.8.8" />
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/test-lib/testng-6.8.8.jar!/" />
+      <root url="jar://$PROJECT_DIR$/test-lib/bsh-2.0b4.jar!/" />
+      <root url="jar://$PROJECT_DIR$/test-lib/guice-2.0.jar!/" />
+      <root url="jar://$PROJECT_DIR$/test-lib/aopalliance-1.0.jar!/" />
+      <root url="jar://$PROJECT_DIR$/test-lib/jcommander-1.27.jar!/" />
+    </CLASSES>
+    <JAVADOC>
+      <root url="jar://$PROJECT_DIR$/test-lib/testng-6.8.8-javadoc.jar!/" />
+    </JAVADOC>
+    <SOURCES />
+  </library>
+</component>

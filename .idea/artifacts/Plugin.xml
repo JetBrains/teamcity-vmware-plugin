@@ -1,0 +1,32 @@
+<component name="ArtifactManager">
+  <artifact build-on-make="true" name="Plugin">
+    <output-path>$PROJECT_DIR$/out/artifacts/Plugin</output-path>
+    <root id="root">
+      <element id="directory" name="server">
+        <element id="archive" name="vmware-cloud-server.jar">
+          <element id="dir-copy" path="$PROJECT_DIR$/teamcity-vmware-plugin-server/src/main/resources" />
+          <element id="module-output" name="teamcity-vmware-plugin-server" />
+        </element>
+        <element id="library" level="project" name="lib" />
+        <element id="archive" name="vmware-cloud-common.jar">
+          <element id="module-output" name="teamcity-vmware-plugin-common" />
+        </element>
+      </element>
+      <element id="file-copy" path="$PROJECT_DIR$/teamcity-plugin.xml" />
+      <element id="directory" name="agent">
+        <element id="archive" name="vmware-cloud.zip">
+          <element id="directory" name="vmware-cloud">
+            <element id="directory" name="lib">
+              <element id="archive" name="vmware-cloud-common.jar">
+                <element id="module-output" name="teamcity-vmware-plugin-common" />
+              </element>
+              <element id="archive" name="vmware-cloud-agent.jar">
+                <element id="module-output" name="teamcity-vmware-plugin-agent" />
+              </element>
+            </element>
+          </element>
+        </element>
+      </element>
+    </root>
+  </artifact>
+</component>
