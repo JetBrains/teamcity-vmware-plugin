@@ -19,12 +19,12 @@ import java.util.Map;
  *         Date: 4/16/2014
  *         Time: 6:28 PM
  */
-public class VSphereCloudClientFactory implements CloudClientFactory {
+public class VMWareCloudClientFactory implements CloudClientFactory {
 
   @NotNull private final String myJspPath;
 
-  public VSphereCloudClientFactory(@NotNull final CloudRegistrar cloudRegistrar,
-                                   @NotNull final PluginDescriptor pluginDescriptor) {
+  public VMWareCloudClientFactory(@NotNull final CloudRegistrar cloudRegistrar,
+                                  @NotNull final PluginDescriptor pluginDescriptor) {
     myJspPath = pluginDescriptor.getPluginResourcesPath("profile-settings.jsp");
     cloudRegistrar.registerCloudFactory(this);
   }
@@ -32,7 +32,7 @@ public class VSphereCloudClientFactory implements CloudClientFactory {
   @NotNull
   public CloudClientEx createNewClient(@NotNull CloudState cloudState, @NotNull CloudClientParameters cloudClientParameters) {
     try {
-      return new VSphereCloudClient(cloudClientParameters);
+      return new VMWareCloudClient(cloudClientParameters);
     } catch (MalformedURLException e) {
       throw new RuntimeException(e);
     } catch (RemoteException e) {
@@ -42,7 +42,7 @@ public class VSphereCloudClientFactory implements CloudClientFactory {
 
   @NotNull
   public String getCloudCode() {
-    return VSphereCloudConstants.TYPE;
+    return VMWareCloudConstants.TYPE;
   }
 
   @NotNull

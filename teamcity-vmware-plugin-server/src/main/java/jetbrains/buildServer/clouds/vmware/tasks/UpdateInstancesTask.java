@@ -6,10 +6,10 @@ import java.util.*;
 import jetbrains.buildServer.clouds.CloudErrorInfo;
 import jetbrains.buildServer.clouds.CloudImage;
 import jetbrains.buildServer.clouds.InstanceStatus;
-import jetbrains.buildServer.clouds.vmware.VSphereCloudClient;
-import jetbrains.buildServer.clouds.vmware.VSphereCloudImage;
-import jetbrains.buildServer.clouds.vmware.VSphereCloudInstance;
-import jetbrains.buildServer.clouds.vmware.VSphereImageStartType;
+import jetbrains.buildServer.clouds.vmware.VMWareCloudClient;
+import jetbrains.buildServer.clouds.vmware.VMWareCloudImage;
+import jetbrains.buildServer.clouds.vmware.VMWareCloudInstance;
+import jetbrains.buildServer.clouds.vmware.VMWareImageStartType;
 import jetbrains.buildServer.clouds.vmware.connector.VSphereApiConnector;
 import org.jetbrains.annotations.NotNull;
 
@@ -21,10 +21,10 @@ import org.jetbrains.annotations.NotNull;
 public class UpdateInstancesTask implements Runnable {
 
   private VSphereApiConnector myApiConnector;
-  private final VSphereCloudClient myCloudClient;
+  private final VMWareCloudClient myCloudClient;
 
 
-  public UpdateInstancesTask(final VSphereApiConnector apiConnector, final VSphereCloudClient cloudClient){
+  public UpdateInstancesTask(final VSphereApiConnector apiConnector, final VMWareCloudClient cloudClient){
     myApiConnector = apiConnector;
     myCloudClient = cloudClient;
   }
@@ -32,9 +32,9 @@ public class UpdateInstancesTask implements Runnable {
   public void run() {
     try {
       final Collection<? extends CloudImage> images = myCloudClient.getImages();
-      Map<String, VSphereCloudImage> imagesMap = new HashMap<String, VSphereCloudImage>();
+      Map<String, VMWareCloudImage> imagesMap = new HashMap<String, VMWareCloudImage>();
       for (CloudImage image : images) {
-        imagesMap.put(image.getId(), (VSphereCloudImage)image);
+        imagesMap.put(image.getId(), (VMWareCloudImage)image);
       }
       final Map<String, VirtualMachine> vms = myApiConnector.getInstances();
       final Map<String, Map<String, InstanceStatus>> runData = new HashMap<String, Map<String, InstanceStatus>>();
@@ -46,10 +46,10 @@ public class UpdateInstancesTask implements Runnable {
         if (imageName == null) {
           if (imagesMap.containsKey(vm.getName())){
             // this instance wasn't started by TC:
-            final VSphereCloudImage image = imagesMap.get(vm.getName());
-            if (image.getStartType() == VSphereImageStartType.START){
+            final VMWareCloudImage image = imagesMap.get(vm.getName());
+            if (image.getStartType() == VMWareImageStartType.START){
               final InstanceStatus instanceStatus = myApiConnector.getInstanceStatus(vm);
-              final VSphereCloudInstance imageInstance = (VSphereCloudInstance)image.getInstances().iterator().next();
+              final VMWareCloudInstance imageInstance = (VMWareCloudInstance)image.getInstances().iterator().next();
               imageInstance.setStatus(instanceStatus);
               if (instanceStatus ==InstanceStatus.RUNNING) {
                 imageInstance.setErrorInfo(new CloudErrorInfo("Instance wasn't started by TC"));
@@ -71,13 +71,13 @@ public class UpdateInstancesTask implements Runnable {
       }
       for (final CloudImage image : images) {
         if (runData.get(image.getId()) != null){
-          ((VSphereCloudImage)image).populateRunningInstances(runData.get(image.getId()));
+          ((VMWareCloudImage)image).populateRunningInstances(runData.get(image.getId()));
         }
       }
       for (final CloudImage imageBase : images) {
-        final VSphereCloudImage image = (VSphereCloudImage) imageBase;
-        image.updateRunningInstances(new VSphereCloudImage.ProcessImageInstancesTask() {
-          public void processInstance(@NotNull final VSphereCloudInstance instance) {
+        final VMWareCloudImage image = (VMWareCloudImage) imageBase;
+        image.updateRunningInstances(new VMWareCloudImage.ProcessImageInstancesTask() {
+          public void processInstance(@NotNull final VMWareCloudInstance instance) {
             if (vms.containsKey(instance.getName())){
               instance.updateVMInfo(vms.get(instance.getName()));
               instance.setErrorInfo(null);

@@ -19,9 +19,9 @@ import static jetbrains.buildServer.clouds.vmware.VMWarePropertiesNames.*;
  *         Date: 4/23/2014
  *         Time: 6:40 PM
  */
-public class PropertiesReader {
+public class VMWarePropertiesReader {
 
-  private static final Logger LOG = Logger.getInstance(PropertiesReader.class.getName());
+  private static final Logger LOG = Logger.getInstance(VMWarePropertiesReader.class.getName());
 
   private static final String NO_VALUE_FOUND="No value found";
 
@@ -34,8 +34,8 @@ public class PropertiesReader {
   private final BuildAgentConfigurationEx myAgentConfiguration;
 
 
-  public PropertiesReader(final BuildAgentConfigurationEx agentConfiguration,
-                          @NotNull EventDispatcher<AgentLifeCycleListener> events) {
+  public VMWarePropertiesReader(final BuildAgentConfigurationEx agentConfiguration,
+                                @NotNull EventDispatcher<AgentLifeCycleListener> events) {
     LOG.info("VSphere plugin initializing...");
     myAgentConfiguration = agentConfiguration;
     events.addListener(new AgentLifeCycleAdapter(){

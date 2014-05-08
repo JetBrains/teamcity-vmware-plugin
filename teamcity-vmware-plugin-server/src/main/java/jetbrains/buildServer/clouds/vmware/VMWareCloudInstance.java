@@ -20,10 +20,10 @@ import static jetbrains.buildServer.clouds.vmware.VMWarePropertiesNames.INSTANCE
  *         Date: 4/15/2014
  *         Time: 3:57 PM
  */
-public class VSphereCloudInstance implements CloudInstance {
+public class VMWareCloudInstance implements CloudInstance {
 
   private final String myInstanceName;
-  private final VSphereCloudImage myImage;
+  private final VMWareCloudImage myImage;
   private InstanceStatus myStatus = InstanceStatus.UNKNOWN;
   private VirtualMachine myVM = null;
   private CloudErrorInfo myErrorInfo;
@@ -31,7 +31,7 @@ public class VSphereCloudInstance implements CloudInstance {
   private String myIpAddress;
   private boolean myDeleteAfterStop;
 
-  public VSphereCloudInstance(@NotNull final VSphereCloudImage image, @NotNull final String instanceName) {
+  public VMWareCloudInstance(@NotNull final VMWareCloudImage image, @NotNull final String instanceName) {
     myImage = image;
     myInstanceName = instanceName;
     myStartDate = new Date();

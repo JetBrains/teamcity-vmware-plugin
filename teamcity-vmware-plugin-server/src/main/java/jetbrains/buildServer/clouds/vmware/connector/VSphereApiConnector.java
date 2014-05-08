@@ -47,7 +47,7 @@ public class VSphereApiConnector {
     final Map<String, VirtualMachine> instances = new HashMap<String, VirtualMachine>();
     Folder rootFolder = createServiceInstance().getRootFolder();
     ManagedEntity[] vms = new InventoryNavigator(rootFolder).searchManagedEntities(
-      new String[][]{{VSphereCloudConstants.VM_TYPE, "name"},}, true);
+      new String[][]{{VMWareCloudConstants.VM_TYPE, "name"},}, true);
     for (int i = 0; i < vms.length; i++) {
       instances.put(vms[i].getName(), (VirtualMachine)vms[i]);
     }
@@ -55,7 +55,7 @@ public class VSphereApiConnector {
   }
 
   @Nullable
-  public VirtualMachine startInstance(VSphereCloudInstance instance, String agentName, String authToken, String serverURL)
+  public VirtualMachine startInstance(VMWareCloudInstance instance, String agentName, String authToken, String serverURL)
     throws RemoteException, InterruptedException {
     instance.setStatus(InstanceStatus.SCHEDULED_TO_START);
     final VirtualMachine vm = findEntityByName(instance.getInstanceId(), VirtualMachine.class);
@@ -80,7 +80,7 @@ public class VSphereApiConnector {
     return null;
   }
 
-  public String cloneVmIfNecessary(VSphereCloudImage image, VSphereImageStartType startType, String cloneFolderName, String resourcePoolName) throws RemoteException, InterruptedException {
+  public String cloneVmIfNecessary(VMWareCloudImage image, VMWareImageStartType startType, String cloneFolderName, String resourcePoolName) throws RemoteException, InterruptedException {
     VirtualMachine vm = findEntityByName(image.getId(), VirtualMachine.class);
     if (vm != null) {
       String cloneName;
@@ -91,8 +91,8 @@ public class VSphereApiConnector {
         location.setPool(findEntityByName(resourcePoolName, ResourcePool.class).getMOR());
       }
       cloneSpec.setTemplate(false);
-      if (image.getImageType() == VSphereImageType.INSTANCE) {
-        if (startType == VSphereImageStartType.START) {
+      if (image.getImageType() == VMWareImageType.INSTANCE) {
+        if (startType == VMWareImageStartType.START) {
           return image.getName();
         }
 
@@ -104,7 +104,7 @@ public class VSphereApiConnector {
         }
 
         if (snapshot != null) { // linked clones only makes sense for snapshots
-          if (startType == VSphereImageStartType.LINKED_CLONE) {
+          if (startType == VMWareImageStartType.LINKED_CLONE) {
             location.setDiskMoveType(VirtualMachineRelocateDiskMoveOptions.createNewChildDiskBacking.name());
           }
           cloneSpec.setSnapshot(snapshot);
@@ -168,7 +168,7 @@ public class VSphereApiConnector {
     return optionValue;
   }
 
-  public void stopInstance(VSphereCloudInstance instance) {
+  public void stopInstance(VMWareCloudInstance instance) {
     instance.setStatus(InstanceStatus.SCHEDULED_TO_STOP);
     try {
       VirtualMachine vm = findEntityByName(instance.getInstanceId(), VirtualMachine.class);
@@ -211,7 +211,7 @@ public class VSphereApiConnector {
     }
   }
 
-  public void restartInstance(VSphereCloudInstance instance) throws RemoteException {
+  public void restartInstance(VMWareCloudInstance instance) throws RemoteException {
     final VirtualMachine vm = findEntityByName(instance.getInstanceId(), VirtualMachine.class);
     if (vm != null) {
       vm.rebootGuest();

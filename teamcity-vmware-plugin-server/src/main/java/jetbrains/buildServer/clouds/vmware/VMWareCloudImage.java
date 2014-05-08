@@ -13,27 +13,27 @@ import org.jetbrains.annotations.Nullable;
  *         Date: 4/15/2014
  *         Time: 3:58 PM
  */
-public class VSphereCloudImage implements CloudImage {
+public class VMWareCloudImage implements CloudImage {
 
   private final String myImageName;
-  private final Map<String, VSphereCloudInstance> myInstances;
-  private final VSphereImageType myImageType;
-  private final VSphereImageStartType myStartType;
+  private final Map<String, VMWareCloudInstance> myInstances;
+  private final VMWareImageType myImageType;
+  private final VMWareImageStartType myStartType;
   @Nullable private final String mySnapshotName;
   private CloudErrorInfo myErrorInfo;
 
-  public VSphereCloudImage(@NotNull final String imageName, @NotNull final VSphereImageType imageType, @Nullable String snapshotName,
-                           @Nullable final InstanceStatus imageInstanceStatus, final VSphereImageStartType startType) {
+  public VMWareCloudImage(@NotNull final String imageName, @NotNull final VMWareImageType imageType, @Nullable String snapshotName,
+                          @Nullable final InstanceStatus imageInstanceStatus, final VMWareImageStartType startType) {
     myImageName = imageName;
     myImageType = imageType;
     mySnapshotName = snapshotName;
     myStartType = startType;
-    if (startType == VSphereImageStartType.START){
-      final VSphereCloudInstance imageInstance = new VSphereCloudInstance(this, imageName);
+    if (startType == VMWareImageStartType.START){
+      final VMWareCloudInstance imageInstance = new VMWareCloudInstance(this, imageName);
       imageInstance.setStatus(imageInstanceStatus);
       myInstances = Collections.singletonMap(imageName, imageInstance);
     } else {
-      myInstances = new HashMap<String, VSphereCloudInstance>();
+      myInstances = new HashMap<String, VMWareCloudInstance>();
     }
   }
 
@@ -47,7 +47,7 @@ public class VSphereCloudImage implements CloudImage {
     return myImageName;
   }
 
-  public VSphereImageType getImageType() {
+  public VMWareImageType getImageType() {
     return myImageType;
   }
 
@@ -75,9 +75,9 @@ public class VSphereCloudImage implements CloudImage {
     myErrorInfo = errorInfo;
   }
 
-  public void instanceStarted(@NotNull final VSphereCloudInstance instance){
+  public void instanceStarted(@NotNull final VMWareCloudInstance instance){
     // special handling for imageInstance
-    if (myStartType == VSphereImageStartType.START){
+    if (myStartType == VMWareImageStartType.START){
       myInstances.get(myImageName).setStatus(InstanceStatus.RUNNING);
     } else {
       myInstances.put(instance.getName(), instance);
@@ -85,7 +85,7 @@ public class VSphereCloudImage implements CloudImage {
   }
 
   public void updateRunningInstances(final ProcessImageInstancesTask task){
-    for (VSphereCloudInstance instance : myInstances.values()) {
+    for (VMWareCloudInstance instance : myInstances.values()) {
       task.processInstance(instance);
     }
   }
@@ -109,7 +109,7 @@ public class VSphereCloudImage implements CloudImage {
       instanceStopped(name);
     }
     for (String name : instances2add) {
-      final VSphereCloudInstance instance = new VSphereCloudInstance(this, name);
+      final VMWareCloudInstance instance = new VMWareCloudInstance(this, name);
       instance.setStatus(currentInstances.get(name));
       instanceStarted(instance);
     }
@@ -117,18 +117,18 @@ public class VSphereCloudImage implements CloudImage {
 
   public void instanceStopped(@NotNull final String instanceName){
     // special handling for imageInstance
-    if (myStartType == VSphereImageStartType.START){
+    if (myStartType == VMWareImageStartType.START){
       myInstances.get(myImageName).setStatus(InstanceStatus.STOPPED);
     } else {
       myInstances.remove(instanceName);
     }
   }
 
-  public VSphereImageStartType getStartType() {
+  public VMWareImageStartType getStartType() {
     return myStartType;
   }
 
   public static interface ProcessImageInstancesTask{
-    void processInstance(@NotNull final VSphereCloudInstance instance);
+    void processInstance(@NotNull final VMWareCloudInstance instance);
   }
 }

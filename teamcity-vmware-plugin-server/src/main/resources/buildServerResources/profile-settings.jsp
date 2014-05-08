@@ -1,4 +1,4 @@
-<%@ page import="jetbrains.buildServer.clouds.vmware.VSphereCloudConstants" %>
+<%@ page import="jetbrains.buildServer.clouds.vmware.VMWareCloudConstants" %>
 <%--
   ~ Copyright 2000-2012 JetBrains s.r.o.
   ~
@@ -19,7 +19,7 @@
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ include file="/include.jsp" %>
 
-<c:set var="paramName" value="<%=VSphereCloudConstants.IMAGES_PROFILE_SETTING%>"/>
+<c:set var="paramName" value="<%=VMWareCloudConstants.IMAGES_PROFILE_SETTING%>"/>
 
 <tr>
     <th><label for="${paramName}">Agent images:</label></th>

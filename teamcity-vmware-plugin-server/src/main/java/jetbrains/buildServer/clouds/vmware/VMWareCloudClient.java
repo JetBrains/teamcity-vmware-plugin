@@ -20,22 +20,22 @@ import org.jetbrains.annotations.Nullable;
  *         Date: 4/15/2014
  *         Time: 3:23 PM
  */
-public class VSphereCloudClient implements CloudClientEx {
+public class VMWareCloudClient implements CloudClientEx {
 
   private VSphereApiConnector myApiConnector;
 
   @NotNull
   private final CloudClientParameters myCloudClientParameters;
-  private final Map<String, VSphereCloudImage> myImageMap = new HashMap<String, VSphereCloudImage>();
+  private final Map<String, VMWareCloudImage> myImageMap = new HashMap<String, VMWareCloudImage>();
   private ScheduledExecutorService myExecutor;
   private CloudErrorInfo myErrorInfo;
-  private VSphereImageStartType myStartType;
+  private VMWareImageStartType myStartType;
   private final String myCloneFolderName;
   private final String myResourcePoolName;
 
 
 
-  public VSphereCloudClient(@NotNull CloudClientParameters cloudClientParameters) throws MalformedURLException, RemoteException {
+  public VMWareCloudClient(@NotNull CloudClientParameters cloudClientParameters) throws MalformedURLException, RemoteException {
     myCloudClientParameters = cloudClientParameters;
     myApiConnector = new VSphereApiConnector(
       new URL(cloudClientParameters.getParameter("serverUrl")),
@@ -72,9 +72,9 @@ public class VSphereCloudClient implements CloudClientEx {
     final Map<String, VirtualMachine> instances = myApiConnector.getInstances();
     final String[] split = images.split("\n");
     List<String> missingInstances = new ArrayList<String>();
-    myStartType = VSphereImageStartType.START;
+    myStartType = VMWareImageStartType.START;
     try {
-      myStartType = VSphereImageStartType.valueOf(cloudClientParameters.getParameter("cloneBehaviour"));
+      myStartType = VMWareImageStartType.valueOf(cloudClientParameters.getParameter("cloneBehaviour"));
     } catch (Exception e){
       e.printStackTrace();
     }
@@ -92,8 +92,8 @@ public class VSphereCloudClient implements CloudClientEx {
         missingInstances.add(imageName);
       } else {
         final VirtualMachine virtualMachine = instances.get(imageName);
-        final VSphereImageType imageType = virtualMachine.getConfig().isTemplate() ? VSphereImageType.TEMPLATE : VSphereImageType.INSTANCE;
-        myImageMap.put(imageName, new VSphereCloudImage(imageName, imageType, snapshotName, myApiConnector.getInstanceStatus(virtualMachine), myStartType));
+        final VMWareImageType imageType = virtualMachine.getConfig().isTemplate() ? VMWareImageType.TEMPLATE : VMWareImageType.INSTANCE;
+        myImageMap.put(imageName, new VMWareCloudImage(imageName, imageType, snapshotName, myApiConnector.getInstanceStatus(virtualMachine), myStartType));
       }
     }
     if (missingInstances.size() == 0){
@@ -110,16 +110,16 @@ public class VSphereCloudClient implements CloudClientEx {
   @NotNull
   public CloudInstance startNewInstance(@NotNull CloudImage cloudImage, @NotNull CloudInstanceUserData cloudInstanceUserData) throws QuotaException {
     try {
-      final String instanceName = myApiConnector.cloneVmIfNecessary((VSphereCloudImage)cloudImage, myStartType, myCloneFolderName, myResourcePoolName);
-      final VSphereCloudInstance instance = new VSphereCloudInstance((VSphereCloudImage)cloudImage, instanceName);
-      if (myStartType != VSphereImageStartType.START || ((VSphereCloudImage)cloudImage).getImageType() != VSphereImageType.INSTANCE){
+      final String instanceName = myApiConnector.cloneVmIfNecessary((VMWareCloudImage)cloudImage, myStartType, myCloneFolderName, myResourcePoolName);
+      final VMWareCloudInstance instance = new VMWareCloudInstance((VMWareCloudImage)cloudImage, instanceName);
+      if (myStartType != VMWareImageStartType.START || ((VMWareCloudImage)cloudImage).getImageType() != VMWareImageType.INSTANCE){
         instance.setDeleteAfterStop(true);
       }
       myApiConnector.startInstance(instance,
                                    instanceName,
                                    cloudInstanceUserData.getAuthToken(),
                                    cloudInstanceUserData.getServerAddress());
-      ((VSphereCloudImage)cloudImage).instanceStarted(instance);
+      ((VMWareCloudImage)cloudImage).instanceStarted(instance);
       return instance;
     } catch (Exception e) {
       throw new RuntimeException("Unable to start new instance: " + e.toString(), e);
@@ -128,16 +128,16 @@ public class VSphereCloudClient implements CloudClientEx {
 
   public void restartInstance(@NotNull CloudInstance cloudInstance) {
     try {
-      myApiConnector.restartInstance((VSphereCloudInstance)cloudInstance);
+      myApiConnector.restartInstance((VMWareCloudInstance)cloudInstance);
     } catch (RemoteException e) {
       e.printStackTrace();
     }
   }
 
   public void terminateInstance(@NotNull CloudInstance cloudInstance) {
-    myApiConnector.stopInstance((VSphereCloudInstance)cloudInstance);
-    ((VSphereCloudInstance)cloudInstance).setStatus(InstanceStatus.STOPPED);
-    ((VSphereCloudImage)cloudInstance.getImage()).instanceStopped(cloudInstance.getName());
+    myApiConnector.stopInstance((VMWareCloudInstance)cloudInstance);
+    ((VMWareCloudInstance)cloudInstance).setStatus(InstanceStatus.STOPPED);
+    ((VMWareCloudImage)cloudInstance.getImage()).instanceStopped(cloudInstance.getName());
   }
 
   public void dispose() {
@@ -177,14 +177,14 @@ public class VSphereCloudClient implements CloudClientEx {
   }
 
   public boolean canStartNewInstance(@NotNull CloudImage cloudImage) {
-    VSphereCloudImage vCloudImage = (VSphereCloudImage)cloudImage;
+    VMWareCloudImage vCloudImage = (VMWareCloudImage)cloudImage;
     try {
-      if (vCloudImage.getImageType() == VSphereImageType.INSTANCE) {
+      if (vCloudImage.getImageType() == VMWareImageType.INSTANCE) {
         if (vCloudImage.getSnapshotName() != null) {
           if (!myApiConnector.ensureSnapshotExists(vCloudImage.getId(), vCloudImage.getSnapshotName())) {
             myErrorInfo = new CloudErrorInfo("Unable to find snapshot: " + vCloudImage.getSnapshotName());
           }
-        } else if (myStartType == VSphereImageStartType.START) {
+        } else if (myStartType == VMWareImageStartType.START) {
           return myApiConnector.isInstanceStopped(vCloudImage.getId());
         }
       }
