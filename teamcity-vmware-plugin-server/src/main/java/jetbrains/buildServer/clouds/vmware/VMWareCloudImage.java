@@ -27,8 +27,12 @@ public class VMWareCloudImage implements CloudImage {
     myImageName = imageName;
     myImageType = imageType;
     mySnapshotName = snapshotName;
-    myStartType = startType;
-    if (startType == VMWareImageStartType.START){
+    if (myImageType == VMWareImageType.TEMPLATE && startType == VMWareImageStartType.START) {
+      myStartType = VMWareImageStartType.CLONE;
+    } else {
+      myStartType = startType;
+    }
+    if (myStartType == VMWareImageStartType.START){
       final VMWareCloudInstance imageInstance = new VMWareCloudInstance(this, imageName);
       imageInstance.setStatus(imageInstanceStatus);
       myInstances = Collections.singletonMap(imageName, imageInstance);

@@ -3,6 +3,7 @@ package jetbrains.buildServer.clouds.vmware;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.text.StringUtil;
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
@@ -22,8 +23,6 @@ import static jetbrains.buildServer.clouds.vmware.VMWarePropertiesNames.*;
 public class VMWarePropertiesReader {
 
   private static final Logger LOG = Logger.getInstance(VMWarePropertiesReader.class.getName());
-
-  private static final String NO_VALUE_FOUND="No value found";
 
   private static final String WINDOWS_COMMAND = "\"C:\\Program Files\\VMWare\\VMWare Tools\\rpctool.exe\"";
   private static final String LINUX_COMMAND="/usr/sbin/vmware-rpctool";
@@ -49,14 +48,14 @@ public class VMWarePropertiesReader {
         }
 
         final String serverUrl = getPropertyValue(SERVER_URL);
-        if (NO_VALUE_FOUND.equals(serverUrl)){
+        if (StringUtil.isEmpty(serverUrl)){
           LOG.info("Unable to read property " + SERVER_URL + ". VMWare integration is disabled");
           return;
         } else {
           LOG.info("Server URL: " + serverUrl);
         }
         final String instanceName = getPropertyValue(INSTANCE_NAME);
-        if (NO_VALUE_FOUND.equals(instanceName)){
+        if (StringUtil.isEmpty(instanceName)){
           LOG.info("Unable to read property " + INSTANCE_NAME + ". VMWare integration is disabled");
           return;
         } else {
@@ -68,7 +67,7 @@ public class VMWarePropertiesReader {
         myAgentConfiguration.addConfigurationParameter(INSTANCE_NAME, instanceName);
 
         String imageName = getPropertyValue(IMAGE_NAME);
-        if (!NO_VALUE_FOUND.equals(imageName)){
+        if (!StringUtil.isEmpty(imageName)){
           myAgentConfiguration.addConfigurationParameter(IMAGE_NAME, imageName);
         }
       }
