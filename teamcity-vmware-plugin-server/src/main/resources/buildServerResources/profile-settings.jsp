@@ -19,12 +19,10 @@
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ include file="/include.jsp" %>
 
-<c:set var="paramName" value="<%=VMWareCloudConstants.IMAGES_PROFILE_SETTING%>"/>
-
 <tr>
-    <th><label for="${paramName}">Agent images:</label></th>
+    <th><label for="images">Agent images:</label></th>
     <td>
-        <props:multilineProperty name="${paramName}" className="longField" linkTitle="Agent images to run" cols="55" rows="5" expanded="${true}"/>
+        <props:multilineProperty name="images" className="longField" linkTitle="Agent images to run" cols="55" rows="5" expanded="true"/>
     </td>
 </tr>
 <tr>

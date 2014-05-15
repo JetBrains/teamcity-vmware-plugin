@@ -12,4 +12,5 @@ public interface VMWarePropertiesNames {
 
   public static final String INSTANCE_NAME = "guestinfo.instanceName";
   public static final String IMAGE_NAME = "guestinfo.imageName";
+  public static final String USER_DATA = "guestinfo.userData";
 }

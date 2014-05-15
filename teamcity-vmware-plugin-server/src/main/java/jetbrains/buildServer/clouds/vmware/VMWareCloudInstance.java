@@ -1,6 +1,7 @@
 package jetbrains.buildServer.clouds.vmware;
 
 //import com.vmware.vim25.mo.VirtualMachine;
+import com.vmware.vim25.VirtualMachinePowerState;
 import com.vmware.vim25.mo.VirtualMachine;
 import java.util.Map;
 import jetbrains.buildServer.clouds.CloudErrorInfo;
@@ -81,6 +82,11 @@ public class VMWareCloudInstance implements CloudInstance {
     myVM = vm;
     myStartDate = myVM.getRuntime() == null ? null : myVM.getRuntime().getBootTime().getTime();
     myIpAddress = myVM.getGuest() == null ? null : myVM.getGuest().getIpAddress();
+    if (vm.getRuntime().getPowerState() == VirtualMachinePowerState.poweredOff && myStatus != InstanceStatus.STOPPED){
+      myStatus = InstanceStatus.STOPPED;
+    } else if (vm.getRuntime().getPowerState() == VirtualMachinePowerState.poweredOn && myStatus != InstanceStatus.RUNNING){
+      myStatus = InstanceStatus.RUNNING;
+    }
   }
 
   public void setErrorInfo(final CloudErrorInfo errorInfo) {
@@ -102,6 +108,6 @@ public class VMWareCloudInstance implements CloudInstance {
 
   public boolean containsAgent(@NotNull AgentDescription agentDescription) {
     final Map<String, String> configParams = agentDescription.getConfigurationParameters();
-    return configParams.get(INSTANCE_NAME).equals(getInstanceId());
+    return getInstanceId().equals(configParams.get(INSTANCE_NAME));
   }
 }

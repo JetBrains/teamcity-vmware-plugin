@@ -7,9 +7,11 @@ import com.intellij.openapi.util.text.StringUtil;
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Map;
 import jetbrains.buildServer.ExecResult;
 import jetbrains.buildServer.SimpleCommandLineProcessRunner;
 import jetbrains.buildServer.agent.*;
+import jetbrains.buildServer.clouds.CloudInstanceUserData;
 import jetbrains.buildServer.util.EventDispatcher;
 import org.jetbrains.annotations.NotNull;
 
@@ -24,7 +26,7 @@ public class VMWarePropertiesReader {
 
   private static final Logger LOG = Logger.getInstance(VMWarePropertiesReader.class.getName());
 
-  private static final String WINDOWS_COMMAND = "\"C:\\Program Files\\VMWare\\VMWare Tools\\rpctool.exe\"";
+  private static final String WINDOWS_COMMAND = "C:\\Program Files\\VMware\\VMware Tools\\rpctool.exe";
   private static final String LINUX_COMMAND="/usr/sbin/vmware-rpctool";
   private static final String MAC_COMMAND="/usr/sbin/vmware-rpctool";
 
@@ -68,7 +70,20 @@ public class VMWarePropertiesReader {
 
         String imageName = getPropertyValue(IMAGE_NAME);
         if (!StringUtil.isEmpty(imageName)){
+          LOG.info("Image name: " + imageName);
           myAgentConfiguration.addConfigurationParameter(IMAGE_NAME, imageName);
+        }
+
+        String userData = getPropertyValue(USER_DATA);
+        if (!StringUtil.isEmpty(userData)){
+          LOG.info("UserData: " + userData);
+          final CloudInstanceUserData cloudUserData = CloudInstanceUserData.deserialize(userData);
+          if (cloudUserData != null) {
+            final Map<String, String> customParameters = cloudUserData.getCustomAgentConfigurationParameters();
+            for (Map.Entry<String, String> entry : customParameters.entrySet()) {
+              myAgentConfiguration.addConfigurationParameter(entry.getKey(), entry.getValue());
+            }
+          }
         }
       }
     });
@@ -92,7 +107,7 @@ public class VMWarePropertiesReader {
     return execResult.getStdout();
   }
 
-  private boolean checkVmwareToolsInstalled(){
+  private static boolean checkVmwareToolsInstalled(){
     return new File(VMWARE_RPCTOOL_PATH).exists();
   }
 

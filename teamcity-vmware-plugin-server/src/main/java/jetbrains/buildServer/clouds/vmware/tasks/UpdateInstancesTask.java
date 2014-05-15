@@ -10,7 +10,7 @@ import jetbrains.buildServer.clouds.vmware.VMWareCloudClient;
 import jetbrains.buildServer.clouds.vmware.VMWareCloudImage;
 import jetbrains.buildServer.clouds.vmware.VMWareCloudInstance;
 import jetbrains.buildServer.clouds.vmware.VMWareImageStartType;
-import jetbrains.buildServer.clouds.vmware.connector.VSphereApiConnector;
+import jetbrains.buildServer.clouds.vmware.connector.VMWareApiConnector;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -20,11 +20,11 @@ import org.jetbrains.annotations.NotNull;
  */
 public class UpdateInstancesTask implements Runnable {
 
-  private VSphereApiConnector myApiConnector;
+  private VMWareApiConnector myApiConnector;
   private final VMWareCloudClient myCloudClient;
 
 
-  public UpdateInstancesTask(final VSphereApiConnector apiConnector, final VMWareCloudClient cloudClient){
+  public UpdateInstancesTask(final VMWareApiConnector apiConnector, final VMWareCloudClient cloudClient){
     myApiConnector = apiConnector;
     myCloudClient = cloudClient;
   }

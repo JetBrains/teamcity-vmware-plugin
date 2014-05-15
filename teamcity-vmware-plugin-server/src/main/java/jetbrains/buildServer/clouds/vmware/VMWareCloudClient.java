@@ -8,7 +8,8 @@ import java.rmi.RemoteException;
 import java.util.*;
 import java.util.concurrent.*;
 import jetbrains.buildServer.clouds.*;
-import jetbrains.buildServer.clouds.vmware.connector.VSphereApiConnector;
+import jetbrains.buildServer.clouds.vmware.connector.VMWareApiConnector;
+import jetbrains.buildServer.clouds.vmware.connector.VMWareApiConnectorImpl;
 import jetbrains.buildServer.clouds.vmware.tasks.UpdateInstancesTask;
 import jetbrains.buildServer.serverSide.AgentDescription;
 import jetbrains.buildServer.util.NamedThreadFactory;
@@ -22,10 +23,8 @@ import org.jetbrains.annotations.Nullable;
  */
 public class VMWareCloudClient implements CloudClientEx {
 
-  private VSphereApiConnector myApiConnector;
+  private final VMWareApiConnector myApiConnector;
 
-  @NotNull
-  private final CloudClientParameters myCloudClientParameters;
   private final Map<String, VMWareCloudImage> myImageMap = new HashMap<String, VMWareCloudImage>();
   private ScheduledExecutorService myExecutor;
   private CloudErrorInfo myErrorInfo;
@@ -33,21 +32,21 @@ public class VMWareCloudClient implements CloudClientEx {
   private final String myCloneFolderName;
   private final String myResourcePoolName;
 
-
-
-  public VMWareCloudClient(@NotNull CloudClientParameters cloudClientParameters) throws MalformedURLException, RemoteException {
-    myCloudClientParameters = cloudClientParameters;
-    myApiConnector = new VSphereApiConnector(
+  public VMWareCloudClient(@NotNull final CloudClientParameters cloudClientParameters) throws MalformedURLException, RemoteException {
+    this(cloudClientParameters, new VMWareApiConnectorImpl(
       new URL(cloudClientParameters.getParameter("serverUrl")),
       cloudClientParameters.getParameter("username"),
-      cloudClientParameters.getParameter("password"));
+      cloudClientParameters.getParameter("password")));
+  }
 
+  VMWareCloudClient(@NotNull final CloudClientParameters cloudClientParameters, @NotNull final VMWareApiConnector apiConnector) throws MalformedURLException, RemoteException {
+    myApiConnector = apiConnector;
     final String cloneFolder = cloudClientParameters.getParameter("cloneFolder");
     if (cloneFolder != null) {
       if (myApiConnector.checkCloneFolder(cloneFolder)) {
         myCloneFolderName = cloneFolder;
       } else {
-        myErrorInfo = new CloudErrorInfo(String.format("Unable to find the clone folder: %s", cloneFolder));
+        myErrorInfo = VMWareCloudErrorInfoFactory.noSuchFolder(cloneFolder);
         myCloneFolderName = null;
       }
     } else {
@@ -59,7 +58,7 @@ public class VMWareCloudClient implements CloudClientEx {
       if (myApiConnector.checkResourcePool(resourcePool)){
         myResourcePoolName = resourcePool;
       } else {
-        myErrorInfo = new CloudErrorInfo(String.format("Unable to find the resource pool: %s", resourcePool));
+        myErrorInfo = VMWareCloudErrorInfoFactory.noSuchResourcePool(resourcePool);
         myResourcePoolName = null;
       }
     } else {
@@ -85,6 +84,9 @@ public class VMWareCloudClient implements CloudClientEx {
       if (sp.contains("@")){
         imageName = sp.substring(0, sp.indexOf("@"));
         snapshotName = sp.substring(sp.indexOf("@")+1);
+        if (!myApiConnector.ensureSnapshotExists(imageName, snapshotName)){
+          myErrorInfo = VMWareCloudErrorInfoFactory.noSuchSnapshot(snapshotName, imageName);
+        }
       } else {
         imageName = sp;
       }
@@ -102,12 +104,11 @@ public class VMWareCloudClient implements CloudClientEx {
     } else {
       myErrorInfo = new CloudErrorInfo(String.format("Unable to find the following images: %s", Arrays.toString(missingInstances.toArray())));
     }
-
-
-
   }
 
-  @NotNull
+
+
+    @NotNull
   public CloudInstance startNewInstance(@NotNull CloudImage cloudImage, @NotNull CloudInstanceUserData cloudInstanceUserData) throws QuotaException {
     try {
       final String instanceName = myApiConnector.cloneVmIfNecessary((VMWareCloudImage)cloudImage, myStartType, myCloneFolderName, myResourcePoolName);
@@ -117,8 +118,7 @@ public class VMWareCloudClient implements CloudClientEx {
       }
       myApiConnector.startInstance(instance,
                                    instanceName,
-                                   cloudInstanceUserData.getAuthToken(),
-                                   cloudInstanceUserData.getServerAddress());
+                                   cloudInstanceUserData);
       ((VMWareCloudImage)cloudImage).instanceStarted(instance);
       return instance;
     } catch (Exception e) {

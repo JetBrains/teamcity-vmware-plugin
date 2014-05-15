@@ -11,6 +11,5 @@ public interface VMWareCloudConstants {
   @NotNull String TYPE = "vmw";
   @NotNull String VM_TYPE = "VirtualMachine";
   @NotNull String FOLDER_TYPE = "Folder";
-  @NotNull String IMAGES_PROFILE_SETTING = "images";
 
 }
