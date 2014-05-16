@@ -1,5 +1,6 @@
 package jetbrains.buildServer.clouds.vmware;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.vmware.vim25.mo.VirtualMachine;
 import java.net.MalformedURLException;
@@ -22,6 +23,8 @@ import org.jetbrains.annotations.Nullable;
  *         Time: 3:23 PM
  */
 public class VMWareCloudClient implements CloudClientEx {
+
+  private static final Logger LOG = Logger.getInstance(VMWareCloudClient.class.getName());
 
   private final VMWareApiConnector myApiConnector;
 
@@ -84,9 +87,6 @@ public class VMWareCloudClient implements CloudClientEx {
       if (sp.contains("@")){
         imageName = sp.substring(0, sp.indexOf("@"));
         snapshotName = sp.substring(sp.indexOf("@")+1);
-        if (!myApiConnector.ensureSnapshotExists(imageName, snapshotName)){
-          myErrorInfo = VMWareCloudErrorInfoFactory.noSuchSnapshot(snapshotName, imageName);
-        }
       } else {
         imageName = sp;
       }
@@ -96,13 +96,16 @@ public class VMWareCloudClient implements CloudClientEx {
         final VirtualMachine virtualMachine = instances.get(imageName);
         final VMWareImageType imageType = virtualMachine.getConfig().isTemplate() ? VMWareImageType.TEMPLATE : VMWareImageType.INSTANCE;
         myImageMap.put(imageName, new VMWareCloudImage(imageName, imageType, snapshotName, myApiConnector.getInstanceStatus(virtualMachine), myStartType));
+        if (snapshotName != null  && !myApiConnector.ensureSnapshotExists(imageName, snapshotName)){
+          myErrorInfo = VMWareCloudErrorInfoFactory.noSuchSnapshot(snapshotName, imageName);
+        }
       }
     }
     if (missingInstances.size() == 0){
       myExecutor = Executors.newScheduledThreadPool(1, new NamedThreadFactory("VSphere"));
       myExecutor.scheduleWithFixedDelay(new UpdateInstancesTask(myApiConnector, this), 20, 10, TimeUnit.SECONDS);
     } else {
-      myErrorInfo = new CloudErrorInfo(String.format("Unable to find the following images: %s", Arrays.toString(missingInstances.toArray())));
+      myErrorInfo = VMWareCloudErrorInfoFactory.noSuchImages(missingInstances);
     }
   }
 
@@ -110,16 +113,20 @@ public class VMWareCloudClient implements CloudClientEx {
 
     @NotNull
   public CloudInstance startNewInstance(@NotNull CloudImage cloudImage, @NotNull CloudInstanceUserData cloudInstanceUserData) throws QuotaException {
+      LOG.info("Attempting to start new Instance for cloud " + cloudImage.getName());
     try {
       final String instanceName = myApiConnector.cloneVmIfNecessary((VMWareCloudImage)cloudImage, myStartType, myCloneFolderName, myResourcePoolName);
+      LOG.info("Instance name is " + instanceName);
       final VMWareCloudInstance instance = new VMWareCloudInstance((VMWareCloudImage)cloudImage, instanceName);
       if (myStartType != VMWareImageStartType.START || ((VMWareCloudImage)cloudImage).getImageType() != VMWareImageType.INSTANCE){
+        LOG.info("Delete after stop:" + true);
         instance.setDeleteAfterStop(true);
       }
       myApiConnector.startInstance(instance,
                                    instanceName,
                                    cloudInstanceUserData);
       ((VMWareCloudImage)cloudImage).instanceStarted(instance);
+      LOG.info("Instance started successfully");
       return instance;
     } catch (Exception e) {
       throw new RuntimeException("Unable to start new instance: " + e.toString(), e);
@@ -135,6 +142,7 @@ public class VMWareCloudClient implements CloudClientEx {
   }
 
   public void terminateInstance(@NotNull CloudInstance cloudInstance) {
+    LOG.info("Terminating instance " + cloudInstance.getName());
     myApiConnector.stopInstance((VMWareCloudInstance)cloudInstance);
     ((VMWareCloudInstance)cloudInstance).setStatus(InstanceStatus.STOPPED);
     ((VMWareCloudImage)cloudInstance.getImage()).instanceStopped(cloudInstance.getName());

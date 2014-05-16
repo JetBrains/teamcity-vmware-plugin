@@ -1,6 +1,6 @@
 package jetbrains.buildServer.clouds.vmware;
 
-//import com.vmware.vim25.mo.VirtualMachine;
+import com.intellij.openapi.diagnostic.Logger;
 import com.vmware.vim25.VirtualMachinePowerState;
 import com.vmware.vim25.mo.VirtualMachine;
 import java.util.Map;
@@ -22,6 +22,8 @@ import static jetbrains.buildServer.clouds.vmware.VMWarePropertiesNames.INSTANCE
  *         Time: 3:57 PM
  */
 public class VMWareCloudInstance implements CloudInstance {
+
+  private static final Logger LOG = Logger.getInstance(VMWareCloudInstance.class.getName());
 
   private final String myInstanceName;
   private final VMWareCloudImage myImage;
@@ -89,7 +91,13 @@ public class VMWareCloudInstance implements CloudInstance {
     }
   }
 
-  public void setErrorInfo(final CloudErrorInfo errorInfo) {
+  public void setErrorInfo(@Nullable final CloudErrorInfo errorInfo) {
+    if (errorInfo == null) {
+      LOG.info(String.format("Cleared error info for " + getInstanceId()));
+    } else {
+      LOG.warn(String.format("Setting error info for %s: %s(%s).",
+                             getInstanceId(), errorInfo.getMessage(), errorInfo.getDetailedMessage()));
+    }
     myErrorInfo = errorInfo;
   }
 
