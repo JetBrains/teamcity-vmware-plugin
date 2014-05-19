@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
+import jetbrains.buildServer.clouds.vmware.connector.VMWareApiConnector;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,6 +28,7 @@ public class FakeVirtualMachine extends VirtualMachine {
   private boolean myTasksSuccessfull = true;
   private AtomicBoolean myIsStarted = new AtomicBoolean(false);
   private final List<VirtualMachineSnapshotTree> myRootSnapshotList = new ArrayList<VirtualMachineSnapshotTree>();
+  private VirtualMachine myLinkedParent = null;
 
   private FakeVirtualMachine(){
     super(null, null);
@@ -35,6 +37,7 @@ public class FakeVirtualMachine extends VirtualMachine {
   public FakeVirtualMachine(final String name, final boolean isTemplate, final boolean isRunning) {
     this();
     myName = name;
+    myIsStarted.set(isRunning);
     myConfigInfo = new VirtualMachineConfigInfo(){
       @Override
       public boolean isTemplate() {
@@ -89,6 +92,10 @@ public class FakeVirtualMachine extends VirtualMachine {
   @Override
   public Task cloneVM_Task(final Folder folder, final String name, final VirtualMachineCloneSpec spec)
     throws RemoteException {
+    FakeModel.instance().addVM(name, false);
+    if (VirtualMachineRelocateDiskMoveOptions.createNewChildDiskBacking.name().equals(spec.getLocation().getDiskMoveType())){
+      //TODO add check for this.
+    }
     return conditionalTask();
   }
 
@@ -121,8 +128,9 @@ public class FakeVirtualMachine extends VirtualMachine {
   }
 
   @Override
-  public Task destroy_Task() throws VimFault, RuntimeFault, RemoteException {
-    return super.destroy_Task();
+  public Task destroy_Task() throws RemoteException {
+    FakeModel.instance().removeVM(getName());
+    return conditionalTask();
   }
 
   @Override
@@ -178,4 +186,7 @@ public class FakeVirtualMachine extends VirtualMachine {
     return myTasksSuccessfull ? successTask() : failureTask();
   }
 
+  public void setLinkedParent(final VirtualMachine linkedParent) {
+    myLinkedParent = linkedParent;
+  }
 }
