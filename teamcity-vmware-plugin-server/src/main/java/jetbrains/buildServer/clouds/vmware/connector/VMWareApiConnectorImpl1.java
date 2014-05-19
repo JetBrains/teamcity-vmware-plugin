@@ -22,7 +22,7 @@ import static jetbrains.buildServer.clouds.vmware.VMWarePropertiesNames.*;
  *         Date: 4/17/2014
  *         Time: 11:32 AM
  */
-public class VMWareApiConnectorImpl implements VMWareApiConnector {
+public class VMWareApiConnectorImpl1 implements VMWareApiConnector {
 
   private static final Logger LOG = Logger.getInstance(VMWareCloudClient.class.getName());
 
@@ -33,7 +33,7 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
   private final String myPassword;
 
 
-  public VMWareApiConnectorImpl(final URL instanceURL, final String username, final String password) throws MalformedURLException, RemoteException {
+  public VMWareApiConnectorImpl1(final URL instanceURL, final String username, final String password) throws MalformedURLException, RemoteException {
     myInstanceURL = instanceURL;
     myUsername = username;
     myPassword = password;
