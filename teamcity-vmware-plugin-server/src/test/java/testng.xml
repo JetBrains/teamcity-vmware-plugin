@@ -1,0 +1,7 @@
+<suite name="VMware plugin server suite">
+  <test name="VMware plugin server tests">
+    <classes>
+      <class name="jetbrains.buildServer.clouds.vmware.VMWareCloudClientTest"/>
+    </classes>
+  </test>
+</suite>
