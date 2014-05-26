@@ -1,23 +1,10 @@
 package jetbrains.buildServer.clouds.vmware.stubs;
 
-import com.vmware.vim25.ManagedObjectReference;
-import com.vmware.vim25.VirtualMachineConfigSpec;
-import com.vmware.vim25.VirtualMachinePowerState;
 import com.vmware.vim25.mo.*;
 import java.net.MalformedURLException;
-import java.net.URL;
 import java.rmi.RemoteException;
-import java.text.SimpleDateFormat;
 import java.util.*;
-import jetbrains.buildServer.clouds.CloudInstanceUserData;
-import jetbrains.buildServer.clouds.InstanceStatus;
-import jetbrains.buildServer.clouds.vmware.VMWareCloudImage;
-import jetbrains.buildServer.clouds.vmware.VMWareCloudInstance;
-import jetbrains.buildServer.clouds.vmware.VMWareImageStartType;
-import jetbrains.buildServer.clouds.vmware.connector.VMWareApiConnector;
 import jetbrains.buildServer.clouds.vmware.connector.VMWareApiConnectorImpl;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Sergey.Pak

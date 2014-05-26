@@ -29,6 +29,8 @@ public class VMWareCloudImage implements CloudImage {
     mySnapshotName = snapshotName;
     if (myImageType == VMWareImageType.TEMPLATE && startType == VMWareImageStartType.START) {
       myStartType = VMWareImageStartType.CLONE;
+    } else if (startType == VMWareImageStartType.LINKED_CLONE && snapshotName == null) {
+      myStartType = VMWareImageStartType.CLONE;
     } else {
       myStartType = startType;
     }

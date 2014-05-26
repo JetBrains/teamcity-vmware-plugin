@@ -6,10 +6,7 @@
       <module fileurl="file://$PROJECT_DIR$/resolve-helper/resolve-helper.iml" filepath="$PROJECT_DIR$/resolve-helper/resolve-helper.iml" />
       <module fileurl="file://$PROJECT_DIR$/teamcity-vmware-plugin.iml" filepath="$PROJECT_DIR$/teamcity-vmware-plugin.iml" />
       <module fileurl="file://$PROJECT_DIR$/teamcity-vmware-plugin-agent/teamcity-vmware-plugin-agent.iml" filepath="$PROJECT_DIR$/teamcity-vmware-plugin-agent/teamcity-vmware-plugin-agent.iml" />
-      <module fileurl="file://$PROJECT_DIR$/teamcity-vmware-plugin-agent/teamcity-vmware-plugin-agent.iml" filepath="$PROJECT_DIR$/teamcity-vmware-plugin-agent/teamcity-vmware-plugin-agent.iml" />
       <module fileurl="file://$PROJECT_DIR$/teamcity-vmware-plugin-common/teamcity-vmware-plugin-common.iml" filepath="$PROJECT_DIR$/teamcity-vmware-plugin-common/teamcity-vmware-plugin-common.iml" />
-      <module fileurl="file://$PROJECT_DIR$/teamcity-vmware-plugin-common/teamcity-vmware-plugin-common.iml" filepath="$PROJECT_DIR$/teamcity-vmware-plugin-common/teamcity-vmware-plugin-common.iml" />
-      <module fileurl="file://$PROJECT_DIR$/teamcity-vmware-plugin-server/teamcity-vmware-plugin-server.iml" filepath="$PROJECT_DIR$/teamcity-vmware-plugin-server/teamcity-vmware-plugin-server.iml" />
       <module fileurl="file://$PROJECT_DIR$/teamcity-vmware-plugin-server/teamcity-vmware-plugin-server.iml" filepath="$PROJECT_DIR$/teamcity-vmware-plugin-server/teamcity-vmware-plugin-server.iml" />
       <module fileurl="file://$PROJECT_DIR$/web/web.iml" filepath="$PROJECT_DIR$/web/web.iml" />
     </modules>
