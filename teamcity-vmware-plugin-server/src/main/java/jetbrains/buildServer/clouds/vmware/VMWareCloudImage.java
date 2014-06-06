@@ -21,11 +21,20 @@ public class VMWareCloudImage implements CloudImage {
   private final VMWareImageStartType myStartType;
   @Nullable private final String mySnapshotName;
   private CloudErrorInfo myErrorInfo;
+  private final String myResourcePool;
+  private final String myFolder;
 
-  public VMWareCloudImage(@NotNull final String imageName, @NotNull final VMWareImageType imageType, @Nullable String snapshotName,
-                          @Nullable final InstanceStatus imageInstanceStatus, final VMWareImageStartType startType) {
+  public VMWareCloudImage(@NotNull final String imageName,
+                          @NotNull final VMWareImageType imageType,
+                          @NotNull String folder,
+                          @NotNull String resourcePool,
+                          @Nullable String snapshotName,
+                          @Nullable final InstanceStatus imageInstanceStatus,
+                          final VMWareImageStartType startType) {
     myImageName = imageName;
     myImageType = imageType;
+    myFolder = folder;
+    myResourcePool = resourcePool;
     mySnapshotName = snapshotName;
     if (myImageType == VMWareImageType.TEMPLATE && startType == VMWareImageStartType.START) {
       myStartType = VMWareImageStartType.CLONE;
@@ -132,6 +141,14 @@ public class VMWareCloudImage implements CloudImage {
 
   public VMWareImageStartType getStartType() {
     return myStartType;
+  }
+
+  public String getResourcePool() {
+    return myResourcePool;
+  }
+
+  public String getFolder() {
+    return myFolder;
   }
 
   public static interface ProcessImageInstancesTask{

@@ -36,7 +36,7 @@ public class UpdateInstancesTask implements Runnable {
       for (CloudImage image : images) {
         imagesMap.put(image.getId(), (VMWareCloudImage)image);
       }
-      final Map<String, VirtualMachine> vms = myApiConnector.getInstances();
+      final Map<String, VirtualMachine> vms = myApiConnector.getVirtualMachines();
       final Map<String, Map<String, InstanceStatus>> runData = new HashMap<String, Map<String, InstanceStatus>>();
       for (Map.Entry<String, VirtualMachine> vmEntry : vms.entrySet()) {
         final VirtualMachine vm = vmEntry.getValue();

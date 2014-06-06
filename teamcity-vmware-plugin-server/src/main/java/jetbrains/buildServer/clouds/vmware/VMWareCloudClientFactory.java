@@ -21,11 +21,11 @@ import java.util.Map;
  */
 public class VMWareCloudClientFactory implements CloudClientFactory {
 
-  @NotNull private final String myJspPath;
+  @NotNull private final String myHtmlPath;
 
   public VMWareCloudClientFactory(@NotNull final CloudRegistrar cloudRegistrar,
                                   @NotNull final PluginDescriptor pluginDescriptor) {
-    myJspPath = pluginDescriptor.getPluginResourcesPath("profile-settings.jsp");
+    myHtmlPath = pluginDescriptor.getPluginResourcesPath("vmware-settings.html");
     cloudRegistrar.registerCloudFactory(this);
   }
 
@@ -52,7 +52,7 @@ public class VMWareCloudClientFactory implements CloudClientFactory {
 
   @Nullable
   public String getEditProfileUrl() {
-    return myJspPath;
+    return myHtmlPath;
   }
 
   @NotNull

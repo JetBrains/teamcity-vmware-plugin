@@ -1,8 +1,12 @@
 package jetbrains.buildServer.clouds.vmware.connector;
 
+import com.vmware.vim25.VirtualMachineSnapshotTree;
+import com.vmware.vim25.mo.Folder;
+import com.vmware.vim25.mo.ResourcePool;
 import com.vmware.vim25.mo.VirtualMachine;
 import java.rmi.RemoteException;
 import java.util.Map;
+import java.util.Set;
 import jetbrains.buildServer.clouds.CloudInstanceUserData;
 import jetbrains.buildServer.clouds.InstanceStatus;
 import jetbrains.buildServer.clouds.vmware.VMWareCloudImage;
@@ -19,13 +23,22 @@ import org.jetbrains.annotations.Nullable;
 public interface VMWareApiConnector {
 
   @NotNull
-  Map<String, VirtualMachine> getInstances() throws RemoteException;
+  Map<String, VirtualMachine> getVirtualMachines() throws RemoteException;
+
+  @NotNull
+  Map<String, Folder> getFolders() throws RemoteException;
+
+  @NotNull
+  Map<String, ResourcePool> getResourcePools() throws RemoteException;
+
+  @NotNull
+  Map<String, VirtualMachineSnapshotTree> getSnapshotList(String vmName) throws RemoteException;
 
   @Nullable
   VirtualMachine startInstance(VMWareCloudInstance instance, String agentName, CloudInstanceUserData userData)
     throws RemoteException, InterruptedException;
 
-  String cloneVmIfNecessary(VMWareCloudImage image, VMWareImageStartType startType, String cloneFolderName, String resourcePoolName) throws RemoteException, InterruptedException;
+  String cloneVmIfNecessary(VMWareCloudImage image) throws RemoteException, InterruptedException;
 
   boolean isStartedByTeamcity(String instanceName) throws RemoteException;
 
@@ -37,9 +50,11 @@ public interface VMWareApiConnector {
 
   void restartInstance(VMWareCloudInstance instance) throws RemoteException;
 
-  boolean checkCloneFolder(@NotNull String cloneFolderName);
+  boolean checkCloneFolderExists(@NotNull String cloneFolderName);
 
-  boolean checkResourcePool(@NotNull String resourcePool);
+  boolean checkResourcePoolExists(@NotNull String resourcePool);
+
+  boolean checkVirtualMachineExists(@NotNull String vmName);
 
   @Nullable
   VirtualMachine getInstanceDetails(String instanceName) throws RemoteException;

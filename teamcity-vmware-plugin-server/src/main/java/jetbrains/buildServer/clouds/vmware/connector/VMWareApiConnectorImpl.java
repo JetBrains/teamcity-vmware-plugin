@@ -66,13 +66,39 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
     return retval;
   }
 
-  public Map<String, VirtualMachine> getInstances() throws RemoteException {
-    final Map<String, VirtualMachine> instances = new HashMap<String, VirtualMachine>();
-    final Collection<VirtualMachine> vms = findAllEntities(VirtualMachine.class);
-    for (VirtualMachine vm : vms) {
-      instances.put(vm.getName(), vm);
+  protected <T extends ManagedEntity> Map<String, T> findAllEntitiesAsMap(Class<T> instanceType) throws RemoteException {
+    final ManagedEntity[] managedEntities = new InventoryNavigator(getRootFolder())
+      .searchManagedEntities(new String[][]{{instanceType.getSimpleName(), "name"},}, true);
+    Map<String, T> retval = new HashMap<String, T>();
+    for (ManagedEntity managedEntity : managedEntities) {
+      retval.put(managedEntity.getName(), (T)managedEntity);
     }
-    return instances;
+    return retval;
+  }
+
+  @NotNull
+  public Map<String, VirtualMachine> getVirtualMachines() throws RemoteException {
+    return findAllEntitiesAsMap(VirtualMachine.class);
+  }
+
+  @NotNull
+  public Map<String, Folder> getFolders() throws RemoteException {
+    return findAllEntitiesAsMap(Folder.class);
+  }
+
+  @NotNull
+  public Map<String, ResourcePool> getResourcePools() throws RemoteException {
+    return findAllEntitiesAsMap(ResourcePool.class);
+  }
+
+  @NotNull
+  public Map<String, VirtualMachineSnapshotTree> getSnapshotList(final String vmName) throws RemoteException {
+    final VirtualMachine vm = findEntityByName(vmName, VirtualMachine.class);
+    if (vm.getSnapshot() == null){
+      return Collections.emptyMap();
+    }
+    final VirtualMachineSnapshotTree[] rootSnapshotList = vm.getSnapshot().getRootSnapshotList();
+    return snapshotNames(rootSnapshotList);
   }
 
   @Nullable
@@ -110,32 +136,32 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
     return null;
   }
 
-  public String cloneVmIfNecessary(VMWareCloudImage image, VMWareImageStartType startType, String cloneFolderName, String resourcePoolName) throws RemoteException, InterruptedException {
+  public String cloneVmIfNecessary(VMWareCloudImage image) throws RemoteException, InterruptedException {
     VirtualMachine vm = findEntityByName(image.getId(), VirtualMachine.class);
     if (vm != null) {
       String cloneName;
       final VirtualMachineCloneSpec cloneSpec = new VirtualMachineCloneSpec();
       final VirtualMachineRelocateSpec location = new VirtualMachineRelocateSpec();
       cloneSpec.setLocation(location);
-      if (resourcePoolName != null) {
-        location.setPool(findEntityByName(resourcePoolName, ResourcePool.class).getMOR());
+      if (image.getResourcePool() != null) {
+        location.setPool(findEntityByName(image.getResourcePool(), ResourcePool.class).getMOR());
       }
       cloneSpec.setTemplate(false);
       if (image.getImageType() == VMWareImageType.INSTANCE) {
-        if (startType == VMWareImageStartType.START) {
+        if (image.getStartType() == VMWareImageStartType.START) {
           return image.getName();
         }
 
         final ManagedObjectReference snapshot;
         if (image.getSnapshotName() != null) {
-          final VirtualMachineSnapshotTree obj = findSnapshot(vm.getSnapshot().getRootSnapshotList(), image.getSnapshotName());
+          final VirtualMachineSnapshotTree obj = getSnapshotList(vm.getName()).get(image.getSnapshotName());
           snapshot = obj==null ? null : obj.getSnapshot();
         } else {
           snapshot = null;
         }
 
         if (snapshot != null) { // linked clones only makes sense for snapshots
-          if (startType == VMWareImageStartType.LINKED_CLONE) {
+          if (image.getStartType() == VMWareImageStartType.LINKED_CLONE) {
             location.setDiskMoveType(VirtualMachineRelocateDiskMoveOptions.createNewChildDiskBacking.name());
           }
           cloneSpec.setSnapshot(snapshot);
@@ -143,7 +169,7 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
       }
       SimpleDateFormat sdf = new SimpleDateFormat("Md-hhmmss");
       cloneName = String.format("%s-clone-%s", image.getId(), sdf.format(new Date()));
-      final Task task = vm.cloneVM_Task(this.findEntityByName(cloneFolderName, Folder.class), cloneName, cloneSpec);
+      final Task task = vm.cloneVM_Task(this.findEntityByName(image.getFolder(), Folder.class), cloneName, cloneSpec);
       final String status = task.waitForTask();
       if (Task.SUCCESS.equals(status)) {
         image.setErrorInfo(null);
@@ -169,27 +195,21 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
     return false;
   }
 
-  @Nullable
-  protected static VirtualMachineSnapshotTree findSnapshot(@Nullable final VirtualMachineSnapshotTree[] trees, @NotNull final String snapshotName) {
-    if (trees == null) {
-      return null;
-    }
-    for (final VirtualMachineSnapshotTree tree : trees) {
-      if (snapshotName.equals(tree.getName())) {
-        return tree;
-      }
-      final VirtualMachineSnapshotTree snapshot = findSnapshot(tree.getChildSnapshotList(), snapshotName);
-      if (snapshot != null) {
-        return snapshot;
+
+
+  protected static Map<String, VirtualMachineSnapshotTree> snapshotNames(@Nullable final VirtualMachineSnapshotTree[] trees){
+    final Map<String, VirtualMachineSnapshotTree> treeNames = new HashMap<String, VirtualMachineSnapshotTree>();
+    if (trees != null) {
+      for (final VirtualMachineSnapshotTree tree : trees) {
+        treeNames.put(tree.getName(), tree);
+        treeNames.putAll(snapshotNames(tree.getChildSnapshotList()));
       }
     }
-    return null;
+    return treeNames;
   }
 
   public boolean ensureSnapshotExists(String instanceName, String snapshotName) throws RemoteException {
-    VirtualMachine vm = findEntityByName(instanceName, VirtualMachine.class);
-    final VirtualMachineSnapshotTree snapshot = findSnapshot(vm.getSnapshot().getRootSnapshotList(), snapshotName);
-    return snapshot != null && snapshot.getSnapshot() != null;
+    return getSnapshotList(instanceName).get(snapshotName) != null;
   }
 
   private OptionValue createOptionValue(String key, String value) {
@@ -257,7 +277,7 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
   }
 
 
-  public boolean checkCloneFolder(@NotNull final String cloneFolderName){
+  public boolean checkCloneFolderExists(@NotNull final String cloneFolderName){
     try {
       return findEntityByName(cloneFolderName, Folder.class) != null;
     } catch (RemoteException e) {
@@ -266,9 +286,18 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
     return false;
   }
 
-  public boolean checkResourcePool(@NotNull final String resourcePool){
+  public boolean checkResourcePoolExists(@NotNull final String resourcePool){
     try {
       return findEntityByName(resourcePool, ResourcePool.class) != null;
+    } catch (RemoteException e) {
+      e.printStackTrace();
+    }
+    return false;
+  }
+
+  public boolean checkVirtualMachineExists(@NotNull final String vmName) {
+    try {
+      return findEntityByName(vmName, VirtualMachine.class) != null;
     } catch (RemoteException e) {
       e.printStackTrace();
     }

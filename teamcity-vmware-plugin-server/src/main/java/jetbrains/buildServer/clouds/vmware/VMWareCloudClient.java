@@ -1,7 +1,6 @@
 package jetbrains.buildServer.clouds.vmware;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.text.StringUtil;
 import com.vmware.vim25.mo.VirtualMachine;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -12,6 +11,7 @@ import jetbrains.buildServer.clouds.*;
 import jetbrains.buildServer.clouds.vmware.connector.VMWareApiConnector;
 import jetbrains.buildServer.clouds.vmware.connector.VMWareApiConnectorImpl;
 import jetbrains.buildServer.clouds.vmware.tasks.UpdateInstancesTask;
+import jetbrains.buildServer.clouds.vmware.web.VMWareWebConstants;
 import jetbrains.buildServer.serverSide.AgentDescription;
 import jetbrains.buildServer.util.NamedThreadFactory;
 import org.jetbrains.annotations.NotNull;
@@ -31,81 +31,67 @@ public class VMWareCloudClient implements CloudClientEx {
   private final Map<String, VMWareCloudImage> myImageMap = new HashMap<String, VMWareCloudImage>();
   private ScheduledExecutorService myExecutor;
   private CloudErrorInfo myErrorInfo;
-  private VMWareImageStartType myStartType;
-  private final String myCloneFolderName;
-  private final String myResourcePoolName;
 
   public VMWareCloudClient(@NotNull final CloudClientParameters cloudClientParameters) throws MalformedURLException, RemoteException {
     this(cloudClientParameters, new VMWareApiConnectorImpl(
       new URL(cloudClientParameters.getParameter("serverUrl")),
       cloudClientParameters.getParameter("username"),
       cloudClientParameters.getParameter("password")));
+
+    //neverov tfs;;vm;Koshkin;START;X;:TC vlad-ubuntu;;vm;Koshkin;START;X;:Lubuntu-sergey;Before installing mc;vm;Koshkin;START;X;:
   }
 
   VMWareCloudClient(@NotNull final CloudClientParameters cloudClientParameters, @NotNull final VMWareApiConnector apiConnector) throws MalformedURLException, RemoteException {
     myApiConnector = apiConnector;
-    final String cloneFolder = cloudClientParameters.getParameter("cloneFolder");
-    if (cloneFolder != null) {
-      if (myApiConnector.checkCloneFolder(cloneFolder)) {
-        myCloneFolderName = cloneFolder;
-      } else {
-        myErrorInfo = VMWareCloudErrorInfoFactory.noSuchFolder(cloneFolder);
-        myCloneFolderName = null;
-      }
-    } else {
-      myCloneFolderName = null;
-    }
 
-    final String resourcePool = cloudClientParameters.getParameter("resourcePool");
-    if (resourcePool != null){
-      if (myApiConnector.checkResourcePool(resourcePool)){
-        myResourcePoolName = resourcePool;
-      } else {
-        myErrorInfo = VMWareCloudErrorInfoFactory.noSuchResourcePool(resourcePool);
-        myResourcePoolName = null;
-      }
-    } else {
-      myResourcePoolName = null;
-    }
-
-    final String images = cloudClientParameters.getParameter("images");
-    if (StringUtil.isEmpty(images))
+    final String imagesListData = cloudClientParameters.getParameter(VMWareWebConstants.IMAGES_DATA);
+    if (imagesListData == null){
       return;
-    final Map<String, VirtualMachine> instances = myApiConnector.getInstances();
-    final String[] split = images.split("\n");
-    List<String> missingInstances = new ArrayList<String>();
-    myStartType = VMWareImageStartType.START;
+    }
+    final List<String> errorList = new ArrayList<String>();
     try {
-      myStartType = VMWareImageStartType.valueOf(cloudClientParameters.getParameter("cloneBehaviour"));
-    } catch (Exception e){
-      e.printStackTrace();
-    }
+      final String[] imageDataArray = imagesListData.split(";X;:");
+      for (String imageDataStr : imageDataArray) {
+        final String[] split = imageDataStr.split(";");
+        String vmName = split[0];
+        String snapshotName = split[1];
+        String cloneFolder = split[2];
+        String resourcePool = split[3];
+        String behaviourStr = split[4];
 
-    for (String sp : split) {
-      String imageName;
-      String snapshotName = null;
-      if (sp.contains("@")){
-        imageName = sp.substring(0, sp.indexOf("@"));
-        snapshotName = sp.substring(sp.indexOf("@")+1);
-      } else {
-        imageName = sp;
-      }
-      if (!instances.containsKey(imageName)){
-        missingInstances.add(imageName);
-      } else {
-        final VirtualMachine virtualMachine = instances.get(imageName);
-        final VMWareImageType imageType = virtualMachine.getConfig().isTemplate() ? VMWareImageType.TEMPLATE : VMWareImageType.INSTANCE;
-        myImageMap.put(imageName, new VMWareCloudImage(imageName, imageType, snapshotName, myApiConnector.getInstanceStatus(virtualMachine), myStartType));
-        if (snapshotName != null  && !myApiConnector.ensureSnapshotExists(imageName, snapshotName)){
-          myErrorInfo = VMWareCloudErrorInfoFactory.noSuchSnapshot(snapshotName, imageName);
+        if (!myApiConnector.checkCloneFolderExists(cloneFolder)) {
+          errorList.add(VMWareCloudErrorInfoFactory.noSuchFolder(cloneFolder).getMessage());
+          break;
         }
+
+        if (!myApiConnector.checkResourcePoolExists(resourcePool)) {
+          errorList.add(VMWareCloudErrorInfoFactory.noSuchResourcePool(resourcePool).getMessage());
+          break;
+        }
+
+        final VirtualMachine vm = myApiConnector.getInstanceDetails(vmName);
+
+        if (vm == null) {
+          errorList.add(VMWareCloudErrorInfoFactory.noSuchVM(vmName).getMessage());
+          break;
+        }
+
+        final VMWareImageStartType startType = VMWareImageStartType.valueOf(behaviourStr);
+        final VMWareImageType imageType = vm.getConfig().isTemplate() ? VMWareImageType.TEMPLATE : VMWareImageType.INSTANCE;
+
+        final VMWareCloudImage cloudImage = new VMWareCloudImage(
+          vmName, imageType, cloneFolder, resourcePool,snapshotName, myApiConnector.getInstanceStatus(vm), startType);
+        myImageMap.put(vmName, cloudImage);
       }
-    }
-    if (missingInstances.size() == 0){
-      myExecutor = Executors.newScheduledThreadPool(1, new NamedThreadFactory("VSphere"));
-      myExecutor.scheduleWithFixedDelay(new UpdateInstancesTask(myApiConnector, this), 20, 10, TimeUnit.SECONDS);
-    } else {
-      myErrorInfo = VMWareCloudErrorInfoFactory.noSuchImages(missingInstances);
+
+    } finally {
+
+      if (errorList.size() == 0) {
+        myExecutor = Executors.newScheduledThreadPool(1, new NamedThreadFactory("VSphere"));
+        myExecutor.scheduleWithFixedDelay(new UpdateInstancesTask(myApiConnector, this), 20, 10, TimeUnit.SECONDS);
+      } else {
+        myErrorInfo = new CloudErrorInfo(Arrays.toString(errorList.toArray()));
+      }
     }
   }
 
@@ -115,17 +101,18 @@ public class VMWareCloudClient implements CloudClientEx {
   public CloudInstance startNewInstance(@NotNull CloudImage cloudImage, @NotNull CloudInstanceUserData cloudInstanceUserData) throws QuotaException {
       LOG.info("Attempting to start new Instance for cloud " + cloudImage.getName());
     try {
-      final String instanceName = myApiConnector.cloneVmIfNecessary((VMWareCloudImage)cloudImage, myStartType, myCloneFolderName, myResourcePoolName);
+      final VMWareCloudImage vCloudImage = (VMWareCloudImage)cloudImage;
+      final String instanceName = myApiConnector.cloneVmIfNecessary(vCloudImage);
       LOG.info("Instance name is " + instanceName);
-      final VMWareCloudInstance instance = new VMWareCloudInstance((VMWareCloudImage)cloudImage, instanceName);
-      if (myStartType != VMWareImageStartType.START || ((VMWareCloudImage)cloudImage).getImageType() != VMWareImageType.INSTANCE){
+      final VMWareCloudInstance instance = new VMWareCloudInstance(vCloudImage, instanceName);
+      if (vCloudImage.getStartType() != VMWareImageStartType.START || vCloudImage.getImageType() != VMWareImageType.INSTANCE){
         LOG.info("Delete after stop:" + true);
         instance.setDeleteAfterStop(true);
       }
       myApiConnector.startInstance(instance,
                                    instanceName,
                                    cloudInstanceUserData);
-      ((VMWareCloudImage)cloudImage).instanceStarted(instance);
+      vCloudImage.instanceStarted(instance);
       LOG.info("Instance started successfully");
       return instance;
     } catch (Exception e) {
@@ -192,7 +179,7 @@ public class VMWareCloudClient implements CloudClientEx {
           if (!myApiConnector.ensureSnapshotExists(vCloudImage.getId(), vCloudImage.getSnapshotName())) {
             myErrorInfo = new CloudErrorInfo("Unable to find snapshot: " + vCloudImage.getSnapshotName());
           }
-        } else if (myStartType == VMWareImageStartType.START) {
+        } else if (vCloudImage.getStartType() == VMWareImageStartType.START) {
           return myApiConnector.isInstanceStopped(vCloudImage.getId());
         }
       }
