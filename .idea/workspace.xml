@@ -2,9 +2,7 @@
 <project version="4">
   <component name="ArtifactsWorkspaceSettings">
     <artifacts-to-build>
-      <artifact name="Deploy" />
-      <artifact name="Plugin" />
-      <artifact name="Plugin-zip" />
+      <artifact name="War" />
     </artifacts-to-build>
   </component>
   <component name="BuildServerSettings">
@@ -40,22 +38,16 @@
     </treeState>
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="37d4af71-fe2c-47a0-8d06-875290881f39" name="Default" comment="1) Refactoring&#10;2) Pass all information from CloudInstanceUserData to agent VM">
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/test-lib/hamcrest-core-1.1.jar" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/test-lib/junit-4.10.jar" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/test-lib/snakeyaml-1.6.jar" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/test-lib/testng-6.8.1.jar" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/teamcity-vmware-plugin-server/src/test/java/jetbrains/buildServer/clouds/vmware/VMWareCloudImageTest.java" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/teamcity-vmware-plugin-server/src/test/java/jetbrains/buildServer/clouds/vmware/VMWareCloudInstanceTest.java" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/teamcity-vmware-plugin-server/src/test/java/jetbrains/buildServer/clouds/vmware/stubs/FakeApiConnector.java" afterPath="$PROJECT_DIR$/teamcity-vmware-plugin-server/src/test/java/jetbrains/buildServer/clouds/vmware/stubs/FakeApiConnector.java" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/teamcity-vmware-plugin-server/src/test/java/jetbrains/buildServer/clouds/vmware/VMWareCloudClientTest.java" afterPath="$PROJECT_DIR$/teamcity-vmware-plugin-server/src/test/java/jetbrains/buildServer/clouds/vmware/VMWareCloudClientTest.java" />
+    <list default="true" id="37d4af71-fe2c-47a0-8d06-875290881f39" name="Default" comment="">
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/.idea/artifacts/Deploy_Dist.xml" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/.idea/artifacts/War.xml" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/teamcity-vmware-plugin-server/src/main/java/jetbrains/buildServer/clouds/vmware/connector/VMWareApiConnectorImpl.java" afterPath="$PROJECT_DIR$/teamcity-vmware-plugin-server/src/main/java/jetbrains/buildServer/clouds/vmware/connector/VMWareApiConnectorImpl.java" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/teamcity-vmware-plugin-server/src/main/java/jetbrains/buildServer/clouds/vmware/VMWareCloudClient.java" afterPath="$PROJECT_DIR$/teamcity-vmware-plugin-server/src/main/java/jetbrains/buildServer/clouds/vmware/VMWareCloudClient.java" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/teamcity-vmware-plugin-server/src/main/java/jetbrains/buildServer/clouds/vmware/VMWareCloudImage.java" afterPath="$PROJECT_DIR$/teamcity-vmware-plugin-server/src/main/java/jetbrains/buildServer/clouds/vmware/VMWareCloudImage.java" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/compiler.xml" afterPath="$PROJECT_DIR$/.idea/compiler.xml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/misc.xml" afterPath="$PROJECT_DIR$/.idea/misc.xml" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/modules.xml" afterPath="$PROJECT_DIR$/.idea/modules.xml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/teamcity-vmware-plugin-common/teamcity-vmware-plugin-common.iml" afterPath="$PROJECT_DIR$/teamcity-vmware-plugin-common/teamcity-vmware-plugin-common.iml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/libraries/test_lib.xml" afterPath="$PROJECT_DIR$/.idea/libraries/test_lib.xml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/teamcity-vmware-plugin-server/src/test/java/testng.xml" afterPath="$PROJECT_DIR$/teamcity-vmware-plugin-server/src/test/java/testng.xml" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/resolve-helper/resolve-helper.iml" afterPath="$PROJECT_DIR$/resolve-helper/resolve-helper.iml" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/libraries/server.xml" afterPath="$PROJECT_DIR$/.idea/libraries/server.xml" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
     </list>
     <ignored path="teamcity-vmware-plugin.iws" />
@@ -117,8 +109,8 @@
         <option name="LOG_MESSAGE" value="" />
       </breakpoint>
     </breakpoint_any>
-    <breakpoint_rules converted="true" />
     <ui_properties converted="true" />
+    <breakpoint_rules converted="true" />
   </component>
   <component name="ExecutionTargetManager" SELECTED_TARGET="default_target" />
   <component name="FavoritesManager">
@@ -126,52 +118,35 @@
   </component>
   <component name="FileEditorManager">
     <leaf>
-      <file leaf-file-name="VMWareCloudClientTest.java" pinned="false" current="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/teamcity-vmware-plugin-server/src/test/java/jetbrains/buildServer/clouds/vmware/VMWareCloudClientTest.java">
-          <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="0.0" vertical-offset="3923" max-vertical-offset="4620">
-              <caret line="216" column="10" selection-start-line="216" selection-start-column="10" selection-end-line="216" selection-end-column="10" />
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
       <file leaf-file-name="VMWareCloudClient.java" pinned="false" current="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/teamcity-vmware-plugin-server/src/main/java/jetbrains/buildServer/clouds/vmware/VMWareCloudClient.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="0.0" vertical-offset="4140" max-vertical-offset="4340">
-              <caret line="207" column="0" selection-start-line="207" selection-start-column="0" selection-end-line="207" selection-end-column="0" />
-              <folding />
+            <state vertical-scroll-proportion="0.0" vertical-offset="2180" max-vertical-offset="2820">
+              <caret line="114" column="0" selection-start-line="114" selection-start-column="0" selection-end-line="114" selection-end-column="0" />
+              <folding>
+                <element signature="docComment;class#VMWareCloudClient#0" expanded="false" />
+                <element signature="method#VMWareCloudClient#0;class#VMWareCloudClient#0" expanded="false" />
+                <element signature="e#5286#5287#0" expanded="true" />
+                <element signature="e#5389#5390#0" expanded="true" />
+                <element signature="method#dispose#0;class#VMWareCloudClient#0" expanded="false" />
+                <element signature="method#findInstanceByAgent#0;class#VMWareCloudClient#0" expanded="false" />
+                <element signature="e#6395#6396#0" expanded="true" />
+                <element signature="e#6423#6424#0" expanded="true" />
+              </folding>
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="VMWareCloudErrorInfoFactory.java" pinned="false" current="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/teamcity-vmware-plugin-server/src/main/java/jetbrains/buildServer/clouds/vmware/VMWareCloudErrorInfoFactory.java">
+      <file leaf-file-name="VMWarePropertiesReader.java" pinned="false" current="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/teamcity-vmware-plugin-agent/src/main/java/jetbrains/buildServer/clouds/vmware/VMWarePropertiesReader.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="660">
-              <caret line="50" column="69" selection-start-line="50" selection-start-column="0" selection-end-line="50" selection-end-column="0" />
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="VMWareCloudImageTest.java" pinned="false" current="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/teamcity-vmware-plugin-server/src/test/java/jetbrains/buildServer/clouds/vmware/VMWareCloudImageTest.java">
-          <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="0.0" vertical-offset="435" max-vertical-offset="1480">
-              <caret line="67" column="29" selection-start-line="67" selection-start-column="29" selection-end-line="67" selection-end-column="29" />
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="testng.xml" pinned="false" current="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/teamcity-vmware-plugin-server/src/test/java/testng.xml">
-          <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="0.0" vertical-offset="60" max-vertical-offset="280">
-              <caret line="3" column="68" selection-start-line="3" selection-start-column="68" selection-end-line="3" selection-end-column="68" />
-              <folding />
+            <state vertical-scroll-proportion="0.0" vertical-offset="900" max-vertical-offset="2520">
+              <caret line="18" column="98" selection-start-line="18" selection-start-column="0" selection-end-line="18" selection-end-column="0" />
+              <folding>
+                <element signature="imports" expanded="true" />
+                <element signature="e#4519#4520#0" expanded="true" />
+                <element signature="e#4574#4575#0" expanded="true" />
+              </folding>
             </state>
           </provider>
         </entry>
@@ -179,28 +154,67 @@
       <file leaf-file-name="VMWareCloudImage.java" pinned="false" current="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/teamcity-vmware-plugin-server/src/main/java/jetbrains/buildServer/clouds/vmware/VMWareCloudImage.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="0.0" vertical-offset="200" max-vertical-offset="2920">
-              <caret line="80" column="66" selection-start-line="80" selection-start-column="28" selection-end-line="80" selection-end-column="28" />
+            <state vertical-scroll-proportion="0.0" vertical-offset="967" max-vertical-offset="3120">
+              <caret line="131" column="98" selection-start-line="131" selection-start-column="60" selection-end-line="131" selection-end-column="60" />
+              <folding>
+                <element signature="docComment;class#VMWareCloudImage#0" expanded="false" />
+                <element signature="method#VMWareCloudImage#0;class#VMWareCloudImage#0" expanded="false" />
+                <element signature="e#2966#2967#0" expanded="true" />
+                <element signature="e#2994#2995#0" expanded="true" />
+                <element signature="class#4142:4321" expanded="false" />
+                <element signature="class#5375:5540" expanded="false" />
+                <element signature="class#5989:6236" expanded="false" />
+                <element signature="method#onSuccess#0;class#5989:6236" expanded="false" />
+                <element signature="method#instanceStarted#0;class#VMWareCloudImage#0" expanded="false" />
+                <element signature="method#updateRunningInstances#0;class#VMWareCloudImage#0" expanded="false" />
+                <element signature="method#populateRunningInstances#0;class#VMWareCloudImage#0" expanded="false" />
+                <element signature="method#instanceStopped#0;class#VMWareCloudImage#0" expanded="false" />
+                <element signature="method#stopInstance#0;class#VMWareCloudImage#0" expanded="false" />
+                <element signature="e#8985#8986#0" expanded="true" />
+                <element signature="e#9016#9017#0" expanded="true" />
+                <element signature="class#ProcessImageInstancesTask#0;class#VMWareCloudImage#0" expanded="false" />
+                <element signature="class#ImageStatusTaskWrapper#0;class#VMWareCloudImage#0" expanded="false" />
+                <element signature="method#onError#0;class#ImageStatusTaskWrapper#0;class#VMWareCloudImage#0" expanded="false" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="VMWareApiConnectorImpl.java" pinned="false" current="true" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/teamcity-vmware-plugin-server/src/main/java/jetbrains/buildServer/clouds/vmware/connector/VMWareApiConnectorImpl.java">
+          <provider selected="true" editor-type-id="text-editor">
+            <state vertical-scroll-proportion="-0.47796142" vertical-offset="2227" max-vertical-offset="5820">
+              <caret line="116" column="19" selection-start-line="116" selection-start-column="0" selection-end-line="116" selection-end-column="0" />
               <folding />
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="SimpleTest.java" pinned="false" current="true" current-in-tab="true">
-        <entry file="file://$PROJECT_DIR$/teamcity-vmware-plugin-server/src/test/java/jetbrains/buildServer/clouds/vmware/SimpleTest.java">
+      <file leaf-file-name="vmware-settings.jsp" pinned="false" current="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/teamcity-vmware-plugin-server/src/main/resources/buildServerResources/vmware-settings.jsp">
           <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="0.4979647" vertical-offset="53" max-vertical-offset="2580">
-              <caret line="31" column="3" selection-start-line="31" selection-start-column="3" selection-end-line="31" selection-end-column="3" />
+            <state vertical-scroll-proportion="-18.931034" vertical-offset="771" max-vertical-offset="2880">
+              <caret line="66" column="37" selection-start-line="66" selection-start-column="14" selection-end-line="66" selection-end-column="14" />
               <folding />
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="modules.xml" pinned="false" current="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/.idea/modules.xml">
+      <file leaf-file-name="vmware-settings-hook.jsp" pinned="false" current="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/teamcity-vmware-plugin-server/src/main/resources/buildServerResources/vmware-settings-hook.jsp">
           <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="0.0" vertical-offset="300" max-vertical-offset="420">
-              <caret line="15" column="0" selection-start-line="15" selection-start-column="0" selection-end-line="15" selection-end-column="0" />
+            <state vertical-scroll-proportion="56.689655" vertical-offset="2064" max-vertical-offset="3080">
+              <caret line="21" column="50" selection-start-line="21" selection-start-column="38" selection-end-line="21" selection-end-column="38" />
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="server.xml" pinned="false" current="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/.idea/libraries/server.xml">
+          <provider selected="true" editor-type-id="text-editor">
+            <state vertical-scroll-proportion="0.0" vertical-offset="9274" max-vertical-offset="10000">
+              <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
               <folding />
             </state>
           </provider>
@@ -219,22 +233,6 @@
   <component name="IdeDocumentHistory">
     <option name="changedFiles">
       <list>
-        <option value="$PROJECT_DIR$/teamcity-vmware-plugin-server/src/main/resources/profile-settings.jsp" />
-        <option value="$PROJECT_DIR$/web/web.iml" />
-        <option value="$PROJECT_DIR$/teamcity-vmware-plugin-server/src/main/java/jetbrains/buildServer/clouds/vsphere/VSphereCloudClientFactory.java" />
-        <option value="$PROJECT_DIR$/lib/src/com/vmware/connection/ConnectedVimServiceBase.java" />
-        <option value="$PROJECT_DIR$/teamcity-vmware-plugin-agent/src/main/resources/META-INF/build-agent-plugin-teamcity-vmware-plugin.xml" />
-        <option value="$PROJECT_DIR$/teamcity-vmware-plugin-common/src/main/java/org/jetbrains/teamcity/cloud/vsphere/VMWarePropertiesName.java" />
-        <option value="$PROJECT_DIR$/teamcity-vmware-plugin-common/src/main/java/org/jetbrains/teamcity/cloud/vsphere/VMWarePropertiesNames.java" />
-        <option value="$PROJECT_DIR$/teamcity-vmware-plugin-agent/src/main/java/org/jetbrains/teamcity/cloud/vsphere/VMWarePropertiesReader.java" />
-        <option value="$PROJECT_DIR$/teamcity-vmware-plugin-server/src/main/java/jetbrains/buildServer/clouds/vsphere/tasks/StartInstanceTask.java" />
-        <option value="$PROJECT_DIR$/teamcity-vmware-plugin-agent/src/main/java/jetbrains/buildServer/clouds/vsphere/VMWarePropertiesReader.java" />
-        <option value="$PROJECT_DIR$/teamcity-vmware-plugin-server/src/main/java/jetbrains/buildServer/clouds/vsphere/VSphereImageType.java" />
-        <option value="$PROJECT_DIR$/teamcity-vmware-plugin-server/src/main/java/jetbrains/buildServer/clouds/vsphere/VSphereImageStartType.java" />
-        <option value="$PROJECT_DIR$/teamcity-vmware-plugin-server/src/main/java/jetbrains/buildServer/clouds/vsphere/VSphereCloudImage.java" />
-        <option value="$PROJECT_DIR$/teamcity-vmware-plugin-server/src/main/java/jetbrains/buildServer/clouds/vsphere/tasks/UpdateInstancesTask.java" />
-        <option value="$PROJECT_DIR$/teamcity-vmware-plugin-server/src/main/java/jetbrains/buildServer/clouds/vsphere/VSphereCloudConstants.java" />
-        <option value="$PROJECT_DIR$/teamcity-vmware-plugin-server/src/main/java/jetbrains/buildServer/clouds/vsphere/VSphereCloudInstance.java" />
         <option value="$PROJECT_DIR$/teamcity-vmware-plugin-server/src/test/java/jetbrains/buildServer/clouds/vsphere/TestSDK.java" />
         <option value="$PROJECT_DIR$/teamcity-vmware-plugin-server/src/main/java/jetbrains/buildServer/clouds/vsphere/connector/VSphereApiConnector.java" />
         <option value="$PROJECT_DIR$/teamcity-vmware-plugin-server/src/main/java/jetbrains/buildServer/clouds/vsphere/VSphereCloudClient.java" />
@@ -246,15 +244,11 @@
         <option value="$PROJECT_DIR$/teamcity-vmware-plugin-server/src/test/java/jetbrains/buildServer/clouds/vsphere/VMWareCloudClientTest.java" />
         <option value="$PROJECT_DIR$/teamcity-vmware-plugin-server/src/main/java/jetbrains/buildServer/clouds/vmware/connector/VSphereApiConnectorImpl.java" />
         <option value="$PROJECT_DIR$/teamcity-vmware-plugin-server/src/test/java/jetbrains/buildServer/clouds/vmware/stubs/FakeVirtualMachineRuntimeInfo.java" />
-        <option value="$PROJECT_DIR$/teamcity-vmware-plugin-server/src/main/resources/buildServerResources/profile-settings.jsp" />
         <option value="$PROJECT_DIR$/teamcity-vmware-plugin-server/src/main/java/jetbrains/buildServer/clouds/vmware/VMWareCloudError.java" />
         <option value="$PROJECT_DIR$/teamcity-vmware-plugin-server/src/main/java/jetbrains/buildServer/clouds/vmware/VMWareCloudErrorInfo.java" />
-        <option value="$PROJECT_DIR$/teamcity-vmware-plugin-server/src/main/java/jetbrains/buildServer/clouds/vmware/connector/VMWareApiConnector.java" />
         <option value="$PROJECT_DIR$/teamcity-vmware-plugin-common/src/main/java/jetbrains/buildServer/clouds/vmware/VMWarePropertiesNames.java" />
-        <option value="$PROJECT_DIR$/teamcity-vmware-plugin-agent/src/main/java/jetbrains/buildServer/clouds/vmware/VMWarePropertiesReader.java" />
         <option value="$PROJECT_DIR$/teamcity-vmware-plugin-server/src/main/java/jetbrains/buildServer/clouds/vmware/VMWareCloudErrorInfoFactory.java" />
         <option value="$PROJECT_DIR$/teamcity-vmware-plugin-server/src/main/java/jetbrains/buildServer/clouds/vmware/VMWareCloudInstance.java" />
-        <option value="$PROJECT_DIR$/teamcity-vmware-plugin-server/src/main/java/jetbrains/buildServer/clouds/vmware/VMWareCloudClient.java" />
         <option value="$PROJECT_DIR$/teamcity-vmware-plugin-server/teamcity-vmware-plugin-server.iml" />
         <option value="$PROJECT_DIR$/teamcity-vmware-plugin-agent/teamcity-vmware-plugin-agent.iml" />
         <option value="$PROJECT_DIR$/teamcity-vmware-plugin-server/src/test/java/jetbrains/buildServer/clouds/vmware/stubs/FakeVCenterModel.java" />
@@ -262,16 +256,43 @@
         <option value="$PROJECT_DIR$/teamcity-vmware-plugin-server/src/test/java/jetbrains/buildServer/clouds/vmware/stubs/FakeModel.java" />
         <option value="$PROJECT_DIR$/teamcity-vmware-plugin-server/src/test/java/jetbrains/buildServer/clouds/vmware/stubs/FakeVirtualMachine.java" />
         <option value="$PROJECT_DIR$/teamcity-vmware-plugin-server/src/main/java/jetbrains/buildServer/clouds/vmware/connector/VMWareApiConnectorImpl1.java" />
-        <option value="$PROJECT_DIR$/teamcity-vmware-plugin-server/src/main/java/jetbrains/buildServer/clouds/vmware/connector/VMWareApiConnectorImpl.java" />
         <option value="$PROJECT_DIR$/teamcity-vmware-plugin-server/src/test/java/jetbrains/buildServer/clouds/vmware/VMWareCloudInstanceTest.java" />
         <option value="$PROJECT_DIR$/.idea/modules.xml" />
-        <option value="$PROJECT_DIR$/teamcity-vmware-plugin-server/src/test/java/jetbrains/buildServer/clouds/vmware/SimpleTest.java" />
-        <option value="$PROJECT_DIR$/teamcity-vmware-plugin-server/src/main/java/jetbrains/buildServer/clouds/vmware/VMWareCloudImage.java" />
         <option value="$PROJECT_DIR$/teamcity-vmware-plugin-server/src/test/java/testng.xml" />
-        <option value="$PROJECT_DIR$/teamcity-vmware-plugin-server/src/test/java/jetbrains/buildServer/clouds/vmware/VMWareCloudImageTest.java" />
         <option value="$PROJECT_DIR$/teamcity-vmware-plugin-server/src/test/java/jetbrains/buildServer/clouds/vmware/VMWareCloudClientTest.java" />
+        <option value="$PROJECT_DIR$/teamcity-vmware-plugin-server/src/main/resources/META-INF/build-server-plugin-teamcity-cloud-vsphere.xml" />
+        <option value="$PROJECT_DIR$/teamcity-vmware-plugin-server/src/main/resources/buildServerResources/profile-settings.jsp" />
+        <option value="$PROJECT_DIR$/teamcity-vmware-plugin-server/src/main/resources/buildServerResources/vmware-settings.js" />
+        <option value="$PROJECT_DIR$/teamcity-vmware-plugin-server/src/main/resources/buildServerResources/vmwre-settings.jsp" />
+        <option value="$PROJECT_DIR$/teamcity-vmware-plugin-server/src/main/java/jetbrains/buildServer/clouds/vmware/VMWareCloudClientFactory.java" />
+        <option value="$PROJECT_DIR$/teamcity-vmware-plugin-server/src/main/java/jetbrains/buildServer/clouds/vmware/web/JsExtension.java" />
+        <option value="$PROJECT_DIR$/teamcity-vmware-plugin-server/src/test/java/jetbrains/buildServer/clouds/vmware/SimpleTest.java" />
+        <option value="$PROJECT_DIR$/teamcity-vmware-plugin-server/src/main/java/jetbrains/buildServer/clouds/vmware/web/FetchAllPropertiesController.java" />
+        <option value="$PROJECT_DIR$/teamcity-vmware-plugin-server/src/main/java/jetbrains/buildServer/clouds/vmware/web/VMWareWebConstants.java" />
+        <option value="$PROJECT_DIR$/teamcity-vmware-plugin-server/src/main/java/jetbrains/buildServer/clouds/vmware/web/VMWareEditProfileController.java" />
+        <option value="$PROJECT_DIR$/teamcity-vmware-plugin-server/src/main/java/jetbrains/buildServer/clouds/vmware/web/GetSnapshotsListController.java" />
+        <option value="$PROJECT_DIR$/teamcity-vmware-plugin-server/src/main/java/jetbrains/buildServer/clouds/vmware/connector/VMWareApiTaskExecutor.java" />
+        <option value="$PROJECT_DIR$/teamcity-vmware-plugin-server/src/main/java/jetbrains/buildServer/clouds/vmware/connector/VMWareApiTask.java" />
+        <option value="$PROJECT_DIR$/teamcity-vmware-plugin-server/src/main/java/jetbrains/buildServer/clouds/vmware/tasks/UpdateTaskStatus.java" />
+        <option value="$PROJECT_DIR$/teamcity-vmware-plugin-server/src/main/java/jetbrains/buildServer/clouds/vmware/tasks/UpdateTaskStatusTask.java" />
+        <option value="$PROJECT_DIR$/teamcity-vmware-plugin-server/src/main/java/jetbrains/buildServer/clouds/vmware/tasks/TaskStatusUpdater.java" />
+        <option value="$PROJECT_DIR$/teamcity-vmware-plugin-server/src/main/java/jetbrains/buildServer/clouds/vmware/connector/VMWareApiConnector.java" />
+        <option value="$PROJECT_DIR$/teamcity-vmware-plugin-server/src/main/resources/buildServerResources/vmware-settings.jsp" />
+        <option value="$PROJECT_DIR$/teamcity-vmware-plugin-server/src/main/resources/buildServerResources/vmware-settings-hook.jsp" />
+        <option value="$PROJECT_DIR$/teamcity-vmware-plugin-server/src/test/java/jetbrains/buildServer/clouds/vmware/VMWareCloudImageTest.java" />
+        <option value="$PROJECT_DIR$/teamcity-vmware-plugin-server/src/main/java/jetbrains/buildServer/clouds/vmware/VMWareCloudClient.java" />
+        <option value="$PROJECT_DIR$/teamcity-vmware-plugin-server/src/main/java/jetbrains/buildServer/clouds/vmware/connector/VMWareApiConnectorImpl.java" />
+        <option value="$PROJECT_DIR$/teamcity-vmware-plugin-agent/src/main/java/jetbrains/buildServer/clouds/vmware/VMWarePropertiesReader.java" />
+        <option value="$PROJECT_DIR$/teamcity-vmware-plugin-server/src/main/java/jetbrains/buildServer/clouds/vmware/VMWareCloudImage.java" />
       </list>
     </option>
+  </component>
+  <component name="LogFilters">
+    <option name="FILTER_ERRORS" value="false" />
+    <option name="FILTER_WARNINGS" value="false" />
+    <option name="FILTER_INFO" value="true" />
+    <option name="FILTER_DEBUG" value="true" />
+    <option name="CUSTOM_FILTER" />
   </component>
   <component name="MavenProjectNavigator">
     <treeState>
@@ -325,6 +346,7 @@
       <sortByType />
     </navigator>
     <panes>
+      <pane id="Scope" />
       <pane id="ProjectPane">
         <subPane>
           <PATH>
@@ -340,6 +362,20 @@
             </PATH_ELEMENT>
             <PATH_ELEMENT>
               <option name="myItemId" value="teamcity-vmware-plugin" />
+              <option name="myItemType" value="com.android.tools.idea.gradle.projectView.AndroidPsiDirectoryNode" />
+            </PATH_ELEMENT>
+          </PATH>
+          <PATH>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="teamcity-vmware-plugin" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="teamcity-vmware-plugin" />
+              <option name="myItemType" value="com.android.tools.idea.gradle.projectView.AndroidPsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="web" />
               <option name="myItemType" value="com.android.tools.idea.gradle.projectView.AndroidPsiDirectoryNode" />
             </PATH_ELEMENT>
           </PATH>
@@ -392,12 +428,30 @@
               <option name="myItemId" value="src" />
               <option name="myItemType" value="com.android.tools.idea.gradle.projectView.AndroidPsiDirectoryNode" />
             </PATH_ELEMENT>
+          </PATH>
+          <PATH>
             <PATH_ELEMENT>
-              <option name="myItemId" value="test" />
+              <option name="myItemId" value="teamcity-vmware-plugin" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="teamcity-vmware-plugin" />
               <option name="myItemType" value="com.android.tools.idea.gradle.projectView.AndroidPsiDirectoryNode" />
             </PATH_ELEMENT>
             <PATH_ELEMENT>
-              <option name="myItemId" value="java" />
+              <option name="myItemId" value="teamcity-vmware-plugin-server" />
+              <option name="myItemType" value="com.android.tools.idea.gradle.projectView.AndroidPsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="src" />
+              <option name="myItemType" value="com.android.tools.idea.gradle.projectView.AndroidPsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="main" />
+              <option name="myItemType" value="com.android.tools.idea.gradle.projectView.AndroidPsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="resources" />
               <option name="myItemType" value="com.android.tools.idea.gradle.projectView.AndroidPsiDirectoryNode" />
             </PATH_ELEMENT>
           </PATH>
@@ -419,7 +473,37 @@
               <option name="myItemType" value="com.android.tools.idea.gradle.projectView.AndroidPsiDirectoryNode" />
             </PATH_ELEMENT>
             <PATH_ELEMENT>
-              <option name="myItemId" value="test" />
+              <option name="myItemId" value="main" />
+              <option name="myItemType" value="com.android.tools.idea.gradle.projectView.AndroidPsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="resources" />
+              <option name="myItemType" value="com.android.tools.idea.gradle.projectView.AndroidPsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="buildServerResources" />
+              <option name="myItemType" value="com.android.tools.idea.gradle.projectView.AndroidPsiDirectoryNode" />
+            </PATH_ELEMENT>
+          </PATH>
+          <PATH>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="teamcity-vmware-plugin" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="teamcity-vmware-plugin" />
+              <option name="myItemType" value="com.android.tools.idea.gradle.projectView.AndroidPsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="teamcity-vmware-plugin-server" />
+              <option name="myItemType" value="com.android.tools.idea.gradle.projectView.AndroidPsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="src" />
+              <option name="myItemType" value="com.android.tools.idea.gradle.projectView.AndroidPsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="main" />
               <option name="myItemType" value="com.android.tools.idea.gradle.projectView.AndroidPsiDirectoryNode" />
             </PATH_ELEMENT>
             <PATH_ELEMENT>
@@ -448,10 +532,159 @@
               <option name="myItemId" value="src" />
               <option name="myItemType" value="com.android.tools.idea.gradle.projectView.AndroidPsiDirectoryNode" />
             </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="main" />
+              <option name="myItemType" value="com.android.tools.idea.gradle.projectView.AndroidPsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="java" />
+              <option name="myItemType" value="com.android.tools.idea.gradle.projectView.AndroidPsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="vmware" />
+              <option name="myItemType" value="com.android.tools.idea.gradle.projectView.AndroidPsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="web" />
+              <option name="myItemType" value="com.android.tools.idea.gradle.projectView.AndroidPsiDirectoryNode" />
+            </PATH_ELEMENT>
+          </PATH>
+          <PATH>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="teamcity-vmware-plugin" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="teamcity-vmware-plugin" />
+              <option name="myItemType" value="com.android.tools.idea.gradle.projectView.AndroidPsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="teamcity-vmware-plugin-server" />
+              <option name="myItemType" value="com.android.tools.idea.gradle.projectView.AndroidPsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="src" />
+              <option name="myItemType" value="com.android.tools.idea.gradle.projectView.AndroidPsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="main" />
+              <option name="myItemType" value="com.android.tools.idea.gradle.projectView.AndroidPsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="java" />
+              <option name="myItemType" value="com.android.tools.idea.gradle.projectView.AndroidPsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="vmware" />
+              <option name="myItemType" value="com.android.tools.idea.gradle.projectView.AndroidPsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="tasks" />
+              <option name="myItemType" value="com.android.tools.idea.gradle.projectView.AndroidPsiDirectoryNode" />
+            </PATH_ELEMENT>
+          </PATH>
+          <PATH>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="teamcity-vmware-plugin" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="teamcity-vmware-plugin" />
+              <option name="myItemType" value="com.android.tools.idea.gradle.projectView.AndroidPsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="teamcity-vmware-plugin-server" />
+              <option name="myItemType" value="com.android.tools.idea.gradle.projectView.AndroidPsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="src" />
+              <option name="myItemType" value="com.android.tools.idea.gradle.projectView.AndroidPsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="main" />
+              <option name="myItemType" value="com.android.tools.idea.gradle.projectView.AndroidPsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="java" />
+              <option name="myItemType" value="com.android.tools.idea.gradle.projectView.AndroidPsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="vmware" />
+              <option name="myItemType" value="com.android.tools.idea.gradle.projectView.AndroidPsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="connector" />
+              <option name="myItemType" value="com.android.tools.idea.gradle.projectView.AndroidPsiDirectoryNode" />
+            </PATH_ELEMENT>
+          </PATH>
+          <PATH>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="teamcity-vmware-plugin" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="teamcity-vmware-plugin" />
+              <option name="myItemType" value="com.android.tools.idea.gradle.projectView.AndroidPsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="teamcity-vmware-plugin-agent" />
+              <option name="myItemType" value="com.android.tools.idea.gradle.projectView.AndroidPsiDirectoryNode" />
+            </PATH_ELEMENT>
+          </PATH>
+          <PATH>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="teamcity-vmware-plugin" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="teamcity-vmware-plugin" />
+              <option name="myItemType" value="com.android.tools.idea.gradle.projectView.AndroidPsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="teamcity-vmware-plugin-agent" />
+              <option name="myItemType" value="com.android.tools.idea.gradle.projectView.AndroidPsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="src" />
+              <option name="myItemType" value="com.android.tools.idea.gradle.projectView.AndroidPsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="main" />
+              <option name="myItemType" value="com.android.tools.idea.gradle.projectView.AndroidPsiDirectoryNode" />
+            </PATH_ELEMENT>
+          </PATH>
+          <PATH>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="teamcity-vmware-plugin" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="teamcity-vmware-plugin" />
+              <option name="myItemType" value="com.android.tools.idea.gradle.projectView.AndroidPsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="teamcity-vmware-plugin-agent" />
+              <option name="myItemType" value="com.android.tools.idea.gradle.projectView.AndroidPsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="src" />
+              <option name="myItemType" value="com.android.tools.idea.gradle.projectView.AndroidPsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="main" />
+              <option name="myItemType" value="com.android.tools.idea.gradle.projectView.AndroidPsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="java" />
+              <option name="myItemType" value="com.android.tools.idea.gradle.projectView.AndroidPsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="vmware" />
+              <option name="myItemType" value="com.android.tools.idea.gradle.projectView.AndroidPsiDirectoryNode" />
+            </PATH_ELEMENT>
           </PATH>
         </subPane>
       </pane>
-      <pane id="Scope" />
       <pane id="PackagesPane" />
     </panes>
   </component>
@@ -463,16 +696,16 @@
     <property name="GoToClass.includeLibraries" value="false" />
     <property name="MemberChooser.copyJavadoc" value="false" />
     <property name="WebServerToolWindowFactoryState" value="false" />
-    <property name="project.structure.last.edited" value="Libraries" />
+    <property name="project.structure.last.edited" value="Modules" />
     <property name="project.structure.proportion" value="0.09389313" />
     <property name="project.structure.side.proportion" value="0.20536913" />
     <property name="OverrideImplement.combined" value="true" />
     <property name="OverrideImplement.overriding.sorted" value="false" />
-    <property name="last_opened_file_path" value="$TeamCityDistribution$/devPackage/tests/jmock-1.2.0.jar!/" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$/../../BuildServer/clouds/cloud-amazon-agent" />
     <property name="recentsLimit" value="5" />
     <property name="dynamic.classpath" value="false" />
     <property name="LayoutCode.rearrangeEntriesJava" value="false" />
-    <property name="options.lastSelected" value="reference.settings.project.maven.importing" />
+    <property name="options.lastSelected" value="reference.projectsettings.compiler.excludes" />
     <property name="options.splitter.main.proportions" value="0.3" />
     <property name="options.splitter.details.proportions" value="0.2" />
     <property name="options.searchVisible" value="true" />
@@ -481,20 +714,21 @@
     <property name="Repository.Attach.JavaDocs" value="false" />
     <property name="Repository.Attach.Sources" value="false" />
     <property name="SearchEverywhereHistoryKey" value="import maven&#9;null&#9;null" />
+    <property name="extract.method.default.visibility" value="private" />
   </component>
   <component name="RecentsManager">
     <key name="ExtractSuperBase.RECENT_KEYS">
       <recent name="jetbrains.buildServer.clouds.vmware.connector" />
     </key>
-    <key name="MoveClassesOrPackagesDialog.RECENTS_KEY">
-      <recent name="jetbrains.buildServer.clouds.vsphere" />
-    </key>
     <key name="MoveFile.RECENT_KEYS">
       <recent name="D:\Projects\TeamCity\Plugins\teamcity-vmware-plugin\teamcity-vmware-plugin-server\src\main\resources\buildServerResources" />
       <recent name="D:\Projects\TeamCity\Plugins\teamcity-vmware-plugin\teamcity-vmware-plugin-common\my-repo" />
     </key>
+    <key name="MoveClassesOrPackagesDialog.RECENTS_KEY">
+      <recent name="jetbrains.buildServer.clouds.vsphere" />
+    </key>
   </component>
-  <component name="RunManager" selected="TestNG.Server Tests">
+  <component name="RunManager" selected="Tomcat Server.TC Dist">
     <configuration default="false" name="VMWareCloudClientTest.delete_vm_after_execution" type="TestNG" factoryName="TestNG" temporary="true" nameIsGenerated="true">
       <extension name="coverage" enabled="false" merge="false" sample_coverage="true" runner="idea">
         <pattern>
@@ -533,41 +767,6 @@
       </RunnerSettings>
       <RunnerSettings RunnerId="Run" />
       <ConfigurationWrapper RunnerId="Debug" />
-      <ConfigurationWrapper RunnerId="Run" />
-      <method />
-    </configuration>
-    <configuration default="false" name="VMWareCloudClientTest.delete_vm_template_after_execution" type="TestNG" factoryName="TestNG" temporary="true" nameIsGenerated="true">
-      <extension name="coverage" enabled="false" merge="false" sample_coverage="true" runner="idea">
-        <pattern>
-          <option name="PATTERN" value="jetbrains.buildServer.clouds.vmware.*" />
-          <option name="ENABLED" value="true" />
-        </pattern>
-      </extension>
-      <module name="teamcity-vmware-plugin-server" />
-      <option name="ALTERNATIVE_JRE_PATH_ENABLED" value="false" />
-      <option name="ALTERNATIVE_JRE_PATH" />
-      <option name="SUITE_NAME" />
-      <option name="PACKAGE_NAME" value="jetbrains.buildServer.clouds.vmware" />
-      <option name="MAIN_CLASS_NAME" value="jetbrains.buildServer.clouds.vmware.VMWareCloudClientTest" />
-      <option name="METHOD_NAME" value="delete_vm_template_after_execution" />
-      <option name="GROUP_NAME" />
-      <option name="TEST_OBJECT" value="METHOD" />
-      <option name="VM_PARAMETERS" value="-ea" />
-      <option name="PARAMETERS" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
-      <option name="OUTPUT_DIRECTORY" />
-      <option name="ANNOTATION_TYPE" />
-      <option name="ENV_VARIABLES" />
-      <option name="PASS_PARENT_ENVS" value="true" />
-      <option name="TEST_SEARCH_SCOPE">
-        <value defaultName="moduleWithDependencies" />
-      </option>
-      <option name="USE_DEFAULT_REPORTERS" value="false" />
-      <option name="PROPERTIES_FILE" />
-      <envs />
-      <properties />
-      <listeners />
-      <RunnerSettings RunnerId="Run" />
       <ConfigurationWrapper RunnerId="Run" />
       <method />
     </configuration>
@@ -680,10 +879,43 @@
       <ConfigurationWrapper RunnerId="Run" />
       <method />
     </configuration>
-    <configuration default="true" type="#org.jetbrains.idea.devkit.run.PluginConfigurationType" factoryName="Plugin">
-      <module name="" />
-      <option name="VM_PARAMETERS" value="-Xmx512m -Xms256m -XX:MaxPermSize=250m -ea" />
-      <option name="PROGRAM_PARAMETERS" />
+    <configuration default="false" name="SimpleTest.testCheckVMStatus" type="TestNG" factoryName="TestNG" temporary="true" nameIsGenerated="true">
+      <extension name="coverage" enabled="false" merge="false" sample_coverage="true" runner="idea">
+        <pattern>
+          <option name="PATTERN" value="jetbrains.buildServer.clouds.vmware.*" />
+          <option name="ENABLED" value="true" />
+        </pattern>
+      </extension>
+      <module name="teamcity-vmware-plugin-server" />
+      <option name="ALTERNATIVE_JRE_PATH_ENABLED" value="false" />
+      <option name="ALTERNATIVE_JRE_PATH" />
+      <option name="SUITE_NAME" />
+      <option name="PACKAGE_NAME" value="jetbrains.buildServer.clouds.vmware" />
+      <option name="MAIN_CLASS_NAME" value="jetbrains.buildServer.clouds.vmware.SimpleTest" />
+      <option name="METHOD_NAME" value="testCheckVMStatus" />
+      <option name="GROUP_NAME" />
+      <option name="TEST_OBJECT" value="METHOD" />
+      <option name="VM_PARAMETERS" value="-ea" />
+      <option name="PARAMETERS" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <option name="OUTPUT_DIRECTORY" />
+      <option name="ANNOTATION_TYPE" />
+      <option name="ENV_VARIABLES" />
+      <option name="PASS_PARENT_ENVS" value="true" />
+      <option name="TEST_SEARCH_SCOPE">
+        <value defaultName="moduleWithDependencies" />
+      </option>
+      <option name="USE_DEFAULT_REPORTERS" value="false" />
+      <option name="PROPERTIES_FILE" />
+      <envs />
+      <properties />
+      <listeners />
+      <RunnerSettings RunnerId="Debug">
+        <option name="DEBUG_PORT" value="52514" />
+        <option name="TRANSPORT" value="0" />
+        <option name="LOCAL" value="true" />
+      </RunnerSettings>
+      <ConfigurationWrapper RunnerId="Debug" />
       <method />
     </configuration>
     <configuration default="true" type="GrailsRunConfigurationType" factoryName="Grails">
@@ -694,6 +926,12 @@
       <setting name="passParentEnv" value="true" />
       <extension name="coverage" enabled="false" merge="false" sample_coverage="true" runner="idea" />
       <setting name="launchBrowser" value="false" />
+      <method />
+    </configuration>
+    <configuration default="true" type="#org.jetbrains.idea.devkit.run.PluginConfigurationType" factoryName="Plugin">
+      <module name="" />
+      <option name="VM_PARAMETERS" value="-Xmx512m -Xms256m -XX:MaxPermSize=250m -ea" />
+      <option name="PROGRAM_PARAMETERS" />
       <method />
     </configuration>
     <configuration default="true" type="AndroidTestRunConfigurationType" factoryName="Android Tests">
@@ -725,6 +963,9 @@
       <option name="PORT" value="5005" />
       <method />
     </configuration>
+    <configuration default="true" type="JavascriptDebugType" factoryName="JavaScript Debug">
+      <method />
+    </configuration>
     <configuration default="true" type="GradleRunConfiguration" factoryName="Gradle">
       <ExternalSystemSettings>
         <option name="externalProjectPath" />
@@ -740,7 +981,17 @@
       </ExternalSystemSettings>
       <method />
     </configuration>
-    <configuration default="true" type="JavascriptDebugType" factoryName="JavaScript Debug">
+    <configuration default="true" type="Applet" factoryName="Applet">
+      <module name="" />
+      <option name="MAIN_CLASS_NAME" />
+      <option name="HTML_FILE_NAME" />
+      <option name="HTML_USED" value="false" />
+      <option name="WIDTH" value="400" />
+      <option name="HEIGHT" value="300" />
+      <option name="POLICY_FILE" value="$APPLICATION_HOME_DIR$/bin/appletviewer.policy" />
+      <option name="VM_PARAMETERS" />
+      <option name="ALTERNATIVE_JRE_PATH_ENABLED" value="false" />
+      <option name="ALTERNATIVE_JRE_PATH" />
       <method />
     </configuration>
     <configuration default="true" type="TestNG" factoryName="TestNG">
@@ -769,19 +1020,6 @@
       <envs />
       <properties />
       <listeners />
-      <method />
-    </configuration>
-    <configuration default="true" type="Applet" factoryName="Applet">
-      <module name="" />
-      <option name="MAIN_CLASS_NAME" />
-      <option name="HTML_FILE_NAME" />
-      <option name="HTML_USED" value="false" />
-      <option name="WIDTH" value="400" />
-      <option name="HEIGHT" value="300" />
-      <option name="POLICY_FILE" value="$APPLICATION_HOME_DIR$/bin/appletviewer.policy" />
-      <option name="VM_PARAMETERS" />
-      <option name="ALTERNATIVE_JRE_PATH_ENABLED" value="false" />
-      <option name="ALTERNATIVE_JRE_PATH" />
       <method />
     </configuration>
     <configuration default="true" type="Application" factoryName="Application">
@@ -840,6 +1078,17 @@
       <option name="FILTER_LOGCAT_AUTOMATICALLY" value="true" />
       <method />
     </configuration>
+    <configuration default="true" type="#com.intellij.j2ee.web.tomcat.TomcatRunConfigurationFactory" factoryName="Local" ALTERNATIVE_JRE_ENABLED="false">
+      <deployment />
+      <server-settings />
+      <predefined_log_file id="Tomcat" enabled="true" />
+      <predefined_log_file id="Tomcat Catalina" enabled="true" />
+      <predefined_log_file id="Tomcat Manager" enabled="false" />
+      <predefined_log_file id="Tomcat Host Manager" enabled="false" />
+      <predefined_log_file id="Tomcat Localhost Access" enabled="false" />
+      <extension name="coverage" enabled="false" merge="false" sample_coverage="true" runner="idea" />
+      <method />
+    </configuration>
     <configuration default="false" name="Web-remote" type="Remote" factoryName="Remote">
       <option name="USE_SOCKET_TRANSPORT" value="true" />
       <option name="SERVER_MODE" value="false" />
@@ -881,28 +1130,112 @@
       <properties />
       <listeners />
       <RunnerSettings RunnerId="Cover" />
+      <RunnerSettings RunnerId="Debug">
+        <option name="DEBUG_PORT" value="56546" />
+        <option name="TRANSPORT" value="0" />
+        <option name="LOCAL" value="true" />
+      </RunnerSettings>
       <RunnerSettings RunnerId="Run" />
       <ConfigurationWrapper RunnerId="Cover" />
+      <ConfigurationWrapper RunnerId="Debug" />
       <ConfigurationWrapper RunnerId="Run" />
       <method />
     </configuration>
-    <list size="8">
+    <configuration default="false" name="TC Dist" type="#com.intellij.j2ee.web.tomcat.TomcatRunConfigurationFactory" factoryName="Local" APPLICATION_SERVER_NAME="Tomcat 7.0.52" ALTERNATIVE_JRE_ENABLED="false" ALTERNATIVE_JRE_PATH="">
+      <option name="OPEN_IN_BROWSER" value="false" />
+      <option name="COMMON_VM_ARGUMENTS" value="-ea -Xmx1024m -XX:MaxPermSize=400m -Ddebug=true -server -XX:+HeapDumpOnOutOfMemoryError -Duser.language=en -Duser.country=GB -Dorg.apache.jasper.runtime.BodyContentImpl.LIMIT_BUFFER=true -Djava.awt.headless -DTC.res.disableAll=true -Dteamcity.development.mode=true -Dteamcity.development.shadowCopyClasses=true -Dteamcity_logs=E:\DevData\logs\trunk -Dlog4j.configuration=file:$PROJECT_DIR$/../../BuildServer/common/src/teamcity-server-log4j.xml -Dteamcity.maintenance.backup.file.name=development-backup -Dteamcity.data.path=E:\DevData\trunk" />
+      <deployment>
+        <artifact name="War">
+          <settings>
+            <option name="CONTEXT_PATH" value="/bs" />
+          </settings>
+        </artifact>
+      </deployment>
+      <server-settings>
+        <option name="BASE_DIRECTORY_NAME" value="Unnamed_teamcity-vmware-plugin" />
+      </server-settings>
+      <predefined_log_file id="Tomcat" enabled="true" />
+      <predefined_log_file id="Tomcat Catalina" enabled="true" />
+      <predefined_log_file id="Tomcat Manager" enabled="false" />
+      <predefined_log_file id="Tomcat Host Manager" enabled="false" />
+      <predefined_log_file id="Tomcat Localhost Access" enabled="false" />
+      <extension name="coverage" enabled="false" merge="false" sample_coverage="true" runner="idea" />
+      <RunnerSettings RunnerId="Cover" />
+      <RunnerSettings RunnerId="Debug">
+        <option name="DEBUG_PORT" value="50529" />
+        <option name="TRANSPORT" value="0" />
+        <option name="LOCAL" value="true" />
+      </RunnerSettings>
+      <RunnerSettings RunnerId="Run" />
+      <ConfigurationWrapper VM_VAR="JAVA_OPTS" RunnerId="Cover">
+        <option name="USE_ENV_VARIABLES" value="true" />
+        <STARTUP>
+          <option name="USE_DEFAULT" value="true" />
+          <option name="SCRIPT" value="" />
+          <option name="VM_PARAMETERS" value="" />
+          <option name="PROGRAM_PARAMETERS" value="" />
+        </STARTUP>
+        <SHUTDOWN>
+          <option name="USE_DEFAULT" value="true" />
+          <option name="SCRIPT" value="" />
+          <option name="VM_PARAMETERS" value="" />
+          <option name="PROGRAM_PARAMETERS" value="" />
+        </SHUTDOWN>
+      </ConfigurationWrapper>
+      <ConfigurationWrapper VM_VAR="JAVA_OPTS" RunnerId="Debug">
+        <option name="USE_ENV_VARIABLES" value="true" />
+        <STARTUP>
+          <option name="USE_DEFAULT" value="true" />
+          <option name="SCRIPT" value="" />
+          <option name="VM_PARAMETERS" value="" />
+          <option name="PROGRAM_PARAMETERS" value="" />
+        </STARTUP>
+        <SHUTDOWN>
+          <option name="USE_DEFAULT" value="true" />
+          <option name="SCRIPT" value="" />
+          <option name="VM_PARAMETERS" value="" />
+          <option name="PROGRAM_PARAMETERS" value="" />
+        </SHUTDOWN>
+      </ConfigurationWrapper>
+      <ConfigurationWrapper VM_VAR="JAVA_OPTS" RunnerId="Run">
+        <option name="USE_ENV_VARIABLES" value="true" />
+        <STARTUP>
+          <option name="USE_DEFAULT" value="true" />
+          <option name="SCRIPT" value="" />
+          <option name="VM_PARAMETERS" value="" />
+          <option name="PROGRAM_PARAMETERS" value="" />
+        </STARTUP>
+        <SHUTDOWN>
+          <option name="USE_DEFAULT" value="true" />
+          <option name="SCRIPT" value="" />
+          <option name="VM_PARAMETERS" value="" />
+          <option name="PROGRAM_PARAMETERS" value="" />
+        </SHUTDOWN>
+      </ConfigurationWrapper>
+      <method>
+        <option name="BuildArtifacts" enabled="true">
+          <artifact name="War" />
+        </option>
+      </method>
+    </configuration>
+    <list size="9">
       <item index="0" class="java.lang.String" itemvalue="Remote.Web-remote" />
       <item index="1" class="java.lang.String" itemvalue="TestNG.Server Module Tests" />
       <item index="2" class="java.lang.String" itemvalue="TestNG.Server Tests" />
-      <item index="3" class="java.lang.String" itemvalue="TestNG.VMWareCloudClientTest.delete_vm_after_execution" />
-      <item index="4" class="java.lang.String" itemvalue="TestNG.VMWareCloudClientTest.delete_vm_template_after_execution" />
+      <item index="3" class="java.lang.String" itemvalue="Tomcat Server.TC Dist" />
+      <item index="4" class="java.lang.String" itemvalue="TestNG.VMWareCloudClientTest.delete_vm_after_execution" />
       <item index="5" class="java.lang.String" itemvalue="TestNG.SimpleTest.cloneVM" />
       <item index="6" class="java.lang.String" itemvalue="TestNG.VMWareCloudImageTest.checkImageType" />
       <item index="7" class="java.lang.String" itemvalue="TestNG.VMWareCloudImageTest" />
+      <item index="8" class="java.lang.String" itemvalue="TestNG.SimpleTest.testCheckVMStatus" />
     </list>
     <recent_temporary>
       <list size="5">
-        <item index="0" class="java.lang.String" itemvalue="TestNG.VMWareCloudImageTest" />
-        <item index="1" class="java.lang.String" itemvalue="TestNG.VMWareCloudImageTest.checkImageType" />
-        <item index="2" class="java.lang.String" itemvalue="TestNG.VMWareCloudClientTest.delete_vm_after_execution" />
-        <item index="3" class="java.lang.String" itemvalue="TestNG.SimpleTest.cloneVM" />
-        <item index="4" class="java.lang.String" itemvalue="TestNG.VMWareCloudClientTest.delete_vm_template_after_execution" />
+        <item index="0" class="java.lang.String" itemvalue="TestNG.SimpleTest.testCheckVMStatus" />
+        <item index="1" class="java.lang.String" itemvalue="TestNG.VMWareCloudImageTest" />
+        <item index="2" class="java.lang.String" itemvalue="TestNG.VMWareCloudImageTest.checkImageType" />
+        <item index="3" class="java.lang.String" itemvalue="TestNG.VMWareCloudClientTest.delete_vm_after_execution" />
+        <item index="4" class="java.lang.String" itemvalue="TestNG.SimpleTest.cloneVM" />
       </list>
     </recent_temporary>
     <configuration name="&lt;template&gt;" type="WebApp" default="true" selected="false">
@@ -946,7 +1279,14 @@
       <workItem from="1400588200994" duration="676000" />
       <workItem from="1400589072088" duration="791000" />
       <workItem from="1400589881681" duration="7904000" />
-      <workItem from="1401099867161" duration="442000" />
+      <workItem from="1401099867161" duration="5800000" />
+      <workItem from="1401265842187" duration="29543000" />
+      <workItem from="1401709566438" duration="21954000" />
+      <workItem from="1401890977215" duration="1823000" />
+      <workItem from="1401949521272" duration="2360000" />
+      <workItem from="1401954871729" duration="5248000" />
+      <workItem from="1401963568778" duration="28924000" />
+      <workItem from="1402928457578" duration="20200000" />
     </task>
     <task id="LOCAL-00001" summary="removed">
       <created>1399540081582</created>
@@ -1032,11 +1372,35 @@
       <option name="project" value="LOCAL" />
       <updated>1400593419664</updated>
     </task>
-    <option name="localTasksCounter" value="15" />
+    <task id="LOCAL-00015" summary="More tests">
+      <created>1401100333705</created>
+      <option name="number" value="00015" />
+      <option name="project" value="LOCAL" />
+      <updated>1401100333705</updated>
+    </task>
+    <task id="LOCAL-00016" summary="UI changes">
+      <created>1402055901754</created>
+      <option name="number" value="00016" />
+      <option name="project" value="LOCAL" />
+      <updated>1402055901754</updated>
+    </task>
+    <task id="LOCAL-00017" summary="Asynchronous task execution">
+      <created>1403003426267</created>
+      <option name="number" value="00017" />
+      <option name="project" value="LOCAL" />
+      <updated>1403003426267</updated>
+    </task>
+    <task id="LOCAL-00018" summary="limited # of started instances">
+      <created>1403008167491</created>
+      <option name="number" value="00018" />
+      <option name="project" value="LOCAL" />
+      <updated>1403008167491</updated>
+    </task>
+    <option name="localTasksCounter" value="19" />
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="214440000" />
+    <option name="totallyTimeSpent" value="329850000" />
   </component>
   <component name="TodoView" selected-index="0">
     <todo-panel id="selected-file">
@@ -1063,65 +1427,69 @@
     <editor active="false" />
     <layout>
       <window_info id="Palette&#9;" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
-      <window_info id="Changes" active="true" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.30311614" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
-      <window_info id="Designer" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
-      <window_info id="Palette" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
-      <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.3295562" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
-      <window_info id="Database" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="5" side_tool="true" content_ui="tabs" />
+      <window_info id="Changes" active="true" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.30122757" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Ant Build" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
-      <window_info id="Java Enterprise" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="8" side_tool="false" content_ui="tabs" />
-      <window_info id="Debug" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.3786591" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
-      <window_info id="TeamCity" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.3299075" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
-      <window_info id="Favorites" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="2" side_tool="true" content_ui="tabs" />
-      <window_info id="IDEtalk Messages" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
-      <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.30311614" sideWeight="0.5" order="7" side_tool="true" content_ui="tabs" />
-      <window_info id="IDEtalk" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="6" side_tool="true" content_ui="tabs" />
-      <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.3299075" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
-      <window_info id="Web" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="2" side_tool="true" content_ui="tabs" />
+      <window_info id="Database" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="6" side_tool="true" content_ui="tabs" />
+      <window_info id="Java Enterprise" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="16" side_tool="false" content_ui="tabs" />
+      <window_info id="Spring" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="14" side_tool="false" content_ui="tabs" />
+      <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.38243628" sideWeight="0.5" order="9" side_tool="true" content_ui="tabs" />
+      <window_info id="IDEtalk Messages" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="8" side_tool="false" content_ui="tabs" />
+      <window_info id="IDEtalk" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="7" side_tool="true" content_ui="tabs" />
+      <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.3299075" sideWeight="0.5" order="10" side_tool="false" content_ui="tabs" />
       <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.3295562" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
+      <window_info id="Application Servers" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.3295562" sideWeight="0.5" order="11" side_tool="false" content_ui="tabs" />
+      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.24494143" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
+      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.6402266" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
+      <window_info id="Designer" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
+      <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.3295562" sideWeight="0.5" order="12" side_tool="false" content_ui="tabs" />
+      <window_info id="Palette" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="4" side_tool="false" content_ui="tabs" />
+      <window_info id="Find" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.5203022" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
+      <window_info id="Debug" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.38243628" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
+      <window_info id="Favorites" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="4" side_tool="true" content_ui="tabs" />
+      <window_info id="TeamCity" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.3299075" sideWeight="0.5" order="13" side_tool="false" content_ui="tabs" />
+      <window_info id="Messages" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.32577905" sideWeight="0.5" order="15" side_tool="false" content_ui="tabs" />
+      <window_info id="Web" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="3" side_tool="true" content_ui="tabs" />
       <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
-      <window_info id="Commander" active="false" anchor="right" auto_hide="false" internal_type="SLIDING" type="SLIDING" visible="false" weight="0.4" sideWeight="0.5" order="7" side_tool="true" content_ui="tabs" />
-      <window_info id="Maven Projects" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.32960597" sideWeight="0.5" order="4" side_tool="false" content_ui="tabs" />
-      <window_info id="Application Servers" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
-      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.17252396" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
-      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.640884" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
-      <window_info id="Spring" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="8" side_tool="false" content_ui="tabs" />
+      <window_info id="Maven Projects" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.32960597" sideWeight="0.5" order="5" side_tool="false" content_ui="tabs" />
+      <window_info id="Commander" active="false" anchor="right" auto_hide="false" internal_type="SLIDING" type="SLIDING" visible="false" weight="0.4" sideWeight="0.5" order="8" side_tool="true" content_ui="tabs" />
+      <window_info id="Documentation" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="FLOATING" visible="true" weight="0.33" sideWeight="0.5" order="-1" side_tool="false" content_ui="tabs" x="-1828" y="92" width="1736" height="1016" />
       <window_info id="Coverage" active="true" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.55438066" sideWeight="0.5" order="0" side_tool="true" content_ui="tabs" />
-      <window_info id="Hierarchy" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.25" sideWeight="0.5" order="2" side_tool="false" content_ui="combo" />
+      <window_info id="Hierarchy" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.24973376" sideWeight="0.5" order="2" side_tool="false" content_ui="combo" />
       <window_info id="Cvs" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.25" sideWeight="0.5" order="4" side_tool="false" content_ui="tabs" />
       <window_info id="Message" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
-      <window_info id="Find" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.5203022" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
-      <window_info id="Messages" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.32577905" sideWeight="0.5" order="8" side_tool="false" content_ui="tabs" />
       <window_info id="Inspection" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.4" sideWeight="0.5" order="5" side_tool="false" content_ui="tabs" />
     </layout>
     <layout-to-restore>
-      <window_info id="Changes" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
+      <window_info id="Palette&#9;" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
+      <window_info id="Changes" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.30215827" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Ant Build" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
-      <window_info id="Database" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
-      <window_info id="Java Enterprise" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="14" side_tool="false" content_ui="tabs" />
-      <window_info id="Spring" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="15" side_tool="false" content_ui="tabs" />
-      <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="8" side_tool="true" content_ui="tabs" />
-      <window_info id="IDEtalk Messages" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="9" side_tool="false" content_ui="tabs" />
-      <window_info id="IDEtalk" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="4" side_tool="false" content_ui="tabs" />
-      <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="10" side_tool="false" content_ui="tabs" />
-      <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
-      <window_info id="Application Servers" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="11" side_tool="false" content_ui="tabs" />
-      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.20660277" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
-      <window_info id="Hierarchy" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.25" sideWeight="0.5" order="2" side_tool="false" content_ui="combo" />
-      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.4984584" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
+      <window_info id="Database" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="6" side_tool="true" content_ui="tabs" />
+      <window_info id="Java Enterprise" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="16" side_tool="false" content_ui="tabs" />
+      <window_info id="Spring" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="14" side_tool="false" content_ui="tabs" />
+      <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.32577905" sideWeight="0.5" order="9" side_tool="true" content_ui="tabs" />
+      <window_info id="IDEtalk Messages" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="8" side_tool="false" content_ui="tabs" />
+      <window_info id="IDEtalk" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="7" side_tool="true" content_ui="tabs" />
+      <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.3299075" sideWeight="0.5" order="10" side_tool="false" content_ui="tabs" />
+      <window_info id="Coverage" active="true" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.55438066" sideWeight="0.5" order="0" side_tool="true" content_ui="tabs" />
+      <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.3295562" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
+      <window_info id="Application Servers" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.3295562" sideWeight="0.5" order="11" side_tool="false" content_ui="tabs" />
+      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.17252396" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
+      <window_info id="Hierarchy" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.24973376" sideWeight="0.5" order="2" side_tool="false" content_ui="combo" />
+      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.6402266" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
       <window_info id="Cvs" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.25" sideWeight="0.5" order="4" side_tool="false" content_ui="tabs" />
+      <window_info id="Designer" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="Message" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
-      <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="12" side_tool="false" content_ui="tabs" />
-      <window_info id="Palette" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="5" side_tool="false" content_ui="tabs" />
-      <window_info id="Find" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.52124643" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
-      <window_info id="Debug" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.394712" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
-      <window_info id="TeamCity" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="13" side_tool="false" content_ui="tabs" />
-      <window_info id="Favorites" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="2" side_tool="true" content_ui="tabs" />
-      <window_info id="Messages" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.3286119" sideWeight="0.5" order="16" side_tool="false" content_ui="tabs" />
+      <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.3295562" sideWeight="0.5" order="12" side_tool="false" content_ui="tabs" />
+      <window_info id="Palette" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="4" side_tool="false" content_ui="tabs" />
+      <window_info id="Find" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.5203022" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
+      <window_info id="Debug" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.37582624" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
+      <window_info id="TeamCity" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.3299075" sideWeight="0.5" order="13" side_tool="false" content_ui="tabs" />
+      <window_info id="Favorites" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="4" side_tool="true" content_ui="tabs" />
+      <window_info id="Messages" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.32577905" sideWeight="0.5" order="15" side_tool="false" content_ui="tabs" />
       <window_info id="Web" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="3" side_tool="true" content_ui="tabs" />
       <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
-      <window_info id="Maven Projects" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.32960597" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
-      <window_info id="Commander" active="false" anchor="right" auto_hide="false" internal_type="SLIDING" type="SLIDING" visible="false" weight="0.4" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
+      <window_info id="Maven Projects" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.32960597" sideWeight="0.5" order="5" side_tool="false" content_ui="tabs" />
+      <window_info id="Commander" active="false" anchor="right" auto_hide="false" internal_type="SLIDING" type="SLIDING" visible="false" weight="0.4" sideWeight="0.5" order="8" side_tool="true" content_ui="tabs" />
       <window_info id="Inspection" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.4" sideWeight="0.5" order="5" side_tool="false" content_ui="tabs" />
     </layout-to-restore>
   </component>
@@ -1153,14 +1521,18 @@
     <MESSAGE value="fixing case #2" />
     <MESSAGE value="temp" />
     <MESSAGE value="1) Refactoring&#10;2) Pass all information from CloudInstanceUserData to agent VM" />
-    <option name="LAST_COMMIT_MESSAGE" value="1) Refactoring&#10;2) Pass all information from CloudInstanceUserData to agent VM" />
+    <MESSAGE value="More tests" />
+    <MESSAGE value="UI changes" />
+    <MESSAGE value="Asynchronous task execution" />
+    <MESSAGE value="limited # of started instances" />
+    <option name="LAST_COMMIT_MESSAGE" value="limited # of started instances" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
       <breakpoints-dialog>
         <breakpoints-dialog />
       </breakpoints-dialog>
-      <option name="time" value="168" />
+      <option name="time" value="248" />
     </breakpoint-manager>
   </component>
   <component name="antWorkspaceConfiguration">
@@ -1168,369 +1540,425 @@
     <option name="FILTER_TARGETS" value="false" />
   </component>
   <component name="editorHistoryManager">
-    <entry file="file://$PROJECT_DIR$/../../BuildServer/clouds/cloud-server/src/jetbrains/buildServer/clouds/server/impl/CloudInstancesProviderImpl.java">
+    <entry file="file://$PROJECT_DIR$/teamcity-vmware-plugin-server/src/main/resources/META-INF/build-server-plugin-teamcity-cloud-vsphere.xml">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.3241107" vertical-offset="136" max-vertical-offset="1420">
-          <caret line="24" column="21" selection-start-line="24" selection-start-column="21" selection-end-line="24" selection-end-column="21" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/../../BuildServer/clouds/cloud-server/src/jetbrains/buildServer/clouds/server/CloudInstancesProviderCallback.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.30245748" vertical-offset="0" max-vertical-offset="1058">
-          <caret line="18" column="10" selection-start-line="18" selection-start-column="10" selection-end-line="18" selection-end-column="10" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/../../BuildServer/clouds/cloud-server/src/jetbrains/buildServer/clouds/server/instances/KillIdleRunningInstances.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.16824196" vertical-offset="2162" max-vertical-offset="3220">
-          <caret line="136" column="42" selection-start-line="136" selection-start-column="42" selection-end-line="136" selection-end-column="42" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="jar://$PROJECT_DIR$/lib/vijava55b20130927src.jar!/com/vmware/vim25/mo/Folder.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.3323263" vertical-offset="0" max-vertical-offset="2520">
-          <caret line="41" column="13" selection-start-line="41" selection-start-column="13" selection-end-line="41" selection-end-column="13" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/teamcity-vmware-plugin-server/src/main/java/jetbrains/buildServer/clouds/vmware/VMWareImageType.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.13232514" vertical-offset="0" max-vertical-offset="1058">
-          <caret line="7" column="12" selection-start-line="7" selection-start-column="12" selection-end-line="7" selection-end-column="12" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/teamcity-vmware-plugin-server/src/main/java/jetbrains/buildServer/clouds/vmware/VMWareImageStartType.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.13232514" vertical-offset="0" max-vertical-offset="1058">
-          <caret line="7" column="12" selection-start-line="7" selection-start-column="12" selection-end-line="7" selection-end-column="12" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/../../BuildServer/clouds/cloud-server/src/jetbrains/buildServer/clouds/server/impl/instances/StartInstanceAction.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.33279744" vertical-offset="1393" max-vertical-offset="2080">
-          <caret line="91" column="0" selection-start-line="91" selection-start-column="0" selection-end-line="91" selection-end-column="0" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="jar://$TeamCityDistribution$/webapps/ROOT/WEB-INF/lib/cloud-server.jar!/jetbrains/buildServer/clouds/server/impl/instances/StopInstanceAction.class">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.53731346" vertical-offset="0" max-vertical-offset="670">
-          <caret line="19" column="15" selection-start-line="19" selection-start-column="15" selection-end-line="19" selection-end-column="15" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/teamcity-vmware-plugin-server/src/main/resources/buildServerResources/profile-settings.jsp">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.45578232" vertical-offset="231" max-vertical-offset="1700">
-          <caret line="35" column="87" selection-start-line="35" selection-start-column="0" selection-end-line="35" selection-end-column="0" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/teamcity-vmware-plugin-server/src/main/java/jetbrains/buildServer/clouds/vmware/VMWareCloudConstants.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.28355387" vertical-offset="0" max-vertical-offset="1058">
-          <caret line="15" column="0" selection-start-line="15" selection-start-column="0" selection-end-line="15" selection-end-column="0" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="jar://$TeamCityDistribution$/webapps/ROOT/WEB-INF/lib/cloud-interface.jar!/jetbrains/buildServer/clouds/CloudClientParameters.class">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.21568628" vertical-offset="0" max-vertical-offset="1020">
-          <caret line="12" column="9" selection-start-line="12" selection-start-column="9" selection-end-line="12" selection-end-column="9" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="jar://$PROJECT_DIR$/lib/vijava55b20130927src.jar!/com/vmware/vim25/mo/ManagedEntity.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.6030246" vertical-offset="422" max-vertical-offset="1540">
-          <caret line="134" column="16" selection-start-line="134" selection-start-column="16" selection-end-line="134" selection-end-column="16" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="jar://$TeamCityDistribution$/webapps/ROOT/WEB-INF/lib/cloud-interface.jar!/jetbrains/buildServer/clouds/CloudImage.class">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.09680542" vertical-offset="0" max-vertical-offset="1033">
-          <caret line="6" column="73" selection-start-line="6" selection-start-column="73" selection-end-line="6" selection-end-column="73" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/../../BuildServer/clouds/cloud-amazon-server/src/jetbrains/buildServer/clouds/amazon/client/quota/QuotedAmazonCloudClient.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.3319838" vertical-offset="916" max-vertical-offset="2020">
-          <caret line="70" column="19" selection-start-line="70" selection-start-column="19" selection-end-line="70" selection-end-column="19" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/teamcity-vmware-plugin-server/src/main/java/jetbrains/buildServer/clouds/vmware/VMWareCloudClientFactory.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.415879" vertical-offset="0" max-vertical-offset="1100">
-          <caret line="34" column="17" selection-start-line="34" selection-start-column="17" selection-end-line="34" selection-end-column="17" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="jar://$PROJECT_DIR$/../../BuildServer/.idea_artifacts/dist-agent/lib/cloud-api.jar!/jetbrains/buildServer/clouds/CloudInstanceUserData.class">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.09803922" vertical-offset="0" max-vertical-offset="1360">
-          <caret line="6" column="13" selection-start-line="6" selection-start-column="13" selection-end-line="6" selection-end-column="13" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/teamcity-vmware-plugin-common/src/main/java/jetbrains/buildServer/clouds/vmware/VMWarePropertiesNames.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.24574669" vertical-offset="0" max-vertical-offset="1058">
-          <caret line="13" column="35" selection-start-line="13" selection-start-column="35" selection-end-line="13" selection-end-column="35" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/teamcity-vmware-plugin-server/src/main/java/jetbrains/buildServer/clouds/vmware/tasks/UpdateInstancesTask.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.62192816" vertical-offset="742" max-vertical-offset="1800">
-          <caret line="81" column="0" selection-start-line="81" selection-start-column="0" selection-end-line="81" selection-end-column="0" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="jar://$PROJECT_DIR$/lib/vijava55b20130927src.jar!/com/vmware/vim25/mo/ManagedObject.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.33301434" vertical-offset="412" max-vertical-offset="8820">
-          <caret line="85" column="11" selection-start-line="85" selection-start-column="11" selection-end-line="85" selection-end-column="11" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="jar://$PROJECT_DIR$/lib/vijava55b20130927src.jar!/com/vmware/vim25/mo/ExtensibleManagedObject.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.35916823" vertical-offset="0" max-vertical-offset="1058">
-          <caret line="54" column="10" selection-start-line="54" selection-start-column="10" selection-end-line="54" selection-end-column="10" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="jar://$PROJECT_DIR$/lib/vijava55b20130927src.jar!/com/vmware/vim25/mo/Task.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.34449762" vertical-offset="0" max-vertical-offset="3620">
-          <caret line="56" column="12" selection-start-line="56" selection-start-column="12" selection-end-line="56" selection-end-column="12" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="jar://$PROJECT_DIR$/lib/vijava55b20130927src.jar!/com/vmware/vim25/OptionValue.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.30245748" vertical-offset="0" max-vertical-offset="1058">
-          <caret line="45" column="16" selection-start-line="45" selection-start-column="16" selection-end-line="45" selection-end-column="16" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="jar://$PROJECT_DIR$/lib/vijava55b20130927src.jar!/com/vmware/vim25/mo/VirtualMachine.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.33204633" vertical-offset="1148" max-vertical-offset="7100">
-          <caret line="137" column="38" selection-start-line="137" selection-start-column="38" selection-end-line="137" selection-end-column="38" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/build/pom.xml">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.44198895" vertical-offset="0" max-vertical-offset="1980">
-          <caret line="16" column="79" selection-start-line="16" selection-start-column="64" selection-end-line="16" selection-end-column="64" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/teamcity-vmware-plugin-common/teamcity-vmware-plugin-common.iml">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.40705562" vertical-offset="0" max-vertical-offset="737">
-          <caret line="15" column="122" selection-start-line="15" selection-start-column="0" selection-end-line="15" selection-end-column="0" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="jar://$PROJECT_DIR$/test-lib/testng-6.8.8.jar!/org/testng/internal/Invoker.class">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.0" vertical-offset="1180" max-vertical-offset="2980">
-          <caret line="59" column="33" selection-start-line="59" selection-start-column="33" selection-end-line="59" selection-end-column="33" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/teamcity-vmware-plugin-agent/teamcity-vmware-plugin-agent.iml">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.35278153" vertical-offset="0" max-vertical-offset="737">
-          <caret line="13" column="42" selection-start-line="13" selection-start-column="42" selection-end-line="13" selection-end-column="42" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="jar://$TeamCityDistribution$/webapps/ROOT/WEB-INF/lib/cloud-shared.jar!/jetbrains/buildServer/clouds/CloudInstanceUserData.class">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.3321471" vertical-offset="0" max-vertical-offset="1360">
-          <caret line="15" column="9" selection-start-line="15" selection-start-column="9" selection-end-line="15" selection-end-column="9" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/teamcity-vmware-plugin-server/src/main/java/jetbrains/buildServer/clouds/vmware/connector/VMWareApiConnector.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.17224881" vertical-offset="0" max-vertical-offset="1045">
-          <caret line="18" column="35" selection-start-line="18" selection-start-column="17" selection-end-line="18" selection-end-column="35" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/../../BuildServer/idea-settings/src/jetbrains/buildServer/ideaSettings/IdeaSettings.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.52057415" vertical-offset="5916" max-vertical-offset="12780">
-          <caret line="375" column="83" selection-start-line="375" selection-start-column="52" selection-end-line="375" selection-end-column="52" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/.idea/modules.xml">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.0" vertical-offset="300" max-vertical-offset="420">
-          <caret line="15" column="0" selection-start-line="15" selection-start-column="0" selection-end-line="15" selection-end-column="0" />
+        <state vertical-scroll-proportion="0.0" vertical-offset="100" max-vertical-offset="220">
+          <caret line="5" column="8" selection-start-line="5" selection-start-column="8" selection-end-line="5" selection-end-column="8" />
           <folding />
         </state>
       </provider>
     </entry>
-    <entry file="jar://$TeamCityDistribution$/devPackage/tests/junit-3.8.2.jar!/META-INF/MANIFEST.MF">
+    <entry file="file://$PROJECT_DIR$/../../BuildServer/web-openapi/src/jetbrains/buildServer/controllers/BaseFormXmlController.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="713">
-          <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/../../BuildServer/vcs/plugins/cvs/cvs-support-tests/testData/ExportModule/after/ir-group/src/org/spbu/ir/parsers/parser/impl/FollowImpl.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.50490886" vertical-offset="0" max-vertical-offset="860">
-          <caret line="25" column="60" selection-start-line="25" selection-start-column="31" selection-end-line="25" selection-end-column="31" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="jar://$PROJECT_DIR$/test-lib/testng-6.8.8.jar!/org/testng/Assert.class">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="1.0470588" vertical-offset="252" max-vertical-offset="3300">
-          <caret line="67" column="21" selection-start-line="67" selection-start-column="21" selection-end-line="67" selection-end-column="21" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="jar://$TeamCityDistribution$/devPackage/tests/tests-support.jar!/jetbrains/buildServer/BaseTestCase.class">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.622549" vertical-offset="1425" max-vertical-offset="4460">
-          <caret line="104" column="25" selection-start-line="104" selection-start-column="25" selection-end-line="104" selection-end-column="25" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="jar://$TeamCityDistribution$/devPackage/tests/junit-3.8.2.jar!/junit/framework/Assert.class">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.09451796" vertical-offset="0" max-vertical-offset="1780">
-          <caret line="6" column="13" selection-start-line="6" selection-start-column="13" selection-end-line="6" selection-end-column="13" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="jar://$TeamCityDistribution$/devPackage/tests/tests-support.jar!/jetbrains/buildServer/MockSupport.class">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.039215688" vertical-offset="60" max-vertical-offset="4160">
-          <caret line="6" column="52" selection-start-line="6" selection-start-column="52" selection-end-line="6" selection-end-column="52" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/teamcity-vmware-plugin-server/src/test/java/jetbrains/buildServer/clouds/vmware/VMWareCloudInstanceTest.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.37807184" vertical-offset="0" max-vertical-offset="1058">
-          <caret line="25" column="71" selection-start-line="25" selection-start-column="14" selection-end-line="25" selection-end-column="14" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/teamcity-vmware-plugin-server/src/main/java/jetbrains/buildServer/clouds/vmware/VMWareCloudInstance.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="1.0567107" vertical-offset="162" max-vertical-offset="1820">
-          <caret line="94" column="28" selection-start-line="94" selection-start-column="28" selection-end-line="94" selection-end-column="28" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/teamcity-vmware-plugin-server/src/main/java/jetbrains/buildServer/clouds/vmware/connector/VMWareApiConnectorImpl.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.0" vertical-offset="2220" max-vertical-offset="6260">
-          <caret line="111" column="0" selection-start-line="111" selection-start-column="0" selection-end-line="111" selection-end-column="0" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/teamcity-vmware-plugin-server/src/test/java/jetbrains/buildServer/clouds/vmware/stubs/FakeApiConnector.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.07561437" vertical-offset="0" max-vertical-offset="1058">
-          <caret line="4" column="32" selection-start-line="4" selection-start-column="32" selection-end-line="4" selection-end-column="32" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/teamcity-vmware-plugin-server/src/test/java/jetbrains/buildServer/clouds/vmware/stubs/FakeVirtualMachine.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.0" vertical-offset="402" max-vertical-offset="1460">
-          <caret line="20" column="13" selection-start-line="20" selection-start-column="13" selection-end-line="20" selection-end-column="13" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/teamcity-vmware-plugin-server/src/test/java/jetbrains/buildServer/clouds/vmware/stubs/FakeModel.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.07372401" vertical-offset="1302" max-vertical-offset="2360">
-          <caret line="69" column="3" selection-start-line="69" selection-start-column="3" selection-end-line="69" selection-end-column="3" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/teamcity-vmware-plugin-agent/src/main/java/jetbrains/buildServer/clouds/vmware/VMWarePropertiesReader.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.7353497" vertical-offset="762" max-vertical-offset="2180">
-          <caret line="95" column="36" selection-start-line="95" selection-start-column="36" selection-end-line="95" selection-end-column="36" />
+        <state vertical-scroll-proportion="0.35215312" vertical-offset="472" max-vertical-offset="2960">
+          <caret line="70" column="21" selection-start-line="70" selection-start-column="0" selection-end-line="70" selection-end-column="0" />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/teamcity-vmware-plugin-server/src/test/java/testng.xml">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="280">
+        <state vertical-scroll-proportion="0.056710776" vertical-offset="0" max-vertical-offset="1058">
           <caret line="3" column="68" selection-start-line="3" selection-start-column="68" selection-end-line="3" selection-end-column="68" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/teamcity-vmware-plugin-server/src/main/java/jetbrains/buildServer/clouds/vmware/VMWareImageStartType.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="360">
+          <caret line="9" column="2" selection-start-line="9" selection-start-column="2" selection-end-line="9" selection-end-column="2" />
           <folding />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/teamcity-vmware-plugin-server/src/test/java/jetbrains/buildServer/clouds/vmware/VMWareCloudClientTest.java">
+    <entry file="file://$TeamCityDistribution$/webapps/ROOT/WEB-INF/src/org/apache/jsp/admin/editRunParams_jsp.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.0" vertical-offset="3923" max-vertical-offset="4620">
-          <caret line="216" column="10" selection-start-line="216" selection-start-column="10" selection-end-line="216" selection-end-column="10" />
-          <folding />
+        <state vertical-scroll-proportion="0.3319838" vertical-offset="716" max-vertical-offset="42140">
+          <caret line="55" column="46" selection-start-line="55" selection-start-column="46" selection-end-line="55" selection-end-column="46" />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/teamcity-vmware-plugin-server/src/main/java/jetbrains/buildServer/clouds/vmware/VMWareCloudClient.java">
+    <entry file="file://$TeamCityDistribution$/webapps/ROOT/admin/editRunParams.jsp">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.0" vertical-offset="3143" max-vertical-offset="3880">
-          <caret line="207" column="0" selection-start-line="207" selection-start-column="0" selection-end-line="207" selection-end-column="0" />
-          <folding />
+        <state vertical-scroll-proportion="0.35268816" vertical-offset="1796" max-vertical-offset="3120">
+          <caret line="98" column="22" selection-start-line="98" selection-start-column="22" selection-end-line="98" selection-end-column="22" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$TeamCityDistribution$/webapps/ROOT/WEB-INF/tags/props/selectProperty.tag">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.34408602" vertical-offset="0" max-vertical-offset="465">
+          <caret line="8" column="24" selection-start-line="8" selection-start-column="24" selection-end-line="8" selection-end-column="24" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$TeamCityDistribution$/webapps/ROOT/admin/buildFailures/editBuildFailureOnMessage.jsp">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.25162336" vertical-offset="345" max-vertical-offset="2380">
+          <caret line="25" column="18" selection-start-line="25" selection-start-column="18" selection-end-line="25" selection-end-column="18" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="jar://$PROJECT_DIR$/lib/vijava55b20130927src.jar!/com/vmware/vim25/VirtualMachineSnapshotTree.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.33282673" vertical-offset="641" max-vertical-offset="1500">
+          <caret line="88" column="0" selection-start-line="88" selection-start-column="0" selection-end-line="88" selection-end-column="0" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="jar://$TeamCityDistribution$/webapps/ROOT/WEB-INF/lib/spring-webmvc.jar!/org/springframework/web/servlet/DispatcherServlet.class">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.33225808" vertical-offset="1734" max-vertical-offset="2360">
+          <caret line="98" column="0" selection-start-line="98" selection-start-column="0" selection-end-line="98" selection-end-column="0" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/../../BuildServer/clouds/cloud-api/src/jetbrains/buildServer/clouds/CloudErrorInfo.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="1660">
+          <caret line="16" column="19" selection-start-line="16" selection-start-column="19" selection-end-line="16" selection-end-column="19" />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/teamcity-vmware-plugin-server/src/main/java/jetbrains/buildServer/clouds/vmware/VMWareCloudErrorInfoFactory.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="660">
-          <caret line="50" column="69" selection-start-line="50" selection-start-column="0" selection-end-line="50" selection-end-column="0" />
+        <state vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="740">
+          <caret line="18" column="31" selection-start-line="18" selection-start-column="31" selection-end-line="18" selection-end-column="31" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/teamcity-vmware-plugin-server/src/test/java/jetbrains/buildServer/clouds/vmware/stubs/FakeApiConnector.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="940">
+          <caret line="13" column="53" selection-start-line="13" selection-start-column="53" selection-end-line="13" selection-end-column="53" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/teamcity-vmware-plugin-server/src/test/java/jetbrains/buildServer/clouds/vmware/stubs/FakeModel.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0" vertical-offset="542" max-vertical-offset="1600">
+          <caret line="69" column="3" selection-start-line="69" selection-start-column="3" selection-end-line="69" selection-end-column="3" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/teamcity-vmware-plugin-server/src/test/java/jetbrains/buildServer/clouds/vmware/stubs/FakeVirtualMachine.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0" vertical-offset="160" max-vertical-offset="3140">
+          <caret line="20" column="13" selection-start-line="20" selection-start-column="13" selection-end-line="20" selection-end-column="13" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/teamcity-vmware-plugin-server/src/test/java/jetbrains/buildServer/clouds/vmware/VMWareCloudClientTest.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0" vertical-offset="2455" max-vertical-offset="4040">
+          <caret line="216" column="10" selection-start-line="216" selection-start-column="10" selection-end-line="216" selection-end-column="10" />
           <folding />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/teamcity-vmware-plugin-server/src/test/java/jetbrains/buildServer/clouds/vmware/VMWareCloudImageTest.java">
+    <entry file="file://$TeamCityDistribution$/webapps/ROOT/WEB-INF/tags/props/passwordProperty.tag">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.0" vertical-offset="435" max-vertical-offset="1480">
-          <caret line="67" column="29" selection-start-line="67" selection-start-column="29" selection-end-line="67" selection-end-column="29" />
+        <state vertical-scroll-proportion="0.69970846" vertical-offset="0" max-vertical-offset="1029">
+          <caret line="36" column="104" selection-start-line="36" selection-start-column="104" selection-end-line="36" selection-end-column="104" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/../../BuildServer/web-openapi/src/jetbrains/buildServer/controllers/BasePropertiesBean.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="1.2835538" vertical-offset="102" max-vertical-offset="1880">
+          <caret line="98" column="35" selection-start-line="98" selection-start-column="35" selection-end-line="98" selection-end-column="35" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/../../BuildServer/web-startup/src/jetbrains/buildServer/maintenance/TeamCityDispatcherServlet.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0" vertical-offset="1061" max-vertical-offset="3700">
+          <caret line="88" column="22" selection-start-line="88" selection-start-column="22" selection-end-line="88" selection-end-column="22" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="jar://C:/Program Files/Java/jdk1.7.0_55/src.zip!/java/util/concurrent/ThreadPoolExecutor.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0" vertical-offset="21521" max-vertical-offset="40620">
+          <caret line="1144" column="0" selection-start-line="1144" selection-start-column="0" selection-end-line="1145" selection-end-column="0" />
           <folding />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/teamcity-vmware-plugin-server/src/main/java/jetbrains/buildServer/clouds/vmware/VMWareCloudImage.java">
+    <entry file="file://$PROJECT_DIR$/../../BuildServer/web/src/jetbrains/buildServer/web/ResponseFragmentFilter.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.0" vertical-offset="200" max-vertical-offset="2920">
-          <caret line="80" column="66" selection-start-line="80" selection-start-column="28" selection-end-line="80" selection-end-column="28" />
+        <state vertical-scroll-proportion="0.0" vertical-offset="201" max-vertical-offset="5660">
+          <caret line="40" column="0" selection-start-line="40" selection-start-column="0" selection-end-line="40" selection-end-column="0" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="jar://$PROJECT_DIR$/../../BuildServer/.idea_artifacts/dist-agent/lib/cloud-api.jar!/jetbrains/buildServer/clouds/CloudClientParameters.class">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="-8.64" vertical-offset="104" max-vertical-offset="640">
+          <caret line="17" column="0" selection-start-line="17" selection-start-column="0" selection-end-line="17" selection-end-column="0" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$TeamCityDistribution$/webapps/ROOT/js/prototype.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="-3.208502" vertical-offset="34865" max-vertical-offset="141020">
+          <caret line="1670" column="0" selection-start-line="1670" selection-start-column="0" selection-end-line="1670" selection-end-column="0" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="jar://$TeamCityDistribution$/webapps/ROOT/WEB-INF/lib/server-api.jar!/root/js/prototype.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.55668014" vertical-offset="33385" max-vertical-offset="141020">
+          <caret line="1689" column="34" selection-start-line="1689" selection-start-column="34" selection-end-line="1689" selection-end-column="34" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$TeamCityDistribution$/webapps/ROOT/js/bs/bs.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.55668014" vertical-offset="3265" max-vertical-offset="55480">
+          <caret line="191" column="24" selection-start-line="191" selection-start-column="24" selection-end-line="191" selection-end-column="24" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/teamcity-vmware-plugin-server/src/main/java/jetbrains/buildServer/clouds/vmware/web/GetSnapshotsListController.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.51282054" vertical-offset="260" max-vertical-offset="1080">
+          <caret line="45" column="73" selection-start-line="45" selection-start-column="73" selection-end-line="45" selection-end-column="73" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/teamcity-vmware-plugin-server/src/main/java/jetbrains/buildServer/clouds/vmware/web/VMWareEditProfileController.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.43392506" vertical-offset="720" max-vertical-offset="2040">
+          <caret line="65" column="0" selection-start-line="65" selection-start-column="0" selection-end-line="65" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="jar://$PROJECT_DIR$/lib/vijava55b20130927src.jar!/com/vmware/vim25/mo/Task.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.2079395" vertical-offset="0" max-vertical-offset="3560">
+          <caret line="49" column="13" selection-start-line="49" selection-start-column="13" selection-end-line="49" selection-end-column="13" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="jar://C:/Program Files/Java/jdk1.7.0_55/src.zip!/java/util/concurrent/ScheduledExecutorService.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.7731569" vertical-offset="2122" max-vertical-offset="3180">
+          <caret line="181" column="30" selection-start-line="181" selection-start-column="30" selection-end-line="181" selection-end-column="30" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="jar://C:/Program Files/Java/jdk1.7.0_55/src.zip!/java/util/concurrent/CopyOnWriteArrayList.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.3327032" vertical-offset="488" max-vertical-offset="25140">
+          <caret line="77" column="13" selection-start-line="77" selection-start-column="13" selection-end-line="77" selection-end-column="13" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="jar://$PROJECT_DIR$/../../BuildServer/.idea_artifacts/dist-agent/lib/cloud-api.jar!/jetbrains/buildServer/clouds/CloudErrorInfo.class">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.40357852" vertical-offset="57" max-vertical-offset="560">
+          <caret line="14" column="0" selection-start-line="14" selection-start-column="0" selection-end-line="14" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="jar://$PROJECT_DIR$/lib/vijava55b20130927src.jar!/com/vmware/vim25/LocalizedMethodFault.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.4287902" vertical-offset="0" max-vertical-offset="653">
+          <caret line="41" column="21" selection-start-line="41" selection-start-column="21" selection-end-line="41" selection-end-column="21" />
+          <folding>
+            <element signature="e#1917#1918#0" expanded="true" />
+            <element signature="e#1944#1945#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="jar://C:/Program Files/Java/jdk1.7.0_55/src.zip!/java/lang/Thread.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.3323124" vertical-offset="13403" max-vertical-offset="39340">
+          <caret line="744" column="0" selection-start-line="744" selection-start-column="0" selection-end-line="744" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/teamcity-vmware-plugin-server/src/main/java/jetbrains/buildServer/clouds/vmware/tasks/UpdateInstancesTask.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="-0.025710419" vertical-offset="319" max-vertical-offset="1760">
+          <caret line="26" column="9" selection-start-line="26" selection-start-column="9" selection-end-line="26" selection-end-column="9" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/teamcity-vmware-plugin-server/src/main/java/jetbrains/buildServer/clouds/vmware/VMWareCloudClientFactory.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.67658997" vertical-offset="0" max-vertical-offset="1100">
+          <caret line="37" column="33" selection-start-line="37" selection-start-column="33" selection-end-line="37" selection-end-column="33" />
           <folding />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/teamcity-vmware-plugin-server/src/test/java/jetbrains/buildServer/clouds/vmware/SimpleTest.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.4979647" vertical-offset="53" max-vertical-offset="2580">
-          <caret line="31" column="3" selection-start-line="31" selection-start-column="3" selection-end-line="31" selection-end-column="3" />
+        <state vertical-scroll-proportion="0.7307172" vertical-offset="200" max-vertical-offset="2580">
+          <caret line="47" column="63" selection-start-line="47" selection-start-column="63" selection-end-line="47" selection-end-column="63" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="jar://$PROJECT_DIR$/../../BuildServer/.idea_artifacts/dist-agent/lib/annotations.jar!/org/intellij/lang/annotations/Language.class">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.29268292" vertical-offset="0" max-vertical-offset="615">
+          <caret line="10" column="19" selection-start-line="10" selection-start-column="19" selection-end-line="10" selection-end-column="19" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/teamcity-vmware-plugin-server/src/test/java/jetbrains/buildServer/clouds/vmware/VMWareCloudImageTest.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.625" vertical-offset="1000" max-vertical-offset="1640">
+          <caret line="80" column="3" selection-start-line="80" selection-start-column="3" selection-end-line="80" selection-end-column="3" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/teamcity-vmware-plugin-server/src/main/java/jetbrains/buildServer/clouds/vmware/web/VMWareWebConstants.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.17304747" vertical-offset="147" max-vertical-offset="800">
+          <caret line="13" column="66" selection-start-line="13" selection-start-column="66" selection-end-line="13" selection-end-column="66" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/teamcity-vmware-plugin-server/src/main/java/jetbrains/buildServer/clouds/vmware/VMWareCloudInstance.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.6937213" vertical-offset="567" max-vertical-offset="1820">
+          <caret line="81" column="0" selection-start-line="81" selection-start-column="0" selection-end-line="81" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/teamcity-vmware-plugin-server/src/main/java/jetbrains/buildServer/clouds/vmware/VMWareImageType.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.2143951" vertical-offset="0" max-vertical-offset="653">
+          <caret line="7" column="12" selection-start-line="7" selection-start-column="12" selection-end-line="7" selection-end-column="12" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/teamcity-vmware-plugin-server/src/main/java/jetbrains/buildServer/clouds/vmware/connector/VMWareApiConnector.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.2588055" vertical-offset="711" max-vertical-offset="1380">
+          <caret line="58" column="7" selection-start-line="58" selection-start-column="7" selection-end-line="58" selection-end-column="7" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/teamcity-vmware-plugin-server/src/main/java/jetbrains/buildServer/clouds/vmware/tasks/TaskStatusUpdater.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.11179173" vertical-offset="1147" max-vertical-offset="1800">
+          <caret line="63" column="26" selection-start-line="63" selection-start-column="26" selection-end-line="63" selection-end-column="26" />
+          <folding>
+            <element signature="imports" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/teamcity-vmware-plugin-agent/src/main/java/jetbrains/buildServer/clouds/vmware/VMWarePropertiesReader.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0" vertical-offset="900" max-vertical-offset="2520">
+          <caret line="18" column="98" selection-start-line="18" selection-start-column="0" selection-end-line="18" selection-end-column="0" />
+          <folding>
+            <element signature="imports" expanded="true" />
+            <element signature="e#4519#4520#0" expanded="true" />
+            <element signature="e#4574#4575#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/teamcity-vmware-plugin-server/src/main/java/jetbrains/buildServer/clouds/vmware/VMWareCloudClient.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0" vertical-offset="2180" max-vertical-offset="2820">
+          <caret line="114" column="0" selection-start-line="114" selection-start-column="0" selection-end-line="114" selection-end-column="0" />
+          <folding>
+            <element signature="docComment;class#VMWareCloudClient#0" expanded="false" />
+            <element signature="method#VMWareCloudClient#0;class#VMWareCloudClient#0" expanded="false" />
+            <element signature="e#5286#5287#0" expanded="true" />
+            <element signature="e#5389#5390#0" expanded="true" />
+            <element signature="method#dispose#0;class#VMWareCloudClient#0" expanded="false" />
+            <element signature="method#findInstanceByAgent#0;class#VMWareCloudClient#0" expanded="false" />
+            <element signature="e#6395#6396#0" expanded="true" />
+            <element signature="e#6423#6424#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/../../BuildServer/clouds/cloud-server/src/jetbrains/buildServer/clouds/server/impl/instances/StartInstanceAction.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.6828125" vertical-offset="1203" max-vertical-offset="2080">
+          <caret line="93" column="99" selection-start-line="93" selection-start-column="66" selection-end-line="93" selection-end-column="66" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/teamcity-vmware-plugin-server/src/main/java/jetbrains/buildServer/clouds/vmware/VMWareCloudImage.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0" vertical-offset="967" max-vertical-offset="3120">
+          <caret line="131" column="98" selection-start-line="131" selection-start-column="60" selection-end-line="131" selection-end-column="60" />
+          <folding>
+            <element signature="docComment;class#VMWareCloudImage#0" expanded="false" />
+            <element signature="method#VMWareCloudImage#0;class#VMWareCloudImage#0" expanded="false" />
+            <element signature="e#2966#2967#0" expanded="true" />
+            <element signature="e#2994#2995#0" expanded="true" />
+            <element signature="class#4142:4321" expanded="false" />
+            <element signature="class#5375:5540" expanded="false" />
+            <element signature="class#5989:6236" expanded="false" />
+            <element signature="method#onSuccess#0;class#5989:6236" expanded="false" />
+            <element signature="method#instanceStarted#0;class#VMWareCloudImage#0" expanded="false" />
+            <element signature="method#updateRunningInstances#0;class#VMWareCloudImage#0" expanded="false" />
+            <element signature="method#populateRunningInstances#0;class#VMWareCloudImage#0" expanded="false" />
+            <element signature="method#instanceStopped#0;class#VMWareCloudImage#0" expanded="false" />
+            <element signature="method#stopInstance#0;class#VMWareCloudImage#0" expanded="false" />
+            <element signature="e#8985#8986#0" expanded="true" />
+            <element signature="e#9016#9017#0" expanded="true" />
+            <element signature="class#ProcessImageInstancesTask#0;class#VMWareCloudImage#0" expanded="false" />
+            <element signature="class#ImageStatusTaskWrapper#0;class#VMWareCloudImage#0" expanded="false" />
+            <element signature="method#onError#0;class#ImageStatusTaskWrapper#0;class#VMWareCloudImage#0" expanded="false" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/teamcity-vmware-plugin-server/src/main/resources/buildServerResources/vmware-settings.jsp">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="-18.931034" vertical-offset="771" max-vertical-offset="2880">
+          <caret line="66" column="37" selection-start-line="66" selection-start-column="14" selection-end-line="66" selection-end-column="14" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/teamcity-vmware-plugin-server/src/main/resources/buildServerResources/vmware-settings-hook.jsp">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="56.689655" vertical-offset="2064" max-vertical-offset="3080">
+          <caret line="21" column="50" selection-start-line="21" selection-start-column="38" selection-end-line="21" selection-end-column="38" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/.idea/libraries/server.xml">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="10000">
+          <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/teamcity-vmware-plugin-server/src/main/java/jetbrains/buildServer/clouds/vmware/connector/VMWareApiConnectorImpl.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="-0.47796142" vertical-offset="2227" max-vertical-offset="5820">
+          <caret line="116" column="19" selection-start-line="116" selection-start-column="0" selection-end-line="116" selection-end-column="0" />
           <folding />
         </state>
       </provider>
@@ -1543,9 +1971,9 @@
           <artifact-editor>
             <show-content>
               <type id="library" />
-              <type id="javaee-facet-resources" />
-              <type id="artifact" />
               <type id="jpa-descriptors" />
+              <type id="artifact" />
+              <type id="javaee-facet-resources" />
             </show-content>
           </artifact-editor>
           <last-edited>Plugin-zip</last-edited>
@@ -1597,7 +2025,7 @@
       </state>
       <state key="ModuleStructureConfigurable.UI">
         <settings>
-          <last-edited>teamcity-vmware-plugin</last-edited>
+          <last-edited>teamcity-vmware-plugin-server</last-edited>
           <splitter-proportions>
             <option name="proportions">
               <list>
@@ -1621,7 +2049,7 @@
       </state>
       <state key="ProjectLibrariesConfigurable.UI">
         <settings>
-          <last-edited>test-lib</last-edited>
+          <last-edited>aws-java-sdk-1.6.4</last-edited>
           <splitter-proportions>
             <option name="proportions">
               <list>

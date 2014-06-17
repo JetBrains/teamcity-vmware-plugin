@@ -99,8 +99,8 @@ public class VMWareCloudClient implements CloudClientEx {
 
       if (errorList.size() == 0) {
         myScheduledExecutor = Executors.newScheduledThreadPool(2, new NamedThreadFactory("VSphere"));
-        myScheduledExecutor.scheduleWithFixedDelay(new UpdateInstancesTask(myApiConnector, this), 20, 10, TimeUnit.SECONDS);
-        myScheduledExecutor.scheduleWithFixedDelay(myStatusTask, 20, 5, TimeUnit.SECONDS);
+        myScheduledExecutor.scheduleWithFixedDelay(new UpdateInstancesTask(myApiConnector, this), 0, 20, TimeUnit.SECONDS);
+        myScheduledExecutor.scheduleWithFixedDelay(myStatusTask, 5, 5, TimeUnit.SECONDS);
       } else {
         myErrorInfo = new CloudErrorInfo(Arrays.toString(errorList.toArray()));
       }

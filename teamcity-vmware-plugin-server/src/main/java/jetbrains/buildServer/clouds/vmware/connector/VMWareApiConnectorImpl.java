@@ -1,6 +1,7 @@
 package jetbrains.buildServer.clouds.vmware.connector;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.text.StringUtil;
 import com.vmware.vim25.*;
 import com.vmware.vim25.mo.*;
 import java.net.MalformedURLException;
@@ -145,7 +146,7 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
 
     cloneSpec.setLocation(location);
     location.setPool(findEntityByName(resourcePool, ResourcePool.class).getMOR());
-    if (snapshotName != null){
+    if (StringUtil.isNotEmpty(snapshotName)){
       final VirtualMachineSnapshotTree obj = getSnapshotList(vm.getName()).get(snapshotName);
       cloneSpec.setSnapshot(obj == null ? null : obj.getSnapshot());
       if (isLinkedClone && cloneSpec.getSnapshot() != null){

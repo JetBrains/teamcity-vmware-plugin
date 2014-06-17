@@ -1,6 +1,7 @@
 package jetbrains.buildServer.clouds.vmware;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.text.StringUtil;
 import com.vmware.vim25.LocalizedMethodFault;
 import com.vmware.vim25.mo.Task;
 import java.rmi.RemoteException;
@@ -106,28 +107,34 @@ public class VMWareCloudImage implements CloudImage {
   }
 
   public VMWareCloudInstance startInstance(@NotNull final CloudInstanceUserData cloudInstanceUserData){
-    final String vmName = generateNewVmName();
-    final VMWareCloudInstance instance = new VMWareCloudInstance(this, vmName);
-    instance.setStatus(InstanceStatus.SCHEDULED_TO_START);
+    final VMWareCloudInstance instance;
     try {
-      final Task task = myApiConnector.cloneVm(
-        getName(),
-        getResourcePool(),
-        getFolder(),
-        vmName,
-        getSnapshotName(),
-        getStartType() == VMWareImageStartType.LINKED_CLONE);
-      myStatusTask.submit(task, new ImageStatusTaskWrapper(instance){
-        @Override
-        public void onSuccess() {
-          cloneVmSuccessHandler(instance, cloudInstanceUserData);
-        }
-      });
-      myInstances.put(vmName, instance);
+      if (myStartType != VMWareImageStartType.START){
+        final String vmName = generateNewVmName();
+        instance = new VMWareCloudInstance(this, vmName);
+        final Task task = myApiConnector.cloneVm(
+          myImageName,
+          myResourcePool,
+          myFolder,
+          vmName,
+          mySnapshotName,
+          myStartType == VMWareImageStartType.LINKED_CLONE);
+        myStatusTask.submit(task, new ImageStatusTaskWrapper(instance){
+          @Override
+          public void onSuccess() {
+            cloneVmSuccessHandler(instance, cloudInstanceUserData);
+          }
+        });
+      } else {
+        instance = new VMWareCloudInstance(this, this.getName());
+        cloneVmSuccessHandler(instance, cloudInstanceUserData);
+      }
+      instance.setStatus(InstanceStatus.SCHEDULED_TO_START);
+      myInstances.put(instance.getName(), instance);
+      return instance;
     } catch (RemoteException e) {
-      e.printStackTrace();
+      return null;
     }
-    return instance;
   }
 
   private void cloneVmSuccessHandler(@NotNull final VMWareCloudInstance instance, @NotNull final CloudInstanceUserData cloudInstanceUserData){
@@ -229,7 +236,7 @@ public class VMWareCloudImage implements CloudImage {
 
   public boolean canStartNewInstance() throws RemoteException {
     if (getImageType() == VMWareImageType.INSTANCE) {
-      if (getSnapshotName() != null) {
+      if (StringUtil.isNotEmpty(mySnapshotName)) {
         if (!myApiConnector.ensureSnapshotExists(getId(), getSnapshotName())) {
           myErrorInfo = new CloudErrorInfo("Unable to find snapshot: " + getSnapshotName());
         }
