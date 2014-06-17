@@ -196,39 +196,7 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
     try {
       VirtualMachine vm = findEntityByName(instance.getInstanceId(), VirtualMachine.class);
       if (vm != null) {
-        try {
-          instance.setStatus(InstanceStatus.STOPPING);
-          vm.shutdownGuest();
-          long shutdownStartTime = System.currentTimeMillis();
-          while (getInstanceStatus(vm) != InstanceStatus.STOPPED && (System.currentTimeMillis() - shutdownStartTime) < SHUTDOWN_TIMEOUT) {
-            vm = findEntityByName(instance.getInstanceId(), VirtualMachine.class);
-            Thread.sleep(5000);
-          }
-          if (getInstanceStatus(vm) != InstanceStatus.STOPPED) {
-            throw new RuntimeException("Stop timeout(" + SHUTDOWN_TIMEOUT + ") elapsed.");
-          }
-
-        } catch (Exception ex) {
-          LOG.warn("Unable to stop using Guest Shutdown: + " + ex.toString());
-          final Task task = vm.powerOffVM_Task();
-          final String powerOffResult = task.waitForTask();
-          if (!Task.SUCCESS.equals(powerOffResult)) {
-            instance.setErrorInfo(new CloudErrorInfo("Unable to powerOff VM. Task status: " + powerOffResult, ex.toString(), ex));
-          }
-        }
-        instance.setStatus(InstanceStatus.STOPPED);
-        if (instance.isDeleteAfterStop()) { // we only destroy proper instances.
-          if (instance.getErrorInfo() == null) {
-            final Task destroyTask = vm.destroy_Task();
-            final String destroyResult = destroyTask.waitForTask();
-            if (!Task.SUCCESS.equals(destroyResult)) {
-              instance.setErrorInfo(new CloudErrorInfo("Unable to destroy VM. Task status: " + destroyResult));
-            }
-          } else {
-            LOG.warn(String.format("Won't delete instance %s with error: %s (%s)",
-                                   instance.getName(), instance.getErrorInfo().getMessage(), instance.getErrorInfo().getDetailedMessage()));
-          }
-        }
+        doShutdown(instance, vm);
       } else {
         instance.setStatus(InstanceStatus.ERROR);
       }
@@ -236,6 +204,42 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
       instance.setStatus(InstanceStatus.ERROR);
       instance.setErrorInfo(new CloudErrorInfo("Unable to terminate instance", ex.toString(), ex));
       throw new RuntimeException(ex);
+    }
+  }
+
+  private void doShutdown(final VMWareCloudInstance instance, VirtualMachine vm) throws RemoteException, InterruptedException {
+    try {
+      instance.setStatus(InstanceStatus.STOPPING);
+      vm.shutdownGuest();
+      long shutdownStartTime = System.currentTimeMillis();
+      while (getInstanceStatus(vm) != InstanceStatus.STOPPED && (System.currentTimeMillis() - shutdownStartTime) < SHUTDOWN_TIMEOUT) {
+        vm = findEntityByName(instance.getInstanceId(), VirtualMachine.class);
+        Thread.sleep(5000);
+      }
+      if (getInstanceStatus(vm) != InstanceStatus.STOPPED) {
+        throw new RuntimeException("Stop timeout(" + SHUTDOWN_TIMEOUT + ") elapsed.");
+      }
+
+    } catch (Exception ex) {
+      LOG.warn("Unable to stop using Guest Shutdown: + " + ex.toString());
+      final Task task = vm.powerOffVM_Task();
+      final String powerOffResult = task.waitForTask();
+      if (!Task.SUCCESS.equals(powerOffResult)) {
+        instance.setErrorInfo(new CloudErrorInfo("Unable to powerOff VM. Task status: " + powerOffResult, ex.toString(), ex));
+      }
+    }
+    instance.setStatus(InstanceStatus.STOPPED);
+    if (instance.isDeleteAfterStop()) { // we only destroy proper instances.
+      if (instance.getErrorInfo() == null) {
+        final Task destroyTask = vm.destroy_Task();
+        final String destroyResult = destroyTask.waitForTask();
+        if (!Task.SUCCESS.equals(destroyResult)) {
+          instance.setErrorInfo(new CloudErrorInfo("Unable to destroy VM. Task status: " + destroyResult));
+        }
+      } else {
+        LOG.warn(String.format("Won't delete instance %s with error: %s (%s)",
+                               instance.getName(), instance.getErrorInfo().getMessage(), instance.getErrorInfo().getDetailedMessage()));
+      }
     }
   }
 

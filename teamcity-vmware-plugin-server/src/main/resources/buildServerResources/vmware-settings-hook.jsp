@@ -60,6 +60,7 @@
     var cloneFolder = $j("#cloneFolder").val();
     var resourcePool = $j("#resourcePool").val();
     var cloneBehaviour = $j("#cloneBehaviour").val();
+    var maxInstances = $j("#maxInstances").val();
 
     // checking properties
     $j("#error_image").empty();
@@ -78,18 +79,19 @@
       hadError = true;
     }
     if (!hadError) {
-      vmware_addImageInternal(vmName, snapshotName, cloneFolder, resourcePool, cloneBehaviour);
+      vmware_addImageInternal(vmName, snapshotName, cloneFolder, resourcePool, cloneBehaviour, maxInstances);
       vmware_updateHidden();
     }
   }
 
-  function vmware_addImageInternal(vmName, snapshotName, cloneFolder, resourcePool, cloneBehaviour){
+  function vmware_addImageInternal(vmName, snapshotName, cloneFolder, resourcePool, cloneBehaviour, maxInstances){
     $j("#vmware_images_list tbody").append($j("<tr>")
         .append($j("<td>").text(vmName))
         .append($j("<td>").text(snapshotName))
         .append($j("<td>").text(cloneFolder))
         .append($j("<td>").text(resourcePool))
         .append($j("<td>").text(cloneBehaviour))
+        .append($j("<td>").text(maxInstances))
         .append($j("<td>").append($j("<a>").attr("href", "#").attr("onclick", "$j(this).closest('tr').remove();vmware_updateHidden();return false;").text("X")))
     );
   }
@@ -136,7 +138,7 @@
         break;
       var ones = partsOfStr[i].split(';');
       if (ones[0].length > 0) {
-        vmware_addImageInternal(ones[0], ones[1], ones[2], ones[3], ones[4]);
+        vmware_addImageInternal(ones[0], ones[1], ones[2], ones[3], ones[4], ones[5]);
       }
     }
   }

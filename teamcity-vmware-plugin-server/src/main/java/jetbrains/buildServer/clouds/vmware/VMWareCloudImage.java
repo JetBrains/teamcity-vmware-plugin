@@ -2,14 +2,13 @@ package jetbrains.buildServer.clouds.vmware;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.vmware.vim25.LocalizedMethodFault;
-import com.vmware.vim25.TaskInfo;
 import com.vmware.vim25.mo.Task;
 import java.rmi.RemoteException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import jetbrains.buildServer.clouds.*;
 import jetbrains.buildServer.clouds.vmware.connector.VMWareApiConnector;
-import jetbrains.buildServer.clouds.vmware.tasks.UpdateTaskStatusTask;
+import jetbrains.buildServer.clouds.vmware.tasks.TaskStatusUpdater;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,7 +30,8 @@ public class VMWareCloudImage implements CloudImage {
   private final String myResourcePool;
   private final String myFolder;
   private final VMWareApiConnector myApiConnector;
-  @NotNull private final UpdateTaskStatusTask myStatusTask;
+  private final int myMaxInstances;
+  @NotNull private final TaskStatusUpdater myStatusTask;
 
   public VMWareCloudImage(@NotNull final VMWareApiConnector apiConnector,
                           @NotNull final String imageName,
@@ -40,8 +40,8 @@ public class VMWareCloudImage implements CloudImage {
                           @NotNull final String resourcePool,
                           @Nullable final String snapshotName,
                           @Nullable final InstanceStatus imageInstanceStatus,
-                          @NotNull final UpdateTaskStatusTask statusTask,
-                          final VMWareImageStartType startType) {
+                          @NotNull final TaskStatusUpdater statusTask,
+                          final VMWareImageStartType startType, final int maxInstances) {
 
     myImageName = imageName;
     myImageType = imageType;
@@ -50,6 +50,7 @@ public class VMWareCloudImage implements CloudImage {
     mySnapshotName = snapshotName;
     myApiConnector = apiConnector;
     this.myStatusTask = statusTask;
+    myMaxInstances = maxInstances;
     if (myImageType == VMWareImageType.TEMPLATE && startType == VMWareImageStartType.START) {
       myStartType = VMWareImageStartType.CLONE;
     } else if (startType == VMWareImageStartType.LINKED_CLONE && snapshotName == null) {
@@ -219,6 +220,26 @@ public class VMWareCloudImage implements CloudImage {
     }
   }
 
+  public void stopInstance(@NotNull final VMWareCloudInstance instance){
+    LOG.info("Terminating instance " + instance.getName());
+    myApiConnector.stopInstance(instance);
+    (instance).setStatus(InstanceStatus.STOPPED);
+    ((VMWareCloudImage)instance.getImage()).instanceStopped(instance.getName());
+  }
+
+  public boolean canStartNewInstance() throws RemoteException {
+    if (getImageType() == VMWareImageType.INSTANCE) {
+      if (getSnapshotName() != null) {
+        if (!myApiConnector.ensureSnapshotExists(getId(), getSnapshotName())) {
+          myErrorInfo = new CloudErrorInfo("Unable to find snapshot: " + getSnapshotName());
+        }
+      } else if (myStartType == VMWareImageStartType.START) {
+        return myApiConnector.isInstanceStopped(getId());
+      }
+    }
+    return myErrorInfo == null && (myMaxInstances==0 || myInstances.size() < myMaxInstances);
+  }
+
   public VMWareImageStartType getStartType() {
     return myStartType;
   }
@@ -240,10 +261,10 @@ public class VMWareCloudImage implements CloudImage {
     void processInstance(@NotNull final VMWareCloudInstance instance);
   }
 
-  private static class ImageStatusTaskWrapper extends UpdateTaskStatusTask.TaskCallbackAdapter{
+  private static class ImageStatusTaskWrapper extends TaskStatusUpdater.TaskCallbackAdapter{
 
 
-    @NotNull private final VMWareCloudInstance myInstance;
+    @NotNull protected final VMWareCloudInstance myInstance;
 
     public ImageStatusTaskWrapper(@NotNull final VMWareCloudInstance instance) {
       myInstance = instance;

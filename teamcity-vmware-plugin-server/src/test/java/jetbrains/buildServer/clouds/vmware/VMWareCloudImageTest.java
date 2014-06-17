@@ -7,7 +7,7 @@ import jetbrains.buildServer.clouds.CloudInstance;
 import jetbrains.buildServer.clouds.InstanceStatus;
 import jetbrains.buildServer.clouds.vmware.connector.VMWareApiConnector;
 import jetbrains.buildServer.clouds.vmware.stubs.FakeApiConnector;
-import jetbrains.buildServer.clouds.vmware.tasks.UpdateTaskStatusTask;
+import jetbrains.buildServer.clouds.vmware.tasks.TaskStatusUpdater;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -20,58 +20,58 @@ import org.testng.annotations.Test;
 @Test
 public class VMWareCloudImageTest extends BaseTestCase {
 
-  private UpdateTaskStatusTask myStatusTask;
+  private TaskStatusUpdater myStatusTask;
   private VMWareApiConnector myApiConnector;
 
   @BeforeMethod
   public void setUp() throws Exception {
     super.setUp();
-    myStatusTask = new UpdateTaskStatusTask();
+    myStatusTask = new TaskStatusUpdater();
     myApiConnector = new FakeApiConnector();
   }
 
   public void checkImageType() throws MalformedURLException, RemoteException {
     assertEquals(VMWareImageStartType.CLONE, new VMWareCloudImage(myApiConnector,
-      "myImage", VMWareImageType.TEMPLATE, "folder", "pool", null, InstanceStatus.RUNNING, myStatusTask, VMWareImageStartType.START).getStartType());
+      "myImage", VMWareImageType.TEMPLATE, "folder", "pool", null, InstanceStatus.RUNNING, myStatusTask, VMWareImageStartType.START, 1).getStartType());
 
     assertEquals(VMWareImageStartType.CLONE, new VMWareCloudImage(myApiConnector,
-      "myImage", VMWareImageType.TEMPLATE, "folder", "pool", "snapshot", InstanceStatus.RUNNING, myStatusTask, VMWareImageStartType.START).getStartType());
+      "myImage", VMWareImageType.TEMPLATE, "folder", "pool", "snapshot", InstanceStatus.RUNNING, myStatusTask, VMWareImageStartType.START, 1).getStartType());
 
     assertEquals(VMWareImageStartType.CLONE, new VMWareCloudImage(myApiConnector,
-      "myImage", VMWareImageType.TEMPLATE, "folder", "pool", null, InstanceStatus.RUNNING, myStatusTask, VMWareImageStartType.CLONE).getStartType());
+      "myImage", VMWareImageType.TEMPLATE, "folder", "pool", null, InstanceStatus.RUNNING, myStatusTask, VMWareImageStartType.CLONE, 1).getStartType());
 
     assertEquals(VMWareImageStartType.CLONE, new VMWareCloudImage(myApiConnector,
-      "myImage", VMWareImageType.TEMPLATE, "folder", "pool", "snapshot", InstanceStatus.RUNNING, myStatusTask,VMWareImageStartType.CLONE).getStartType());
+      "myImage", VMWareImageType.TEMPLATE, "folder", "pool", "snapshot", InstanceStatus.RUNNING, myStatusTask,VMWareImageStartType.CLONE, 1).getStartType());
 
     assertEquals(VMWareImageStartType.CLONE, new VMWareCloudImage(myApiConnector,
-      "myImage", VMWareImageType.TEMPLATE, "folder", "pool", null, InstanceStatus.RUNNING, myStatusTask,VMWareImageStartType.LINKED_CLONE).getStartType());
+      "myImage", VMWareImageType.TEMPLATE, "folder", "pool", null, InstanceStatus.RUNNING, myStatusTask,VMWareImageStartType.LINKED_CLONE, 1).getStartType());
 
     assertEquals(VMWareImageStartType.LINKED_CLONE, new VMWareCloudImage(myApiConnector,
-      "myImage", VMWareImageType.TEMPLATE, "folder", "pool", "snapshot", InstanceStatus.RUNNING, myStatusTask,VMWareImageStartType.LINKED_CLONE).getStartType());
+      "myImage", VMWareImageType.TEMPLATE, "folder", "pool", "snapshot", InstanceStatus.RUNNING, myStatusTask,VMWareImageStartType.LINKED_CLONE, 1).getStartType());
 
     assertEquals(VMWareImageStartType.START, new VMWareCloudImage(myApiConnector,
-      "myImage", VMWareImageType.INSTANCE, "folder", "pool", null, InstanceStatus.RUNNING, myStatusTask,VMWareImageStartType.START).getStartType());
+      "myImage", VMWareImageType.INSTANCE, "folder", "pool", null, InstanceStatus.RUNNING, myStatusTask,VMWareImageStartType.START, 1).getStartType());
 
     assertEquals(VMWareImageStartType.START, new VMWareCloudImage(myApiConnector,
-      "myImage", VMWareImageType.INSTANCE, "folder", "pool", "snapshot", InstanceStatus.RUNNING, myStatusTask,VMWareImageStartType.START).getStartType());
+      "myImage", VMWareImageType.INSTANCE, "folder", "pool", "snapshot", InstanceStatus.RUNNING, myStatusTask,VMWareImageStartType.START, 1).getStartType());
 
     assertEquals(VMWareImageStartType.CLONE, new VMWareCloudImage(myApiConnector,
-      "myImage", VMWareImageType.INSTANCE, "folder", "pool", null, InstanceStatus.RUNNING, myStatusTask,VMWareImageStartType.CLONE).getStartType());
+      "myImage", VMWareImageType.INSTANCE, "folder", "pool", null, InstanceStatus.RUNNING, myStatusTask,VMWareImageStartType.CLONE, 1).getStartType());
 
     assertEquals(VMWareImageStartType.CLONE, new VMWareCloudImage(myApiConnector,
-      "myImage", VMWareImageType.INSTANCE, "folder", "pool", "snapshot", InstanceStatus.RUNNING, myStatusTask,VMWareImageStartType.CLONE).getStartType());
+      "myImage", VMWareImageType.INSTANCE, "folder", "pool", "snapshot", InstanceStatus.RUNNING, myStatusTask,VMWareImageStartType.CLONE, 1).getStartType());
 
     assertEquals(VMWareImageStartType.CLONE, new VMWareCloudImage(myApiConnector,
-      "myImage", VMWareImageType.INSTANCE, "folder", "pool", null, InstanceStatus.RUNNING, myStatusTask,VMWareImageStartType.LINKED_CLONE).getStartType());
+      "myImage", VMWareImageType.INSTANCE, "folder", "pool", null, InstanceStatus.RUNNING, myStatusTask,VMWareImageStartType.LINKED_CLONE, 1).getStartType());
 
     assertEquals(VMWareImageStartType.LINKED_CLONE, new VMWareCloudImage(myApiConnector,
-      "myImage", VMWareImageType.INSTANCE, "folder", "pool", "snapshot", InstanceStatus.RUNNING, myStatusTask,VMWareImageStartType.LINKED_CLONE).getStartType());
+      "myImage", VMWareImageType.INSTANCE, "folder", "pool", "snapshot", InstanceStatus.RUNNING, myStatusTask,VMWareImageStartType.LINKED_CLONE, 1).getStartType());
 
   }
 
   public void test_start_stop_instances(){
     final VMWareCloudImage image = new VMWareCloudImage(myApiConnector,
-      "myImage", VMWareImageType.INSTANCE, "folder", "pool", "snapshot", InstanceStatus.RUNNING, myStatusTask, VMWareImageStartType.START);
+      "myImage", VMWareImageType.INSTANCE, "folder", "pool", "snapshot", InstanceStatus.RUNNING, myStatusTask, VMWareImageStartType.START, 1);
     assertEquals(1, image.getInstances().size());
     final CloudInstance instance = image.getInstances().iterator().next();
     assertEquals(InstanceStatus.RUNNING,instance.getStatus());

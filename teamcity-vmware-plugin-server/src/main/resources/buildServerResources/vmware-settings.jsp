@@ -61,6 +61,7 @@
         <th>Clone folder</th>
         <th>Resource pool</th>
         <th>Start behaviour</th>
+        <th>Max number of instances</th>
         <th>Delete</th>
       </tr>
       </tbody>
@@ -113,6 +114,14 @@
   </td>
 </tr>
 
+<tr>
+  <th>
+    <label for="maxInstances">Max number of instances</label>
+  </th>
+  <td>
+    <props:textProperty name="maxInstances"/>
+  </td>
+</tr>
 <tr>
   <th>
     <label for="resourcePool">Resource pool</label>

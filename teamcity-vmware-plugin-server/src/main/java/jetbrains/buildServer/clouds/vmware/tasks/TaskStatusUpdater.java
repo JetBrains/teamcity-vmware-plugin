@@ -5,7 +5,6 @@ import com.vmware.vim25.LocalizedMethodFault;
 import com.vmware.vim25.TaskInfo;
 import com.vmware.vim25.TaskInfoState;
 import com.vmware.vim25.mo.Task;
-import java.rmi.RemoteException;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -17,13 +16,13 @@ import org.jetbrains.annotations.Nullable;
  *         Date: 6/9/2014
  *         Time: 4:26 PM
  */
-public class UpdateTaskStatusTask implements Runnable {
-  private static final Logger LOG = Logger.getInstance(UpdateTaskStatusTask.class.getName());
+public class TaskStatusUpdater implements Runnable {
+  private static final Logger LOG = Logger.getInstance(TaskStatusUpdater.class.getName());
 
 
   private final ConcurrentMap<Task, TaskCallbackHandler> myTasks;
 
-  public UpdateTaskStatusTask() {
+  public TaskStatusUpdater() {
     myTasks = new ConcurrentHashMap<Task, TaskCallbackHandler>();
   }
 

@@ -1,8 +1,6 @@
 package jetbrains.buildServer.clouds.vmware;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.vmware.vim25.*;
-import com.vmware.vim25.mo.Task;
 import com.vmware.vim25.mo.VirtualMachine;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -12,8 +10,8 @@ import java.util.concurrent.*;
 import jetbrains.buildServer.clouds.*;
 import jetbrains.buildServer.clouds.vmware.connector.VMWareApiConnector;
 import jetbrains.buildServer.clouds.vmware.connector.VMWareApiConnectorImpl;
+import jetbrains.buildServer.clouds.vmware.tasks.TaskStatusUpdater;
 import jetbrains.buildServer.clouds.vmware.tasks.UpdateInstancesTask;
-import jetbrains.buildServer.clouds.vmware.tasks.UpdateTaskStatusTask;
 import jetbrains.buildServer.clouds.vmware.web.VMWareWebConstants;
 import jetbrains.buildServer.serverSide.AgentDescription;
 import jetbrains.buildServer.util.NamedThreadFactory;
@@ -33,7 +31,7 @@ public class VMWareCloudClient implements CloudClientEx {
 
   private final Map<String, VMWareCloudImage> myImageMap = new HashMap<String, VMWareCloudImage>();
   private ScheduledExecutorService myScheduledExecutor;
-  private UpdateTaskStatusTask myStatusTask;
+  private TaskStatusUpdater myStatusTask;
   private CloudErrorInfo myErrorInfo;
 
   public VMWareCloudClient(@NotNull final CloudClientParameters cloudClientParameters) throws MalformedURLException, RemoteException {
@@ -47,7 +45,7 @@ public class VMWareCloudClient implements CloudClientEx {
 
   VMWareCloudClient(@NotNull final CloudClientParameters cloudClientParameters, @NotNull final VMWareApiConnector apiConnector) throws MalformedURLException, RemoteException {
     myApiConnector = apiConnector;
-    myStatusTask = new UpdateTaskStatusTask();
+    myStatusTask = new TaskStatusUpdater();
 
     final String imagesListData = cloudClientParameters.getParameter(VMWareWebConstants.IMAGES_DATA);
     if (imagesListData == null) {
@@ -63,6 +61,13 @@ public class VMWareCloudClient implements CloudClientEx {
         String cloneFolder = split[2];
         String resourcePool = split[3];
         String behaviourStr = split[4];
+        String maxInstancesStr = split[5];
+
+        int maxInstances = 0;
+        try {
+          maxInstances = Integer.parseInt(maxInstancesStr);
+        } catch (Exception ex) {
+        }
 
         if (!myApiConnector.checkCloneFolderExists(cloneFolder)) {
           errorList.add(VMWareCloudErrorInfoFactory.noSuchFolder(cloneFolder).getMessage());
@@ -86,14 +91,14 @@ public class VMWareCloudClient implements CloudClientEx {
 
         final VMWareCloudImage cloudImage = new VMWareCloudImage(
           myApiConnector, vmName, imageType, cloneFolder, resourcePool, snapshotName,
-          myApiConnector.getInstanceStatus(vm), myStatusTask, startType);
+          myApiConnector.getInstanceStatus(vm), myStatusTask, startType, maxInstances);
         myImageMap.put(vmName, cloudImage);
       }
 
     } finally {
 
       if (errorList.size() == 0) {
-        myScheduledExecutor = Executors.newScheduledThreadPool(1, new NamedThreadFactory("VSphere"));
+        myScheduledExecutor = Executors.newScheduledThreadPool(2, new NamedThreadFactory("VSphere"));
         myScheduledExecutor.scheduleWithFixedDelay(new UpdateInstancesTask(myApiConnector, this), 20, 10, TimeUnit.SECONDS);
         myScheduledExecutor.scheduleWithFixedDelay(myStatusTask, 20, 5, TimeUnit.SECONDS);
       } else {
@@ -119,10 +124,7 @@ public class VMWareCloudClient implements CloudClientEx {
   }
 
   public void terminateInstance(@NotNull CloudInstance cloudInstance) {
-    LOG.info("Terminating instance " + cloudInstance.getName());
-    myApiConnector.stopInstance((VMWareCloudInstance)cloudInstance);
-    ((VMWareCloudInstance)cloudInstance).setStatus(InstanceStatus.STOPPED);
-    ((VMWareCloudImage)cloudInstance.getImage()).instanceStopped(cloudInstance.getName());
+    ((VMWareCloudImage)cloudInstance.getImage()).stopInstance((VMWareCloudInstance)cloudInstance);
   }
 
   public void dispose() {
@@ -163,17 +165,9 @@ public class VMWareCloudClient implements CloudClientEx {
   }
 
   public boolean canStartNewInstance(@NotNull CloudImage cloudImage) {
-    VMWareCloudImage vCloudImage = (VMWareCloudImage)cloudImage;
     try {
-      if (vCloudImage.getImageType() == VMWareImageType.INSTANCE) {
-        if (vCloudImage.getSnapshotName() != null) {
-          if (!myApiConnector.ensureSnapshotExists(vCloudImage.getId(), vCloudImage.getSnapshotName())) {
-            myErrorInfo = new CloudErrorInfo("Unable to find snapshot: " + vCloudImage.getSnapshotName());
-          }
-        } else if (vCloudImage.getStartType() == VMWareImageStartType.START) {
-          return myApiConnector.isInstanceStopped(vCloudImage.getId());
-        }
-      }
+      VMWareCloudImage vCloudImage = (VMWareCloudImage)cloudImage;
+      return vCloudImage.canStartNewInstance();
     } catch (RemoteException e) {
       if (myErrorInfo == null) {
         myErrorInfo = new CloudErrorInfo("error reading VM information", e.toString(), e);
