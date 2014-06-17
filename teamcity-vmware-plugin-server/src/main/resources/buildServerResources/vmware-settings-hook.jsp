@@ -2,16 +2,18 @@
 <%@ include file="/include.jsp" %>
 <script type="text/javascript">
 
-  function refreshVMWareOptions(refreshUrl){
-    document.getElementById("temp").value="Trying";
+  function vmware_refreshOptions(refreshUrl){
+
     BS.ajaxRequest(refreshUrl, {
       parameters: BS.Clouds.Admin.CreateProfileForm.serializeParameters(),
-      onSuccess: function(response){
+
+      onComplete: function(response){
         var root = BS.Util.documentRoot(response);
         if (!root) return;
 
         var vms = root.getElementsByTagName("VirtualMachines")[0].getElementsByTagName("VirtualMachine");
         $j('#image').find("option").remove();
+        $j('#image').append($j("<option>").val("").text("--Please select a VM--"))
         $j('#image').append($j("<optgroup>").attr("label", "Virtual machines"));
         for (var i=0; i<vms.length; i++) {
           var vm = vms[i];
@@ -52,20 +54,47 @@
     });
   }
 
-  function addImage(){
-    $j("#vmware_images_list tbody").append($j("<tr>")
-        .append($j("<td>").text($j("#image option:selected").text()))
-        .append($j("<td>").text($j("#snapshot option:selected").text()))
-        .append($j("<td>").text($j("#cloneFolder").val()))
-        .append($j("<td>").text($j("#resourcePool").val()))
-        .append($j("<td>").text($j("#cloneBehaviour").val()))
-        .append($j("<td>").append($j("<a>").attr("href", "#").attr("onclick", "$j(this).closest('tr').remove();updateHidden();return false;").text("X")))
-    );
+  function vmware_addImage() {
+    var vmName = $j("#image option:selected").text();
+    var snapshotName = $j("#snapshot option:selected").text();
+    var cloneFolder = $j("#cloneFolder").val();
+    var resourcePool = $j("#resourcePool").val();
+    var cloneBehaviour = $j("#cloneBehaviour").val();
 
-    updateHidden();
+    // checking properties
+    $j("#error_image").empty();
+    $j("#error_cloneBehaviour").empty();
+    var hadError = false;
+    if ($j("#image option:selected").val() == "") {
+      $j("#error_image").append($j("<div>").text("Please select a VM"));
+      hadError = true;
+    }
+    if ($j("#image option:selected").parent().attr("label") == 'Templates' && cloneBehaviour == 'START') {
+      $j("#error_cloneBehaviour").append($j("<div>").text("Start/Stop mode is not available for readonly(template) VMs"));
+      hadError = true;
+    }
+    if ($j("#snapshot option:selected").val() == "" && cloneBehaviour == "LINKED_CLONE") {
+      $j("#error_cloneBehaviour").append($j("<div>").text("Linked clone mode requires an existing snapshot"));
+      hadError = true;
+    }
+    if (!hadError) {
+      vmware_addImageInternal(vmName, snapshotName, cloneFolder, resourcePool, cloneBehaviour);
+      vmware_updateHidden();
+    }
   }
 
-  function updateHidden(){
+  function vmware_addImageInternal(vmName, snapshotName, cloneFolder, resourcePool, cloneBehaviour){
+    $j("#vmware_images_list tbody").append($j("<tr>")
+        .append($j("<td>").text(vmName))
+        .append($j("<td>").text(snapshotName))
+        .append($j("<td>").text(cloneFolder))
+        .append($j("<td>").text(resourcePool))
+        .append($j("<td>").text(cloneBehaviour))
+        .append($j("<td>").append($j("<a>").attr("href", "#").attr("onclick", "$j(this).closest('tr').remove();vmware_updateHidden();return false;").text("X")))
+    );
+  }
+
+  function vmware_updateHidden(){
     $j("#${cons.imagesData}").val("");
     var data = "";
     $j("#vmware_images_list tbody tr").each(function(){
@@ -81,8 +110,7 @@
     $j("#${cons.imagesData}").val(data);
   }
 
-  function readSnapshots(refreshUrl){
-    document.getElementById("temp").value="Trying Sn";
+  function vmware_readSnapshots(refreshUrl){
     BS.ajaxRequest(refreshUrl, {
       parameters: BS.Clouds.Admin.CreateProfileForm.serializeParameters(),
       onSuccess: function(response){
@@ -100,5 +128,20 @@
       }.bind(this)
     });
   }
+
+  function vmware_restoreFromHidden(){
+    var partsOfStr = $j("#${cons.imagesData}").val().split(';X;:');
+    for (var i=0; i<partsOfStr.length; i++){
+      if (partsOfStr.length ==0)
+        break;
+      var ones = partsOfStr[i].split(';');
+      if (ones[0].length > 0) {
+        vmware_addImageInternal(ones[0], ones[1], ones[2], ones[3], ones[4]);
+      }
+    }
+  }
+
+  vmware_refreshOptions($j("#refreshablePath").val());
+  vmware_restoreFromHidden();
 
 </script>

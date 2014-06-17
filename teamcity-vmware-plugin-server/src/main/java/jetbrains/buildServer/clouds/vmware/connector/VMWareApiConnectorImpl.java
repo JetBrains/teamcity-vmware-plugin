@@ -26,7 +26,7 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
 
   private static final Logger LOG = Logger.getInstance(VMWareCloudClient.class.getName());
 
-  private static final long SHUTDOWN_TIMEOUT = 60*1000;
+  private static final long SHUTDOWN_TIMEOUT = 60 * 1000;
 
   private final URL myInstanceURL;
   private final String myUsername;
@@ -94,7 +94,7 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
   @NotNull
   public Map<String, VirtualMachineSnapshotTree> getSnapshotList(final String vmName) throws RemoteException {
     final VirtualMachine vm = findEntityByName(vmName, VirtualMachine.class);
-    if (vm.getSnapshot() == null){
+    if (vm.getSnapshot() == null) {
       return Collections.emptyMap();
     }
     final VirtualMachineSnapshotTree[] rootSnapshotList = vm.getSnapshot().getRootSnapshotList();
@@ -102,33 +102,11 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
   }
 
   @Nullable
-  public VirtualMachine startInstance(@NotNull final VMWareCloudInstance instance, @NotNull final String agentName, @NotNull final CloudInstanceUserData userData)
+  public Task startInstance(@NotNull final VMWareCloudInstance instance, @NotNull final String agentName, @NotNull final CloudInstanceUserData userData)
     throws RemoteException, InterruptedException {
-    instance.setStatus(InstanceStatus.SCHEDULED_TO_START);
     final VirtualMachine vm = findEntityByName(instance.getInstanceId(), VirtualMachine.class);
     if (vm != null) {
-      final Task task = vm.powerOnVM_Task(null);
-      instance.setStatus(InstanceStatus.STARTING);
-      final String result = task.waitForTask();
-      if (result != Task.SUCCESS) {
-        final String errorMsg = String.format("Unable to start %s. Result: %s", instance.getName(), result);
-        LOG.warn(errorMsg);
-        instance.setErrorInfo(new CloudErrorInfo(errorMsg));
-      }
-      // adding special properties:
-      final VirtualMachineConfigSpec spec = new VirtualMachineConfigSpec();
-      spec.setExtraConfig(new OptionValue[]{
-        createOptionValue(AGENT_NAME, agentName),
-        createOptionValue(INSTANCE_NAME, instance.getInstanceId()),
-        createOptionValue(AUTH_TOKEN, userData.getAuthToken()),
-        createOptionValue(SERVER_URL, userData.getServerAddress()),
-        createOptionValue(IMAGE_NAME, instance.getImageId()),
-        createOptionValue(USER_DATA, userData.serialize())
-      });
-      if (vm.reconfigVM_Task(spec).waitForTask() == Task.SUCCESS) {
-        instance.setStatus(InstanceStatus.RUNNING);
-      }
-      return vm;
+      return vm.powerOnVM_Task(null);
     } else {
       instance.setStatus(InstanceStatus.ERROR);
       instance.setErrorInfo(new CloudErrorInfo("VM " + instance.getInstanceId() + " not found!"));
@@ -136,50 +114,45 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
     return null;
   }
 
-  public String cloneVmIfNecessary(VMWareCloudImage image) throws RemoteException, InterruptedException {
-    VirtualMachine vm = findEntityByName(image.getId(), VirtualMachine.class);
-    if (vm != null) {
-      String cloneName;
-      final VirtualMachineCloneSpec cloneSpec = new VirtualMachineCloneSpec();
-      final VirtualMachineRelocateSpec location = new VirtualMachineRelocateSpec();
-      cloneSpec.setLocation(location);
-      if (image.getResourcePool() != null) {
-        location.setPool(findEntityByName(image.getResourcePool(), ResourcePool.class).getMOR());
-      }
-      cloneSpec.setTemplate(false);
-      if (image.getImageType() == VMWareImageType.INSTANCE) {
-        if (image.getStartType() == VMWareImageStartType.START) {
-          return image.getName();
-        }
+  public Task reconfigureInstance(@NotNull final VMWareCloudInstance instance, @NotNull final String agentName, @NotNull final CloudInstanceUserData userData)
+    throws RemoteException {
+    final VirtualMachine vm = findEntityByName(instance.getInstanceId(), VirtualMachine.class);
+    final VirtualMachineConfigSpec spec = new VirtualMachineConfigSpec();
+    spec.setExtraConfig(new OptionValue[]{
+      createOptionValue(AGENT_NAME, agentName),
+      createOptionValue(INSTANCE_NAME, instance.getInstanceId()),
+      createOptionValue(AUTH_TOKEN, userData.getAuthToken()),
+      createOptionValue(SERVER_URL, userData.getServerAddress()),
+      createOptionValue(IMAGE_NAME, instance.getImageId()),
+      createOptionValue(USER_DATA, userData.serialize())
+    });
+    return vm.reconfigVM_Task(spec);
+  }
 
-        final ManagedObjectReference snapshot;
-        if (image.getSnapshotName() != null) {
-          final VirtualMachineSnapshotTree obj = getSnapshotList(vm.getName()).get(image.getSnapshotName());
-          snapshot = obj==null ? null : obj.getSnapshot();
-        } else {
-          snapshot = null;
-        }
+  @Nullable
+  public Task cloneVm(@NotNull final String baseVmName,
+                      @NotNull String resourcePool,
+                      @NotNull String folder,
+                      @NotNull final String newVmName,
+                      @Nullable final String snapshotName,
+                      final boolean isLinkedClone) throws RemoteException {
+    VirtualMachine vm = findEntityByName(baseVmName, VirtualMachine.class);
+    if (vm == null){
+      return null;
+    }
+    final VirtualMachineCloneSpec cloneSpec = new VirtualMachineCloneSpec();
+    final VirtualMachineRelocateSpec location = new VirtualMachineRelocateSpec();
 
-        if (snapshot != null) { // linked clones only makes sense for snapshots
-          if (image.getStartType() == VMWareImageStartType.LINKED_CLONE) {
-            location.setDiskMoveType(VirtualMachineRelocateDiskMoveOptions.createNewChildDiskBacking.name());
-          }
-          cloneSpec.setSnapshot(snapshot);
-        }
-      }
-      SimpleDateFormat sdf = new SimpleDateFormat("Md-hhmmss");
-      cloneName = String.format("%s-clone-%s", image.getId(), sdf.format(new Date()));
-      final Task task = vm.cloneVM_Task(this.findEntityByName(image.getFolder(), Folder.class), cloneName, cloneSpec);
-      final String status = task.waitForTask();
-      if (Task.SUCCESS.equals(status)) {
-        image.setErrorInfo(null);
-        return cloneName;
-      } else {
-        image.setErrorInfo(new CloudErrorInfo("Unable to clone VM: " + status));
-        return null;
+    cloneSpec.setLocation(location);
+    location.setPool(findEntityByName(resourcePool, ResourcePool.class).getMOR());
+    if (snapshotName != null){
+      final VirtualMachineSnapshotTree obj = getSnapshotList(vm.getName()).get(snapshotName);
+      cloneSpec.setSnapshot(obj == null ? null : obj.getSnapshot());
+      if (isLinkedClone && cloneSpec.getSnapshot() != null){
+        location.setDiskMoveType(VirtualMachineRelocateDiskMoveOptions.createNewChildDiskBacking.name());
       }
     }
-    return null;
+    return vm.cloneVM_Task(findEntityByName(folder, Folder.class), newVmName, cloneSpec);
   }
 
   public boolean isStartedByTeamcity(String instanceName) throws RemoteException {
@@ -189,15 +162,14 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
 
   public boolean isInstanceStopped(String instanceName) throws RemoteException {
     final VirtualMachine vm = findEntityByName(instanceName, VirtualMachine.class);
-    if (vm.getRuntime() != null){
+    if (vm.getRuntime() != null) {
       return vm.getRuntime().getPowerState() == VirtualMachinePowerState.poweredOff;
     }
     return false;
   }
 
 
-
-  protected static Map<String, VirtualMachineSnapshotTree> snapshotNames(@Nullable final VirtualMachineSnapshotTree[] trees){
+  protected static Map<String, VirtualMachineSnapshotTree> snapshotNames(@Nullable final VirtualMachineSnapshotTree[] trees) {
     final Map<String, VirtualMachineSnapshotTree> treeNames = new HashMap<String, VirtualMachineSnapshotTree>();
     if (trees != null) {
       for (final VirtualMachineSnapshotTree tree : trees) {
@@ -228,24 +200,24 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
           instance.setStatus(InstanceStatus.STOPPING);
           vm.shutdownGuest();
           long shutdownStartTime = System.currentTimeMillis();
-          while (getInstanceStatus(vm) != InstanceStatus.STOPPED && (System.currentTimeMillis() - shutdownStartTime) < SHUTDOWN_TIMEOUT){
+          while (getInstanceStatus(vm) != InstanceStatus.STOPPED && (System.currentTimeMillis() - shutdownStartTime) < SHUTDOWN_TIMEOUT) {
             vm = findEntityByName(instance.getInstanceId(), VirtualMachine.class);
             Thread.sleep(5000);
           }
-          if (getInstanceStatus(vm) != InstanceStatus.STOPPED){
-            throw new RuntimeException("Stop timeout("+SHUTDOWN_TIMEOUT+") elapsed.");
+          if (getInstanceStatus(vm) != InstanceStatus.STOPPED) {
+            throw new RuntimeException("Stop timeout(" + SHUTDOWN_TIMEOUT + ") elapsed.");
           }
 
         } catch (Exception ex) {
           LOG.warn("Unable to stop using Guest Shutdown: + " + ex.toString());
           final Task task = vm.powerOffVM_Task();
           final String powerOffResult = task.waitForTask();
-          if (!Task.SUCCESS.equals(powerOffResult)){
+          if (!Task.SUCCESS.equals(powerOffResult)) {
             instance.setErrorInfo(new CloudErrorInfo("Unable to powerOff VM. Task status: " + powerOffResult, ex.toString(), ex));
           }
         }
         instance.setStatus(InstanceStatus.STOPPED);
-        if (instance.isDeleteAfterStop()){ // we only destroy proper instances.
+        if (instance.isDeleteAfterStop()) { // we only destroy proper instances.
           if (instance.getErrorInfo() == null) {
             final Task destroyTask = vm.destroy_Task();
             final String destroyResult = destroyTask.waitForTask();
@@ -277,7 +249,7 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
   }
 
 
-  public boolean checkCloneFolderExists(@NotNull final String cloneFolderName){
+  public boolean checkCloneFolderExists(@NotNull final String cloneFolderName) {
     try {
       return findEntityByName(cloneFolderName, Folder.class) != null;
     } catch (RemoteException e) {
@@ -286,7 +258,7 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
     return false;
   }
 
-  public boolean checkResourcePoolExists(@NotNull final String resourcePool){
+  public boolean checkResourcePoolExists(@NotNull final String resourcePool) {
     try {
       return findEntityByName(resourcePool, ResourcePool.class) != null;
     } catch (RemoteException e) {
@@ -309,26 +281,26 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
   }
 
   @Nullable
-  public String getImageName(VirtualMachine vm){
+  public String getImageName(VirtualMachine vm) {
     return getOptionValue(vm, IMAGE_NAME);
   }
 
   @Nullable
-  private String getOptionValue(@NotNull final VirtualMachine vm, @NotNull final String optionName){
+  private String getOptionValue(@NotNull final VirtualMachine vm, @NotNull final String optionName) {
     final OptionValue[] extraConfig = vm.getConfig().getExtraConfig();
     for (OptionValue option : extraConfig) {
-      if (optionName.equals(option.getKey())){
+      if (optionName.equals(option.getKey())) {
         return String.valueOf(option.getValue());
       }
     }
     return null;
   }
 
-  public InstanceStatus getInstanceStatus(VirtualMachine vm){
-    if (vm.getRuntime() == null || vm.getRuntime().getPowerState() ==VirtualMachinePowerState.poweredOff){
+  public InstanceStatus getInstanceStatus(VirtualMachine vm) {
+    if (vm.getRuntime() == null || vm.getRuntime().getPowerState() == VirtualMachinePowerState.poweredOff) {
       return InstanceStatus.STOPPED;
     }
-    if (vm.getRuntime().getPowerState() == VirtualMachinePowerState.poweredOn){
+    if (vm.getRuntime().getPowerState() == VirtualMachinePowerState.poweredOn) {
       return InstanceStatus.RUNNING;
     }
     return InstanceStatus.UNKNOWN;

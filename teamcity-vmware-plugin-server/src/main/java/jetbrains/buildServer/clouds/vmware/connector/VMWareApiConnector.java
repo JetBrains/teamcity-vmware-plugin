@@ -3,6 +3,7 @@ package jetbrains.buildServer.clouds.vmware.connector;
 import com.vmware.vim25.VirtualMachineSnapshotTree;
 import com.vmware.vim25.mo.Folder;
 import com.vmware.vim25.mo.ResourcePool;
+import com.vmware.vim25.mo.Task;
 import com.vmware.vim25.mo.VirtualMachine;
 import java.rmi.RemoteException;
 import java.util.Map;
@@ -35,10 +36,19 @@ public interface VMWareApiConnector {
   Map<String, VirtualMachineSnapshotTree> getSnapshotList(String vmName) throws RemoteException;
 
   @Nullable
-  VirtualMachine startInstance(VMWareCloudInstance instance, String agentName, CloudInstanceUserData userData)
+  Task startInstance(VMWareCloudInstance instance, String agentName, CloudInstanceUserData userData)
     throws RemoteException, InterruptedException;
 
-  String cloneVmIfNecessary(VMWareCloudImage image) throws RemoteException, InterruptedException;
+  Task reconfigureInstance(@NotNull final VMWareCloudInstance instance,
+                           @NotNull final String agentName,
+                           @NotNull final CloudInstanceUserData userData) throws RemoteException;
+
+  Task cloneVm(@NotNull final String baseVmName,
+               @NotNull String resourcePool,
+               @NotNull String folder,
+               @NotNull final String newVmName,
+               @Nullable final String snapshotName,
+               final boolean isLinkedClone) throws RemoteException;
 
   boolean isStartedByTeamcity(String instanceName) throws RemoteException;
 

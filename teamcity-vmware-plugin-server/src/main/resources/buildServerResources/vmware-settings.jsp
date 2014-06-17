@@ -30,23 +30,14 @@
 <c:set var="refreshUrl"><c:url value="${refreshablePath}"/></c:set>
 <c:set var="refreshSnapshotsUrl"><c:url value="${refreshSnapshotsPath}"/></c:set>
 
-<tr>
-  <td><input type="text" id="temp" value=""></td>
-  <td></td>
-</tr>
   <tr>
-    <td>
-      <label for="${cons.serverUrl}">Server URL: <l:star/></label>
-    </td>
-    <td><props:textProperty name="${cons.serverUrl}" className="longField"/>
-    </td>
+    <th><label for="${cons.serverUrl}">Server URL: <l:star/></label></th>
+    <td><props:textProperty name="${cons.serverUrl}" className="longField"/></td>
   </tr>
 
   <tr>
-    <td><label for="${cons.username}">Username: <l:star/></label></td>
-    <td>
-      <props:textProperty name="${cons.username}"/>
-    </td>
+    <th><label for="${cons.username}">Username: <l:star/></label></th>
+    <td><props:textProperty name="${cons.username}"/></td>
   </tr>
 
   <tr>
@@ -55,7 +46,8 @@
   </tr>
   <tr>
     <td colspan="2">
-      <input type="button" value="Fetch options" onclick="refreshVMWareOptions('<c:url value="${refreshablePath}"/>'); return false;"/>
+      <input type="hidden" id="refreshablePath" value="<c:url value="${refreshablePath}"/>"/>
+      <input type="button" value="Fetch options" onclick="vmware_refreshOptions('<c:url value="${refreshablePath}"/>'); return false;"/>
     </td>
   </tr>
 
@@ -81,8 +73,11 @@
 <tr>
   <th><label for="image">Agent images:</label></th>
   <td>
-    <c:set var="readSnapshotsOnChange">readSnapshots('<c:url value="${refreshSnapshotsPath}"/>')</c:set>
-    <props:selectProperty name="image" onchange="${readSnapshotsOnChange}"/>
+    <c:set var="readSnapshotsOnChange">vmware_readSnapshots('<c:url value="${refreshSnapshotsPath}"/>')</c:set>
+    <div>
+      <props:selectProperty name="image" onchange="${readSnapshotsOnChange}"/>
+    </div>
+    <span id="error_image" class="error"></span>
   </td>
 </tr>
 
@@ -113,6 +108,8 @@
       <props:option value="CLONE">Clone</props:option>
       <props:option value="LINKED_CLONE">Linked clone</props:option>
     </props:selectProperty>
+    <span id="error_cloneBehaviour" class="error"></span>
+    <%--<span class="smallNote">Linked clone mode requires an existing snapshot</span>--%>
   </td>
 </tr>
 
@@ -126,7 +123,7 @@
 </tr>
 <tr>
   <td colspan="2">
-    <input type="button" value="Add image" onclick="addImage(); return false;"/>
+    <input type="button" value="Add image" onclick="vmware_addImage(); return false;"/>
   </td>
 </tr>
 
