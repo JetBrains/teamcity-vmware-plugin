@@ -40,7 +40,6 @@ public class VMWareEditProfileController extends BaseFormXmlController {
     mySnapshotsPath = pluginDescriptor.getPluginResourcesPath("vmware-getsnapshotlist.html");
     manager.registerController(myHtmlPath, this);
     manager.registerController(pluginDescriptor.getPluginResourcesPath("vmware-getsnapshotlist.html"), new GetSnapshotsListController());
-    new JsExtension(manager, pluginDescriptor).register();
   }
 
   @Override
@@ -105,10 +104,4 @@ public class VMWareEditProfileController extends BaseFormXmlController {
     return element;
   }
 
-  private static class JsExtension extends SimplePageExtension {
-    public JsExtension(@NotNull PagePlaces pagePlaces,
-                       @NotNull PluginDescriptor descriptor) {
-      super(pagePlaces, PlaceId.ALL_PAGES_FOOTER, "vmware-settings-hook", descriptor.getPluginResourcesPath("vmware-settings-hook.jsp"));
-    }
-  }
 }
