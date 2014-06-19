@@ -33,16 +33,22 @@
         BS.Clouds.VMWareVSphere = BS.Clouds.VMWareVSphere || {
         refreshOptionsUrl: '<c:url value="${refreshablePath}"/>',
         refreshSnapshotsUrl: '<c:url value="${refreshSnapshotsPath}"/>',
-        refreshOptions: function (refreshUrl) {
+        refreshOptions: function () {
             var $loader = $j(BS.loadingIcon);
 
+            if ($j('#vmwareFetchOptionsButton').attr('disabled')) {
+                return false;
+            }
+
+            $j('#vmwareFetchOptionsButton').attr('disabled', true);
             $loader.insertAfter($j('#vmwareFetchOptionsButton'));
 
-            BS.ajaxRequest(refreshUrl || this.refreshOptionsUrl, {
+            BS.ajaxRequest(this.refreshOptionsUrl, {
                 parameters: BS.Clouds.Admin.CreateProfileForm.serializeParameters(),
 
                 onComplete: function() {
                     $loader.remove();
+                    $j('#vmwareFetchOptionsButton').attr('disabled', false);
                 },
 
                 onFailure: function (response) {
@@ -94,6 +100,8 @@
                     BS.Clouds.VMWareVSphere.showOptions();
                 }
             });
+
+            return false;
         },
         addImage: function () {
             var vmName = $j("#image option:selected").text(),
@@ -107,6 +115,8 @@
                 this.addImageInternal(vmName, snapshotName, cloneFolder, resourcePool, cloneBehaviour, maxInstances);
                 this.updateHidden();
             }
+
+            return false;
         },
         validateOptions: function () {
             var cloneFolder = $j("#cloneFolder").val(),
@@ -146,6 +156,7 @@
                         self.addImageInternal.apply(self, ones);
                     }
                 });
+                $j(".images-list-wrapper").show(200);
             }
         },
         addImageInternal: function (vmName, snapshotName, cloneFolder, resourcePool, cloneBehaviour, maxInstances) {
@@ -174,8 +185,8 @@
             });
             $j("#${cons.imagesData}").val(data);
         },
-        readSnapshots: function (refreshUrl) {
-            BS.ajaxRequest(regreshUrl || this.refreshSnapshotsUrl, {
+        readSnapshots: function () {
+            BS.ajaxRequest(this.refreshSnapshotsUrl, {
                 parameters: BS.Clouds.Admin.CreateProfileForm.serializeParameters(),
                 onSuccess: function (response) {
                     var root = BS.Util.documentRoot(response),
@@ -217,12 +228,13 @@
   </tr>
   <tr>
     <td colspan="2">
-      <input type="hidden" id="refreshablePath" value="<c:url value="${refreshablePath}"/>"/>
-      <input type="button" value="Fetch options" id="vmwareFetchOptionsButton"/>
+      <%--<input type="hidden" id="refreshablePath" value="<c:url value="${refreshablePath}"/>"/>--%>
+      <%--<input type="button" value="Fetch options" id="vmwareFetchOptionsButton"/>--%>
+      <forms:button id="vmwareFetchOptionsButton">Fetch options</forms:button>
     </td>
   </tr>
 
-<tr>
+<tr class="images-list-wrapper hidden">
   <td colspan="2">
     <table id="vmware_images_list" class="runnerFormTable">
       <tbody>
@@ -304,7 +316,7 @@
         </tr>
         <tr>
           <td colspan="2">
-            <input type="button" value="Add image" id="vmwareAddImageButton"/>
+            <forms:button title="Add image" id="vmwareAddImageButton">Add image</forms:button>
           </td>
         </tr>
         </table>
