@@ -89,8 +89,8 @@ public class VMWareCloudClientTest extends BaseTestCase {
 
     myFakeApi = new FakeApiConnector(){
       @Override
-      public Map<String, VirtualMachine> getVirtualMachines() throws RemoteException {
-        final Map<String, VirtualMachine> instances = super.getVirtualMachines();
+      public Map<String, VirtualMachine> getVirtualMachines(boolean filterClones) throws RemoteException {
+        final Map<String, VirtualMachine> instances = super.getVirtualMachines(filterClones);
         instances.put("image_template", new FakeVirtualMachine("image_template", true, false));
         instances.put("image1", new FakeVirtualMachine("image1", false, false));
         return instances;
@@ -107,11 +107,11 @@ public class VMWareCloudClientTest extends BaseTestCase {
     assertEquals(VMWareImageStartType.CLONE, getImageByName("image_template").getStartType());
     assertEquals(VMWareImageStartType.CLONE, getImageByName("image1").getStartType());
 
-    myClientParameters.setParameter("cloneBehaviour", VMWareImageStartType.LINKED_CLONE.name());
+    myClientParameters.setParameter("cloneBehaviour", VMWareImageStartType.CLONE.name());
     myClient = new VMWareCloudClient(myClientParameters, myFakeApi);
     // doesn't depend on snapshot existence
-    assertEquals(VMWareImageStartType.LINKED_CLONE, getImageByName("image_template").getStartType());
-    assertEquals(VMWareImageStartType.LINKED_CLONE, getImageByName("image1").getStartType());
+    assertEquals(VMWareImageStartType.CLONE, getImageByName("image_template").getStartType());
+    assertEquals(VMWareImageStartType.CLONE, getImageByName("image1").getStartType());
   }
 
   public void check_startup_parameters() throws MalformedURLException, RemoteException {
@@ -119,7 +119,7 @@ public class VMWareCloudClientTest extends BaseTestCase {
     assertNull(myClient.getErrorInfo());
 
     startNewInstance("image1", Collections.singletonMap("customParam1", "customValue1"));
-    final VirtualMachine vm = myFakeApi.getVirtualMachines().get("image1");
+    final VirtualMachine vm = myFakeApi.getVirtualMachines(true).get("image1");
     final OptionValue[] extraConfig = vm.getConfig().getExtraConfig();
     final String userDataEncoded = getExtraConfigValue(extraConfig, VMWarePropertiesNames.USER_DATA);
     final CloudInstanceUserData cloudInstanceUserData = CloudInstanceUserData.deserialize(userDataEncoded);
@@ -135,7 +135,7 @@ public class VMWareCloudClientTest extends BaseTestCase {
         assertTrue(data.getInstanceId().contains("clone"));
       }
     }, true);
-    startAndCheckCloneDeletedAfterTermination("image2", VMWareImageStartType.LINKED_CLONE, new Checker<VMWareCloudInstance>() {
+    startAndCheckCloneDeletedAfterTermination("image2", VMWareImageStartType.CLONE, new Checker<VMWareCloudInstance>() {
       public void check(final VMWareCloudInstance data) {
         assertTrue(data.getInstanceId().startsWith("image_template"));
         assertTrue(data.getInstanceId().contains("clone"));
@@ -143,7 +143,7 @@ public class VMWareCloudClientTest extends BaseTestCase {
       }
     }, false);
 
-    startAndCheckCloneDeletedAfterTermination("image2", VMWareImageStartType.LINKED_CLONE, new Checker<VMWareCloudInstance>() {
+    startAndCheckCloneDeletedAfterTermination("image2", VMWareImageStartType.CLONE, new Checker<VMWareCloudInstance>() {
       public void check(final VMWareCloudInstance data) {
         assertTrue(data.getInstanceId().startsWith("image_template"));
         assertTrue(data.getInstanceId().contains("clone"));
@@ -171,14 +171,14 @@ public class VMWareCloudClientTest extends BaseTestCase {
     assertNull(myClient.getErrorInfo());
 
     final VMWareCloudInstance instance = startNewInstance(imageName);
-    final VirtualMachine vm = myFakeApi.getVirtualMachines().get(instance.getName());
+    final VirtualMachine vm = myFakeApi.getVirtualMachines(true).get(instance.getName());
     assertNotNull("instance must exists", vm);
     assertEquals("Must be running", InstanceStatus.RUNNING, myFakeApi.getInstanceStatus(vm));
     if (instanceChecker != null) {
       instanceChecker.check(instance);
     }
     myClient.terminateInstance(instance);
-    assertEquals("template clone should be deleted after execution", shouldBeDeleted, myFakeApi.getVirtualMachines().get(instance.getName()) == null);
+    assertEquals("template clone should be deleted after execution", shouldBeDeleted, myFakeApi.getVirtualMachines(true).get(instance.getName()) == null);
 
   }
 

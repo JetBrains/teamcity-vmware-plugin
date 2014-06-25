@@ -7,12 +7,12 @@ import com.vmware.vim25.mo.*;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.rmi.RemoteException;
-import java.text.SimpleDateFormat;
 import java.util.*;
 import jetbrains.buildServer.clouds.CloudErrorInfo;
 import jetbrains.buildServer.clouds.CloudInstanceUserData;
 import jetbrains.buildServer.clouds.InstanceStatus;
 import jetbrains.buildServer.clouds.vmware.*;
+import jetbrains.buildServer.util.pathMatcher.SearchPattern;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -78,8 +78,55 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
   }
 
   @NotNull
-  public Map<String, VirtualMachine> getVirtualMachines() throws RemoteException {
-    return findAllEntitiesAsMap(VirtualMachine.class);
+  public Map<String, VirtualMachine> getVirtualMachines(boolean filterClones) throws RemoteException {
+    final Map<String, VirtualMachine> allVms = findAllEntitiesAsMap(VirtualMachine.class);
+    final Map<String, VirtualMachine> filteredVms = new HashMap<String, VirtualMachine>();
+    for (Map.Entry<String, VirtualMachine> vmEntry : allVms.entrySet()) {
+      final VirtualMachine vm = vmEntry.getValue();
+      final VirtualMachineConfigInfo config = vm.getConfig();
+      if (config == null) {
+        continue;
+      }
+      final OptionValue[] extraConfig = config.getExtraConfig();
+      boolean isClone = false;
+      for (OptionValue optionValue : extraConfig) {
+        if (TEAMCITY_VMWARE_CLONED_INSTANCE.equals(optionValue.getKey()) && Boolean.valueOf(String.valueOf(optionValue.getValue()))) {
+          isClone = true;
+          break;
+        }
+      }
+      if (!isClone || !filterClones) {
+        filteredVms.put(vmEntry.getKey(), vmEntry.getValue());
+      }
+    }
+    return filteredVms;
+  }
+
+  public Map<String, VirtualMachine> getClones(@NotNull final String imageName) throws RemoteException {
+    final Map<String, VirtualMachine> allVms = findAllEntitiesAsMap(VirtualMachine.class);
+    final Map<String, VirtualMachine> filteredVms = new HashMap<String, VirtualMachine>();
+    for (Map.Entry<String, VirtualMachine> entry : allVms.entrySet()) {
+      final VirtualMachine vm = entry.getValue();
+      final OptionValue[] extraConfig = vm.getConfig().getExtraConfig();
+
+      for (OptionValue optionValue : extraConfig) {
+        if (TEAMCITY_VMWARE_IMAGE_NAME.equals(optionValue.getKey()) &&
+            imageName.equals(optionValue.getValue())) {
+          filteredVms.put(entry.getKey(), entry.getValue());
+        }
+      }
+    }
+    return filteredVms;
+  }
+
+  public Map<String, String> getVMParams(@NotNull final String vmName) throws RemoteException {
+    final Map<String, String> map = new HashMap<String, String>();
+    VirtualMachine vm = findEntityByName(vmName, VirtualMachine.class);
+    for (OptionValue val : vm.getConfig().getExtraConfig()) {
+      map.put(val.getKey(), String.valueOf(val.getValue()));
+    }
+
+    return map;
   }
 
   @NotNull
@@ -100,6 +147,26 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
     }
     final VirtualMachineSnapshotTree[] rootSnapshotList = vm.getSnapshot().getRootSnapshotList();
     return snapshotNames(rootSnapshotList);
+  }
+
+  @Nullable
+  public String getLatestSnapshot(@NotNull final String vmName, @NotNull final String snapshotNameMask) throws RemoteException {
+    final Map<String, VirtualMachineSnapshotTree> snapshotList = getSnapshotList(vmName);
+    if (!snapshotNameMask.contains("*") && !snapshotNameMask.contains("?")) {
+      return snapshotList.containsKey(snapshotNameMask) ? snapshotNameMask : null;
+    }
+    Date latestTime = new Date(0);
+    String latestSnapshotName = null;
+    for (Map.Entry<String, VirtualMachineSnapshotTree> entry : snapshotList.entrySet()) {
+      if (SearchPattern.wildcardMatch(entry.getKey(), snapshotNameMask)) {
+        final Date snapshotTime = entry.getValue().getCreateTime().getTime();
+        if (latestTime.before(snapshotTime)) {
+          latestTime = snapshotTime;
+          latestSnapshotName = entry.getKey();
+        }
+      }
+    }
+    return latestSnapshotName;
   }
 
   @Nullable
@@ -131,29 +198,36 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
   }
 
   @Nullable
-  public Task cloneVm(@NotNull final String baseVmName,
-                      @NotNull String resourcePool,
-                      @NotNull String folder,
-                      @NotNull final String newVmName,
-                      @Nullable final String snapshotName,
-                      final boolean isLinkedClone) throws RemoteException {
-    VirtualMachine vm = findEntityByName(baseVmName, VirtualMachine.class);
-    if (vm == null){
+  public Task cloneVm(@NotNull final VMWareCloudInstance instance, @NotNull String resourcePool,@NotNull String folder) throws RemoteException {
+    VirtualMachine vm = findEntityByName(instance.getImage().getName(), VirtualMachine.class);
+    if (vm == null) {
       return null;
     }
+    final VirtualMachineConfigSpec config = new VirtualMachineConfigSpec();
     final VirtualMachineCloneSpec cloneSpec = new VirtualMachineCloneSpec();
     final VirtualMachineRelocateSpec location = new VirtualMachineRelocateSpec();
 
     cloneSpec.setLocation(location);
+    cloneSpec.setConfig(config);
     location.setPool(findEntityByName(resourcePool, ResourcePool.class).getMOR());
-    if (StringUtil.isNotEmpty(snapshotName)){
-      final VirtualMachineSnapshotTree obj = getSnapshotList(vm.getName()).get(snapshotName);
+    final Map<String, VirtualMachineSnapshotTree> snapshotList = getSnapshotList(vm.getName());
+    if (StringUtil.isNotEmpty(instance.getSnapshotName())) {
+
+      final VirtualMachineSnapshotTree obj = snapshotList.get(instance.getSnapshotName());
       cloneSpec.setSnapshot(obj == null ? null : obj.getSnapshot());
-      if (isLinkedClone && cloneSpec.getSnapshot() != null){
+      if (cloneSpec.getSnapshot() != null) {
         location.setDiskMoveType(VirtualMachineRelocateDiskMoveOptions.createNewChildDiskBacking.name());
       }
     }
-    return vm.cloneVM_Task(findEntityByName(folder, Folder.class), newVmName, cloneSpec);
+
+    config.setExtraConfig(new OptionValue[]{
+      createOptionValue(TEAMCITY_VMWARE_CLONED_INSTANCE, "true"),
+      createOptionValue(TEAMCITY_VMWARE_IMAGE_NAME, instance.getImage().getName()),
+      createOptionValue(TEAMCITY_VMWARE_IMAGE_SNAPSHOT, instance.getSnapshotName()),
+      createOptionValue(TEAMCITY_VMWARE_IMAGE_CHANGE_VERSION, vm.getConfig().getChangeVersion())
+    });
+
+    return vm.cloneVM_Task(findEntityByName(folder, Folder.class), instance.getName(), cloneSpec);
   }
 
   public boolean isStartedByTeamcity(String instanceName) throws RemoteException {
@@ -230,18 +304,10 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
       }
     }
     instance.setStatus(InstanceStatus.STOPPED);
-    if (instance.isDeleteAfterStop()) { // we only destroy proper instances.
-      if (instance.getErrorInfo() == null) {
-        final Task destroyTask = vm.destroy_Task();
-        final String destroyResult = destroyTask.waitForTask();
-        if (!Task.SUCCESS.equals(destroyResult)) {
-          instance.setErrorInfo(new CloudErrorInfo("Unable to destroy VM. Task status: " + destroyResult));
-        }
-      } else {
-        LOG.warn(String.format("Won't delete instance %s with error: %s (%s)",
-                               instance.getName(), instance.getErrorInfo().getMessage(), instance.getErrorInfo().getDetailedMessage()));
-      }
-    }
+  }
+
+  public Task deleteVirtualMachine(final VirtualMachine vm) throws RemoteException, InterruptedException {
+    return vm.destroy_Task();
   }
 
   public void restartInstance(VMWareCloudInstance instance) throws RemoteException {
@@ -286,8 +352,8 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
   }
 
   @Nullable
-  public String getImageName(VirtualMachine vm) {
-    return getOptionValue(vm, IMAGE_NAME);
+  public String getImageName(@NotNull final VirtualMachine vm) {
+    return getOptionValue(vm, TEAMCITY_VMWARE_IMAGE_NAME);
   }
 
   @Nullable
@@ -301,7 +367,7 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
     return null;
   }
 
-  public InstanceStatus getInstanceStatus(VirtualMachine vm) {
+  public InstanceStatus getInstanceStatus(@NotNull final VirtualMachine vm) {
     if (vm.getRuntime() == null || vm.getRuntime().getPowerState() == VirtualMachinePowerState.poweredOff) {
       return InstanceStatus.STOPPED;
     }
@@ -309,5 +375,17 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
       return InstanceStatus.RUNNING;
     }
     return InstanceStatus.UNKNOWN;
+  }
+
+  @NotNull
+  public Map<String, String> getTeamcityParams(@NotNull final VirtualMachine vm) {
+    final Map<String, String> params = new HashMap<String, String>();
+    final OptionValue[] extraConfig = vm.getConfig().getExtraConfig();
+    for (OptionValue optionValue : extraConfig) {
+      if (optionValue.getKey().startsWith(TEAMCITY_VMWARE_PREFIX)) {
+        params.put(optionValue.getKey(), String.valueOf(optionValue.getValue()));
+      }
+    }
+    return params;
   }
 }

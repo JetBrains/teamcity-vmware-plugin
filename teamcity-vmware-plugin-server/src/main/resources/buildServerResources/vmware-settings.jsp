@@ -56,6 +56,7 @@
                 },
 
                 onSuccess: function (response) {
+                  $j(".images-list-wrapper").show(200);
                     var $root = $j(BS.Util.documentRoot(response)),
                         $vms = $root.find('VirtualMachines:eq(0) VirtualMachine'),
                         $pools = $root.find('ResourcePools:eq(0) ResourcePool'),
@@ -109,10 +110,11 @@
                 cloneFolder = $j("#cloneFolder").val(),
                 resourcePool = $j("#resourcePool").val(),
                 cloneBehaviour = $j("#cloneBehaviour").val(),
+                cloneType = $j("#cloneType").val(),
                 maxInstances = $j("#maxInstances").val();
 
             if (this.validateOptions()) {
-                this.addImageInternal(vmName, snapshotName, cloneFolder, resourcePool, cloneBehaviour, maxInstances);
+                this.addImageInternal(vmName, snapshotName, cloneFolder, resourcePool, cloneBehaviour, maxInstances, cloneType);
                 this.updateHidden();
             }
 
@@ -159,13 +161,14 @@
                 $j(".images-list-wrapper").show(200);
             }
         },
-        addImageInternal: function (vmName, snapshotName, cloneFolder, resourcePool, cloneBehaviour, maxInstances) {
+        addImageInternal: function (vmName, snapshotName, cloneFolder, resourcePool, cloneBehaviour, maxInstances, cloneType) {
             $j("#vmware_images_list tbody").append($j("<tr>")
                 .append($j("<td>").text(vmName))
                 .append($j("<td>").text(snapshotName))
                 .append($j("<td>").text(cloneFolder))
                 .append($j("<td>").text(resourcePool))
                 .append($j("<td>").text(cloneBehaviour))
+                .append($j("<td>").text(cloneType))
                 .append($j("<td>").text(maxInstances))
                 .append($j("<td>")
                     .append($j("<a>").attr("href", "#").attr("onclick", "$j(this).closest('tr').remove();BS.Clouds.VMWareVSphere.updateHidden();return false;").text("X")))
@@ -292,11 +295,26 @@
               <props:option value="START">Start/Stop</props:option>
               <props:option value="CLONE">Clone</props:option>
               <props:option value="LINKED_CLONE">Linked clone</props:option>
+              <props:option value="ON_DEMAND_CLONE">On demand clone</props:option>
             </props:selectProperty>
             <span id="error_cloneBehaviour" class="error"></span>
             <%--<span class="smallNote">Linked clone mode requires an existing snapshot</span>--%>
           </td>
         </tr>
+          <tr>
+            <th>
+              <label for="cloneType">Clone type</label>
+            </th>
+            <td>
+              <props:selectProperty name="cloneType">
+                <props:option value="DEFINED">Defined</props:option>
+                <props:option value="CURRENT_STATE">Current state</props:option>
+                <props:option value="LATEST_SNAPSHOT">Latest snapshot</props:option>
+              </props:selectProperty>
+              <span id="error_cloneType" class="error"></span>
+              <%--<span class="smallNote">Linked clone mode requires an existing snapshot</span>--%>
+            </td>
+          </tr>
 
         <tr>
           <th>

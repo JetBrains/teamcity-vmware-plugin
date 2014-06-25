@@ -5,6 +5,7 @@ import java.rmi.RemoteException;
 import java.util.*;
 import jetbrains.buildServer.clouds.CloudErrorInfo;
 import jetbrains.buildServer.clouds.CloudImage;
+import jetbrains.buildServer.clouds.CloudInstance;
 import jetbrains.buildServer.clouds.InstanceStatus;
 import jetbrains.buildServer.clouds.vmware.VMWareCloudClient;
 import jetbrains.buildServer.clouds.vmware.VMWareCloudImage;
@@ -31,34 +32,37 @@ public class UpdateInstancesTask implements Runnable {
 
   public void run() {
     try {
-      final Collection<? extends CloudImage> images = myCloudClient.getImages();
+      myCloudClient.clearErrorInfo();
+      final Collection<VMWareCloudImage> images = myCloudClient.getImages();
       Map<String, VMWareCloudImage> imagesMap = new HashMap<String, VMWareCloudImage>();
-      for (CloudImage image : images) {
-        imagesMap.put(image.getId(), (VMWareCloudImage)image);
+      for (VMWareCloudImage image : images) {
+        image.setErrorInfo(null);
+        imagesMap.put(image.getId(), image);
+        for (VMWareCloudInstance inst : image.getInstances()) {
+          inst.setErrorInfo(null);
+        }
       }
-      final Map<String, VirtualMachine> vms = myApiConnector.getVirtualMachines();
+      final Map<String, VirtualMachine> vms = myApiConnector.getVirtualMachines(false);
       final Map<String, Map<String, InstanceStatus>> runData = new HashMap<String, Map<String, InstanceStatus>>();
+      for (Map.Entry<String, VMWareCloudImage> entry : imagesMap.entrySet()) {
+        final VirtualMachine vm = vms.get(entry.getKey());
+        final VMWareCloudImage image = entry.getValue();
+        if (vm != null){
+          if (image.getStartType().isUseOriginal()){
+            final InstanceStatus instanceStatus = myApiConnector.getInstanceStatus(vm);
+            final VMWareCloudInstance imageInstance = image.getInstances().iterator().next();
+            imageInstance.setStatus(instanceStatus);
+          }
+        } else {
+          image.setErrorInfo(new CloudErrorInfo("Can't find vm with name " + image.getName()));
+        }
+      }
       for (Map.Entry<String, VirtualMachine> vmEntry : vms.entrySet()) {
         final VirtualMachine vm = vmEntry.getValue();
 
 
         final String imageName = myApiConnector.getImageName(vm);
         if (imageName == null) {
-          if (imagesMap.containsKey(vm.getName())){
-            // this instance wasn't started by TC:
-            final VMWareCloudImage image = imagesMap.get(vm.getName());
-            if (image.getStartType() == VMWareImageStartType.START){
-              final InstanceStatus instanceStatus = myApiConnector.getInstanceStatus(vm);
-              final VMWareCloudInstance imageInstance = (VMWareCloudInstance)image.getInstances().iterator().next();
-              imageInstance.setStatus(instanceStatus);
-              if (instanceStatus ==InstanceStatus.RUNNING) {
-                imageInstance.setErrorInfo(new CloudErrorInfo("Instance wasn't started by TC"));
-              } else {
-                imageInstance.setErrorInfo(null);
-              }
-            }
-
-          }
           continue;
         }
 
@@ -71,11 +75,10 @@ public class UpdateInstancesTask implements Runnable {
       }
       for (final CloudImage image : images) {
         if (runData.get(image.getId()) != null){
-          ((VMWareCloudImage)image).populateRunningInstances(runData.get(image.getId()));
+          ((VMWareCloudImage)image).populateInstances(runData.get(image.getId()));
         }
       }
-      for (final CloudImage imageBase : images) {
-        final VMWareCloudImage image = (VMWareCloudImage) imageBase;
+      for (final VMWareCloudImage image : images) {
         image.updateRunningInstances(new VMWareCloudImage.ProcessImageInstancesTask() {
           public void processInstance(@NotNull final VMWareCloudInstance instance) {
             if (vms.containsKey(instance.getName())){
@@ -87,7 +90,7 @@ public class UpdateInstancesTask implements Runnable {
           }
         });
       }
-    } catch (RemoteException e) {
+    } catch (Exception e) {
       e.printStackTrace();
     }
 

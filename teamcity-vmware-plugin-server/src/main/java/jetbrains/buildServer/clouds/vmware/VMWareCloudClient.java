@@ -1,6 +1,7 @@
 package jetbrains.buildServer.clouds.vmware;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.text.StringUtil;
 import com.vmware.vim25.mo.VirtualMachine;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -55,13 +56,16 @@ public class VMWareCloudClient implements CloudClientEx {
     try {
       final String[] imageDataArray = imagesListData.split(";X;:");
       for (String imageDataStr : imageDataArray) {
+        if (StringUtil.isEmpty(imageDataStr)) continue;
+
         final String[] split = imageDataStr.split(";");
         String vmName = split[0];
         String snapshotName = split[1];
         String cloneFolder = split[2];
         String resourcePool = split[3];
         String behaviourStr = split[4];
-        String maxInstancesStr = split[5];
+        String cloneTypeStr = split[5];
+        String maxInstancesStr = split[6];
 
         int maxInstances = 0;
         try {
@@ -124,12 +128,18 @@ public class VMWareCloudClient implements CloudClientEx {
   }
 
   public void terminateInstance(@NotNull CloudInstance cloudInstance) {
-    ((VMWareCloudImage)cloudInstance.getImage()).stopInstance((VMWareCloudInstance)cloudInstance);
+    try {
+      ((VMWareCloudImage)cloudInstance.getImage()).stopInstance((VMWareCloudInstance)cloudInstance);
+    } catch (RemoteException e) {
+      e.printStackTrace();
+    } catch (InterruptedException e) {
+      e.printStackTrace();
+    }
   }
 
   public void dispose() {
     if (myScheduledExecutor != null) {
-      myScheduledExecutor.shutdown();
+      myScheduledExecutor.shutdownNow();
     }
   }
 
@@ -155,7 +165,7 @@ public class VMWareCloudClient implements CloudClientEx {
   }
 
   @NotNull
-  public Collection<? extends CloudImage> getImages() throws CloudException {
+  public Collection<VMWareCloudImage> getImages() throws CloudException {
     return myImageMap.values();
   }
 
@@ -179,5 +189,9 @@ public class VMWareCloudClient implements CloudClientEx {
   @Nullable
   public String generateAgentName(@NotNull AgentDescription agentDescription) {
     return agentDescription.getAvailableParameters().get(VMWarePropertiesNames.INSTANCE_NAME);
+  }
+
+  public void clearErrorInfo(){
+    myErrorInfo = null;
   }
 }

@@ -2,6 +2,7 @@ package jetbrains.buildServer.clouds.vmware;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.vmware.vim25.VirtualMachinePowerState;
+import com.vmware.vim25.VirtualMachineRuntimeInfo;
 import com.vmware.vim25.mo.VirtualMachine;
 import java.util.Map;
 import jetbrains.buildServer.clouds.CloudErrorInfo;
@@ -32,13 +33,13 @@ public class VMWareCloudInstance implements CloudInstance {
   private CloudErrorInfo myErrorInfo;
   private Date myStartDate;
   private String myIpAddress;
-  private boolean myDeleteAfterStop;
+  private String mySnapshotName;
 
-  public VMWareCloudInstance(@NotNull final VMWareCloudImage image, @NotNull final String instanceName) {
+  public VMWareCloudInstance(@NotNull final VMWareCloudImage image, @NotNull final String instanceName, @Nullable final String snapshotName) {
     myImage = image;
     myInstanceName = instanceName;
+    mySnapshotName = snapshotName;
     myStartDate = new Date();
-    myDeleteAfterStop = false;
   }
 
   @NotNull
@@ -76,18 +77,30 @@ public class VMWareCloudInstance implements CloudInstance {
     return myStatus;
   }
 
+  @Nullable
+  public String getSnapshotName() {
+    return mySnapshotName;
+  }
+
   public void setStatus(final InstanceStatus status) {
     myStatus = status;
   }
 
-  public void updateVMInfo(VirtualMachine vm){
+  public void updateVMInfo(@NotNull final VirtualMachine vm) {
     myVM = vm;
-    myStartDate = myVM.getRuntime() == null ? null : myVM.getRuntime().getBootTime().getTime();
-    myIpAddress = myVM.getGuest() == null ? null : myVM.getGuest().getIpAddress();
-    if (vm.getRuntime().getPowerState() == VirtualMachinePowerState.poweredOff && myStatus != InstanceStatus.STOPPED){
-      myStatus = InstanceStatus.STOPPED;
-    } else if (vm.getRuntime().getPowerState() == VirtualMachinePowerState.poweredOn && myStatus != InstanceStatus.RUNNING){
-      myStatus = InstanceStatus.RUNNING;
+    final VirtualMachineRuntimeInfo runtime = vm.getRuntime();
+    if (runtime != null && runtime.getPowerState() == VirtualMachinePowerState.poweredOn) {
+      if (runtime.getBootTime() != null) {
+        myStartDate = runtime.getBootTime().getTime();
+      }
+      if (myStatus != InstanceStatus.RUNNING) {
+        myStatus = InstanceStatus.RUNNING;
+      }
+      myIpAddress = myVM.getGuest() == null ? null : myVM.getGuest().getIpAddress();
+    } else {
+      if (myStatus != InstanceStatus.STOPPED) {
+        myStatus = InstanceStatus.STOPPED;
+      }
     }
   }
 
@@ -99,14 +112,6 @@ public class VMWareCloudInstance implements CloudInstance {
                              getInstanceId(), errorInfo.getMessage(), errorInfo.getDetailedMessage()));
     }
     myErrorInfo = errorInfo;
-  }
-
-  public boolean isDeleteAfterStop() {
-    return myDeleteAfterStop;
-  }
-
-  public void setDeleteAfterStop(final boolean deleteAfterStop) {
-    myDeleteAfterStop = deleteAfterStop;
   }
 
   @Nullable
