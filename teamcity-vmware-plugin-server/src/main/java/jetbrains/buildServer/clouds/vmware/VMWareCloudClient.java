@@ -64,8 +64,7 @@ public class VMWareCloudClient implements CloudClientEx {
         String cloneFolder = split[2];
         String resourcePool = split[3];
         String behaviourStr = split[4];
-        String cloneTypeStr = split[5];
-        String maxInstancesStr = split[6];
+        String maxInstancesStr = split[5];
 
         int maxInstances = 0;
         try {

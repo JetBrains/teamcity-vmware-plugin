@@ -110,11 +110,10 @@
                 cloneFolder = $j("#cloneFolder").val(),
                 resourcePool = $j("#resourcePool").val(),
                 cloneBehaviour = $j("#cloneBehaviour").val(),
-                cloneType = $j("#cloneType").val(),
                 maxInstances = $j("#maxInstances").val();
 
             if (this.validateOptions()) {
-                this.addImageInternal(vmName, snapshotName, cloneFolder, resourcePool, cloneBehaviour, maxInstances, cloneType);
+                this.addImageInternal(vmName, snapshotName, cloneFolder, resourcePool, cloneBehaviour, maxInstances);
                 this.updateHidden();
             }
 
@@ -161,14 +160,13 @@
                 $j(".images-list-wrapper").show(200);
             }
         },
-        addImageInternal: function (vmName, snapshotName, cloneFolder, resourcePool, cloneBehaviour, maxInstances, cloneType) {
+        addImageInternal: function (vmName, snapshotName, cloneFolder, resourcePool, cloneBehaviour, maxInstances) {
             $j("#vmware_images_list tbody").append($j("<tr>")
                 .append($j("<td>").text(vmName))
                 .append($j("<td>").text(snapshotName))
                 .append($j("<td>").text(cloneFolder))
                 .append($j("<td>").text(resourcePool))
                 .append($j("<td>").text(cloneBehaviour))
-                .append($j("<td>").text(cloneType))
                 .append($j("<td>").text(maxInstances))
                 .append($j("<td>")
                     .append($j("<a>").attr("href", "#").attr("onclick", "$j(this).closest('tr').remove();BS.Clouds.VMWareVSphere.updateHidden();return false;").text("X")))
