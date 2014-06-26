@@ -37,27 +37,31 @@ public class TaskStatusUpdater implements Runnable {
   }
 
   public void run() {
-    for (Map.Entry<Task, TaskCallbackHandler> entry : myTasks.entrySet()) {
-      final Task task = entry.getKey();
-      final TaskInfo taskInfo;
-      try {
-        taskInfo = task.getTaskInfo();
-        if (taskInfo.getState() == TaskInfoState.queued || taskInfo.getState() == TaskInfoState.running) {
-          continue;
+    try {
+      for (Map.Entry<Task, TaskCallbackHandler> entry : myTasks.entrySet()) {
+        final Task task = entry.getKey();
+        final TaskInfo taskInfo;
+        try {
+          taskInfo = task.getTaskInfo();
+          if (taskInfo.getState() == TaskInfoState.queued || taskInfo.getState() == TaskInfoState.running) {
+            continue;
+          }
+          final TaskCallbackHandler handler = entry.getValue();
+          LOG.info("Task completed. Handler: " + handler.getClass());
+          handler.onComplete();
+          if (taskInfo.getState() == TaskInfoState.success) {
+            handler.onSuccess();
+          } else {
+            handler.onError(taskInfo.getError());
+          }
+        } catch (Exception e) {
+          LOG.error("Unable to get taskInfo: " + e.toString());
+          LOG.debug("Unable to get taskInfo", e);
         }
-        final TaskCallbackHandler handler = entry.getValue();
-        LOG.info("Task completed. Handler: " + handler.getClass());
-        handler.onComplete();
-        if (taskInfo.getState() == TaskInfoState.success) {
-          handler.onSuccess();
-        } else {
-          handler.onError(taskInfo.getError());
-        }
-      } catch (Exception e) {
-        LOG.error("Unable to get taskInfo: " + e.toString());
-        LOG.debug("Unable to get taskInfo", e);
+        myTasks.remove(task);
       }
-      myTasks.remove(task);
+    } catch (Exception ex) {
+      ex.printStackTrace();
     }
   }
 

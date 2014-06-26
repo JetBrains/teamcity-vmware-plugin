@@ -19,6 +19,8 @@ import org.jetbrains.annotations.Nullable;
  *         Time: 1:07 PM
  */
 public class FakeVirtualMachine extends VirtualMachine {
+
+  private static final int GUEST_SHUTDOWN_TIMEOUT = 5*1000;
   private String myName;
   private VirtualMachineRuntimeInfo myRuntimeInfo;
   private GuestInfo myGuestInfo;
@@ -92,10 +94,7 @@ public class FakeVirtualMachine extends VirtualMachine {
   @Override
   public Task cloneVM_Task(final Folder folder, final String name, final VirtualMachineCloneSpec spec)
     throws RemoteException {
-    FakeModel.instance().addVM(name, false);
-    if (VirtualMachineRelocateDiskMoveOptions.createNewChildDiskBacking.name().equals(spec.getLocation().getDiskMoveType())){
-      //TODO add check for this.
-    }
+    FakeModel.instance().addVM(name, false, spec);
     return conditionalTask();
   }
 
@@ -135,12 +134,22 @@ public class FakeVirtualMachine extends VirtualMachine {
 
   @Override
   public Task reconfigVM_Task(final VirtualMachineConfigSpec spec) throws RemoteException {
-    myCustomUserData.clear();
     final OptionValue[] extraConfig = spec.getExtraConfig();
     for (OptionValue opt : extraConfig) {
       myCustomUserData.put(opt.getKey(), opt.getValue().toString());
     }
     return conditionalTask();
+  }
+
+  @Override
+  public void shutdownGuest() throws TaskInProgress, InvalidState, ToolsUnavailable, RuntimeFault, RemoteException {
+    try {
+      Thread.sleep(GUEST_SHUTDOWN_TIMEOUT);
+      myIsStarted.set(false);
+    } catch (InterruptedException e) {
+
+    }
+
   }
 
   public void setTasksSuccessStatus(boolean success){
@@ -167,6 +176,13 @@ public class FakeVirtualMachine extends VirtualMachine {
   private static Task successTask(){
     return new Task(null, null) {
       @Override
+      public TaskInfo getTaskInfo() throws RemoteException {
+        final TaskInfo taskInfo = new TaskInfo();
+        taskInfo.setState(TaskInfoState.success);
+        return taskInfo;
+      }
+
+      @Override
       public String waitForTask() throws RemoteException, InterruptedException {
         return Task.SUCCESS;
       }
@@ -175,6 +191,13 @@ public class FakeVirtualMachine extends VirtualMachine {
 
   private static Task failureTask(){
     return new Task(null, null) {
+      @Override
+      public TaskInfo getTaskInfo() throws RemoteException {
+        final TaskInfo taskInfo = new TaskInfo();
+        taskInfo.setState(TaskInfoState.error);
+        return taskInfo;
+      }
+
       @Override
       public String waitForTask() throws RemoteException, InterruptedException {
         return "failure";
@@ -188,5 +211,10 @@ public class FakeVirtualMachine extends VirtualMachine {
 
   public void setLinkedParent(final VirtualMachine linkedParent) {
     myLinkedParent = linkedParent;
+  }
+
+  public void addCustomParam(final String key, final Object value){
+    myCustomUserData.put(key, String.valueOf(value));
+
   }
 }

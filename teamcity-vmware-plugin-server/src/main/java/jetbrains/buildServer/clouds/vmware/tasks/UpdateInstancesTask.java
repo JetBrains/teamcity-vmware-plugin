@@ -1,5 +1,6 @@
 package jetbrains.buildServer.clouds.vmware.tasks;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.vmware.vim25.mo.VirtualMachine;
 import java.rmi.RemoteException;
 import java.util.*;
@@ -20,6 +21,9 @@ import org.jetbrains.annotations.NotNull;
  *         Time: 1:51 PM
  */
 public class UpdateInstancesTask implements Runnable {
+
+  private static final Logger LOG = Logger.getInstance(UpdateInstancesTask.class.getName());
+
 
   private VMWareApiConnector myApiConnector;
   private final VMWareCloudClient myCloudClient;
@@ -81,8 +85,17 @@ public class UpdateInstancesTask implements Runnable {
       for (final VMWareCloudImage image : images) {
         image.updateRunningInstances(new VMWareCloudImage.ProcessImageInstancesTask() {
           public void processInstance(@NotNull final VMWareCloudInstance instance) {
-            if (vms.containsKey(instance.getName())){
-              instance.updateVMInfo(vms.get(instance.getName()));
+            VirtualMachine vm = null;
+            try {
+              vm = vms.get(instance.getName());
+              if (vm == null) {
+                vm = myApiConnector.getInstanceDetails(instance.getName());
+              }
+            } catch (RemoteException e) {
+              LOG.error(e.toString() + ":" + e.getStackTrace()[0].toString());
+            }
+            if (vm != null){
+              instance.updateVMInfo(vm);
               instance.setErrorInfo(null);
             } else {
               instance.setErrorInfo(new CloudErrorInfo("Unable to find information about VM"));

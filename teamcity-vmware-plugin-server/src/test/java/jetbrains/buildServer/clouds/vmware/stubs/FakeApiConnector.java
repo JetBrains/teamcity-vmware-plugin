@@ -40,4 +40,16 @@ public class FakeApiConnector extends VMWareApiConnectorImpl {
     }
     throw new IllegalArgumentException("Unknown entity type: " + instanceType.getCanonicalName());
   }
+
+  @Override
+  protected <T extends ManagedEntity> Map<String, T> findAllEntitiesAsMap(final Class<T> instanceType) throws RemoteException {
+    if (instanceType == Folder.class){
+      return (Map<String, T>)FakeModel.instance().getFolders();
+    } else if (instanceType == ResourcePool.class){
+      return (Map<String, T>)FakeModel.instance().getResourcePools();
+    } else if (instanceType == VirtualMachine.class){
+      return (Map<String, T>)FakeModel.instance().getVms();
+    }
+    throw new IllegalArgumentException("Unknown entity type: " + instanceType.getCanonicalName());
+  }
 }

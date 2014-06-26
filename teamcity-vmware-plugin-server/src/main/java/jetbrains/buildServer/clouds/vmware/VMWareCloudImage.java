@@ -167,7 +167,6 @@ public class VMWareCloudImage implements CloudImage {
       } else {
         cloneVmSuccessHandler(instance, cloudInstanceUserData);
       }
-      myInstances.put(instance.getName(), instance);
       return instance;
     } catch (RemoteException e) {
       return null;
@@ -177,6 +176,9 @@ public class VMWareCloudImage implements CloudImage {
   }
 
   private synchronized void cloneVmSuccessHandler(@NotNull final VMWareCloudInstance instance, @NotNull final CloudInstanceUserData cloudInstanceUserData) {
+    if (!myInstances.containsKey(instance.getName())) {
+      addInstance(instance);
+    }
     instance.setStatus(InstanceStatus.STARTING);
     try {
       final Task startInstanceTask = myApiConnector.startInstance(instance,
@@ -233,14 +235,13 @@ public class VMWareCloudImage implements CloudImage {
         instances2add.add(name);
       }
     }
-
     for (String name : instances2remove) {
-      myInstances.remove(name);
+      removeInstance(name);
     }
     for (String name : instances2add) {
       final VMWareCloudInstance instance = new VMWareCloudInstance(this, name, null);
       instance.setStatus(currentInstances.get(name));
-      myInstances.put(instance.getName(), instance);
+      addInstance(instance);
     }
   }
 
@@ -254,14 +255,6 @@ public class VMWareCloudImage implements CloudImage {
     }
   }
 
-  public void instanceStopped(@NotNull final String instanceName) {
-    // special handling for imageInstance
-    if (myStartType == VMWareImageStartType.START) {
-      myInstances.get(myImageName).setStatus(InstanceStatus.STOPPED);
-    } else {
-      myInstances.remove(instanceName);
-    }
-  }
 
   public void stopInstance(@NotNull final VMWareCloudInstance instance) throws RemoteException, InterruptedException {
     LOG.info("Terminating instance " + instance.getName());
@@ -275,12 +268,8 @@ public class VMWareCloudImage implements CloudImage {
   private void deleteInstance(@NotNull final VMWareCloudInstance instance) throws RemoteException, InterruptedException {
     if (instance.getErrorInfo() == null) {
       final Task task = myApiConnector.deleteVirtualMachine(myApiConnector.getInstanceDetails(instance.getName()));
-      myStatusTask.submit(task, new TaskStatusUpdater.TaskCallbackAdapter(){
-        @Override
-        public void onSuccess() {
-          myInstances.remove(instance.getName());
-        }
-      });
+      myStatusTask.submit(task, new TaskStatusUpdater.TaskCallbackAdapter());
+      removeInstance(instance.getName());
     } else {
       LOG.warn(String.format("Won't delete instance %s with error: %s (%s)",
                              instance.getName(), instance.getErrorInfo().getMessage(), instance.getErrorInfo().getDetailedMessage()));
@@ -314,6 +303,14 @@ public class VMWareCloudImage implements CloudImage {
   private String generateNewVmName() {
     SimpleDateFormat sdf = new SimpleDateFormat("MMdd-hhmmss");
     return String.format("%s-clone-%s", getId(), sdf.format(new Date()));
+  }
+
+  private void addInstance(@NotNull final VMWareCloudInstance instance){
+    myInstances.put(instance.getName(), instance);
+  }
+
+  private void removeInstance(@NotNull final String name){
+    myInstances.remove(name);
   }
 
   public static interface ProcessImageInstancesTask{

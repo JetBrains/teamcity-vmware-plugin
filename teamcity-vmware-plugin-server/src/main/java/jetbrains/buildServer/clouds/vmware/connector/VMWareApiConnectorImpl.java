@@ -81,8 +81,8 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
   public Map<String, VirtualMachine> getVirtualMachines(boolean filterClones) throws RemoteException {
     final Map<String, VirtualMachine> allVms = findAllEntitiesAsMap(VirtualMachine.class);
     final Map<String, VirtualMachine> filteredVms = new HashMap<String, VirtualMachine>();
-    for (Map.Entry<String, VirtualMachine> vmEntry : allVms.entrySet()) {
-      final VirtualMachine vm = vmEntry.getValue();
+    for (String vmName : allVms.keySet()) {
+      final VirtualMachine vm = allVms.get(vmName);
       final VirtualMachineConfigInfo config = vm.getConfig();
       if (config == null) {
         continue;
@@ -96,7 +96,7 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
         }
       }
       if (!isClone || !filterClones) {
-        filteredVms.put(vmEntry.getKey(), vmEntry.getValue());
+        filteredVms.put(vmName, vm);
       }
     }
     return filteredVms;
@@ -296,7 +296,7 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
       }
 
     } catch (Exception ex) {
-      LOG.warn("Unable to stop using Guest Shutdown: + " + ex.toString());
+      LOG.warn("Unable to stop using Guest Shutdown: " + ex.toString());
       final Task task = vm.powerOffVM_Task();
       final String powerOffResult = task.waitForTask();
       if (!Task.SUCCESS.equals(powerOffResult)) {
