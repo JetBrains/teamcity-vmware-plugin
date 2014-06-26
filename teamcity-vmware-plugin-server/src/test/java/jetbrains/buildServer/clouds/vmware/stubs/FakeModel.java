@@ -1,5 +1,6 @@
 package jetbrains.buildServer.clouds.vmware.stubs;
 
+import com.vmware.vim25.OptionValue;
 import com.vmware.vim25.VirtualMachineCloneSpec;
 import com.vmware.vim25.VirtualMachineRelocateDiskMoveOptions;
 import com.vmware.vim25.mo.Folder;
@@ -74,11 +75,21 @@ public class FakeModel {
   }
 
   public VirtualMachine addVM(String name, boolean isRunning, VirtualMachineCloneSpec spec){
-    final VirtualMachine vm = putVM(name, new FakeVirtualMachine(name, name.contains("template"), isRunning));
-    if (spec != null && spec.getLocation().getDiskMoveType()
-      .equals(VirtualMachineRelocateDiskMoveOptions.createNewChildDiskBacking.name())){
+    final FakeVirtualMachine vm = new FakeVirtualMachine(name, name.contains("template"), isRunning);
+    putVM(name, vm);
+    if (spec != null && spec.getLocation()!= null
+        && VirtualMachineRelocateDiskMoveOptions.createNewChildDiskBacking.name().equals(spec.getLocation().getDiskMoveType())){
       //((FakeVirtualMachine)vm).set
     }
+    if (spec != null && spec.getConfig() != null) {
+      final OptionValue[] extraConfig = spec.getConfig().getExtraConfig();
+      if (extraConfig != null) {
+        for (OptionValue optionValue : extraConfig) {
+          vm.addCustomParam(optionValue.getKey(), String.valueOf(optionValue.getValue()));
+        }
+      }
+    }
+
     return vm;
   }
   public VirtualMachine addVM(String name, boolean isRunning){
@@ -86,10 +97,13 @@ public class FakeModel {
   }
 
   public VirtualMachine putVM(String name, VirtualMachine vm){
-    return myVms.put(name, vm);
+    System.out.println("added VM " + name);
+    myVms.put(name, vm);
+    return vm;
   }
 
   public void removeVM(String name){
+    System.out.println("Removed VM " + name);
     myVms.remove(name);
   }
 

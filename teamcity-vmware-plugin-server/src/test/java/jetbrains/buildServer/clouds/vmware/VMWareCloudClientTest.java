@@ -1,5 +1,6 @@
 package jetbrains.buildServer.clouds.vmware;
 
+import com.intellij.util.WaitFor;
 import com.vmware.vim25.OptionValue;
 import com.vmware.vim25.mo.VirtualMachine;
 import java.net.MalformedURLException;
@@ -9,6 +10,7 @@ import java.util.HashMap;
 import java.util.Map;
 import jetbrains.buildServer.BaseTestCase;
 import jetbrains.buildServer.clouds.*;
+import jetbrains.buildServer.clouds.vmware.connector.VMWareApiConnector;
 import jetbrains.buildServer.clouds.vmware.stubs.FakeApiConnector;
 import jetbrains.buildServer.clouds.vmware.stubs.FakeModel;
 import jetbrains.buildServer.clouds.vmware.stubs.FakeVirtualMachine;
@@ -38,7 +40,10 @@ public class VMWareCloudClientTest extends BaseTestCase {
     myClientParameters.setParameter("password", "pw");
     myClientParameters.setParameter("cloneFolder", "cf");
     myClientParameters.setParameter("resourcePool", "rp");
-    myClientParameters.setParameter("images", "image1\nimage2@snap\nimage_template");
+    myClientParameters.setParameter("vmware_images_data", "image1;;cf;rp;START;3;X;:" +
+                                                          "image2;snap;cf;rp;ON_DEMAND_CLONE;3;X;:" +
+                                                          "image_template;;cf;rp;CLONE;3;X;:");
+    //myClientParameters.setParameter("images", "image1\nimage2@snap\nimage_template");
     myClientParameters.setParameter("cloneBehaviour", VMWareImageStartType.START.name());
 
     myFakeApi = new FakeApiConnector();
@@ -57,61 +62,48 @@ public class VMWareCloudClientTest extends BaseTestCase {
     FakeModel.instance().removeFolder("cf");
     myClient = new VMWareCloudClient(myClientParameters, myFakeApi);
     assertNotNull(myClient.getErrorInfo());
-    assertEquals(VMWareCloudErrorInfoFactory.noSuchFolder("cf").getMessage(), myClient.getErrorInfo().getMessage());
+    assertEquals(wrapWithArraySymbols(VMWareCloudErrorInfoFactory.noSuchFolder("cf").getMessage()),
+                 myClient.getErrorInfo().getMessage());
     FakeModel.instance().addFolder("cf");
 
     FakeModel.instance().removeResourcePool("rp");
     myClient = new VMWareCloudClient(myClientParameters, myFakeApi);
     assertNotNull(myClient.getErrorInfo());
-    assertEquals(VMWareCloudErrorInfoFactory.noSuchResourcePool("rp").getMessage(), myClient.getErrorInfo().getMessage());
+    assertEquals(wrapWithArraySymbols(VMWareCloudErrorInfoFactory.noSuchResourcePool("rp").getMessage()),
+                 myClient.getErrorInfo().getMessage());
     FakeModel.instance().addResourcePool("rp");
 
     FakeModel.instance().removeVM("image1");
     myClient = new VMWareCloudClient(myClientParameters, myFakeApi);
     assertNotNull(myClient.getErrorInfo());
-    assertEquals(VMWareCloudErrorInfoFactory.noSuchImages(Collections.singletonList("image1")).getMessage(), myClient.getErrorInfo().getMessage());
+    assertEquals(wrapWithArraySymbols(VMWareCloudErrorInfoFactory.noSuchVM("image1").getMessage()),
+                 myClient.getErrorInfo().getMessage());
     FakeModel.instance().addVM("image1");
 
     FakeModel.instance().removeVM("image2");
     myClient = new VMWareCloudClient(myClientParameters, myFakeApi);
     assertNotNull(myClient.getErrorInfo());
-    assertEquals(VMWareCloudErrorInfoFactory.noSuchImages(Collections.singletonList("image2")).getMessage(), myClient.getErrorInfo().getMessage());
+    assertEquals(wrapWithArraySymbols(VMWareCloudErrorInfoFactory.noSuchVM("image2").getMessage()),
+                 myClient.getErrorInfo().getMessage());
     FakeModel.instance().addVM("image2");
-
-    FakeModel.instance().removeVmSnaphot("image2", "snap");
-    myClient = new VMWareCloudClient(myClientParameters, myFakeApi);
-    assertNotNull(myClient.getErrorInfo());
-    assertEquals(VMWareCloudErrorInfoFactory.noSuchSnapshot("snap", "image2").getMessage(), myClient.getErrorInfo().getMessage());
   }
 
   public void check_start_type() throws MalformedURLException, RemoteException {
-    myClientParameters.setParameter("images", "image1\nimage_template");
 
     myFakeApi = new FakeApiConnector(){
       @Override
-      public Map<String, VirtualMachine> getVirtualMachines() throws RemoteException {
-        final Map<String, VirtualMachine> instances = super.getVirtualMachines();
+      public Map<String, VirtualMachine> getVirtualMachines(boolean filterClones) throws RemoteException {
+        final Map<String, VirtualMachine> instances = super.getVirtualMachines(filterClones);
         instances.put("image_template", new FakeVirtualMachine("image_template", true, false));
         instances.put("image1", new FakeVirtualMachine("image1", false, false));
         return instances;
       }
     };
 
-    myClientParameters.setParameter("cloneBehaviour", VMWareImageStartType.START.name());
-    myClient = new VMWareCloudClient(myClientParameters, myFakeApi);
-    assertEquals(VMWareImageStartType.CLONE, getImageByName("image_template").getStartType());
-    assertEquals(VMWareImageStartType.START, getImageByName("image1").getStartType());
+  }
 
-    myClientParameters.setParameter("cloneBehaviour", VMWareImageStartType.CLONE.name());
-    myClient = new VMWareCloudClient(myClientParameters, myFakeApi);
-    assertEquals(VMWareImageStartType.CLONE, getImageByName("image_template").getStartType());
-    assertEquals(VMWareImageStartType.CLONE, getImageByName("image1").getStartType());
-
-    myClientParameters.setParameter("cloneBehaviour", VMWareImageStartType.LINKED_CLONE.name());
-    myClient = new VMWareCloudClient(myClientParameters, myFakeApi);
-    // doesn't depend on snapshot existence
-    assertEquals(VMWareImageStartType.LINKED_CLONE, getImageByName("image_template").getStartType());
-    assertEquals(VMWareImageStartType.LINKED_CLONE, getImageByName("image1").getStartType());
+  public void check_on_demand_snapshot(){
+    myClientParameters.setParameter("vmware_images_data", "image1;;cf;rp;ON_DEMAND_CLONE;3;X;:");
   }
 
   public void check_startup_parameters() throws MalformedURLException, RemoteException {
@@ -119,35 +111,44 @@ public class VMWareCloudClientTest extends BaseTestCase {
     assertNull(myClient.getErrorInfo());
 
     startNewInstance("image1", Collections.singletonMap("customParam1", "customValue1"));
-    final VirtualMachine vm = myFakeApi.getVirtualMachines().get("image1");
+    final VirtualMachine vm = myFakeApi.getVirtualMachines(true).get("image1");
     final OptionValue[] extraConfig = vm.getConfig().getExtraConfig();
     final String userDataEncoded = getExtraConfigValue(extraConfig, VMWarePropertiesNames.USER_DATA);
     final CloudInstanceUserData cloudInstanceUserData = CloudInstanceUserData.deserialize(userDataEncoded);
     assertEquals("customValue1", cloudInstanceUserData.getCustomAgentConfigurationParameters().get("customParam1"));
   }
 
+  private static String wrapWithArraySymbols(String str){
+    return String.format("[%s]", str);
+  }
+
 
   public void check_vm_clone() throws MalformedURLException, RemoteException {
-    startAndCheckCloneDeletedAfterTermination("image1", VMWareImageStartType.START, null, false);
-    startAndCheckCloneDeletedAfterTermination("image_template", VMWareImageStartType.START, new Checker<VMWareCloudInstance>() {
-      public void check(final VMWareCloudInstance data) {
-        assertTrue(data.getInstanceId().startsWith("image_template"));
-        assertTrue(data.getInstanceId().contains("clone"));
-      }
-    }, true);
-    startAndCheckCloneDeletedAfterTermination("image2", VMWareImageStartType.LINKED_CLONE, new Checker<VMWareCloudInstance>() {
-      public void check(final VMWareCloudInstance data) {
-        assertTrue(data.getInstanceId().startsWith("image_template"));
-        assertTrue(data.getInstanceId().contains("clone"));
-        //TODO add check for this
+    startAndCheckCloneDeletedAfterTermination("image1", new Checker<VMWareCloudInstance>() {
+      public void check(final VMWareCloudInstance data) throws RemoteException {
+        assertEquals("image1", data.getInstanceId());
+        final Map<String, String> vmParams = myFakeApi.getVMParams(data.getInstanceId());
+        assertNull(vmParams.get(VMWareApiConnector.TEAMCITY_VMWARE_CLONED_INSTANCE));
+        assertNull(vmParams.get(VMWareApiConnector.TEAMCITY_VMWARE_IMAGE_NAME));
       }
     }, false);
-
-    startAndCheckCloneDeletedAfterTermination("image2", VMWareImageStartType.LINKED_CLONE, new Checker<VMWareCloudInstance>() {
-      public void check(final VMWareCloudInstance data) {
+    startAndCheckCloneDeletedAfterTermination("image_template", new Checker<VMWareCloudInstance>() {
+      public void check(final VMWareCloudInstance data) throws RemoteException {
         assertTrue(data.getInstanceId().startsWith("image_template"));
         assertTrue(data.getInstanceId().contains("clone"));
-        //TODO add check for this
+        final Map<String, String> vmParams = myFakeApi.getVMParams(data.getInstanceId());
+        assertEquals("true", vmParams.get(VMWareApiConnector.TEAMCITY_VMWARE_CLONED_INSTANCE));
+        assertEquals("image_template", vmParams.get(VMWareApiConnector.TEAMCITY_VMWARE_IMAGE_NAME));
+      }
+    }, true);
+    startAndCheckCloneDeletedAfterTermination("image2", new Checker<VMWareCloudInstance>() {
+      public void check(final VMWareCloudInstance data) throws RemoteException {
+        assertTrue(data.getInstanceId().startsWith("image2"));
+        assertTrue(data.getInstanceId().contains("clone"));
+        final Map<String, String> vmParams = myFakeApi.getVMParams(data.getInstanceId());
+        assertEquals("true",vmParams.get(VMWareApiConnector.TEAMCITY_VMWARE_CLONED_INSTANCE));
+        assertEquals("image2",vmParams.get(VMWareApiConnector.TEAMCITY_VMWARE_IMAGE_NAME));
+        assertEquals("snap",vmParams.get(VMWareApiConnector.TEAMCITY_VMWARE_IMAGE_SNAPSHOT));
       }
     }, false);
   }
@@ -157,29 +158,43 @@ public class VMWareCloudClientTest extends BaseTestCase {
   }
 
   private void startAndCheckCloneDeletedAfterTermination(String imageName, VMWareImageStartType cloneBehaviour) throws MalformedURLException, RemoteException {
-    startAndCheckCloneDeletedAfterTermination(imageName, cloneBehaviour, null, true);
+    startAndCheckCloneDeletedAfterTermination(imageName, null, true);
   }
 
 
   private void startAndCheckCloneDeletedAfterTermination(String imageName,
-                                                         VMWareImageStartType cloneBehaviour,
                                                          Checker<VMWareCloudInstance> instanceChecker,
                                                          boolean shouldBeDeleted)
     throws MalformedURLException, RemoteException {
-    myClientParameters.setParameter("cloneBehaviour", cloneBehaviour.name());
-    myClient = new VMWareCloudClient(myClientParameters, myFakeApi);
-    assertNull(myClient.getErrorInfo());
+    try {
+      myClient = new VMWareCloudClient(myClientParameters, myFakeApi);
+      assertNull(myClient.getErrorInfo());
 
-    final VMWareCloudInstance instance = startNewInstance(imageName);
-    final VirtualMachine vm = myFakeApi.getVirtualMachines().get(instance.getName());
-    assertNotNull("instance must exists", vm);
-    assertEquals("Must be running", InstanceStatus.RUNNING, myFakeApi.getInstanceStatus(vm));
-    if (instanceChecker != null) {
-      instanceChecker.check(instance);
+      final VMWareCloudInstance instance = startNewInstance(imageName);
+      new WaitFor(10 * 1000) {
+
+        @Override
+        protected boolean condition() {
+          final VirtualMachine vm;
+          try {
+            vm = myFakeApi.getVirtualMachines(false).get(instance.getName());
+            return vm != null && myFakeApi.getInstanceStatus(vm) == InstanceStatus.RUNNING;
+          } catch (RemoteException e) {
+            return false;
+          }
+        }
+      };
+      final VirtualMachine vm = myFakeApi.getVirtualMachines(false).get(instance.getName());
+      assertNotNull("instance " + instance.getName() + " must exists", vm);
+      assertEquals("Must be running", InstanceStatus.RUNNING, myFakeApi.getInstanceStatus(vm));
+      if (instanceChecker != null) {
+        instanceChecker.check(instance);
+      }
+      myClient.terminateInstance(instance);
+      assertEquals("template clone should be deleted after execution", shouldBeDeleted, myFakeApi.getVirtualMachines(false).get(instance.getName()) == null);
+    } finally {
+      myClient.dispose();
     }
-    myClient.terminateInstance(instance);
-    assertEquals("template clone should be deleted after execution", shouldBeDeleted, myFakeApi.getVirtualMachines().get(instance.getName()) == null);
-
   }
 
 
@@ -220,6 +235,6 @@ public class VMWareCloudClientTest extends BaseTestCase {
   }
 
   private static interface Checker<T>{
-    void check(T data);
+    void check(T data) throws RemoteException;
   }
 }

@@ -63,7 +63,7 @@ public class VMWareEditProfileController extends BaseFormXmlController {
     try {
 
       final VMWareApiConnector myApiConnector = new VMWareApiConnectorImpl(new URL(serverUrl),username, password);
-      xmlResponse.addContent(getVirtualMachinesAsElement(myApiConnector.getVirtualMachines()));
+      xmlResponse.addContent(getVirtualMachinesAsElement(myApiConnector.getVirtualMachines(true)));
       xmlResponse.addContent(getFoldersAsElement(myApiConnector.getFolders()));
       xmlResponse.addContent(getResourcePoolsAsElement(myApiConnector.getResourcePools()));
     } catch (MalformedURLException e) {

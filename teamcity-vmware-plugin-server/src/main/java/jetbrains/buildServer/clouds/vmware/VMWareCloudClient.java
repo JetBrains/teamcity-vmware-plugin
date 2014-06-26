@@ -1,6 +1,7 @@
 package jetbrains.buildServer.clouds.vmware;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.text.StringUtil;
 import com.vmware.vim25.mo.VirtualMachine;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -55,6 +56,8 @@ public class VMWareCloudClient implements CloudClientEx {
     try {
       final String[] imageDataArray = imagesListData.split(";X;:");
       for (String imageDataStr : imageDataArray) {
+        if (StringUtil.isEmpty(imageDataStr)) continue;
+
         final String[] split = imageDataStr.split(";");
         String vmName = split[0];
         String snapshotName = split[1];
@@ -99,8 +102,8 @@ public class VMWareCloudClient implements CloudClientEx {
 
       if (errorList.size() == 0) {
         myScheduledExecutor = Executors.newScheduledThreadPool(2, new NamedThreadFactory("VSphere"));
-        myScheduledExecutor.scheduleWithFixedDelay(new UpdateInstancesTask(myApiConnector, this), 0, 20, TimeUnit.SECONDS);
-        myScheduledExecutor.scheduleWithFixedDelay(myStatusTask, 5, 5, TimeUnit.SECONDS);
+        myScheduledExecutor.scheduleWithFixedDelay(new UpdateInstancesTask(myApiConnector, this), 0, 1, TimeUnit.SECONDS);
+        myScheduledExecutor.scheduleWithFixedDelay(myStatusTask, 1, 1, TimeUnit.SECONDS);
       } else {
         myErrorInfo = new CloudErrorInfo(Arrays.toString(errorList.toArray()));
       }
@@ -124,12 +127,18 @@ public class VMWareCloudClient implements CloudClientEx {
   }
 
   public void terminateInstance(@NotNull CloudInstance cloudInstance) {
-    ((VMWareCloudImage)cloudInstance.getImage()).stopInstance((VMWareCloudInstance)cloudInstance);
+    try {
+      ((VMWareCloudImage)cloudInstance.getImage()).stopInstance((VMWareCloudInstance)cloudInstance);
+    } catch (RemoteException e) {
+      e.printStackTrace();
+    } catch (InterruptedException e) {
+      e.printStackTrace();
+    }
   }
 
   public void dispose() {
     if (myScheduledExecutor != null) {
-      myScheduledExecutor.shutdown();
+      myScheduledExecutor.shutdownNow();
     }
   }
 
@@ -155,7 +164,7 @@ public class VMWareCloudClient implements CloudClientEx {
   }
 
   @NotNull
-  public Collection<? extends CloudImage> getImages() throws CloudException {
+  public Collection<VMWareCloudImage> getImages() throws CloudException {
     return myImageMap.values();
   }
 
@@ -179,5 +188,9 @@ public class VMWareCloudClient implements CloudClientEx {
   @Nullable
   public String generateAgentName(@NotNull AgentDescription agentDescription) {
     return agentDescription.getAvailableParameters().get(VMWarePropertiesNames.INSTANCE_NAME);
+  }
+
+  public void clearErrorInfo(){
+    myErrorInfo = null;
   }
 }

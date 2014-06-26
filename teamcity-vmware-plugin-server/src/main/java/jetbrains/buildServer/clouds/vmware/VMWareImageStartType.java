@@ -6,7 +6,24 @@ package jetbrains.buildServer.clouds.vmware;
  *         Time: 2:26 PM
  */
 public enum VMWareImageStartType {
-  CLONE,
-  LINKED_CLONE,
-  START
+  CLONE(true, false),
+  START(false, true),
+  ON_DEMAND_CLONE(false, false);
+
+  private boolean myDeleteAfterStop;
+  private boolean myUseOriginal;
+
+  VMWareImageStartType(final boolean deleteAfterStop, final boolean useOriginal) {
+    myDeleteAfterStop = deleteAfterStop;
+    myUseOriginal = useOriginal;
+  }
+
+  public boolean isDeleteAfterStop() {
+    return myDeleteAfterStop;
+  }
+
+  public boolean isUseOriginal() {
+    return myUseOriginal;
+  }
+
 }
