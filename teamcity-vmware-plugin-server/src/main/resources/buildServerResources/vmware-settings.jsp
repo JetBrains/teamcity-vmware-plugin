@@ -30,17 +30,28 @@
 <script type="text/javascript">
     BS = BS || {};
     BS.Clouds = BS.Clouds || {};
-        BS.Clouds.VMWareVSphere = BS.Clouds.VMWareVSphere || {
+    BS.Clouds.VMWareVSphere = BS.Clouds.VMWareVSphere || {
         refreshOptionsUrl: '<c:url value="${refreshablePath}"/>',
         refreshSnapshotsUrl: '<c:url value="${refreshSnapshotsPath}"/>',
-        refreshOptions: function () {
-            var $loader = $j(BS.loadingIcon);
+        init: function () {
+            this.$fetchOptionsButton = $j('#vmwareFetchOptionsButton');
+            this.$addImageButtons = $j('#vmwareAddImageButton');
+            this.$image = $j('#image');
 
-            if ($j('#vmwareFetchOptionsButton').attr('disabled')) {
+            this.$fetchOptionsButton.on('click', BS.Clouds.VMWareVSphere.refreshOptions.bind(BS.Clouds.VMWareVSphere));
+            this.$addImageButtons.on('click', BS.Clouds.VMWareVSphere.addImage.bind(BS.Clouds.VMWareVSphere));
+            this.$image.on('change', BS.Clouds.VMWareVSphere.readSnapshots.bind(BS.Clouds.VMWareVSphere));
+            $j("#cloneBehaviour, #snapshot, #image").on('change', BS.Clouds.VMWareVSphere.validateOptions.bind(BS.Clouds.VMWareVSphere));
+        },
+        refreshOptions: function () {
+            var self = this,
+                $loader = $j(BS.loadingIcon);
+
+            if (this.$fetchOptionsButton.attr('disabled')) {
                 return false;
             }
 
-            $j('#vmwareFetchOptionsButton').attr('disabled', true);
+            this.$fetchOptionsButton.attr('disabled', true);
             $loader.insertAfter($j('#vmwareFetchOptionsButton'));
 
             BS.ajaxRequest(this.refreshOptionsUrl, {
@@ -48,7 +59,7 @@
 
                 onComplete: function() {
                     $loader.remove();
-                    $j('#vmwareFetchOptionsButton').attr('disabled', false);
+                    self.$fetchOptionsButton.attr('disabled', false);
                 },
 
                 onFailure: function (response) {
@@ -97,11 +108,11 @@
                         appendOption($j("#cloneFolder"), $j(this).attr('name'));
                     });
 
-                    BS.Clouds.VMWareVSphere.showOptions();
+                    self.showOptions();
                 }
             });
 
-            return false;
+            return false; // to prevent link with href='#' to scroll to the top of the page
         },
         addImage: function () {
             var vmName = $j("#image option:selected").text(),
@@ -116,7 +127,7 @@
                 this.updateHidden();
             }
 
-            return false;
+            return false; // to prevent link with href='#' to scroll to the top of the page
         },
         validateOptions: function () {
             var cloneFolder = $j("#cloneFolder").val(),
@@ -322,10 +333,7 @@
         </table>
     </td></tr>
 <script type="text/javascript">
-    $j('#vmwareFetchOptionsButton').on('click', BS.Clouds.VMWareVSphere.refreshOptions.bind(BS.Clouds.VMWareVSphere));
-    $j('#vmwareAddImageButton').on('click', BS.Clouds.VMWareVSphere.addImage.bind(BS.Clouds.VMWareVSphere));
-    $j('#image').on('change', BS.Clouds.VMWareVSphere.readSnapshots.bind(BS.Clouds.VMWareVSphere));
-    $j("#cloneBehaviour, #snapshot, #image").on('change', BS.Clouds.VMWareVSphere.validateOptions.bind(BS.Clouds.VMWareVSphere));
+    BS.Clouds.VMWareVSphere.init();
 
     BS.Clouds.VMWareVSphere.refreshOptions();
     BS.Clouds.VMWareVSphere.restoreFromHidden();
