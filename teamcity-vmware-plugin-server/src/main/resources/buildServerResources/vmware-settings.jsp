@@ -30,152 +30,62 @@
 <script type="text/javascript">
     BS = BS || {};
     BS.Clouds = BS.Clouds || {};
-        BS.Clouds.VMWareVSphere = BS.Clouds.VMWareVSphere || {
+    BS.Clouds.VMWareVSphere = BS.Clouds.VMWareVSphere || {
         refreshOptionsUrl: '<c:url value="${refreshablePath}"/>',
         refreshSnapshotsUrl: '<c:url value="${refreshSnapshotsPath}"/>',
-        refreshOptions: function () {
-            var $loader = $j(BS.loadingIcon);
+        _imagesDataSelector: '#${cons.imagesData}',
+        init: function () {
+            var self = this;
 
-            if ($j('#vmwareFetchOptionsButton').attr('disabled')) {
-                return false;
-            }
+            this.$fetchOptionsButton = $j('#vmwareFetchOptionsButton');
+            this.$addImageButtons = $j('#vmwareAddImageButton');
+            this.$image = $j('#image');
+            this.$snapshot = $j('#snapshot');
+            this.$imagesList = $j("#vmware_images_list");
+            this.$imagesDataElem = $j(this._imagesDataSelector);
 
-            $j('#vmwareFetchOptionsButton').attr('disabled', true);
-            $loader.insertAfter($j('#vmwareFetchOptionsButton'));
-
-            BS.ajaxRequest(this.refreshOptionsUrl, {
-                parameters: BS.Clouds.Admin.CreateProfileForm.serializeParameters(),
-
-                onComplete: function() {
-                    $loader.remove();
-                    $j('#vmwareFetchOptionsButton').attr('disabled', false);
-                },
-
-                onFailure: function (response) {
-                    console.error('something went wrong', response);
-                },
-
-                onSuccess: function (response) {
-                  $j(".images-list-wrapper").show(200);
-                    var $root = $j(BS.Util.documentRoot(response)),
-                        $vms = $root.find('VirtualMachines:eq(0) VirtualMachine'),
-                        $pools = $root.find('ResourcePools:eq(0) ResourcePool'),
-                        $folders = $root.find('Folders:eq(0) Folder'),
-                        appendOption = function(target, value) {
-                            target.append($j("<option>").attr("value", value).text(value));
-                        };
-
-                    if (! $vms.length) {
-                        return;
-                    }
-
-                    $j('#image')
-                        .find("option, optgroup").remove().end()
-                        .append($j("<option>").val("").text("--Please select a VM--"))
-                        .append($j("<optgroup>").attr("label", "Virtual machines"));
-
-                    $vms.each(function () {
-                        if ($j(this).attr('template') == 'false') {
-                            appendOption($j("#image optgroup[label='Virtual machines']"), $j(this).attr('name'));
-                        }
-                    });
-
-                    $j('#image').append($j("<optgroup>").attr("label", "Templates"));
-
-                    $vms.each(function () {
-                        if ($j(this).attr('template') == 'true') {
-                            appendOption($j("#image optgroup[label='Templates']"), $j(this).attr('name'));
-                        }
-                    });
-
-                    $j("#resourcePool").find("option").remove();
-                    $pools.each(function () {
-                        appendOption($j('#resourcePool'), $j(this).attr('name'));
-                    });
-
-                    $j("#cloneFolder").find("option").remove();
-                    $folders.each(function () {
-                        appendOption($j("#cloneFolder"), $j(this).attr('name'));
-                    });
-
-                    BS.Clouds.VMWareVSphere.showOptions();
+            this.$fetchOptionsButton.on('click', this.refreshOptions.bind(this));
+            this.$addImageButtons.on('click', this.addImage.bind(this));
+            this.$image.on('change', this.readSnapshots.bind(this));
+            $j('#cloneBehaviour, #snapshot, #image').on('change', this.validateOptions.bind(this));
+            $j(".images-list-wrapper").on('click', '.removeVmImageLink', function () {
+                if (confirm('Are you sure?')) {
+                    self.removeImage($j(this));
                 }
+                return false;
             });
 
-            return false;
+            this.refreshOptions();
+            this.showImagesList();
         },
-        addImage: function () {
-            var vmName = $j("#image option:selected").text(),
-                snapshotName = $j("#snapshot option:selected").text(),
-                cloneFolder = $j("#cloneFolder").val(),
-                resourcePool = $j("#resourcePool").val(),
-                cloneBehaviour = $j("#cloneBehaviour").val(),
-                maxInstances = $j("#maxInstances").val();
-
-            if (this.validateOptions()) {
-                this.addImageInternal(vmName, snapshotName, cloneFolder, resourcePool, cloneBehaviour, maxInstances);
-                this.updateHidden();
-            }
-
-            return false;
+        _appendOption: function ($target, value) {
+            $target.append($j('<option>').attr('value', value).text(value));
         },
-        validateOptions: function () {
-            var cloneFolder = $j("#cloneFolder").val(),
-                resourcePool = $j("#resourcePool").val(),
-                cloneBehaviour = $j("#cloneBehaviour").val(),
-                maxInstances = $j("#maxInstances").val(),
-                isValid = true;
+        getImagesData: function () {
+            var rawImagesData = this.$imagesDataElem.val(),
+                    imagesData = rawImagesData && rawImagesData.split(';X;:') || [];
 
-            // checking properties
-            $j("#error_image").empty();
-            $j("#error_cloneBehaviour").empty();
+            return imagesData.map(function (imageDataStr) {
+                var props = imageDataStr.split(';');
 
-            if ($j("#image").val() == "") {
-                $j("#error_image").append($j("<div>").text("Please select a VM"));
-                isValid = false;
-            }
-            if ($j("#image option:selected").parent().attr("label") == 'Templates' && cloneBehaviour == 'START') {
-                $j("#error_cloneBehaviour").append($j("<div>").text("Start/Stop mode is not available for readonly(template) VMs"));
-                isValid = false;
-            }
-            if ($j("#snapshot").val() == "" && cloneBehaviour == "LINKED_CLONE") {
-                $j("#error_cloneBehaviour").append($j("<div>").text("Linked clone mode requires an existing snapshot"));
-                isValid = false;
-            }
+                // drop images without vmName
+                if (!props[0].length) {
+                    props = [];
+                }
 
-            return isValid;
+                return props;
+            }).filter(function (imageData) {
+                return !!imageData.length;
+            });
         },
-        restoreFromHidden: function () {
-            var self = this,
-                partsOfStr = $j("#${cons.imagesData}").val();
-
-            if (partsOfStr) {
-                partsOfStr.split(';X;:').each(function (partOfStr) {
-                    var ones = partOfStr.split(';');
-
-                    if (ones[0].length > 0) {
-                        self.addImageInternal.apply(self, ones);
-                    }
-                });
-                $j(".images-list-wrapper").show(200);
-            }
+        setImagesData: function (data) {
+            this.$imagesDataElem.val(data);
         },
-        addImageInternal: function (vmName, snapshotName, cloneFolder, resourcePool, cloneBehaviour, maxInstances) {
-            $j("#vmware_images_list tbody").append($j("<tr>")
-                .append($j("<td>").text(vmName))
-                .append($j("<td>").text(snapshotName))
-                .append($j("<td>").text(cloneFolder))
-                .append($j("<td>").text(resourcePool))
-                .append($j("<td>").text(cloneBehaviour))
-                .append($j("<td>").text(maxInstances))
-                .append($j("<td>")
-                    .append($j("<a>").attr("href", "#").attr("onclick", "$j(this).closest('tr').remove();BS.Clouds.VMWareVSphere.updateHidden();return false;").text("X")))
-            );
-        },
-        updateHidden: function () {
+        updateImagesData: function () {
             var data = "";
-            $j("#${cons.imagesData}").val("");
-            $j("#vmware_images_list tbody tr").each(function () {
+
+            this.setImagesData('');
+            this.$imagesList.find('tr').each(function () {
                 if ($j(this).children("td").size()) {
                     $j(this).children("td").each(function () {
                         data += $j(this).text().replace("[Latest version]", "")+ ";";
@@ -184,24 +94,169 @@
                     data += ":";
                 }
             });
-            $j("#${cons.imagesData}").val(data);
+            this.setImagesData(data);
+        },
+        refreshOptions: function () {
+            var self = this,
+                $loader = $j(BS.loadingIcon);
+
+            if (this.$fetchOptionsButton.attr('disabled')) {
+                return false;
+            }
+
+            this.$fetchOptionsButton.attr('disabled', true);
+            $loader.insertAfter(this.$fetchOptionsButton);
+
+            BS.ajaxRequest(this.refreshOptionsUrl, {
+                parameters: BS.Clouds.Admin.CreateProfileForm.serializeParameters(),
+
+                onComplete: function () {
+                    $loader.remove();
+                    self.$fetchOptionsButton.attr('disabled', false);
+                },
+
+                onFailure: function (response) {
+                    console.error('something went wrong', response);
+                },
+
+                onSuccess: function (response) {
+                    var $response = $j(response.responseXML),
+                            $vms = $response.find('VirtualMachines:eq(0) VirtualMachine'),
+                            $pools = $response.find('ResourcePools:eq(0) ResourcePool'),
+                            $folders = $response.find('Folders:eq(0) Folder');
+
+                    if (!$vms.length) {
+                        return;
+                    }
+
+                    self.$image
+                            .find('option, optgroup').remove().end()
+                            .append($j('<option>').val('').text('--Please select a VM--'))
+                            .append($j('<optgroup>').attr('label', 'Virtual machines'));
+
+                    $vms.each(function () {
+                        if ($j(this).attr('template') == 'false') {
+                            self._appendOption(self.$image.find("optgroup[label='Virtual machines']"), $j(this).attr('name'));
+                        }
+                    });
+
+                    self.$image.append($j("<optgroup>").attr("label", "Templates"));
+
+                    $vms.each(function () {
+                        if ($j(this).attr('template') == 'true') {
+                            self._appendOption(self.$image.find("optgroup[label='Templates']"), $j(this).attr('name'));
+                        }
+                    });
+
+                    $j("#resourcePool").find("option").remove();
+                    $pools.each(function () {
+                        self._appendOption($j('#resourcePool'), $j(this).attr('name'));
+                    });
+
+                    $j("#cloneFolder").find("option").remove();
+                    $folders.each(function () {
+                        self._appendOption($j("#cloneFolder"), $j(this).attr('name'));
+                    });
+
+                    self.showOptions();
+                }
+            });
+
+            return false; // to prevent link with href='#' to scroll to the top of the page
+        },
+        validateOptions: function () {
+            var cloneFolder = $j("#cloneFolder").val(),
+                    resourcePool = $j("#resourcePool").val(),
+                    cloneBehaviour = $j("#cloneBehaviour").val(),
+                    maxInstances = $j("#maxInstances").val(),
+                    isValid = true;
+
+            // checking properties
+            $j("#error_image").empty();
+            $j("#error_cloneBehaviour").empty();
+
+            if (!this.$image.val()) {
+                $j("#error_image").append($j("<div>").text("Please select a VM"));
+                isValid = false;
+            }
+            if (this.$image.find(":selected").parent().attr("label") == 'Templates' && cloneBehaviour == 'START') {
+                $j("#error_cloneBehaviour").append($j("<div>").text("Start/Stop mode is not available for readonly(template) VMs"));
+                isValid = false;
+            }
+            if ( !this.$snapshot.val()  && cloneBehaviour == "LINKED_CLONE") {
+                $j("#error_cloneBehaviour").append($j("<div>").text("Linked clone mode requires an existing snapshot"));
+                isValid = false;
+            }
+
+            return isValid;
+        },
+        addImage: function () {
+            var vmName = $j("#image option:selected").text(),
+                    snapshotName = $j("#snapshot option:selected").text(),
+                    cloneFolder = $j("#cloneFolder").val(),
+                    resourcePool = $j("#resourcePool").val(),
+                    cloneBehaviour = $j("#cloneBehaviour").val(),
+                    maxInstances = $j("#maxInstances").val();
+
+            if (this.validateOptions()) {
+                this._addImage(vmName, snapshotName, cloneFolder, resourcePool, cloneBehaviour, maxInstances);
+                this.updateImagesData();
+            }
+
+            return false; // to prevent link with href='#' to scroll to the top of the page
+        },
+        _addImage: function (vmName, snapshotName, cloneFolder, resourcePool, cloneBehaviour, maxInstances) {
+            this.$imagesList.append($j("<tr>")
+                .append($j("<td>").text(vmName))
+                .append($j("<td>").text(snapshotName))
+                .append($j("<td>").text(cloneFolder))
+                .append($j("<td>").text(resourcePool))
+                .append($j("<td>").text(cloneBehaviour))
+                .append($j("<td>").text(maxInstances))
+                .append($j("<td>")
+                    .append($j("<a>")
+                        .attr('href', '#')
+                        .addClass('removeVmImageLink')
+                        .text("X")))
+            );
+        },
+        removeImage: function ($elem) {
+            $j(this).closest('tr').remove();
+            self.updateImagesData();
+        },
+        showImagesList: function () {
+            var self = this,
+                imagesData = this.getImagesData();
+
+            if (imagesData) {
+                imagesData.each(function (imageData) {
+                    self._addImage.apply(self, imageData);
+                });
+                $j(".images-list-wrapper").show(200);
+            }
         },
         readSnapshots: function () {
+            var self = this;
+
             BS.ajaxRequest(this.refreshSnapshotsUrl, {
                 parameters: BS.Clouds.Admin.CreateProfileForm.serializeParameters(),
+                onFailure: function (response) {
+                    console.error('something went wrong', response);
+                },
                 onSuccess: function (response) {
-                    var root = BS.Util.documentRoot(response),
+                    var $response = $j(response.responseXML),
                         $snapshots;
 
-                    if (!root) return;
+                    if ( ! $response.length) return;
 
-                    $snapshots = $j(root).find('Snapshots:eq(0) Snapshot');
+                    $snapshots = $response.find('Snapshots:eq(0) Snapshot');
 
-                    $j("#snapshot").find("option").remove();
-                    $j("#snapshot").append("<option value=''>[Latest version]</option>");
+                    self.$snapshot
+                        .find("option").remove().end()
+                        .append("<option value=''>[Latest version]</option>");
 
                     $snapshots.each(function () {
-                        $j("#snapshot").append($j('<option/>').val($j(this).attr("name")).text($j(this).attr("name")));
+                        self._appendOption(self.$snapshot, $j(this).attr("name"));
                     });
 
                 }.bind(this)
@@ -338,11 +393,5 @@
         </table>
     </td></tr>
 <script type="text/javascript">
-    $j('#vmwareFetchOptionsButton').on('click', BS.Clouds.VMWareVSphere.refreshOptions.bind(BS.Clouds.VMWareVSphere));
-    $j('#vmwareAddImageButton').on('click', BS.Clouds.VMWareVSphere.addImage.bind(BS.Clouds.VMWareVSphere));
-    $j('#image').on('change', BS.Clouds.VMWareVSphere.readSnapshots.bind(BS.Clouds.VMWareVSphere));
-    $j("#cloneBehaviour, #snapshot, #image").on('change', BS.Clouds.VMWareVSphere.validateOptions.bind(BS.Clouds.VMWareVSphere));
-
-    BS.Clouds.VMWareVSphere.refreshOptions();
-    BS.Clouds.VMWareVSphere.restoreFromHidden();
+    BS.Clouds.VMWareVSphere.init();
 </script>
