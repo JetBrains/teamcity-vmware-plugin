@@ -259,10 +259,10 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
     return getSnapshotList(instanceName).get(snapshotName) != null;
   }
 
-  private OptionValue createOptionValue(String key, String value) {
+  private OptionValue createOptionValue(@NotNull final String key, @Nullable final String value) {
     final OptionValue optionValue = new OptionValue();
     optionValue.setKey(key);
-    optionValue.setValue(value);
+    optionValue.setValue(value == null ? "" : value);
     return optionValue;
   }
 

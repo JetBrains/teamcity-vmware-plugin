@@ -301,8 +301,9 @@ public class VMWareCloudImage implements CloudImage {
   }
 
   private String generateNewVmName() {
+    Random r = new Random();
     SimpleDateFormat sdf = new SimpleDateFormat("MMdd-hhmmss");
-    return String.format("%s-clone-%s", getId(), sdf.format(new Date()));
+    return String.format("%s-clone-%s%s", getId(), sdf.format(new Date()), Integer.toHexString(r.nextInt(256)));
   }
 
   private void addInstance(@NotNull final VMWareCloudInstance instance){

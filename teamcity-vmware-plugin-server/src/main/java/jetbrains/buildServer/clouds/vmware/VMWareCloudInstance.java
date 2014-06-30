@@ -58,7 +58,7 @@ public class VMWareCloudInstance implements CloudInstance {
   }
 
   @NotNull
-  public CloudImage getImage() {
+  public VMWareCloudImage getImage() {
     return myImage;
   }
 

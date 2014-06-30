@@ -3,10 +3,7 @@ package jetbrains.buildServer.clouds.vmware.stubs;
 import com.vmware.vim25.*;
 import com.vmware.vim25.mo.*;
 import java.rmi.RemoteException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import jetbrains.buildServer.clouds.vmware.connector.VMWareApiConnector;
@@ -161,6 +158,7 @@ public class FakeVirtualMachine extends VirtualMachine {
     VirtualMachineSnapshotTree tree = new VirtualMachineSnapshotTree();
     tree.setName(snapshotName);
     tree.setSnapshot(new ManagedObjectReference());
+    tree.setCreateTime(Calendar.getInstance());
     myRootSnapshotList.add(tree);
   }
 

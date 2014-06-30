@@ -123,4 +123,9 @@ public class FakeModel {
     vm.removeSnapshot(snapshotName);
   }
 
+  public void clear(){
+    myFolders.clear();
+    myVms.clear();
+    myResourcePools.clear();
+  }
 }
