@@ -7,6 +7,7 @@ import com.vmware.vim25.VirtualMachinePowerState;
 import com.vmware.vim25.mo.VirtualMachine;
 import java.net.MalformedURLException;
 import java.rmi.RemoteException;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -118,11 +119,6 @@ public class VMWareCloudClientTest extends BaseTestCase {
     final CloudInstanceUserData cloudInstanceUserData = CloudInstanceUserData.deserialize(userDataEncoded);
     assertEquals("customValue1", cloudInstanceUserData.getCustomAgentConfigurationParameters().get("customParam1"));
   }
-
-  private static String wrapWithArraySymbols(String str) {
-    return String.format("[%s]", str);
-  }
-
 
   public void check_vm_clone() throws Exception {
     startAndCheckCloneDeletedAfterTermination("image1", new Checker<VMWareCloudInstance>() {
@@ -247,11 +243,50 @@ public class VMWareCloudClientTest extends BaseTestCase {
     assertEquals(VirtualMachinePowerState.poweredOn, vms.get(instance2.getName()).getRuntime().getPowerState());
   }
 
+  public void catch_tc_started_instances_on_startup() throws MalformedURLException, RemoteException {
+    startNewInstanceAndWait("image1");
+    startNewInstanceAndWait("image2");
+    startNewInstanceAndWait("image_template");
+    assertEquals(5, FakeModel.instance().getVms().size());
+
+    recreateClient();
+    assertNull(myClient.getErrorInfo());
+    new WaitFor(10*1000){
+      protected boolean condition() {
+        int cnt = 0;
+        for (VMWareCloudImage image : myClient.getImages()) {
+          final Collection<VMWareCloudInstance> instances = image.getInstances();
+          cnt += instances.size();
+          for (VMWareCloudInstance instance : instances) {
+            assertEquals(InstanceStatus.RUNNING, instance.getStatus());
+          }
+        }
+        return cnt == 3;
+      }
+    };
+    for (VMWareCloudImage image : myClient.getImages()) {
+      final Collection<VMWareCloudInstance> instances = image.getInstances();
+      assertEquals(1, instances.size());
+      final VMWareCloudInstance instance = instances.iterator().next();
+      if ("image1".equals(image.getName())){
+        assertEquals("image1", instance.getName());
+      } else if ("image2".equals(image.getName())) {
+        assertTrue(instance.getName().startsWith(image.getName()));
+        assertEquals("snap", instance.getSnapshotName());
+      } else if ("image_template".equals(image.getName())) {
+        assertTrue(instance.getName().startsWith(image.getName()));
+      }
+    }
+
+  }
+
+  private static String wrapWithArraySymbols(String str) {
+    return String.format("[%s]", str);
+  }
 
   private void startAndCheckCloneDeletedAfterTermination(String imageName,
                                                          Checker<VMWareCloudInstance> instanceChecker,
-                                                         boolean shouldBeDeleted)
-    throws Exception {
+                                                         boolean shouldBeDeleted) throws Exception {
     final VMWareCloudInstance instance = startAndCheckInstance(imageName, instanceChecker);
     terminateAndDeleteIfNecessary(shouldBeDeleted, instance);
   }
@@ -285,16 +320,6 @@ public class VMWareCloudClientTest extends BaseTestCase {
     return instance;
   }
 
-
-  private VMWareCloudInstance startNewInstance(String imageName) {
-    return startNewInstance(imageName, new HashMap<String, String>());
-  }
-
-  private VMWareCloudInstance startNewInstance(String imageName, Map<String, String> parameters) {
-    final CloudInstanceUserData userData = new CloudInstanceUserData(
-      imageName + "_agent", "authToken", "http://localhost:8080", 30 * 60 * 1000l, "My profile", parameters);
-    return myClient.startNewInstance(getImageByName(imageName), userData);
-  }
 
   private VMWareCloudInstance startNewInstanceAndWait(String imageName) {
     return startNewInstanceAndWait(imageName, new HashMap<String, String>());

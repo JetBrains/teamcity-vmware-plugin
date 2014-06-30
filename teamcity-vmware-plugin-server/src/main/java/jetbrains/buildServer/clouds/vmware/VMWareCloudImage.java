@@ -1,6 +1,7 @@
 package jetbrains.buildServer.clouds.vmware;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.text.StringUtil;
 import com.vmware.vim25.LocalizedMethodFault;
 import com.vmware.vim25.VirtualMachineConfigInfo;
 import com.vmware.vim25.mo.Task;
@@ -220,7 +221,7 @@ public class VMWareCloudImage implements CloudImage {
     }
   }
 
-  public void populateInstances(final Map<String, InstanceStatus> currentInstances) {
+  public void populateInstances(final Map<String, VirtualMachine> currentInstances) {
     final List<String> instances2add = new ArrayList<String>();
     final List<String> instances2remove = new ArrayList<String>();
 
@@ -239,8 +240,12 @@ public class VMWareCloudImage implements CloudImage {
       removeInstance(name);
     }
     for (String name : instances2add) {
-      final VMWareCloudInstance instance = new VMWareCloudInstance(this, name, null);
-      instance.setStatus(currentInstances.get(name));
+      final VirtualMachine vm = currentInstances.get(name);
+      final Map<String, String> teamcityParams = myApiConnector.getTeamcityParams(vm);
+      final String snapshotName = teamcityParams.get(VMWareApiConnector.TEAMCITY_VMWARE_IMAGE_SNAPSHOT);
+
+      final VMWareCloudInstance instance = new VMWareCloudInstance(this, name, StringUtil.isEmpty(snapshotName) ? null : snapshotName);
+      instance.setStatus(myApiConnector.getInstanceStatus(vm));
       addInstance(instance);
     }
   }
