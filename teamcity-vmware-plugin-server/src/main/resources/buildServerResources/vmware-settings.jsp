@@ -47,7 +47,10 @@
             this.$fetchOptionsButton.on('click', this.refreshOptions.bind(this));
             this.$addImageButtons.on('click', this.addImage.bind(this));
             this.$image.on('change', this.readSnapshots.bind(this));
-            $j('#cloneBehaviour, #snapshot, #image').on('change', this.validateOptions.bind(this));
+            $j("[id^=cloneBehaviour]").each(function(){
+              $j(this).on('change', self.showNecessaryOptions.bind(self));
+            });
+            $j('#snapshot, #image').on('change', this.validateOptions.bind(this));
             $j(".images-list-wrapper").on('click', '.removeVmImageLink', function () {
                 if (confirm('Are you sure?')) {
                     self.removeImage($j(this));
@@ -80,6 +83,19 @@
         },
         setImagesData: function (data) {
             this.$imagesDataElem.val(data);
+        },
+        showNecessaryOptions: function() {
+          var start = $j("input:radio[name='prop:cloneBehaviour']:checked").val() == 'START';
+
+          if (start){
+            $j("#tr_resource_pool").hide("fast");
+            $j("#tr_clone_folder").hide("fast");
+            $j("#tr_snapshot_name").hide("fast");
+          } else {
+            $j("#tr_resource_pool").show("fast");
+            $j("#tr_clone_folder").show("fast");
+            $j("#tr_snapshot_name").show("fast");
+          }
         },
         updateImagesData: function () {
             var data = "";
@@ -311,63 +327,21 @@
 
 <tr class="vmWareSphereOptions hidden">
     <td colspan="2">
-        <table class="runnerFormTable">
-        <tr>
-          <th><label for="image">Agent images:</label></th>
+      <table class="runnerFormTable">
+        <tr id="tr_clone_behaviour">
+          <th>Select an image type:</th>
           <td>
-            <div>
-              <props:selectProperty name="image"/>
-            </div>
-            <span id="error_image" class="error"></span>
+            <props:radioButtonProperty id="cloneBehaviour_START" name="cloneBehaviour" value="START" checked="true"/>
+            <label for="cloneBehaviour">Start/Stop instance</label>
+            <br/>
+            <props:radioButtonProperty id="cloneBehaviour_CLONE" name="cloneBehaviour" value="CLONE"/>
+            <label for="cloneBehaviour">Fresh clone</label>
+            <br/>
+            <props:radioButtonProperty id="cloneBehaviour_ON_DEMAND_CLONE" name="cloneBehaviour" value="ON_DEMAND_CLONE"/>
+            <label for="cloneBehaviour">On demand clone</label>
+            <br/>
           </td>
         </tr>
-
-        <tr>
-          <th><label for="snapshot">Snapshot name:</label></th>
-          <td>
-            <props:selectProperty name="snapshot"/>
-          </td>
-        </tr>
-
-
-        <tr>
-          <th>
-            <label for="cloneFolder">Folder for clones</label>
-          </th>
-          <td>
-            <props:selectProperty name="cloneFolder"/>
-          </td>
-        </tr>
-
-        <tr>
-          <th>
-            <label for="cloneBehaviour">Start behaviour</label>
-          </th>
-          <td>
-            <props:selectProperty name="cloneBehaviour">
-              <props:option value="START">Start/Stop</props:option>
-              <props:option value="CLONE">Clone</props:option>
-              <props:option value="LINKED_CLONE">Linked clone</props:option>
-              <props:option value="ON_DEMAND_CLONE">On demand clone</props:option>
-            </props:selectProperty>
-            <span id="error_cloneBehaviour" class="error"></span>
-            <%--<span class="smallNote">Linked clone mode requires an existing snapshot</span>--%>
-          </td>
-        </tr>
-          <tr>
-            <th>
-              <label for="cloneType">Clone type</label>
-            </th>
-            <td>
-              <props:selectProperty name="cloneType">
-                <props:option value="DEFINED">Defined</props:option>
-                <props:option value="CURRENT_STATE">Current state</props:option>
-                <props:option value="LATEST_SNAPSHOT">Latest snapshot</props:option>
-              </props:selectProperty>
-              <span id="error_cloneType" class="error"></span>
-              <%--<span class="smallNote">Linked clone mode requires an existing snapshot</span>--%>
-            </td>
-          </tr>
 
         <tr>
           <th>
@@ -377,7 +351,35 @@
             <props:textProperty name="maxInstances"/>
           </td>
         </tr>
+
         <tr>
+          <th><label for="image">Agent image:</label></th>
+          <td>
+            <div>
+              <props:selectProperty name="image"/>
+            </div>
+            <span id="error_image" class="error"></span>
+          </td>
+        </tr>
+
+        <tr class="hidden"  id="tr_snapshot_name">
+          <th><label for="snapshot">Snapshot name:</label></th>
+          <td>
+            <props:selectProperty name="snapshot"/>
+          </td>
+        </tr>
+
+
+        <tr class="hidden" id="tr_clone_folder">
+          <th>
+            <label for="cloneFolder">Folder for clones</label>
+          </th>
+          <td>
+            <props:selectProperty name="cloneFolder"/>
+          </td>
+        </tr>
+
+        <tr class="hidden" id="tr_resource_pool">
           <th>
             <label for="resourcePool">Resource pool</label>
           </th>
