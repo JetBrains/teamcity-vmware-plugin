@@ -109,7 +109,7 @@ public class VMWareCloudImage implements CloudImage {
 
   private  synchronized VMWareCloudInstance getOrCreateInstance() throws RemoteException, InterruptedException {
     if (myStartType.isUseOriginal()) {
-      LOG.info("Won't create a new instance - use original");
+      LOG.info("Won't create a new instance - using original");
       return new VMWareCloudInstance(this, myImageName, null);
     }
 
@@ -134,7 +134,7 @@ public class VMWareCloudImage implements CloudImage {
       for (VirtualMachine vm : clones.values()) {
         if (myApiConnector.getInstanceStatus(vm) == InstanceStatus.STOPPED) {
           final Map<String, String> teamcityParams = myApiConnector.getTeamcityParams(vm);
-          if (mySnapshotName == null) {
+          if (latestSnapshotName == null) {
             if (!config.getChangeVersion().equals(vm.getConfig().getChangeVersion())) {
               LOG.info(String.format("Change version for %s is outdated: '%s' vs '%s'", vm.getName(), vm.getConfig().getChangeVersion(), config.getChangeVersion()));
               deleteInstance(myInstances.get(vm.getName()));

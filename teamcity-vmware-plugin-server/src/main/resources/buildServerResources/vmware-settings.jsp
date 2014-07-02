@@ -122,7 +122,15 @@
             }
           $j("#error_fetch_options").empty();
 
-            this.$fetchOptionsButton.attr('disabled', true);
+          var url = $j("#${cons.serverUrl}").val();
+          if (url.lastIndexOf("https://", 0) != 0
+              || url.lastIndexOf("/sdk") != url.length-4) {
+            $j("#error_fetch_options").append($j("<div>").html("Server URL doesn't seem to be correct. <br/>" +
+                                                               "Correct URL should look like this: <strong>https://vcenter/sdk</strong>"));
+            return false;
+          }
+
+          this.$fetchOptionsButton.attr('disabled', true);
             $loader.insertAfter(this.$fetchOptionsButton);
 
             BS.ajaxRequest(this.refreshOptionsUrl, {
