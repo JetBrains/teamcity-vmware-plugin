@@ -1,18 +1,18 @@
 package jetbrains.buildServer.clouds.vmware.connector;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.text.StringUtil;
 import com.vmware.vim25.*;
 import com.vmware.vim25.mo.*;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.rmi.RemoteException;
 import java.util.*;
+import java.util.regex.Pattern;
 import jetbrains.buildServer.clouds.CloudErrorInfo;
 import jetbrains.buildServer.clouds.CloudInstanceUserData;
 import jetbrains.buildServer.clouds.InstanceStatus;
 import jetbrains.buildServer.clouds.vmware.*;
-import jetbrains.buildServer.util.pathMatcher.SearchPattern;
+import jetbrains.buildServer.util.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -169,7 +169,9 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
     Date latestTime = new Date(0);
     String latestSnapshotName = null;
     for (Map.Entry<String, VirtualMachineSnapshotTree> entry : snapshotList.entrySet()) {
-      if (SearchPattern.wildcardMatch(entry.getKey(), snapshotNameMask)) {
+      final String snapshotNameMaskRegex = StringUtil.convertWildcardToRegexp(snapshotNameMask);
+      final Pattern pattern = Pattern.compile(snapshotNameMaskRegex);
+      if (pattern.matcher(entry.getKey()).matches()) {
         final Date snapshotTime = entry.getValue().getCreateTime().getTime();
         if (latestTime.before(snapshotTime)) {
           latestTime = snapshotTime;
