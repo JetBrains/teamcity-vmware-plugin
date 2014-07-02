@@ -43,17 +43,6 @@ public class VMWareCloudImageTest extends BaseTestCase {
 
   }
 
-  public void test_start_stop_instances(){
-    final VMWareCloudImage image = new VMWareCloudImage(myApiConnector,
-      "myImage", VMWareImageType.INSTANCE, "folder", "pool", "snapshot", InstanceStatus.RUNNING, myStatusTask, VMWareImageStartType.START, 1);
-    assertEquals(1, image.getInstances().size());
-    final CloudInstance instance = image.getInstances().iterator().next();
-    assertEquals(InstanceStatus.RUNNING,instance.getStatus());
-
-    //image.instanceStopped(instance.getName());
-    assertEquals(InstanceStatus.STOPPED,image.getInstances().iterator().next().getStatus());
-  }
-
 
   @AfterMethod
   public void tearDown() throws Exception {
