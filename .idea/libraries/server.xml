@@ -5,6 +5,8 @@
     </ANNOTATIONS>
     <CLASSES>
       <root url="file://$TeamCityDistribution$/webapps/ROOT/WEB-INF/lib" />
+      <root url="jar://$TeamCityDistribution$/lib/jsp-api.jar!/" />
+      <root url="jar://$TeamCityDistribution$/lib/servlet-api.jar!/" />
     </CLASSES>
     <JAVADOC>
       <root url="file://$PROJECT_DIR$/../../BuildServer/tools/ant-contrib/docs/api" />

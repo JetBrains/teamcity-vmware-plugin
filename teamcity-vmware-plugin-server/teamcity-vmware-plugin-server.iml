@@ -16,7 +16,6 @@
     <orderEntry type="library" scope="PROVIDED" name="server" level="project" />
     <orderEntry type="library" scope="TEST" name="test-lib" level="project" />
     <orderEntry type="module" module-name="resolve-helper" scope="PROVIDED" />
-    <orderEntry type="library" scope="PROVIDED" name="Tomcat 7.0.52" level="application_server_libraries" />
   </component>
 </module>
 
