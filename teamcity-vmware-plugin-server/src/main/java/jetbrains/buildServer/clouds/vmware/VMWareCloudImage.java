@@ -109,6 +109,7 @@ public class VMWareCloudImage implements CloudImage {
 
   private  synchronized VMWareCloudInstance getOrCreateInstance() throws RemoteException, InterruptedException {
     if (myStartType.isUseOriginal()) {
+      LOG.info("Won't create a new instance - use original");
       return new VMWareCloudInstance(this, myImageName, null);
     }
 
@@ -135,27 +136,36 @@ public class VMWareCloudImage implements CloudImage {
           final Map<String, String> teamcityParams = myApiConnector.getTeamcityParams(vm);
           if (mySnapshotName == null) {
             if (!config.getChangeVersion().equals(vm.getConfig().getChangeVersion())) {
+              LOG.info(String.format("Change version for %s is outdated: '%s' vs '%s'", vm.getName(), vm.getConfig().getChangeVersion(), config.getChangeVersion()));
               deleteInstance(myInstances.get(vm.getName()));
               continue;
             }
           } else {
             if (!latestSnapshotName.equals(teamcityParams.get(VMWareApiConnector.TEAMCITY_VMWARE_IMAGE_SNAPSHOT))) {
+              LOG.info(String.format("VM %s Snapshot is not the latest one: '%s' vs '%s'",
+                                     vm.getName(),
+                                     teamcityParams.get(VMWareApiConnector.TEAMCITY_VMWARE_IMAGE_SNAPSHOT),
+                                     latestSnapshotName));
               deleteInstance(myInstances.get(vm.getName()));
               continue;
             }
           }
+          LOG.info("Will use existing VM with name " + vm.getName());
           return new VMWareCloudInstance(this, vm.getName(), latestSnapshotName);
         }
       }
     }
     // wasn't able to find an existing candidate, so will clone into a new VM
-    return new VMWareCloudInstance(this, generateNewVmName(), latestSnapshotName);
+    final String newVmName = generateNewVmName();
+    LOG.info("Will create a new VM with name " + newVmName);
+    return new VMWareCloudInstance(this, newVmName, latestSnapshotName);
   }
 
   public synchronized VMWareCloudInstance startInstance(@NotNull final CloudInstanceUserData cloudInstanceUserData) {
     try {
       final VMWareCloudInstance instance = getOrCreateInstance();
       boolean willClone = !myApiConnector.checkVirtualMachineExists(instance.getName());
+      LOG.info("Will clone for " + instance.getName() + ": " + willClone);
       instance.setStatus(InstanceStatus.SCHEDULED_TO_START);
       if (willClone) {
         final Task task = myApiConnector.cloneVm(instance, myResourcePool, myFolder);
@@ -262,7 +272,7 @@ public class VMWareCloudImage implements CloudImage {
 
 
   public void stopInstance(@NotNull final VMWareCloudInstance instance) throws RemoteException, InterruptedException {
-    LOG.info("Terminating instance " + instance.getName());
+    LOG.info("Stopping instance " + instance.getName());
     myApiConnector.stopInstance(instance);
     instance.setStatus(InstanceStatus.STOPPED);
     if (myStartType.isDeleteAfterStop()) { // we only destroy proper instances.
@@ -272,6 +282,7 @@ public class VMWareCloudImage implements CloudImage {
 
   private void deleteInstance(@NotNull final VMWareCloudInstance instance) throws RemoteException, InterruptedException {
     if (instance.getErrorInfo() == null) {
+      LOG.info("Will delete instance " + instance.getName());
       final Task task = myApiConnector.deleteVirtualMachine(myApiConnector.getInstanceDetails(instance.getName()));
       myStatusTask.submit(task, new TaskStatusUpdater.TaskCallbackAdapter());
       removeInstance(instance.getName());

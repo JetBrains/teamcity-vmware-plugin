@@ -25,28 +25,39 @@ import static jetbrains.buildServer.clouds.vmware.VMWarePropertiesNames.*;
  */
 public class VMWareApiConnectorImpl implements VMWareApiConnector {
 
-  private static final Logger LOG = Logger.getInstance(VMWareCloudClient.class.getName());
+  private static final Logger LOG = Logger.getInstance(VMWareApiConnectorImpl.class.getName());
 
   private static final long SHUTDOWN_TIMEOUT = 60 * 1000;
 
   private final URL myInstanceURL;
   private final String myUsername;
   private final String myPassword;
+  private ServiceInstance myServiceInstance;
 
 
   public VMWareApiConnectorImpl(final URL instanceURL, final String username, final String password) throws MalformedURLException, RemoteException {
     myInstanceURL = instanceURL;
     myUsername = username;
     myPassword = password;
+
   }
 
-  private Folder getRootFolder() throws RemoteException {
-    try {
-      final ServiceInstance serviceInstance = new ServiceInstance(myInstanceURL, myUsername, myPassword, true);
-      return serviceInstance.getRootFolder();
-    } catch (MalformedURLException e) {
-      throw new RemoteException("Unable to create ServiceInstance", e);
+  private synchronized Folder getRootFolder() throws RemoteException {
+    if (myServiceInstance != null){
+      final SessionManager sessionManager = myServiceInstance.getSessionManager();
+      if (sessionManager == null || sessionManager.getCurrentSession() == null){
+        myServiceInstance = null;
+      }
     }
+
+    if (myServiceInstance == null){
+      try {
+        myServiceInstance = new ServiceInstance(myInstanceURL, myUsername, myPassword, true);
+      } catch (MalformedURLException e) {
+        throw new RemoteException("Unable to create ServiceInstance", e);
+      }
+    }
+    return myServiceInstance.getRootFolder();
   }
 
   protected <T extends ManagedEntity> T findEntityByName(String name, Class<T> instanceType) throws RemoteException {
@@ -199,8 +210,11 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
 
   @Nullable
   public Task cloneVm(@NotNull final VMWareCloudInstance instance, @NotNull String resourcePool,@NotNull String folder) throws RemoteException {
-    VirtualMachine vm = findEntityByName(instance.getImage().getName(), VirtualMachine.class);
+    final String imageName = instance.getImage().getName();
+    LOG.info(String.format("Attempting to clone VM %s into %s", imageName, instance.getName()));
+    VirtualMachine vm = findEntityByName(imageName, VirtualMachine.class);
     if (vm == null) {
+      LOG.warn(String.format("%s not found. Returning null ", imageName));
       return null;
     }
     final VirtualMachineConfigSpec config = new VirtualMachineConfigSpec();
@@ -216,13 +230,14 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
       final VirtualMachineSnapshotTree obj = snapshotList.get(instance.getSnapshotName());
       cloneSpec.setSnapshot(obj == null ? null : obj.getSnapshot());
       if (cloneSpec.getSnapshot() != null) {
+        LOG.info("Using linked clone. Snapshot name: " + instance.getSnapshotName());
         location.setDiskMoveType(VirtualMachineRelocateDiskMoveOptions.createNewChildDiskBacking.name());
       }
     }
 
     config.setExtraConfig(new OptionValue[]{
       createOptionValue(TEAMCITY_VMWARE_CLONED_INSTANCE, "true"),
-      createOptionValue(TEAMCITY_VMWARE_IMAGE_NAME, instance.getImage().getName()),
+      createOptionValue(TEAMCITY_VMWARE_IMAGE_NAME, imageName),
       createOptionValue(TEAMCITY_VMWARE_IMAGE_SNAPSHOT, instance.getSnapshotName()),
       createOptionValue(TEAMCITY_VMWARE_IMAGE_CHANGE_VERSION, vm.getConfig().getChangeVersion())
     });
@@ -387,5 +402,15 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
       }
     }
     return params;
+  }
+
+  public void dispose(){
+    try {
+      if (myServiceInstance != null) {
+        final ServerConnection serverConnection = myServiceInstance.getServerConnection();
+        if (serverConnection != null)
+          serverConnection.logout();
+      }
+    } catch (Exception ex){}
   }
 }

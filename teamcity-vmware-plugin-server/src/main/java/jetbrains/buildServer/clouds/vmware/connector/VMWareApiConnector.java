@@ -85,4 +85,6 @@ public interface VMWareApiConnector {
 
   @NotNull
   Map<String, String> getTeamcityParams(@NotNull final VirtualMachine vm);
+
+  void dispose();
 }

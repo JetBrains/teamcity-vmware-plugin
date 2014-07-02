@@ -113,7 +113,7 @@ public class VMWareCloudClient implements CloudClientEx {
 
   @NotNull
   public VMWareCloudInstance startNewInstance(@NotNull final CloudImage cloudImage, @NotNull final CloudInstanceUserData cloudInstanceUserData) throws QuotaException {
-    LOG.info("Attempting to start new Instance for cloud " + cloudImage.getName());
+    LOG.info("Attempting to start new Instance for image " + cloudImage.getName());
     final VMWareCloudImage vCloudImage = (VMWareCloudImage)cloudImage;
     return vCloudImage.startInstance(cloudInstanceUserData);
   }
@@ -138,6 +138,7 @@ public class VMWareCloudClient implements CloudClientEx {
   }
 
   public void dispose() {
+    myApiConnector.dispose();
     if (myScheduledExecutor != null) {
       myScheduledExecutor.shutdownNow();
     }

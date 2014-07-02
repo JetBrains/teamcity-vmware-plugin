@@ -85,16 +85,17 @@
             this.$imagesDataElem.val(data);
         },
         showNecessaryOptions: function() {
-          var start = $j("input:radio[name='prop:cloneBehaviour']:checked").val() == 'START';
-
-          if (start){
+          var clone = $j("input:radio[name='prop:cloneBehaviour']:checked").val() == 'START';
+          if (clone){
             $j("#tr_resource_pool").hide("fast");
             $j("#tr_clone_folder").hide("fast");
             $j("#tr_snapshot_name").hide("fast");
+            $j("#tr_max_instances").hide("fast");
           } else {
             $j("#tr_resource_pool").show("fast");
             $j("#tr_clone_folder").show("fast");
             $j("#tr_snapshot_name").show("fast");
+            $j("#tr_max_instances").show("fast");
           }
         },
         updateImagesData: function () {
@@ -119,6 +120,7 @@
             if (this.$fetchOptionsButton.attr('disabled')) {
                 return false;
             }
+          $j("#error_fetch_options").empty();
 
             this.$fetchOptionsButton.attr('disabled', true);
             $loader.insertAfter(this.$fetchOptionsButton);
@@ -132,14 +134,22 @@
                 },
 
                 onFailure: function (response) {
-                    console.error('something went wrong', response);
+                  console.error('something went wrong', response);
+                  $j("#error_fetch_options").append($j("<div>").text("Unable to fetch options: " + response.getStatusText()));
                 },
 
                 onSuccess: function (response) {
+
                     var $response = $j(response.responseXML),
+                            $errors = $response.find("errors:eq(0) error"),
                             $vms = $response.find('VirtualMachines:eq(0) VirtualMachine'),
                             $pools = $response.find('ResourcePools:eq(0) ResourcePool'),
                             $folders = $response.find('Folders:eq(0) Folder');
+
+                  if ($errors.length){
+                    $j("#error_fetch_options").append($j("<div>").text("Unable to fetch options: " + $errors.text()));
+                    return;
+                  }
 
                     if (!$vms.length) {
                         return;
@@ -189,30 +199,34 @@
 
             // checking properties
             $j("#error_image").empty();
-            $j("#error_cloneBehaviour").empty();
+            $j("#error_max_instances").empty();
 
             if (!this.$image.val()) {
                 $j("#error_image").append($j("<div>").text("Please select a VM"));
                 isValid = false;
             }
-            if (this.$image.find(":selected").parent().attr("label") == 'Templates' && cloneBehaviour == 'START') {
-                $j("#error_cloneBehaviour").append($j("<div>").text("Start/Stop mode is not available for readonly(template) VMs"));
-                isValid = false;
-            }
-            if ( !this.$snapshot.val()  && cloneBehaviour == "LINKED_CLONE") {
-                $j("#error_cloneBehaviour").append($j("<div>").text("Linked clone mode requires an existing snapshot"));
-                isValid = false;
-            }
+
+          if (maxInstances != '' && !$j.isNumeric(maxInstances)){
+            $j("#error_max_instances").append($j("<div>").text("Must be number"));
+            isValid = false;
+          }
 
             return isValid;
         },
+        _visibleValue: function(elem) {
+          if (elem.is(":visible")){
+            return elem.val();
+          } else {
+            return "";
+          }
+        },
         addImage: function () {
-            var vmName = $j("#image option:selected").text(),
-                    snapshotName = $j("#snapshot option:selected").text(),
-                    cloneFolder = $j("#cloneFolder").val(),
-                    resourcePool = $j("#resourcePool").val(),
-                    cloneBehaviour = $j("#cloneBehaviour").val(),
-                    maxInstances = $j("#maxInstances").val();
+            var vmName = $j("#image option:selected").text();
+            var snapshotName = this._visibleValue($j("#snapshot")),
+                    cloneFolder = this._visibleValue($j("#cloneFolder")),
+                    resourcePool = this._visibleValue($j("#resourcePool")),
+                    cloneBehaviour = this._visibleValue($j("#cloneBehaviour")),
+                    maxInstances = this._visibleValue($j("#maxInstances"));
 
             if (this.validateOptions()) {
                 this._addImage(vmName, snapshotName, cloneFolder, resourcePool, cloneBehaviour, maxInstances);
@@ -222,6 +236,12 @@
             return false; // to prevent link with href='#' to scroll to the top of the page
         },
         _addImage: function (vmName, snapshotName, cloneFolder, resourcePool, cloneBehaviour, maxInstances) {
+          if (snapshotName==''){
+            snapshotName='[Latest version]';
+          }
+          if (maxInstances ==''){
+            maxInstances = '0';
+          }
             this.$imagesList.append($j("<tr>")
                 .append($j("<td>").text(vmName))
                 .append($j("<td>").text(snapshotName))
@@ -237,8 +257,8 @@
             );
         },
         removeImage: function ($elem) {
-            $j(this).closest('tr').remove();
-            self.updateImagesData();
+            $elem.closest('tr').remove();
+            this.updateImagesData();
         },
         showImagesList: function () {
             var self = this,
@@ -300,9 +320,10 @@
   </tr>
   <tr>
     <td colspan="2">
-      <%--<input type="hidden" id="refreshablePath" value="<c:url value="${refreshablePath}"/>"/>--%>
-      <%--<input type="button" value="Fetch options" id="vmwareFetchOptionsButton"/>--%>
-      <forms:button id="vmwareFetchOptionsButton">Fetch options</forms:button>
+      <span id="error_fetch_options" class="error"></span>
+      <div>
+        <forms:button id="vmwareFetchOptionsButton">Fetch options</forms:button>
+      </div>
     </td>
   </tr>
 
@@ -343,14 +364,6 @@
           </td>
         </tr>
 
-        <tr>
-          <th>
-            <label for="maxInstances">Max number of instances</label>
-          </th>
-          <td>
-            <props:textProperty name="maxInstances"/>
-          </td>
-        </tr>
 
         <tr>
           <th><label for="image">Agent image:</label></th>
@@ -385,6 +398,17 @@
           </th>
           <td>
             <props:selectProperty name="resourcePool"/>
+          </td>
+        </tr>
+        <tr class="hidden" id="tr_max_instances">
+          <th>
+            <label for="maxInstances">Max number of instances</label>
+          </th>
+          <td>
+            <div>
+              <props:textProperty name="maxInstances" value="0"/>
+            </div>
+            <span id="error_max_instances" class="error"></span>
           </td>
         </tr>
         <tr>

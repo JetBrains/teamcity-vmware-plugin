@@ -1,21 +1,25 @@
 package jetbrains.buildServer.clouds.vmware.web;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.vmware.vim25.mo.Folder;
 import com.vmware.vim25.mo.ResourcePool;
 import com.vmware.vim25.mo.VirtualMachine;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.rmi.RemoteException;
-import java.util.Map;
+import java.util.*;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import jetbrains.buildServer.clouds.vmware.connector.VMWareApiConnector;
 import jetbrains.buildServer.clouds.vmware.connector.VMWareApiConnectorImpl;
+import jetbrains.buildServer.controllers.ActionErrors;
 import jetbrains.buildServer.controllers.BaseFormXmlController;
 import jetbrains.buildServer.controllers.BasePropertiesBean;
 import jetbrains.buildServer.controllers.admin.projects.PluginPropertiesUtil;
 import jetbrains.buildServer.serverSide.SBuildServer;
+import jetbrains.buildServer.util.StringUtil;
 import jetbrains.buildServer.web.openapi.*;
+import org.apache.commons.lang.ObjectUtils;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.web.servlet.ModelAndView;
@@ -26,6 +30,8 @@ import org.springframework.web.servlet.ModelAndView;
  *         Time: 2:58 PM
  */
 public class VMWareEditProfileController extends BaseFormXmlController {
+
+  private static final Logger LOG = Logger.getInstance(VMWareEditProfileController.class.getName());
 
   @NotNull private final String myJspPath;
   @NotNull private final String myHtmlPath;
@@ -52,6 +58,8 @@ public class VMWareEditProfileController extends BaseFormXmlController {
 
   @Override
   protected void doPost(@NotNull final HttpServletRequest request, @NotNull final HttpServletResponse response, @NotNull final Element xmlResponse) {
+    ActionErrors errors = new ActionErrors();
+
     final BasePropertiesBean propsBean = new BasePropertiesBean(null);
     PluginPropertiesUtil.bindPropertiesFromRequest(request, propsBean, true);
 
@@ -61,21 +69,26 @@ public class VMWareEditProfileController extends BaseFormXmlController {
     final String password = props.get(VMWareWebConstants.SECURE_PASSWORD);
 
     try {
-
-      final VMWareApiConnector myApiConnector = new VMWareApiConnectorImpl(new URL(serverUrl),username, password);
+      final VMWareApiConnector myApiConnector = new VMWareApiConnectorImpl(new URL(serverUrl), username, password);
       xmlResponse.addContent(getVirtualMachinesAsElement(myApiConnector.getVirtualMachines(true)));
       xmlResponse.addContent(getFoldersAsElement(myApiConnector.getFolders()));
       xmlResponse.addContent(getResourcePoolsAsElement(myApiConnector.getResourcePools()));
-    } catch (MalformedURLException e) {
-      e.printStackTrace();
-    } catch (RemoteException e) {
-      e.printStackTrace();
+    } catch (Exception ex) {
+      LOG.warn("Unable to get vCenter details: " + ex.toString());
+      errors.addError("errorFetchResults", ex.toString());
+      writeErrors(xmlResponse, errors);
     }
   }
 
   private Element getVirtualMachinesAsElement(@NotNull final Map<String, VirtualMachine> vmMap){
     Element element = new Element("VirtualMachines");
-    for (VirtualMachine vm : vmMap.values()) {
+    final List<VirtualMachine> values = new ArrayList<VirtualMachine>(vmMap.values());
+    Collections.sort(values, new Comparator<VirtualMachine>() {
+      public int compare(@NotNull final VirtualMachine o1, @NotNull final VirtualMachine o2) {
+        return StringUtil.compare(o1.getName(), o2.getName());
+      }
+    });
+    for (VirtualMachine vm : values) {
       Element vmElement = new Element("VirtualMachine");
       vmElement.setAttribute("name", vm.getName());
       vmElement.setAttribute("template", String.valueOf(vm.getConfig().isTemplate()));
