@@ -1,10 +1,10 @@
 <component name="libraryTable">
   <library name="agent">
     <CLASSES>
-      <root url="file://$PROJECT_DIR$/../../BuildServer/.idea_artifacts/dist-agent/lib" />
+      <root url="file://$TeamCityDistribution$/buildAgent/lib" />
     </CLASSES>
     <JAVADOC />
     <SOURCES />
-    <jarDirectory url="file://$PROJECT_DIR$/../../BuildServer/.idea_artifacts/dist-agent/lib" recursive="false" />
+    <jarDirectory url="file://$TeamCityDistribution$/buildAgent/lib" recursive="false" />
   </library>
 </component>
