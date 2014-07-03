@@ -15,6 +15,7 @@ import jetbrains.buildServer.clouds.vmware.tasks.TaskStatusUpdater;
 import jetbrains.buildServer.clouds.vmware.tasks.UpdateInstancesTask;
 import jetbrains.buildServer.clouds.vmware.web.VMWareWebConstants;
 import jetbrains.buildServer.serverSide.AgentDescription;
+import jetbrains.buildServer.serverSide.TeamCityProperties;
 import jetbrains.buildServer.util.NamedThreadFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -27,6 +28,9 @@ import org.jetbrains.annotations.Nullable;
 public class VMWareCloudClient implements CloudClientEx {
 
   private static final Logger LOG = Logger.getInstance(VMWareCloudClient.class.getName());
+
+  private static final long UPDATE_INSTANCES_TASK_DELAY = 10*1000; // 10 seconds
+  private static final long TASK_STATUS_UPDATER_DELAY = 300; // 0.3 seconds
 
   private final VMWareApiConnector myApiConnector;
 
@@ -102,8 +106,11 @@ public class VMWareCloudClient implements CloudClientEx {
 
       if (errorList.size() == 0) {
         myScheduledExecutor = Executors.newScheduledThreadPool(2, new NamedThreadFactory("VSphere"));
-        myScheduledExecutor.scheduleWithFixedDelay(new UpdateInstancesTask(myApiConnector, this), 0, 1, TimeUnit.SECONDS);
-        myScheduledExecutor.scheduleWithFixedDelay(myStatusTask, 1, 1, TimeUnit.SECONDS);
+        myScheduledExecutor.scheduleWithFixedDelay(
+          new UpdateInstancesTask(myApiConnector, this), 0,
+          TeamCityProperties.getLong("teamcity.vsphere.instance.status.update.delay.ms", UPDATE_INSTANCES_TASK_DELAY), TimeUnit.MILLISECONDS
+        );
+        myScheduledExecutor.scheduleWithFixedDelay(myStatusTask, 0, 500, TimeUnit.MILLISECONDS);
       } else {
         myErrorInfo = new CloudErrorInfo(Arrays.toString(errorList.toArray()));
       }

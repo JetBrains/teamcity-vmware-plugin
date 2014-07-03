@@ -51,7 +51,7 @@ public class VMWareCloudImage implements CloudImage {
     myImageType = imageType;
     myFolder = folder;
     myResourcePool = resourcePool;
-    mySnapshotName = snapshotName;
+    mySnapshotName = StringUtil.isEmpty(snapshotName) ? null : snapshotName;
     myApiConnector = apiConnector;
     myStatusTask = statusTask;
     myMaxInstances = maxInstances;
@@ -167,12 +167,21 @@ public class VMWareCloudImage implements CloudImage {
       boolean willClone = !myApiConnector.checkVirtualMachineExists(instance.getName());
       LOG.info("Will clone for " + instance.getName() + ": " + willClone);
       instance.setStatus(InstanceStatus.SCHEDULED_TO_START);
+      if (!myInstances.containsKey(instance.getName())) {
+        addInstance(instance);
+      }
       if (willClone) {
         final Task task = myApiConnector.cloneVm(instance, myResourcePool, myFolder);
         myStatusTask.submit(task, new ImageStatusTaskWrapper(instance) {
           @Override
           public void onSuccess() {
             cloneVmSuccessHandler(instance, cloudInstanceUserData);
+          }
+
+          @Override
+          public void onError(final LocalizedMethodFault fault) {
+            super.onError(fault);
+            myInstances.remove(instance.getName());
           }
         });
       } else {
@@ -257,16 +266,6 @@ public class VMWareCloudImage implements CloudImage {
       final VMWareCloudInstance instance = new VMWareCloudInstance(this, name, StringUtil.isEmpty(snapshotName) ? null : snapshotName);
       instance.setStatus(myApiConnector.getInstanceStatus(vm));
       addInstance(instance);
-    }
-  }
-
-  private static boolean isPermanent(InstanceStatus status){
-    switch (status){
-      case RUNNING:
-      case STOPPED:
-        return true;
-      default:
-        return false;
     }
   }
 

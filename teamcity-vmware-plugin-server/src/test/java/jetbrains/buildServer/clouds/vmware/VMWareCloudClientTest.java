@@ -4,6 +4,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.WaitFor;
 import com.vmware.vim25.OptionValue;
 import com.vmware.vim25.VirtualMachinePowerState;
+import com.vmware.vim25.mo.Task;
 import com.vmware.vim25.mo.VirtualMachine;
 import java.net.MalformedURLException;
 import java.rmi.RemoteException;
@@ -18,6 +19,7 @@ import jetbrains.buildServer.clouds.vmware.connector.VMWareApiConnector;
 import jetbrains.buildServer.clouds.vmware.stubs.FakeApiConnector;
 import jetbrains.buildServer.clouds.vmware.stubs.FakeModel;
 import jetbrains.buildServer.clouds.vmware.stubs.FakeVirtualMachine;
+import jetbrains.buildServer.serverSide.TeamCityProperties;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -38,6 +40,7 @@ public class VMWareCloudClientTest extends BaseTestCase {
   @BeforeMethod
   public void setUp() throws Exception {
     super.setUp();
+    System.setProperty("teamcity.vsphere.instance.status.update.delay.ms", "300");
     myClientParameters = new CloudClientParameters();
     myClientParameters.setParameter("serverUrl", "http://localhost:8080");
     myClientParameters.setParameter("username", "un");
@@ -243,6 +246,54 @@ public class VMWareCloudClientTest extends BaseTestCase {
     assertEquals(VirtualMachinePowerState.poweredOn, vms.get(instance2.getName()).getRuntime().getPowerState());
   }
 
+  public void on_demand_clone_should_create_new_when_version_changes() throws Exception {
+    myClientParameters.setParameter("vmware_images_data", "image1;;cf;rp;ON_DEMAND_CLONE;3;X;:" +
+                                                          "image2;snap*;cf;rp;ON_DEMAND_CLONE;3;X;:" +
+                                                          "image_template;;cf;rp;CLONE;3;X;:");
+    recreateClient();
+
+
+    final AtomicReference<String> instanceId = new AtomicReference<String>();
+    final String originalChangeVersion = FakeModel.instance().getVirtualMachine("image1").getConfig().getChangeVersion();
+    startAndCheckCloneDeletedAfterTermination("image1", new Checker<VMWareCloudInstance>() {
+      public void check(final VMWareCloudInstance data) throws RemoteException {
+        final Map<String, String> vmParams = myFakeApi.getVMParams(data.getInstanceId());
+        assertEquals("", vmParams.get(VMWareApiConnector.TEAMCITY_VMWARE_IMAGE_SNAPSHOT));
+        assertEquals(originalChangeVersion, vmParams.get(VMWareApiConnector.TEAMCITY_VMWARE_IMAGE_CHANGE_VERSION));
+        instanceId.set(data.getInstanceId());
+      }
+    }, false);
+    assertEquals(4, FakeModel.instance().getVms().size());
+
+    // start and stop Instance
+    final Task powerOnTask = FakeModel.instance().getVirtualMachine("image1").powerOnVM_Task(null);
+    assertEquals("success", powerOnTask.waitForTask());
+    FakeModel.instance().getVirtualMachine("image1").shutdownGuest();
+    final String updatedChangeVersion = FakeModel.instance().getVirtualMachine("image1").getConfig().getChangeVersion();
+    assertNotSame(originalChangeVersion, updatedChangeVersion);
+
+    final VMWareCloudInstance instance1 = startAndCheckInstance("image1", new Checker<VMWareCloudInstance>() {
+      public void check(final VMWareCloudInstance data) throws RemoteException {
+        assertNotSame(instanceId.get(), data.getInstanceId());
+        final Map<String, String> vmParams = myFakeApi.getVMParams(data.getInstanceId());
+        assertEquals(updatedChangeVersion, vmParams.get(VMWareApiConnector.TEAMCITY_VMWARE_IMAGE_CHANGE_VERSION));
+      }
+    });
+    assertEquals(4, FakeModel.instance().getVms().size());
+    assertNotContains(FakeModel.instance().getVms().keySet(), instanceId.get());
+    final VMWareCloudInstance instance2 = startAndCheckInstance("image1", new Checker<VMWareCloudInstance>() {
+      public void check(final VMWareCloudInstance data) throws RemoteException {
+        assertNotSame(instanceId.get(), data.getInstanceId());
+        final Map<String, String> vmParams = myFakeApi.getVMParams(data.getInstanceId());
+        assertEquals(updatedChangeVersion, vmParams.get(VMWareApiConnector.TEAMCITY_VMWARE_IMAGE_CHANGE_VERSION));
+      }
+    });
+    assertEquals(5, FakeModel.instance().getVms().size());
+    final Map<String, VirtualMachine> vms = FakeModel.instance().getVms();
+    assertEquals(VirtualMachinePowerState.poweredOn, vms.get(instance1.getName()).getRuntime().getPowerState());
+    assertEquals(VirtualMachinePowerState.poweredOn, vms.get(instance2.getName()).getRuntime().getPowerState());
+  }
+
   public void catch_tc_started_instances_on_startup() throws MalformedURLException, RemoteException {
     startNewInstanceAndWait("image1");
     startNewInstanceAndWait("image2");
@@ -278,6 +329,18 @@ public class VMWareCloudClientTest extends BaseTestCase {
       }
     }
 
+  }
+
+  public void should_limit_new_instances_count(){
+    int countStarted = 0;
+    final VMWareCloudImage image_template = getImageByName("image_template");
+    while (myClient.canStartNewInstance(image_template)){
+      final CloudInstanceUserData userData = new CloudInstanceUserData(
+        image_template + "_agent", "authToken", "http://localhost:8080", 30 * 60 * 1000l, "My profile", Collections.<String, String>emptyMap());
+      myClient.startNewInstance(image_template, userData);
+      countStarted++;
+      assertTrue(countStarted <= 3);
+    }
   }
 
   private static String wrapWithArraySymbols(String str) {

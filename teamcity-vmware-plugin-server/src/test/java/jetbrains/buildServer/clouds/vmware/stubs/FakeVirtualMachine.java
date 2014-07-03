@@ -27,7 +27,7 @@ public class FakeVirtualMachine extends VirtualMachine {
   private boolean myTasksSuccessfull = true;
   private AtomicBoolean myIsStarted = new AtomicBoolean(false);
   private final List<VirtualMachineSnapshotTree> myRootSnapshotList = new ArrayList<VirtualMachineSnapshotTree>();
-  private VirtualMachine myLinkedParent = null;
+  private String myVersion;
 
   private FakeVirtualMachine(){
     super(null, null);
@@ -36,11 +36,17 @@ public class FakeVirtualMachine extends VirtualMachine {
   public FakeVirtualMachine(final String name, final boolean isTemplate, final boolean isRunning) {
     this();
     myName = name;
+    updateVersion();
     myIsStarted.set(isRunning);
     myConfigInfo = new VirtualMachineConfigInfo(){
       @Override
       public boolean isTemplate() {
         return isTemplate;
+      }
+
+      @Override
+      public String getChangeVersion() {
+        return myVersion;
       }
 
       @Override
@@ -139,9 +145,10 @@ public class FakeVirtualMachine extends VirtualMachine {
   }
 
   @Override
-  public void shutdownGuest() throws TaskInProgress, InvalidState, ToolsUnavailable, RuntimeFault, RemoteException {
+  public void shutdownGuest() throws RemoteException {
     try {
       Thread.sleep(GUEST_SHUTDOWN_TIMEOUT);
+      updateVersion();
       myIsStarted.set(false);
     } catch (InterruptedException e) {
 
@@ -207,12 +214,12 @@ public class FakeVirtualMachine extends VirtualMachine {
     return myTasksSuccessfull ? successTask() : failureTask();
   }
 
-  public void setLinkedParent(final VirtualMachine linkedParent) {
-    myLinkedParent = linkedParent;
-  }
-
   public void addCustomParam(final String key, final Object value){
     myCustomUserData.put(key, String.valueOf(value));
 
+  }
+
+  private void updateVersion(){
+    myVersion = new Date().toString();
   }
 }
