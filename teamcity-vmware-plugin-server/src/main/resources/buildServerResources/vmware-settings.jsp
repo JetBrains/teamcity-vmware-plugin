@@ -85,7 +85,7 @@
             this.$imagesDataElem.val(data);
         },
         showNecessaryOptions: function() {
-          var clone = $j("input:radio[name='prop:cloneBehaviour']:checked").val() == 'START';
+          var clone = $j("input:radio[name='cloneBehaviour']:checked").val() == 'START';
           if (clone){
             $j("#tr_resource_pool").hide("fast");
             $j("#tr_clone_folder").hide("fast");
@@ -201,7 +201,7 @@
         validateOptions: function () {
             var cloneFolder = $j("#cloneFolder").val(),
                     resourcePool = $j("#resourcePool").val(),
-                    cloneBehaviour = $j("#cloneBehaviour").val(),
+                    cloneBehaviour = $j("input:radio[name='cloneBehaviour']:checked").val(),
                     maxInstances = $j("#maxInstances").val(),
                     isValid = true;
 
@@ -233,7 +233,7 @@
             var snapshotName = this._visibleValue($j("#snapshot")),
                     cloneFolder = this._visibleValue($j("#cloneFolder")),
                     resourcePool = this._visibleValue($j("#resourcePool")),
-                    cloneBehaviour = this._visibleValue($j("#cloneBehaviour")),
+                    cloneBehaviour = $j("input:radio[name='cloneBehaviour']:checked").val(),
                     maxInstances = this._visibleValue($j("#maxInstances"));
 
             if (this.validateOptions()) {
@@ -360,14 +360,14 @@
         <tr id="tr_clone_behaviour">
           <th>Select an image type:</th>
           <td>
-            <props:radioButtonProperty id="cloneBehaviour_START" name="cloneBehaviour" value="START" checked="true"/>
-            <label for="cloneBehaviour">Start/Stop instance</label>
+            <input type="radio" id="cloneBehaviour_START" name="cloneBehaviour" value="START" checked="true"/>
+            <label for="cloneBehaviour_START">Start/Stop instance</label>
             <br/>
-            <props:radioButtonProperty id="cloneBehaviour_CLONE" name="cloneBehaviour" value="CLONE"/>
-            <label for="cloneBehaviour">Fresh clone</label>
+            <input type="radio" id="cloneBehaviour_CLONE" name="cloneBehaviour" value="CLONE"/>
+            <label for="cloneBehaviour_CLONE">Fresh clone</label>
             <br/>
-            <props:radioButtonProperty id="cloneBehaviour_ON_DEMAND_CLONE" name="cloneBehaviour" value="ON_DEMAND_CLONE"/>
-            <label for="cloneBehaviour">On demand clone</label>
+            <input type="radio" id="cloneBehaviour_ON_DEMAND_CLONE" name="cloneBehaviour" value="ON_DEMAND_CLONE"/>
+            <label for="cloneBehaviour_ON_DEMAND_CLONE">On demand clone</label>
             <br/>
           </td>
         </tr>
@@ -386,7 +386,7 @@
         <tr class="hidden"  id="tr_snapshot_name">
           <th><label for="snapshot">Snapshot name:</label></th>
           <td>
-            <props:selectProperty name="snapshot"/>
+            <select id="snapshot"> </select>
           </td>
         </tr>
 
@@ -396,7 +396,7 @@
             <label for="cloneFolder">Folder for clones</label>
           </th>
           <td>
-            <props:selectProperty name="cloneFolder"/>
+            <select id="cloneFolder"> </select>
           </td>
         </tr>
 
@@ -405,7 +405,7 @@
             <label for="resourcePool">Resource pool</label>
           </th>
           <td>
-            <props:selectProperty name="resourcePool"/>
+            <select id="resourcePool"> </select>
           </td>
         </tr>
         <tr class="hidden" id="tr_max_instances">
@@ -414,7 +414,7 @@
           </th>
           <td>
             <div>
-              <props:textProperty name="maxInstances" value="0"/>
+              <input type="text" id="maxInstances" value="0"/>
             </div>
             <span id="error_max_instances" class="error"></span>
           </td>

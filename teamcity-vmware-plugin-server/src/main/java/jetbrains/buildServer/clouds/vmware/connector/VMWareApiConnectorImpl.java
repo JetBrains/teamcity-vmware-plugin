@@ -153,7 +153,7 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
   @NotNull
   public Map<String, VirtualMachineSnapshotTree> getSnapshotList(final String vmName) throws RemoteException {
     final VirtualMachine vm = findEntityByName(vmName, VirtualMachine.class);
-    if (vm.getSnapshot() == null) {
+    if (vm == null || vm.getSnapshot() == null) {
       return Collections.emptyMap();
     }
     final VirtualMachineSnapshotTree[] rootSnapshotList = vm.getSnapshot().getRootSnapshotList();
