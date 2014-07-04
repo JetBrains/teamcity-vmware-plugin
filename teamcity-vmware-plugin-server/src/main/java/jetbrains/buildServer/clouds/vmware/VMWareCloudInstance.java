@@ -83,23 +83,32 @@ public class VMWareCloudInstance implements CloudInstance {
   }
 
   public void setStatus(final InstanceStatus status) {
+    if (myStatus == status)
+      return;
+    LOG.info(String.format("Changing %s status from %s to %s ", getName(), myStatus, status));
     myStatus = status;
   }
 
   public void updateVMInfo(@NotNull final VirtualMachine vm) {
     myVM = vm;
+    if (vm.getConfig() == null){
+      if (myStatus != InstanceStatus.SCHEDULED_TO_START) {
+        setStatus(InstanceStatus.UNKNOWN); // still cloning
+      }
+      return;
+    }
     final VirtualMachineRuntimeInfo runtime = vm.getRuntime();
     if (runtime != null && runtime.getPowerState() == VirtualMachinePowerState.poweredOn) {
       if (runtime.getBootTime() != null) {
         myStartDate = runtime.getBootTime().getTime();
       }
       if (myStatus != InstanceStatus.RUNNING) {
-        myStatus = InstanceStatus.RUNNING;
+        setStatus(InstanceStatus.RUNNING);
       }
       myIpAddress = myVM.getGuest() == null ? null : myVM.getGuest().getIpAddress();
     } else {
-      if (myStatus != InstanceStatus.STOPPED) {
-        myStatus = InstanceStatus.STOPPED;
+      if (myStatus != InstanceStatus.SCHEDULED_TO_START && myStatus != InstanceStatus.STOPPED) {
+        setStatus(InstanceStatus.STOPPED);
       }
     }
   }
@@ -122,5 +131,9 @@ public class VMWareCloudInstance implements CloudInstance {
   public boolean containsAgent(@NotNull AgentDescription agentDescription) {
     final Map<String, String> configParams = agentDescription.getConfigurationParameters();
     return getInstanceId().equals(configParams.get(INSTANCE_NAME));
+  }
+
+  public boolean isInPermanentStatus(){
+    return myStatus == InstanceStatus.STOPPED || myStatus == InstanceStatus.RUNNING;
   }
 }

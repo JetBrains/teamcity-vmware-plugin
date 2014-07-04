@@ -40,7 +40,7 @@ public class VMWareCloudClientTest extends BaseTestCase {
   @BeforeMethod
   public void setUp() throws Exception {
     super.setUp();
-    System.setProperty("teamcity.vsphere.instance.status.update.delay.ms", "300");
+    System.setProperty("teamcity.vsphere.instance.status.update.delay.ms", "250");
     myClientParameters = new CloudClientParameters();
     myClientParameters.setParameter("serverUrl", "http://localhost:8080");
     myClientParameters.setParameter("username", "un");

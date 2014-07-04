@@ -110,7 +110,7 @@ public class VMWareCloudClient implements CloudClientEx {
           new UpdateInstancesTask(myApiConnector, this), 0,
           TeamCityProperties.getLong("teamcity.vsphere.instance.status.update.delay.ms", UPDATE_INSTANCES_TASK_DELAY), TimeUnit.MILLISECONDS
         );
-        myScheduledExecutor.scheduleWithFixedDelay(myStatusTask, 0, 500, TimeUnit.MILLISECONDS);
+        myScheduledExecutor.scheduleWithFixedDelay(myStatusTask, 0, TASK_STATUS_UPDATER_DELAY, TimeUnit.MILLISECONDS);
       } else {
         myErrorInfo = new CloudErrorInfo(Arrays.toString(errorList.toArray()));
       }

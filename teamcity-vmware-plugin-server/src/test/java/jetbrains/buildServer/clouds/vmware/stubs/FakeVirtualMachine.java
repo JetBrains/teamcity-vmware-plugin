@@ -4,11 +4,10 @@ import com.vmware.vim25.*;
 import com.vmware.vim25.mo.*;
 import java.rmi.RemoteException;
 import java.util.*;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
-import jetbrains.buildServer.clouds.vmware.connector.VMWareApiConnector;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Sergey.Pak
@@ -17,12 +16,12 @@ import org.jetbrains.annotations.Nullable;
  */
 public class FakeVirtualMachine extends VirtualMachine {
 
-  private static final int GUEST_SHUTDOWN_TIMEOUT = 5*1000;
+  private static final int GUEST_SHUTDOWN_TIMEOUT = 3*1000;
   private String myName;
   private VirtualMachineRuntimeInfo myRuntimeInfo;
   private GuestInfo myGuestInfo;
   private VirtualMachineSnapshotInfo mySnapshotInfo;
-  private VirtualMachineConfigInfo myConfigInfo;
+  private final AtomicReference<VirtualMachineConfigInfo> myConfigInfo = new AtomicReference<VirtualMachineConfigInfo>();
   private Map<String, String> myCustomUserData;
   private boolean myTasksSuccessfull = true;
   private AtomicBoolean myIsStarted = new AtomicBoolean(false);
@@ -38,7 +37,7 @@ public class FakeVirtualMachine extends VirtualMachine {
     myName = name;
     updateVersion();
     myIsStarted.set(isRunning);
-    myConfigInfo = new VirtualMachineConfigInfo(){
+    myConfigInfo.set(new VirtualMachineConfigInfo(){
       @Override
       public boolean isTemplate() {
         return isTemplate;
@@ -60,7 +59,7 @@ public class FakeVirtualMachine extends VirtualMachine {
         }
         return retval;
       }
-    };
+    });
 
     myRuntimeInfo = new VirtualMachineRuntimeInfo(){
       @Override
@@ -97,8 +96,19 @@ public class FakeVirtualMachine extends VirtualMachine {
   @Override
   public Task cloneVM_Task(final Folder folder, final String name, final VirtualMachineCloneSpec spec)
     throws RemoteException {
-    FakeModel.instance().addVM(name, false, spec);
-    return conditionalTask();
+    final VirtualMachine vm = FakeModel.instance().addVM(name, false, spec);
+    final VirtualMachineConfigInfo oldConfig = ((FakeVirtualMachine)vm).myConfigInfo.get();
+    ((FakeVirtualMachine)vm).myConfigInfo.set(null);
+    final CountDownLatch latch = new CountDownLatch(1);
+    new Thread(){
+      @Override
+      public void run() {
+        try {sleep(2000);} catch (InterruptedException e) {}
+        latch.countDown();
+        ((FakeVirtualMachine)vm).myConfigInfo.set(oldConfig);
+      }
+    }.start();
+    return longTask(latch);
   }
 
   @Override
@@ -126,7 +136,7 @@ public class FakeVirtualMachine extends VirtualMachine {
 
   @Override
   public VirtualMachineConfigInfo getConfig() {
-    return myConfigInfo;
+    return myConfigInfo.get();
   }
 
   @Override
@@ -212,6 +222,24 @@ public class FakeVirtualMachine extends VirtualMachine {
 
   private Task conditionalTask(){
     return myTasksSuccessfull ? successTask() : failureTask();
+  }
+
+  private Task longTask(final CountDownLatch latch){
+    return new Task(null, null) {
+
+      @Override
+      public TaskInfo getTaskInfo() throws RemoteException {
+        final TaskInfo taskInfo = new TaskInfo();
+        taskInfo.setState(latch.getCount()==0 ? TaskInfoState.success : TaskInfoState.running);
+        return taskInfo;
+      }
+
+      @Override
+      public String waitForTask() throws RemoteException, InterruptedException {
+        latch.await();
+        return SUCCESS;
+      }
+    };
   }
 
   public void addCustomParam(final String key, final Object value){

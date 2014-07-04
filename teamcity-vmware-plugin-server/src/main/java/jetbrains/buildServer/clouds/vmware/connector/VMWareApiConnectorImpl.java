@@ -96,6 +96,9 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
       final VirtualMachine vm = allVms.get(vmName);
       final VirtualMachineConfigInfo config = vm.getConfig();
       if (config == null) {
+        if (!filterClones) {
+          filteredVms.put(vmName, vm);
+        }
         continue;
       }
       final OptionValue[] extraConfig = config.getExtraConfig();
@@ -133,8 +136,11 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
   public Map<String, String> getVMParams(@NotNull final String vmName) throws RemoteException {
     final Map<String, String> map = new HashMap<String, String>();
     VirtualMachine vm = findEntityByName(vmName, VirtualMachine.class);
-    for (OptionValue val : vm.getConfig().getExtraConfig()) {
-      map.put(val.getKey(), String.valueOf(val.getValue()));
+    final VirtualMachineConfigInfo config = vm.getConfig();
+    if (config != null) {
+      for (OptionValue val : config.getExtraConfig()) {
+        map.put(val.getKey(), String.valueOf(val.getValue()));
+      }
     }
 
     return map;
@@ -375,7 +381,10 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
 
   @Nullable
   private String getOptionValue(@NotNull final VirtualMachine vm, @NotNull final String optionName) {
-    final OptionValue[] extraConfig = vm.getConfig().getExtraConfig();
+    final VirtualMachineConfigInfo config = vm.getConfig();
+    if (config == null)
+      return null;
+    final OptionValue[] extraConfig = config.getExtraConfig();
     for (OptionValue option : extraConfig) {
       if (optionName.equals(option.getKey())) {
         return String.valueOf(option.getValue());

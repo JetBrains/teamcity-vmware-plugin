@@ -107,7 +107,7 @@ public class VMWareCloudImage implements CloudImage {
     myErrorInfo = errorInfo;
   }
 
-  private  synchronized VMWareCloudInstance getOrCreateInstance() throws RemoteException, InterruptedException {
+  private synchronized VMWareCloudInstance getOrCreateInstance() throws RemoteException, InterruptedException {
     if (myStartType.isUseOriginal()) {
       LOG.info("Won't create a new instance - using original");
       return new VMWareCloudInstance(this, myImageName, null);
@@ -181,7 +181,7 @@ public class VMWareCloudImage implements CloudImage {
           @Override
           public void onError(final LocalizedMethodFault fault) {
             super.onError(fault);
-            myInstances.remove(instance.getName());
+            removeInstance(instance.getName());
           }
         });
       } else {
@@ -245,7 +245,7 @@ public class VMWareCloudImage implements CloudImage {
     final List<String> instances2remove = new ArrayList<String>();
 
     for (String name : myInstances.keySet()) {
-      if (currentInstances.get(name) == null) {
+      if (currentInstances.get(name) == null && myInstances.get(name).isInPermanentStatus()) {
         instances2remove.add(name);
       }
     }
@@ -300,7 +300,9 @@ public class VMWareCloudImage implements CloudImage {
       if (entry.getValue().getStatus() != InstanceStatus.STOPPED)
         runningInstancesCount++;
     }
-    return myErrorInfo == null && (myMaxInstances == 0 || runningInstancesCount < myMaxInstances);
+    final boolean canStartMore = myErrorInfo == null && (myMaxInstances == 0 || runningInstancesCount < myMaxInstances);
+    LOG.info(String.format("Running count: %d, can start more: %s", runningInstancesCount, String.valueOf(canStartMore)));
+    return canStartMore;
   }
 
   public VMWareImageStartType getStartType() {
@@ -322,10 +324,12 @@ public class VMWareCloudImage implements CloudImage {
   }
 
   private void addInstance(@NotNull final VMWareCloudInstance instance){
+    LOG.info(String.format("Image %s, put instance %s", myImageName, instance.getName()));
     myInstances.put(instance.getName(), instance);
   }
 
   private void removeInstance(@NotNull final String name){
+    LOG.info(String.format("Image %s, remove instance %s", myImageName, name));
     myInstances.remove(name);
   }
 

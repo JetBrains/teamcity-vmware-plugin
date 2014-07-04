@@ -55,7 +55,9 @@ public class UpdateInstancesTask implements Runnable {
           if (image.getStartType().isUseOriginal()){
             final InstanceStatus instanceStatus = myApiConnector.getInstanceStatus(vm);
             final VMWareCloudInstance imageInstance = image.getInstances().iterator().next();
-            imageInstance.setStatus(instanceStatus);
+            if (imageInstance.isInPermanentStatus()) {
+              imageInstance.setStatus(instanceStatus);
+            }
           }
         } else {
           image.setErrorInfo(new CloudErrorInfo("Can't find vm with name " + image.getName()));
@@ -66,7 +68,7 @@ public class UpdateInstancesTask implements Runnable {
 
 
         final String imageName = myApiConnector.getImageName(vm);
-        if (imageName == null) {
+        if (imageName == null) { // we skip not ready instances too.
           continue;
         }
 
