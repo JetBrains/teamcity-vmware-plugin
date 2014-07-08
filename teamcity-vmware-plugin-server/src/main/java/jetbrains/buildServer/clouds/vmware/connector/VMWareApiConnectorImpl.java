@@ -12,6 +12,7 @@ import jetbrains.buildServer.clouds.CloudErrorInfo;
 import jetbrains.buildServer.clouds.CloudInstanceUserData;
 import jetbrains.buildServer.clouds.InstanceStatus;
 import jetbrains.buildServer.clouds.vmware.*;
+import jetbrains.buildServer.clouds.vmware.errors.VMWareCloudErrorType;
 import jetbrains.buildServer.util.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -195,8 +196,7 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
     if (vm != null) {
       return vm.powerOnVM_Task(null);
     } else {
-      instance.setStatus(InstanceStatus.ERROR);
-      instance.setErrorInfo(new CloudErrorInfo("VM " + instance.getInstanceId() + " not found!"));
+      instance.setErrorType(VMWareCloudErrorType.IMAGE_NOT_EXISTS);
     }
     return null;
   }
@@ -222,8 +222,8 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
     LOG.info(String.format("Attempting to clone VM %s into %s", imageName, instance.getName()));
     VirtualMachine vm = findEntityByName(imageName, VirtualMachine.class);
     if (vm == null) {
-      LOG.warn(String.format("%s not found. Returning null ", imageName));
-      return null;
+      final String errorText = "Unable to find vm " + instance.getName();
+      throw new RemoteException(errorText);
     }
     final VirtualMachineConfigSpec config = new VirtualMachineConfigSpec();
     final VirtualMachineCloneSpec cloneSpec = new VirtualMachineCloneSpec();
@@ -236,12 +236,19 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
     if (StringUtil.isNotEmpty(instance.getSnapshotName())) {
 
       final VirtualMachineSnapshotTree obj = snapshotList.get(instance.getSnapshotName());
-      cloneSpec.setSnapshot(obj == null ? null : obj.getSnapshot());
-      if (cloneSpec.getSnapshot() != null) {
+      final ManagedObjectReference snapshot = obj == null ? null : obj.getSnapshot();
+      cloneSpec.setSnapshot(snapshot);
+      if (snapshot != null) {
         LOG.info("Using linked clone. Snapshot name: " + instance.getSnapshotName());
         location.setDiskMoveType(VirtualMachineRelocateDiskMoveOptions.createNewChildDiskBacking.name());
+      } else {
+        final String errorText = "Unable to find snapshot " + instance.getSnapshotName();
+        throw new RemoteException(errorText);
       }
+    } else {
+      LOG.info("Snapshot name is not specified. Will clone latest VM state");
     }
+
 
     config.setExtraConfig(new OptionValue[]{
       createOptionValue(TEAMCITY_VMWARE_CLONED_INSTANCE, "true"),
@@ -299,8 +306,7 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
         instance.setStatus(InstanceStatus.ERROR);
       }
     } catch (Exception ex) {
-      instance.setStatus(InstanceStatus.ERROR);
-      instance.setErrorInfo(new CloudErrorInfo("Unable to terminate instance", ex.toString(), ex));
+      instance.setErrorType(VMWareCloudErrorType.CUSTOM, "Cannot stop VM " + instance.getName());
       throw new RuntimeException(ex);
     }
   }
@@ -323,7 +329,7 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
       final Task task = vm.powerOffVM_Task();
       final String powerOffResult = task.waitForTask();
       if (!Task.SUCCESS.equals(powerOffResult)) {
-        instance.setErrorInfo(new CloudErrorInfo("Unable to powerOff VM. Task status: " + powerOffResult, ex.toString(), ex));
+        instance.setErrorType(VMWareCloudErrorType.CUSTOM, "Unable to stop " + instance.getName());
       }
     }
     instance.setStatus(InstanceStatus.STOPPED);

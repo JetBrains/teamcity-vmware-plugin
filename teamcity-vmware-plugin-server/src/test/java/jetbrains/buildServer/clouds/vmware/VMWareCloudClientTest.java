@@ -16,10 +16,10 @@ import java.util.concurrent.atomic.AtomicReference;
 import jetbrains.buildServer.BaseTestCase;
 import jetbrains.buildServer.clouds.*;
 import jetbrains.buildServer.clouds.vmware.connector.VMWareApiConnector;
+import jetbrains.buildServer.clouds.vmware.errors.VMWareCloudErrorInfoFactory;
 import jetbrains.buildServer.clouds.vmware.stubs.FakeApiConnector;
 import jetbrains.buildServer.clouds.vmware.stubs.FakeModel;
 import jetbrains.buildServer.clouds.vmware.stubs.FakeVirtualMachine;
-import jetbrains.buildServer.serverSide.TeamCityProperties;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -341,6 +341,13 @@ public class VMWareCloudClientTest extends BaseTestCase {
       countStarted++;
       assertTrue(countStarted <= 3);
     }
+  }
+
+  @Test(expectedExceptions = RuntimeException.class, expectedExceptionsMessageRegExp = ".*Unable to find snapshot.*")
+  public void shouldnt_start_when_snapshot_is_missing(){
+    final VMWareCloudImage image2 = getImageByName("image2");
+    FakeModel.instance().removeVmSnaphot(image2.getName(), "snap");
+    startNewInstanceAndWait("image2");
   }
 
   private static String wrapWithArraySymbols(String str) {

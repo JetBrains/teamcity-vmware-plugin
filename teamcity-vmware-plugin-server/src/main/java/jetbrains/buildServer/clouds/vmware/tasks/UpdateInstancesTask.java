@@ -13,6 +13,7 @@ import jetbrains.buildServer.clouds.vmware.VMWareCloudImage;
 import jetbrains.buildServer.clouds.vmware.VMWareCloudInstance;
 import jetbrains.buildServer.clouds.vmware.VMWareImageStartType;
 import jetbrains.buildServer.clouds.vmware.connector.VMWareApiConnector;
+import jetbrains.buildServer.clouds.vmware.errors.VMWareCloudErrorType;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -40,11 +41,7 @@ public class UpdateInstancesTask implements Runnable {
       final Collection<VMWareCloudImage> images = myCloudClient.getImages();
       Map<String, VMWareCloudImage> imagesMap = new HashMap<String, VMWareCloudImage>();
       for (VMWareCloudImage image : images) {
-        image.setErrorInfo(null);
         imagesMap.put(image.getId(), image);
-        for (VMWareCloudInstance inst : image.getInstances()) {
-          inst.setErrorInfo(null);
-        }
       }
       final Map<String, VirtualMachine> vms = myApiConnector.getVirtualMachines(false);
       final Map<String, Map<String, VirtualMachine>> runData = new HashMap<String, Map<String, VirtualMachine>>();
@@ -59,8 +56,9 @@ public class UpdateInstancesTask implements Runnable {
               imageInstance.setStatus(instanceStatus);
             }
           }
+          image.clearErrorType(VMWareCloudErrorType.IMAGE_NOT_EXISTS);
         } else {
-          image.setErrorInfo(new CloudErrorInfo("Can't find vm with name " + image.getName()));
+          image.setErrorType(VMWareCloudErrorType.IMAGE_NOT_EXISTS);
         }
       }
       for (Map.Entry<String, VirtualMachine> vmEntry : vms.entrySet()) {
@@ -98,9 +96,9 @@ public class UpdateInstancesTask implements Runnable {
             }
             if (vm != null){
               instance.updateVMInfo(vm);
-              instance.setErrorInfo(null);
+              instance.clearErrorType(VMWareCloudErrorType.IMAGE_NOT_EXISTS);
             } else {
-              instance.setErrorInfo(new CloudErrorInfo("Unable to find information about VM"));
+              instance.setErrorType(VMWareCloudErrorType.IMAGE_NOT_EXISTS);
             }
           }
         });

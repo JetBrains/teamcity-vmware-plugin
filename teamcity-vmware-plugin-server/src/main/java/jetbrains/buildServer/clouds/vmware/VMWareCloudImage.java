@@ -9,8 +9,11 @@ import com.vmware.vim25.mo.VirtualMachine;
 import java.rmi.RemoteException;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
 import jetbrains.buildServer.clouds.*;
 import jetbrains.buildServer.clouds.vmware.connector.VMWareApiConnector;
+import jetbrains.buildServer.clouds.vmware.errors.VMWareCloudErrorInfo;
+import jetbrains.buildServer.clouds.vmware.errors.VMWareCloudErrorType;
 import jetbrains.buildServer.clouds.vmware.tasks.TaskStatusUpdater;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -20,7 +23,7 @@ import org.jetbrains.annotations.Nullable;
  *         Date: 4/15/2014
  *         Time: 3:58 PM
  */
-public class VMWareCloudImage implements CloudImage {
+public class VMWareCloudImage implements CloudImage, VmInfo {
 
   private static final Logger LOG = Logger.getInstance(VMWareCloudImage.class.getName());
 
@@ -29,7 +32,7 @@ public class VMWareCloudImage implements CloudImage {
   private final VMWareImageType myImageType;
   private final VMWareImageStartType myStartType;
   @Nullable private final String mySnapshotName;
-  private CloudErrorInfo myErrorInfo;
+  private final VMWareCloudErrorInfo myErrorInfo;
   private final String myResourcePool;
   private final String myFolder;
   private final VMWareApiConnector myApiConnector;
@@ -46,7 +49,7 @@ public class VMWareCloudImage implements CloudImage {
                           @NotNull final TaskStatusUpdater statusTask,
                           @NotNull final VMWareImageStartType startType,
                           final int maxInstances) {
-
+    myErrorInfo = new VMWareCloudErrorInfo(this);
     myImageName = imageName;
     myImageType = imageType;
     myFolder = folder;
@@ -100,11 +103,7 @@ public class VMWareCloudImage implements CloudImage {
 
   @Nullable
   public CloudErrorInfo getErrorInfo() {
-    return myErrorInfo;
-  }
-
-  public void setErrorInfo(final CloudErrorInfo errorInfo) {
-    myErrorInfo = errorInfo;
+    return myErrorInfo.getErrorInfo();
   }
 
   private synchronized VMWareCloudInstance getOrCreateInstance() throws RemoteException, InterruptedException {
@@ -114,17 +113,21 @@ public class VMWareCloudImage implements CloudImage {
     }
 
     String latestSnapshotName = null;
+    if (mySnapshotName != null) { ////means latest clone of snapshot that fits a mask
+      latestSnapshotName = myApiConnector.getLatestSnapshot(myImageName, mySnapshotName);
+      if (latestSnapshotName == null) {
+        setErrorType(VMWareCloudErrorType.IMAGE_SNAPSHOT_NOT_EXISTS);
+        throw new IllegalArgumentException("Unable to find snapshot: " + mySnapshotName);
+      }
+    }
+
+    clearErrorType(VMWareCloudErrorType.IMAGE_SNAPSHOT_NOT_EXISTS);
+
+
     if (!myStartType.isDeleteAfterStop()) {
       // on demand clone
       final Map<String, VirtualMachine> clones = myApiConnector.getClones(myImageName);
 
-      if (mySnapshotName != null) { ////means latest clone of snapshot that fits a mask
-        latestSnapshotName = myApiConnector.getLatestSnapshot(myImageName, mySnapshotName);
-        if (latestSnapshotName == null) {
-          setErrorInfo(VMWareCloudErrorInfoFactory.noSuchSnapshot(mySnapshotName, myImageName));
-          throw new IllegalArgumentException("Unable to find snapshot: " + mySnapshotName);
-        }
-      }
       // start an existsing one.
       final VirtualMachine imageVM = myApiConnector.getInstanceDetails(myImageName);
       if (imageVM == null) {
@@ -188,10 +191,8 @@ public class VMWareCloudImage implements CloudImage {
         cloneVmSuccessHandler(instance, cloudInstanceUserData);
       }
       return instance;
-    } catch (RemoteException e) {
-      return null;
-    } catch (InterruptedException e) {
-      return null;
+    } catch (Exception e) {
+      throw new RuntimeException(e);
     }
   }
 
@@ -300,7 +301,7 @@ public class VMWareCloudImage implements CloudImage {
       if (entry.getValue().getStatus() != InstanceStatus.STOPPED)
         runningInstancesCount++;
     }
-    final boolean canStartMore = myErrorInfo == null && (myMaxInstances == 0 || runningInstancesCount < myMaxInstances);
+    final boolean canStartMore = myErrorInfo.getErrorInfo() == null && (myMaxInstances == 0 || runningInstancesCount < myMaxInstances);
     LOG.info(String.format("Running count: %d, can start more: %s", runningInstancesCount, String.valueOf(canStartMore)));
     return canStartMore;
   }
@@ -333,6 +334,18 @@ public class VMWareCloudImage implements CloudImage {
     myInstances.remove(name);
   }
 
+  public void setErrorType(@NotNull final VMWareCloudErrorType errorType) {
+    setErrorType(errorType, null);
+  }
+
+  public void setErrorType(@NotNull final VMWareCloudErrorType errorType, @Nullable final String errorMessage) {
+    myErrorInfo.setErrorType(errorType, errorMessage);
+  }
+
+  public void clearErrorType(@NotNull final VMWareCloudErrorType errorType) {
+    myErrorInfo.clearErrorType(errorType);
+  }
+
   public static interface ProcessImageInstancesTask{
     void processInstance(@NotNull final VMWareCloudInstance instance);
   }
@@ -348,15 +361,13 @@ public class VMWareCloudImage implements CloudImage {
 
     @Override
     public void onError(final LocalizedMethodFault fault) {
-      myInstance.setStatus(InstanceStatus.ERROR);
-      final CloudErrorInfo errorInfo;
-      if (fault.getFault() != null && fault.getFault().getCause() != null) {
-        errorInfo = new CloudErrorInfo(fault.getLocalizedMessage(), fault.getLocalizedMessage(), fault.getFault().getCause());
+      if (fault != null) {
+        myInstance.setErrorType(VMWareCloudErrorType.CUSTOM, fault.getLocalizedMessage());
+        LOG.info("An error occured: " + fault.getLocalizedMessage() + " during processing " + myInstance.getName());
       } else {
-        errorInfo = new CloudErrorInfo(fault.getLocalizedMessage(), fault.getLocalizedMessage());
+        myInstance.setErrorType(VMWareCloudErrorType.CUSTOM, "Unknown error during processing instance " + myInstance.getName());
+        LOG.info("Unknown error during processing " + myInstance.getName());
       }
-      myInstance.setErrorInfo(errorInfo);
-      LOG.info("Unknown error occured: " + fault.getLocalizedMessage());
     }
   }
 }

@@ -1,4 +1,4 @@
-package jetbrains.buildServer.clouds.vmware;
+package jetbrains.buildServer.clouds.vmware.errors;
 
 import com.vmware.vim25.mo.Folder;
 import com.vmware.vim25.mo.ResourcePool;

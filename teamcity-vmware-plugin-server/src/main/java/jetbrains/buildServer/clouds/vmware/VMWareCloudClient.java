@@ -11,6 +11,7 @@ import java.util.concurrent.*;
 import jetbrains.buildServer.clouds.*;
 import jetbrains.buildServer.clouds.vmware.connector.VMWareApiConnector;
 import jetbrains.buildServer.clouds.vmware.connector.VMWareApiConnectorImpl;
+import jetbrains.buildServer.clouds.vmware.errors.VMWareCloudErrorInfoFactory;
 import jetbrains.buildServer.clouds.vmware.tasks.TaskStatusUpdater;
 import jetbrains.buildServer.clouds.vmware.tasks.UpdateInstancesTask;
 import jetbrains.buildServer.clouds.vmware.web.VMWareWebConstants;
@@ -29,7 +30,7 @@ public class VMWareCloudClient implements CloudClientEx {
 
   private static final Logger LOG = Logger.getInstance(VMWareCloudClient.class.getName());
 
-  private static final long UPDATE_INSTANCES_TASK_DELAY = 10*1000; // 10 seconds
+  private static final long UPDATE_INSTANCES_TASK_DELAY = 200*1000; // 10 seconds
   private static final long TASK_STATUS_UPDATER_DELAY = 300; // 0.3 seconds
 
   private final VMWareApiConnector myApiConnector;
@@ -152,7 +153,7 @@ public class VMWareCloudClient implements CloudClientEx {
   }
 
   public boolean isInitialized() {
-    return myScheduledExecutor != null && myImageMap.size() > 0;
+    return myScheduledExecutor != null;
   }
 
   @Nullable
