@@ -44,6 +44,7 @@ public class VMWareCloudErrorInfo {
   private void updateErrorInfo() {
     if (myErrorTypeSet.size() ==0 ){
       myErrorInfo = null;
+      return;
     }
     Set<String> errorStrs = new HashSet<String>();
     for (VMWareCloudErrorType errorType : myErrorTypeSet.keySet()) {

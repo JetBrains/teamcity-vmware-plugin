@@ -104,7 +104,7 @@ public class VMWareCloudInstance implements CloudInstance, VmInfo {
       if (runtime.getBootTime() != null) {
         myStartDate = runtime.getBootTime().getTime();
       }
-      if (myStatus != InstanceStatus.RUNNING) {
+      if (myStatus == InstanceStatus.STOPPED) {
         setStatus(InstanceStatus.RUNNING);
       }
       myIpAddress = myVM.getGuest() == null ? null : myVM.getGuest().getIpAddress();

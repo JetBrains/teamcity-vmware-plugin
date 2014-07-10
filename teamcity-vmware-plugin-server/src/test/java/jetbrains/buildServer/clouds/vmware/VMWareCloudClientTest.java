@@ -363,7 +363,22 @@ public class VMWareCloudClientTest extends BaseTestCase {
 
   private void terminateAndDeleteIfNecessary(final boolean shouldBeDeleted, final VMWareCloudInstance instance) throws RemoteException {
     myClient.terminateInstance(instance);
-    assertEquals("template clone should be deleted after execution", shouldBeDeleted, myFakeApi.getVirtualMachines(false).get(instance.getName()) == null);
+    final String name = instance.getName();
+    final WaitFor waitFor = new WaitFor(10 * 1000) {
+      @Override
+      protected boolean condition() {
+        try {
+          if (shouldBeDeleted) {
+            return (myFakeApi.getVirtualMachines(false).get(name) == null);
+          } else {
+            return myFakeApi.getInstanceDetails(name).getRuntime().getPowerState() == VirtualMachinePowerState.poweredOff;
+          }
+        } catch (RemoteException e) {
+          return false;
+        }
+      }
+    };
+    waitFor.assertCompleted("template clone should be deleted after execution");
   }
 
   private VMWareCloudInstance startAndCheckInstance(final String imageName, final Checker<VMWareCloudInstance> instanceChecker) throws Exception {
