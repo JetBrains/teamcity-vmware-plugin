@@ -12,6 +12,7 @@ import jetbrains.buildServer.clouds.*;
 import jetbrains.buildServer.clouds.vmware.connector.VMWareApiConnector;
 import jetbrains.buildServer.clouds.vmware.connector.VMWareApiConnectorImpl;
 import jetbrains.buildServer.clouds.vmware.errors.VMWareCloudErrorInfoFactory;
+import jetbrains.buildServer.clouds.vmware.errors.VMWareCloudErrorType;
 import jetbrains.buildServer.clouds.vmware.tasks.TaskStatusUpdater;
 import jetbrains.buildServer.clouds.vmware.tasks.UpdateInstancesTask;
 import jetbrains.buildServer.clouds.vmware.web.VMWareWebConstants;
@@ -30,7 +31,7 @@ public class VMWareCloudClient implements CloudClientEx {
 
   private static final Logger LOG = Logger.getInstance(VMWareCloudClient.class.getName());
 
-  private static final long UPDATE_INSTANCES_TASK_DELAY = 200*1000; // 10 seconds
+  private static final long UPDATE_INSTANCES_TASK_DELAY = 10*1000; // 10 seconds
   private static final long TASK_STATUS_UPDATER_DELAY = 300; // 0.3 seconds
 
   private final VMWareApiConnector myApiConnector;
@@ -134,22 +135,28 @@ public class VMWareCloudClient implements CloudClientEx {
     }
   }
 
-  public void terminateInstance(@NotNull CloudInstance cloudInstance) {
-    try {
-      final VMWareCloudInstance vInstance = (VMWareCloudInstance)cloudInstance;
-      vInstance.getImage().stopInstance(vInstance);
-    } catch (RemoteException e) {
-      e.printStackTrace();
-    } catch (InterruptedException e) {
-      e.printStackTrace();
-    }
+  public void terminateInstance(@NotNull final CloudInstance cloudInstance) {
+    myScheduledExecutor.submit(new Runnable() {
+      public void run() {
+        final VMWareCloudInstance vInstance = (VMWareCloudInstance)cloudInstance;
+        try {
+          vInstance.getImage().stopInstance(vInstance);
+        } catch (Exception e) {
+          LOG.error(e);
+          vInstance.setErrorType(VMWareCloudErrorType.INSTANCE_CANNOT_STOP);
+        }
+      }
+    });
   }
 
   public void dispose() {
-    myApiConnector.dispose();
     if (myScheduledExecutor != null) {
-      myScheduledExecutor.shutdownNow();
+      myScheduledExecutor.shutdown();
+      try {
+        myScheduledExecutor.awaitTermination(2, TimeUnit.MINUTES);
+      } catch (InterruptedException e) {}
     }
+    myApiConnector.dispose();
   }
 
   public boolean isInitialized() {

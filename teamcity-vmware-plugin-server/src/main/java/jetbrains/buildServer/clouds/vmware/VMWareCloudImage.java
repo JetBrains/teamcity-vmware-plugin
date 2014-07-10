@@ -109,7 +109,7 @@ public class VMWareCloudImage implements CloudImage, VmInfo {
   private synchronized VMWareCloudInstance getOrCreateInstance() throws RemoteException, InterruptedException {
     if (myStartType.isUseOriginal()) {
       LOG.info("Won't create a new instance - using original");
-      return new VMWareCloudInstance(this, myImageName, null);
+      return myInstances.get(myImageName);
     }
 
     String latestSnapshotName = null;
@@ -137,24 +137,31 @@ public class VMWareCloudImage implements CloudImage, VmInfo {
       for (VirtualMachine vm : clones.values()) {
         if (myApiConnector.getInstanceStatus(vm) == InstanceStatus.STOPPED) {
           final Map<String, String> teamcityParams = myApiConnector.getTeamcityParams(vm);
+          final String vmName = vm.getName();
+          final VMWareCloudInstance instance = myInstances.get(vmName);
+
+          // checking if this instance is already starting.
+          if (instance != null && instance.getStatus() != InstanceStatus.STOPPED)
+            continue;
+
           if (latestSnapshotName == null) {
             if (!config.getChangeVersion().equals(vm.getConfig().getChangeVersion())) {
-              LOG.info(String.format("Change version for %s is outdated: '%s' vs '%s'", vm.getName(), vm.getConfig().getChangeVersion(), config.getChangeVersion()));
-              deleteInstance(myInstances.get(vm.getName()));
+              LOG.info(String.format("Change version for %s is outdated: '%s' vs '%s'", vmName, vm.getConfig().getChangeVersion(), config.getChangeVersion()));
+              deleteInstance(instance);
               continue;
             }
           } else {
             if (!latestSnapshotName.equals(teamcityParams.get(VMWareApiConnector.TEAMCITY_VMWARE_IMAGE_SNAPSHOT))) {
               LOG.info(String.format("VM %s Snapshot is not the latest one: '%s' vs '%s'",
-                                     vm.getName(),
+                                     vmName,
                                      teamcityParams.get(VMWareApiConnector.TEAMCITY_VMWARE_IMAGE_SNAPSHOT),
                                      latestSnapshotName));
-              deleteInstance(myInstances.get(vm.getName()));
+              deleteInstance(instance);
               continue;
             }
           }
-          LOG.info("Will use existing VM with name " + vm.getName());
-          return new VMWareCloudInstance(this, vm.getName(), latestSnapshotName);
+          LOG.info("Will use existing VM with name " + vmName);
+          return instance == null ? new VMWareCloudInstance(this, vmName, latestSnapshotName) : instance;
         }
       }
     }
@@ -197,9 +204,6 @@ public class VMWareCloudImage implements CloudImage, VmInfo {
   }
 
   private synchronized void cloneVmSuccessHandler(@NotNull final VMWareCloudInstance instance, @NotNull final CloudInstanceUserData cloudInstanceUserData) {
-    if (!myInstances.containsKey(instance.getName())) {
-      addInstance(instance);
-    }
     instance.setStatus(InstanceStatus.STARTING);
     try {
       final Task startInstanceTask = myApiConnector.startInstance(instance,
@@ -227,6 +231,7 @@ public class VMWareCloudImage implements CloudImage, VmInfo {
         @Override
         public void onSuccess() {
           instance.setStatus(InstanceStatus.RUNNING);
+          instance.clearAllErrors();
           LOG.info("Instance started successfully");
         }
       });
@@ -296,13 +301,14 @@ public class VMWareCloudImage implements CloudImage, VmInfo {
     if (getImageType() == VMWareImageType.INSTANCE && myStartType == VMWareImageStartType.START) {
       return myApiConnector.isInstanceStopped(getId());
     }
-    int runningInstancesCount = 0;
+    final List<String> runningInstancesNames = new ArrayList<String>();
     for (Map.Entry<String, VMWareCloudInstance> entry : myInstances.entrySet()) {
       if (entry.getValue().getStatus() != InstanceStatus.STOPPED)
-        runningInstancesCount++;
+        runningInstancesNames.add(entry.getKey());
     }
-    final boolean canStartMore = myErrorInfo.getErrorInfo() == null && (myMaxInstances == 0 || runningInstancesCount < myMaxInstances);
-    LOG.info(String.format("Running count: %d, can start more: %s", runningInstancesCount, String.valueOf(canStartMore)));
+    final boolean canStartMore = myErrorInfo.getErrorInfo() == null && (myMaxInstances == 0 || runningInstancesNames.size() < myMaxInstances);
+    LOG.info(String.format("Running count: %d %s, can start more: %s",
+                           runningInstancesNames.size(), Arrays.toString(runningInstancesNames.toArray()), String.valueOf(canStartMore)));
     return canStartMore;
   }
 
@@ -324,7 +330,7 @@ public class VMWareCloudImage implements CloudImage, VmInfo {
     return String.format("%s-clone-%s%s", getId(), sdf.format(new Date()), Integer.toHexString(r.nextInt(256)));
   }
 
-  private void addInstance(@NotNull final VMWareCloudInstance instance){
+  public void addInstance(@NotNull final VMWareCloudInstance instance){
     LOG.info(String.format("Image %s, put instance %s", myImageName, instance.getName()));
     myInstances.put(instance.getName(), instance);
   }

@@ -87,7 +87,7 @@ public class VMWareCloudInstance implements CloudInstance, VmInfo {
   public void setStatus(final InstanceStatus status) {
     if (myStatus == status)
       return;
-    LOG.info(String.format("Changing %s status from %s to %s ", getName(), myStatus, status));
+    LOG.info(String.format("Changing %s(%s) status from %s to %s ", getName(), toString(), myStatus, status));
     myStatus = status;
   }
 
@@ -125,6 +125,10 @@ public class VMWareCloudInstance implements CloudInstance, VmInfo {
 
   public void clearErrorType(@NotNull final VMWareCloudErrorType errorType) {
     myErrorInfo.clearErrorType(errorType);
+  }
+
+  public void clearAllErrors(){
+    myErrorInfo.clearAllErrors();
   }
 
   @Nullable

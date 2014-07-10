@@ -44,11 +44,16 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
   }
 
   private synchronized Folder getRootFolder() throws RemoteException {
-    if (myServiceInstance != null){
-      final SessionManager sessionManager = myServiceInstance.getSessionManager();
-      if (sessionManager == null || sessionManager.getCurrentSession() == null){
-        myServiceInstance = null;
+    try {
+      if (myServiceInstance != null) {
+        final SessionManager sessionManager = myServiceInstance.getSessionManager();
+        if (sessionManager == null || sessionManager.getCurrentSession() == null) {
+          myServiceInstance = null;
+        }
       }
+    } catch (Exception ex){
+      ex.printStackTrace();
+      myServiceInstance = null;
     }
 
     if (myServiceInstance == null){
@@ -296,7 +301,7 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
     return optionValue;
   }
 
-  public void stopInstance(VMWareCloudInstance instance) {
+  public void stopInstance(@NotNull final VMWareCloudInstance instance) {
     instance.setStatus(InstanceStatus.SCHEDULED_TO_STOP);
     try {
       VirtualMachine vm = findEntityByName(instance.getInstanceId(), VirtualMachine.class);
@@ -306,19 +311,19 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
         instance.setStatus(InstanceStatus.ERROR);
       }
     } catch (Exception ex) {
-      instance.setErrorType(VMWareCloudErrorType.CUSTOM, "Cannot stop VM " + instance.getName());
+      instance.setErrorType(VMWareCloudErrorType.INSTANCE_CANNOT_STOP);
       throw new RuntimeException(ex);
     }
   }
 
-  private void doShutdown(final VMWareCloudInstance instance, VirtualMachine vm) throws RemoteException, InterruptedException {
+  private void doShutdown(@NotNull final VMWareCloudInstance instance, @NotNull VirtualMachine vm) throws RemoteException, InterruptedException {
     try {
       instance.setStatus(InstanceStatus.STOPPING);
       vm.shutdownGuest();
       long shutdownStartTime = System.currentTimeMillis();
       while (getInstanceStatus(vm) != InstanceStatus.STOPPED && (System.currentTimeMillis() - shutdownStartTime) < SHUTDOWN_TIMEOUT) {
-        vm = findEntityByName(instance.getInstanceId(), VirtualMachine.class);
         Thread.sleep(5000);
+        vm = findEntityByName(instance.getInstanceId(), VirtualMachine.class);
       }
       if (getInstanceStatus(vm) != InstanceStatus.STOPPED) {
         throw new RuntimeException("Stop timeout(" + SHUTDOWN_TIMEOUT + ") elapsed.");
@@ -329,7 +334,7 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
       final Task task = vm.powerOffVM_Task();
       final String powerOffResult = task.waitForTask();
       if (!Task.SUCCESS.equals(powerOffResult)) {
-        instance.setErrorType(VMWareCloudErrorType.CUSTOM, "Unable to stop " + instance.getName());
+        instance.setErrorType(VMWareCloudErrorType.INSTANCE_CANNOT_STOP);
       }
     }
     instance.setStatus(InstanceStatus.STOPPED);

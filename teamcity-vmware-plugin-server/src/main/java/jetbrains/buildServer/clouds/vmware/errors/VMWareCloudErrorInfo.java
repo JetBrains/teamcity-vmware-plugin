@@ -28,11 +28,17 @@ public class VMWareCloudErrorInfo {
       updateErrorInfo();
     }
   }
+
   public void clearErrorType(@NotNull final VMWareCloudErrorType errorType){
     if (myErrorTypeSet.containsKey(errorType)) {
       myErrorTypeSet.remove(errorType);
       updateErrorInfo();
     }
+  }
+
+  public void clearAllErrors(){
+    myErrorTypeSet.clear();
+    updateErrorInfo();
   }
 
   private void updateErrorInfo() {

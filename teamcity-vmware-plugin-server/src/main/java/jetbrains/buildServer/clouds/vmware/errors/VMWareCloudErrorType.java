@@ -12,6 +12,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public enum VMWareCloudErrorType {
   INSTANCE_CANNOT_START("Cannot start instance %s@%s"),
+  INSTANCE_CANNOT_STOP("Cannot stop instance %s@%s"),
   IMAGE_NOT_EXISTS("Virtual machine %s doesn't exist"),
   IMAGE_CANNOT_CLONE("Cannot clone image %s@%s"),
   IMAGE_SNAPSHOT_NOT_EXISTS("Cannot find snapshot %s@%s"),
