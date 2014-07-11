@@ -30,7 +30,6 @@ public class VMWareCloudInstance implements CloudInstance, VmInfo {
   private final String myInstanceName;
   private final VMWareCloudImage myImage;
   private InstanceStatus myStatus = InstanceStatus.UNKNOWN;
-  private VirtualMachine myVM = null;
   private final VMWareCloudErrorInfo myErrorInfo;
   private Date myStartDate;
   private String myIpAddress;
@@ -92,7 +91,6 @@ public class VMWareCloudInstance implements CloudInstance, VmInfo {
   }
 
   public void updateVMInfo(@NotNull final VirtualMachine vm) {
-    myVM = vm;
     if (vm.getConfig() == null){
       if (myStatus != InstanceStatus.SCHEDULED_TO_START) {
         setStatus(InstanceStatus.UNKNOWN); // still cloning
@@ -107,7 +105,7 @@ public class VMWareCloudInstance implements CloudInstance, VmInfo {
       if (myStatus == InstanceStatus.STOPPED) {
         setStatus(InstanceStatus.RUNNING);
       }
-      myIpAddress = myVM.getGuest() == null ? null : myVM.getGuest().getIpAddress();
+      myIpAddress = vm.getGuest() == null ? null : vm.getGuest().getIpAddress();
     } else {
       if (myStatus != InstanceStatus.SCHEDULED_TO_START && myStatus != InstanceStatus.STOPPED) {
         setStatus(InstanceStatus.STOPPED);
