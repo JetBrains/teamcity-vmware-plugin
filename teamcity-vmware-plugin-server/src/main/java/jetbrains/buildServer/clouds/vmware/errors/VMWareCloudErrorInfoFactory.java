@@ -40,11 +40,11 @@ public class VMWareCloudErrorInfoFactory {
     return error("No such %s: %s", itemClass.getSimpleName(), itemName);
   }
 
-  private static CloudErrorInfo error(String message, Object... args){
+  public static CloudErrorInfo error(String message, Object... args){
     return new CloudErrorInfo(String.format(message, args));
   }
 
-  private static CloudErrorInfo error(String message, String detailedMessage, Throwable th){
+  public static CloudErrorInfo error(String message, String detailedMessage, Throwable th){
     return new CloudErrorInfo(message, detailedMessage, th);
   }
 }
