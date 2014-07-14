@@ -26,6 +26,19 @@
 
 <jsp:useBean id="refreshablePath" class="java.lang.String" scope="request"/>
 <jsp:useBean id="refreshSnapshotsPath" class="java.lang.String" scope="request"/>
+<c:set var="imagesTableWrapperClass" value="imagesTableWrapper"/>
+
+<script type="text/template" id="imagesTableRowTemplate">
+    <tr class="imagesTableRow">
+        <td class="vmName"></td>
+        <td class="snapshotName"></td>
+        <td class="cloneFolder"></td>
+        <td class="resourcePool"></td>
+        <td class="cloneBehaviour"></td>
+        <td class="maxInstances"></td>
+        <td><a href="#" class="removeVmImageLink">X</a></td>
+    </tr>
+</script>
 
 <script type="text/javascript">
     BS = BS || {};
@@ -34,14 +47,16 @@
         refreshOptionsUrl: '<c:url value="${refreshablePath}"/>',
         refreshSnapshotsUrl: '<c:url value="${refreshSnapshotsPath}"/>',
         _lastImageId: 0,
+        _imagesDataLength: 0,
+        _dataKeys: [ 'vmName', 'snapshotName', 'cloneFolder', 'resourcePool', 'cloneBehaviour', 'maxInstances'],
         init: function () {
-            this.imagesData = { length: 0 };
+            this.imagesData = {};
             this.$fetchOptionsButton = $j('#vmwareFetchOptionsButton');
             this.$addImageButtons = $j('#vmwareAddImageButton');
-            this.$options = $j('vmWareSphereOptions');
+            this.$options = $j('.vmWareSphereOptions');
             this.$image = $j('#image');
             this.$snapshot = $j('#snapshot');
-            this.$imagesTableWrapper = $j('.images-table-wrapper');
+            this.$imagesTableWrapper = $j('.${imagesTableWrapperClass}');
             this.$imagesTable = $j("#vmware_images_list");
             this.$imagesDataElem = $j('#${cons.imagesData}');
             this.$fetchOptionsError = $j("#error_fetch_options");
@@ -49,6 +64,7 @@
             this.$resourcePool = $j("#resourcePool");
             this.$maxInstances = $j("#maxInstances");
             this.$cloneBehaviour = $j("input[name='cloneBehaviour']:checked");
+            this.$imagesTableRowTemplate = $j('#imagesTableRowTemplate').html();
 
             this._initImagesData();
             this._bindHandlers();
@@ -56,17 +72,21 @@
             this.renderImagesTable();
         },
         saveImagesData: function () {
-            var data = '';
+            var data = Object.keys(this.imagesData).map(function (imageId) {
+                return this._dataKeys.map(function (key) {
+                    return this.imagesData[imageId][key];
+                }.bind(this)).join(';').replace(/\[Latest version]/g, '');
+            }.bind(this)).join(';X;:');
 
-            Object.keys(this.imagesData).forEach(function (imageId) {
-                data += this.imagesData[imageId].join(';X;:').replace('[Latest version]', '') + ';X;:';
-            }.bind(this));
+            if (data.length) {
+                data+= ';X;:';
+            }
 
             this.$imagesDataElem.val(data);
         },
         toggleCloneOptions: function () {
             var isClone = this.$cloneBehaviour.val() !== 'START',
-                $elementsToToggle = $j('#tr_resource_pool, #tr_clone_folder, #tr_snapshot_name, #tr_max_instances');
+                $elementsToToggle = $j('.cloneOptionsRow');
 
             $elementsToToggle.toggle(isClone);
         },
@@ -128,8 +148,7 @@
             return false; // to prevent link with href='#' to scroll to the top of the page
         },
         validateOptions: function () {
-            var cloneBehaviour = .val(),
-                maxInstances = this.$maxInstances.val(),
+            var maxInstances = this.$maxInstances.val(),
                 isValid = true;
 
             // checking properties
@@ -153,32 +172,34 @@
 
             if (this.validateOptions()) {
                 newImageId = this._lastImageId++;
-                newImage = [
-                    this.$image.val(),
-                    this._visibleValue(this.$snapshot),
-                    this._visibleValue(this.$cloneFolder),
-                    this._visibleValue(this.$resourcePool),
-                    this.$cloneBehaviour.val(),
-                    this._visibleValue(this.$maxInstances)
-                ];
-                this._renderImageRow.apply(this, newImage.concat(newImageId));
+                newImage = {
+                    vmName: this.$image.val(),
+                    snapshotName: this._visibleValue(this.$snapshot) || '[Latest Version]',
+                    cloneFolder: this._visibleValue(this.$cloneFolder),
+                    resourcePool: this._visibleValue(this.$resourcePool),
+                    cloneBehaviour: this.$cloneBehaviour.val(),
+                    maxInstances: this._visibleValue(this.$maxInstances) || '0'
+                };
+                this._renderImageRow(newImage, newImageId);
                 this.imagesData[newImageId] = newImage;
-                this.imagesData.length++;
+                this._imagesDataLength += 1;
                 this.saveImagesData();
+                this._toggleImagesTable(!!this._imagesDataLength);
             }
 
             return false; // to prevent link with href='#' to scroll to the top of the page
         },
         removeImage: function ($elem) {
             delete this.imagesData[$elem.data('imageId')];
-            this.imagesData.length--;
-            $elem.closest('tr').remove();
+            this._imagesDataLength -= 1;
+            $elem.parents('.imagesTableRow').remove();
             this.saveImagesData();
+            this._toggleImagesTable(!!this._imagesDataLength);
         },
         renderImagesTable: function () {
             if (this.imagesData.length) {
                 Object.keys(this.imagesData).forEach(function (imageId) {
-                    this._renderImageRow.apply(this, this.imagesData[imageId].concat(imageId));
+                    this._renderImageRow(this.imagesData[imageId], imageId);
                 }.bind(this));
 
                 this._toggleImagesTable(true);
@@ -241,26 +262,27 @@
                 // drop images without vmName
                 if (props[0].length) {
                     id = self._lastImageId++;
-                    accumulator[id] = props;
+                    accumulator[id] = {
+                        vmName: props[0],
+                        snapshotName: props[1],
+                        cloneFolder: props[2],
+                        resourcePool: props[3],
+                        cloneBehaviour: props[4],
+                        maxInstances: props[5]
+                    };
+                    self._imagesDataLength++;
                 }
                 return accumulator;
             }, {});
         },
-        _renderImageRow: function (vmName, snapshotName, cloneFolder, resourcePool, cloneBehaviour, maxInstances, id) {
-            this.$imagesTable
-                .append($j("<tr>")
-                    .append($j("<td>").text(vmName))
-                    .append($j("<td>").text(snapshotName || '[Latest version]'))
-                    .append($j("<td>").text(cloneFolder))
-                    .append($j("<td>").text(resourcePool))
-                    .append($j("<td>").text(cloneBehaviour))
-                    .append($j("<td>").text(maxInstances || '0'))
-                    .append($j("<td>")
-                        .append($j("<a>")
-                            .data('imageId', id)
-                            .attr('href', '#')
-                            .addClass('removeVmImageLink')
-                            .text("X"))));
+        _renderImageRow: function (rows, id) {
+            var $row = $j(this.$imagesTableRowTemplate);
+
+            this._dataKeys.forEach(function (className) {
+                $row.find('.' + className).text(rows[className]);
+            });
+            $row.find('.removeVmImageLink').data('imageId', id);
+            this.$imagesTable.append($row);
         },
         _toggleImagesTable: function (show) {
             this.$imagesTableWrapper.toggle(show);
@@ -356,7 +378,7 @@
     </td>
   </tr>
 
-<tr class="images-table-wrapper hidden">
+<tr class="${imagesTableWrapperClass} hidden">
   <td colspan="2">
     <table id="vmware_images_list" class="runnerFormTable">
       <tbody>
@@ -404,7 +426,7 @@
           </td>
         </tr>
 
-        <tr class="hidden"  id="tr_snapshot_name">
+        <tr class="hidden cloneOptionsRow"  id="tr_snapshot_name">
           <th><label for="snapshot">Snapshot name:</label></th>
           <td>
             <select id="snapshot"> </select>
@@ -412,7 +434,7 @@
         </tr>
 
 
-        <tr class="hidden" id="tr_clone_folder">
+        <tr class="hidden cloneOptionsRow" id="tr_clone_folder">
           <th>
             <label for="cloneFolder">Folder for clones</label>
           </th>
@@ -421,7 +443,7 @@
           </td>
         </tr>
 
-        <tr class="hidden" id="tr_resource_pool">
+        <tr class="hidden cloneOptionsRow" id="tr_resource_pool">
           <th>
             <label for="resourcePool">Resource pool</label>
           </th>
@@ -429,7 +451,7 @@
             <select id="resourcePool"> </select>
           </td>
         </tr>
-        <tr class="hidden" id="tr_max_instances">
+        <tr class="hidden cloneOptionsRow" id="tr_max_instances">
           <th>
             <label for="maxInstances">Max number of instances</label>
           </th>
