@@ -72,22 +72,6 @@ public class VMWareCloudClient implements CloudClientEx {
         String behaviourStr = split[4];
         String maxInstancesStr = split[5];
 
-        int maxInstances = 0;
-        try {
-          maxInstances = Integer.parseInt(maxInstancesStr);
-        } catch (Exception ex) {
-        }
-
-        if (!myApiConnector.checkCloneFolderExists(cloneFolder)) {
-          errorList.add(VMWareCloudErrorInfoFactory.noSuchFolder(cloneFolder).getMessage());
-          break;
-        }
-
-        if (!myApiConnector.checkResourcePoolExists(resourcePool)) {
-          errorList.add(VMWareCloudErrorInfoFactory.noSuchResourcePool(resourcePool).getMessage());
-          break;
-        }
-
         final VirtualMachine vm = myApiConnector.getInstanceDetails(vmName);
 
         if (vm == null) {
@@ -97,11 +81,39 @@ public class VMWareCloudClient implements CloudClientEx {
 
         final VMWareImageStartType startType = VMWareImageStartType.valueOf(behaviourStr);
         final VMWareImageType imageType = vm.getConfig().isTemplate() ? VMWareImageType.TEMPLATE : VMWareImageType.INSTANCE;
+        if (startType.isUseOriginal()) {
+          if (imageType == VMWareImageType.TEMPLATE){
+            errorList.add(VMWareCloudErrorInfoFactory.error("Cannot use image % as Start/Stop - it's readonly", vmName).getMessage());
+            break;
+          }
+          final VMWareCloudImage cloudImage = new VMWareCloudImage(
+            myApiConnector, vmName, imageType, cloneFolder, resourcePool, snapshotName,
+            myApiConnector.getInstanceStatus(vm), myStatusTask, startType, 0);
+          myImageMap.put(vmName, cloudImage);
+        } else {
+          int maxInstances = 0;
+          try {
+            maxInstances = Integer.parseInt(maxInstancesStr);
+          } catch (Exception ex) {
+          }
 
-        final VMWareCloudImage cloudImage = new VMWareCloudImage(
-          myApiConnector, vmName, imageType, cloneFolder, resourcePool, snapshotName,
-          myApiConnector.getInstanceStatus(vm), myStatusTask, startType, maxInstances);
-        myImageMap.put(vmName, cloudImage);
+          if (!myApiConnector.checkCloneFolderExists(cloneFolder)) {
+            errorList.add(VMWareCloudErrorInfoFactory.noSuchFolder(cloneFolder).getMessage());
+            break;
+          }
+
+          if (!myApiConnector.checkResourcePoolExists(resourcePool)) {
+            errorList.add(VMWareCloudErrorInfoFactory.noSuchResourcePool(resourcePool).getMessage());
+            break;
+          }
+
+
+
+          final VMWareCloudImage cloudImage = new VMWareCloudImage(
+            myApiConnector, vmName, imageType, cloneFolder, resourcePool, snapshotName,
+            myApiConnector.getInstanceStatus(vm), myStatusTask, startType, maxInstances);
+          myImageMap.put(vmName, cloudImage);
+        }
       }
 
     } finally {

@@ -45,13 +45,9 @@ public class VMWareCloudClientTest extends BaseTestCase {
     myClientParameters.setParameter("serverUrl", "http://localhost:8080");
     myClientParameters.setParameter("username", "un");
     myClientParameters.setParameter("password", "pw");
-    myClientParameters.setParameter("cloneFolder", "cf");
-    myClientParameters.setParameter("resourcePool", "rp");
-    myClientParameters.setParameter("vmware_images_data", "image1;;cf;rp;START;3;X;:" +
+    myClientParameters.setParameter("vmware_images_data", "image1;;;;START;3;X;:" +
                                                           "image2;snap*;cf;rp;ON_DEMAND_CLONE;3;X;:" +
                                                           "image_template;;cf;rp;CLONE;3;X;:");
-    //myClientParameters.setParameter("images", "image1\nimage2@snap\nimage_template");
-    myClientParameters.setParameter("cloneBehaviour", VMWareImageStartType.START.name());
 
     myFakeApi = new FakeApiConnector();
     FakeModel.instance().addFolder("cf");
