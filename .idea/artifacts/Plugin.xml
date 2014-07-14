@@ -22,6 +22,7 @@
               </element>
               <element id="archive" name="vmware-cloud-agent.jar">
                 <element id="module-output" name="teamcity-vmware-plugin-agent" />
+                <element id="dir-copy" path="$PROJECT_DIR$/teamcity-vmware-plugin-agent/src/main/resources" />
               </element>
             </element>
           </element>
