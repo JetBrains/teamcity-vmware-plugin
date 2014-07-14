@@ -26,7 +26,6 @@
 
 <jsp:useBean id="refreshablePath" class="java.lang.String" scope="request"/>
 <jsp:useBean id="refreshSnapshotsPath" class="java.lang.String" scope="request"/>
-<c:set var="imagesTableWrapperClass" value="imagesTableWrapper"/>
 
 <script type="text/template" id="imagesTableRowTemplate">
     <tr class="imagesTableRow">
@@ -40,79 +39,53 @@
     </tr>
 </script>
 
+<script type="text/template" id="imagesSelectTemplate">
+    <props:selectProperty name="image">
+    <option value="">--Please select a VM--</option>
+    <optgroup label="Virtual machines" class="vmGroup"></optgroup>
+    <optgroup label="Templates" class="templatesGroup"></optgroup>
+    </props:selectProperty>
+</script>
+
 <script type="text/javascript">
     BS = BS || {};
     BS.Clouds = BS.Clouds || {};
     BS.Clouds.VMWareVSphere = BS.Clouds.VMWareVSphere || {
         refreshOptionsUrl: '<c:url value="${refreshablePath}"/>',
         refreshSnapshotsUrl: '<c:url value="${refreshSnapshotsPath}"/>',
-        _lastImageId: 0,
-        _imagesDataLength: 0,
         _dataKeys: [ 'vmName', 'snapshotName', 'cloneFolder', 'resourcePool', 'cloneBehaviour', 'maxInstances'],
+        selectors: {
+            imagesSelect: '#image',
+            activeCloneBehaviour: ".cloneBehaviourRadio:checked"
+        },
+        templates: {
+            imagesTableRow: $j('#imagesTableRowTemplate').html(),
+            imagesSelect: $j('#imagesSelectTemplate').html()
+        },
         init: function () {
-            this.imagesData = {};
             this.$fetchOptionsButton = $j('#vmwareFetchOptionsButton');
-            this.$addImageButtons = $j('#vmwareAddImageButton');
-            this.$options = $j('.vmWareSphereOptions');
-            this.$image = $j('#image');
-            this.$snapshot = $j('#snapshot');
-            this.$imagesTableWrapper = $j('.${imagesTableWrapperClass}');
-            this.$imagesTable = $j("#vmware_images_list");
+            this.$emptyImagesListMessage = $j('.emptyImagesListMessage');
+            this.$imagesTableWrapper = $j('.imagesTableWrapper');
+            this.$imagesTable = $j("#vmwareImagesTable");
             this.$imagesDataElem = $j('#${cons.imagesData}');
-            this.$fetchOptionsError = $j("#error_fetch_options");
+            this.$options = $j('.vmWareSphereOptions');
+            this.$image = $j(this.selectors.imagesSelect);
+            this.$snapshot = $j('#snapshot');
             this.$cloneFolder = $j("#cloneFolder");
             this.$resourcePool = $j("#resourcePool");
             this.$maxInstances = $j("#maxInstances");
-            this.$cloneBehaviour = $j("input[name='cloneBehaviour']:checked");
-            this.$imagesTableRowTemplate = $j('#imagesTableRowTemplate').html();
+            this.$addImageButtons = $j('#vmwareAddImageButton');
+            this.$fetchOptionsError = $j("#error_fetch_options");
 
+            this._lastImageId = this._imagesDataLength = 0;
             this._initImagesData();
             this._bindHandlers();
             this.refreshOptions();
             this.renderImagesTable();
         },
-        saveImagesData: function () {
-            var data = Object.keys(this.imagesData).map(function (imageId) {
-                return this._dataKeys.map(function (key) {
-                    return this.imagesData[imageId][key];
-                }.bind(this)).join(';').replace(/\[Latest version]/g, '');
-            }.bind(this)).join(';X;:');
-
-            if (data.length) {
-                data+= ';X;:';
-            }
-
-            this.$imagesDataElem.val(data);
-        },
-        toggleCloneOptions: function () {
-            var isClone = this.$cloneBehaviour.val() !== 'START',
-                $elementsToToggle = $j('.cloneOptionsRow');
-
-            $elementsToToggle.toggle(isClone);
-        },
-        clearErrors: function () {
-            this.$fetchOptionsError.empty();
-        },
-        addError: function (errorHTML) {
-            this.$fetchOptionsError
-                .append($j("<div>").html(errorHTML));
-        },
-        validateServerSettings: function () {
-            var url = $j("#${cons.serverUrl}").val(),
-                isValid = (/^https:\/\/.*\/sdk$/).test(url);
-
-            this.clearErrors();
-
-            if (!isValid) {
-                this.addError("Server URL doesn't seem to be correct. <br/>" +
-                "Correct URL should look like this: <strong>https://vcenter/sdk</strong>");
-            }
-
-            return isValid;
-        },
         refreshOptions: function () {
             var self = this,
-                $loader = $j(BS.loadingIcon);
+                    $loader = $j(BS.loadingIcon);
 
             if ( ! this.validateServerSettings()) {
                 return false;
@@ -132,10 +105,10 @@
                 },
                 onSuccess: function (response) {
                     var $response = $j(response.responseXML),
-                        $errors = $response.find("errors:eq(0) error"),
-                        $vms = $response.find('VirtualMachines:eq(0) VirtualMachine'),
-                        $pools = $response.find('ResourcePools:eq(0) ResourcePool'),
-                        $folders = $response.find('Folders:eq(0) Folder');
+                            $errors = $response.find("errors:eq(0) error"),
+                            $vms = $response.find('VirtualMachines:eq(0) VirtualMachine'),
+                            $pools = $response.find('ResourcePools:eq(0) ResourcePool'),
+                            $folders = $response.find('Folders:eq(0) Folder');
 
                     if ($errors.length) {
                         self.addError("Unable to fetch options: " + $errors.text());
@@ -147,20 +120,49 @@
 
             return false; // to prevent link with href='#' to scroll to the top of the page
         },
+        renderImagesTable: function () {
+            if (this._imagesDataLength) {
+                Object.keys(this.imagesData).forEach(function (imageId) {
+                    this._renderImageRow(this.imagesData[imageId], imageId);
+                }.bind(this));
+            }
+            this._toggleImagesTable(!!this._imagesDataLength);
+        },
+        showOptions: function ($vms, $pools, $folders) {
+            this
+                    ._displayImagesSelect($vms)
+                    ._displayPoolsSelect($pools)
+                    ._displayFoldersSelect($folders);
+
+            this.$options.show();
+        },
+        validateServerSettings: function () {
+            var url = $j("#${cons.serverUrl}").val(),
+                isValid = (/^https:\/\/.*\/sdk$/).test(url);
+
+            this.clearErrors();
+
+            if (!isValid) {
+                this.addError("Server URL doesn't seem to be correct. <br/>" +
+                "Correct URL should look like this: <strong>https://vcenter/sdk</strong>");
+            }
+
+            return isValid;
+        },
         validateOptions: function () {
             var maxInstances = this.$maxInstances.val(),
                 isValid = true;
 
             // checking properties
-            $j("#error_image").add("#error_max_instances").empty();
+            this.clearErrors($j("#error_image").add("#error_max_instances"));
 
             if ( ! this.$image.val()) {
-                $j("#error_image").append($j("<div>").text("Please select a VM"));
+                this.addError("Please select a VM", $j("#error_image"));
                 isValid = false;
             }
 
-            if (maxInstances != '' && !$j.isNumeric(maxInstances)) {
-                $j("#error_max_instances").append($j("<div>").text("Must be number"));
+            if (maxInstances != '' && ! $j.isNumeric(maxInstances)) {
+                this.addError("Must be number", $j("#error_max_instances"));
                 isValid = false;
             }
 
@@ -177,7 +179,7 @@
                     snapshotName: this._visibleValue(this.$snapshot) || '[Latest Version]',
                     cloneFolder: this._visibleValue(this.$cloneFolder),
                     resourcePool: this._visibleValue(this.$resourcePool),
-                    cloneBehaviour: this.$cloneBehaviour.val(),
+                    cloneBehaviour: $j(this.selectors.activeCloneBehaviour).val(),
                     maxInstances: this._visibleValue(this.$maxInstances) || '0'
                 };
                 this._renderImageRow(newImage, newImageId);
@@ -196,14 +198,18 @@
             this.saveImagesData();
             this._toggleImagesTable(!!this._imagesDataLength);
         },
-        renderImagesTable: function () {
-            if (this.imagesData.length) {
-                Object.keys(this.imagesData).forEach(function (imageId) {
-                    this._renderImageRow(this.imagesData[imageId], imageId);
-                }.bind(this));
+        saveImagesData: function () {
+            var data = Object.keys(this.imagesData).map(function (imageId) {
+                return this._dataKeys.map(function (key) {
+                    return this.imagesData[imageId][key];
+                }.bind(this)).join(';').replace(/\[Latest version]/g, '');
+            }.bind(this)).join(';X;:');
 
-                this._toggleImagesTable(true);
+            if (data.length) {
+                data+= ';X;:';
             }
+
+            this.$imagesDataElem.val(data);
         },
         fetchSnapshots: function () {
             BS.ajaxRequest(this.refreshSnapshotsUrl, {
@@ -220,21 +226,46 @@
                 }.bind(this)
             });
         },
-        showOptions: function ($vms, $pools, $folders) {
-            this
-                ._displayImagesSelect($vms)
-                ._displayPoolsSelect($pools)
-                ._displayFoldersSelect($folders);
+        clearErrors: function (target) {
+            (target || this.$fetchOptionsError).empty();
+        },
+        addError: function (errorHTML, target) {
+            (target || this.$fetchOptionsError)
+                    .append($j("<div>").html(errorHTML));
+        },
+        _initImagesData: function () {
+            var self = this,
+                    rawImagesData = this.$imagesDataElem.val() || '',
+                    imagesData = rawImagesData && rawImagesData.split(';X;:') || [];
 
-            this.$options.show();
+            this.imagesData = imagesData.reduce(function (accumulator, imageDataStr) {
+                var props = imageDataStr.split(';'),
+                        id;
+
+                // drop images without vmName
+                if (props[0].length) {
+                    id = self._lastImageId++;
+                    accumulator[id] = {};
+                    self._dataKeys.forEach(function(key, index) {
+                        accumulator[id][key] = props[index];
+                    });
+                    self._imagesDataLength++;
+                }
+                return accumulator;
+            }, {});
         },
         _bindHandlers: function () {
             var self = this;
 
             this.$fetchOptionsButton.on('click', this._fetchOptionsClickHandler.bind(this));
             this.$addImageButtons.on('click', this.addImage.bind(this));
-            this.$image.on('change', this.fetchSnapshots.bind(this));
-            $j("[name=cloneBehaviour]").on('change', this.toggleCloneOptions.bind(this));
+            this.$options.on('change', this.selectors.imagesSelect, this.fetchSnapshots.bind(this));
+            $j("[name=cloneBehaviour]").on('change', function () {
+                var isClone = $j(this.selectors.activeCloneBehaviour).val() !== 'START',
+                    $elementsToToggle = $j('.cloneOptionsRow');
+
+                $elementsToToggle.toggle(isClone);
+            }.bind(this));
             this.$image.add(this.$snapshot).on('change', this.validateOptions.bind(this));
             this.$imagesTable.on('click', '.removeVmImageLink', function () {
                 if (confirm('Are you sure?')) {
@@ -250,33 +281,8 @@
 
             return false; // to prevent link with href='#' to scroll to the top of the page
         },
-        _initImagesData: function () {
-            var self = this,
-                rawImagesData = this.$imagesDataElem.val() || '',
-                imagesData = rawImagesData && rawImagesData.split(';X;:') || [];
-
-            this.imagesData = imagesData.reduce(function (accumulator, imageDataStr) {
-                var props = imageDataStr.split(';'),
-                    id;
-
-                // drop images without vmName
-                if (props[0].length) {
-                    id = self._lastImageId++;
-                    accumulator[id] = {
-                        vmName: props[0],
-                        snapshotName: props[1],
-                        cloneFolder: props[2],
-                        resourcePool: props[3],
-                        cloneBehaviour: props[4],
-                        maxInstances: props[5]
-                    };
-                    self._imagesDataLength++;
-                }
-                return accumulator;
-            }, {});
-        },
         _renderImageRow: function (rows, id) {
-            var $row = $j(this.$imagesTableRowTemplate);
+            var $row = $j(this.templates.imagesTableRow);
 
             this._dataKeys.forEach(function (className) {
                 $row.find('.' + className).text(rows[className]);
@@ -285,29 +291,22 @@
             this.$imagesTable.append($row);
         },
         _toggleImagesTable: function (show) {
-            this.$imagesTableWrapper.toggle(show);
+            this.$imagesTableWrapper.show();
+            this.$emptyImagesListMessage.toggle(!show);
+            this.$imagesTable.toggle(show);
         },
         _displayImagesSelect: function ($vms) {
-            var self = this;
-
-            this.$image
-                    .find('option, optgroup').remove().end()
-                    .append($j('<option>').val('').text('--Please select a VM--'))
-                    .append($j('<optgroup>').attr('label', 'Virtual machines'));
+            var self = this,
+                $select = $j(this.templates.imagesSelect),
+                $vmGroup = $select.find(".vmGroup"),
+                $templatesGroup = $select.find(".templatesGroup");
 
             $vms.each(function () {
-                if ($j(this).attr('template') == 'false') {
-                    self._appendOption(self.$image.find("optgroup[label='Virtual machines']"), $j(this).attr('name'));
-                }
+                self._appendOption($j(this).attr('template') == 'false' ? $vmGroup : $templatesGroup, $j(this).attr('name'));
             });
 
-            this.$image.append($j("<optgroup>").attr("label", "Templates"));
-
-            $vms.each(function () {
-                if ($j(this).attr('template') == 'true') {
-                    self._appendOption(self.$image.find("optgroup[label='Templates']"), $j(this).attr('name'));
-                }
-            });
+            this.$image.replaceWith($select);
+            this.$image = $select;
 
             return this;
         },
@@ -343,11 +342,7 @@
             });
         },
         _visibleValue: function (elem) {
-            if (elem.is(":visible")) {
-                return elem.val();
-            } else {
-                return "";
-            }
+            return elem.is(":visible") ? elem.val() : '';
         },
         _appendOption: function ($target, value) {
             $target.append($j('<option>').attr('value', value).text(value));
@@ -378,9 +373,10 @@
     </td>
   </tr>
 
-<tr class="${imagesTableWrapperClass} hidden">
+<tr class="imagesTableWrapper hidden">
   <td colspan="2">
-    <table id="vmware_images_list" class="runnerFormTable">
+    <span class="emptyImagesListMessage hidden">You haven't added any images yet.</span>
+    <table id="vmwareImagesTable" class="imagesTable runnerFormTable hidden">
       <tbody>
       <tr>
         <th>Image name</th>
@@ -400,16 +396,16 @@
 <tr class="vmWareSphereOptions hidden">
     <td colspan="2">
       <table class="runnerFormTable">
-        <tr id="tr_clone_behaviour">
+        <tr>
           <th>Select an image type:</th>
           <td>
-            <input type="radio" id="cloneBehaviour_START" name="cloneBehaviour" value="START" checked="true"/>
+            <input type="radio" id="cloneBehaviour_START" name="cloneBehaviour" value="START" checked="true" class="cloneBehaviourRadio"/>
             <label for="cloneBehaviour_START">Start/Stop instance</label>
             <br/>
-            <input type="radio" id="cloneBehaviour_CLONE" name="cloneBehaviour" value="CLONE"/>
+            <input type="radio" id="cloneBehaviour_CLONE" name="cloneBehaviour" value="CLONE" class="cloneBehaviourRadio"/>
             <label for="cloneBehaviour_CLONE">Fresh clone</label>
             <br/>
-            <input type="radio" id="cloneBehaviour_ON_DEMAND_CLONE" name="cloneBehaviour" value="ON_DEMAND_CLONE"/>
+            <input type="radio" id="cloneBehaviour_ON_DEMAND_CLONE" name="cloneBehaviour" value="ON_DEMAND_CLONE" class="cloneBehaviourRadio"/>
             <label for="cloneBehaviour_ON_DEMAND_CLONE">On demand clone</label>
             <br/>
           </td>
@@ -434,7 +430,7 @@
         </tr>
 
 
-        <tr class="hidden cloneOptionsRow" id="tr_clone_folder">
+        <tr class="hidden cloneOptionsRow">
           <th>
             <label for="cloneFolder">Folder for clones</label>
           </th>
@@ -443,7 +439,7 @@
           </td>
         </tr>
 
-        <tr class="hidden cloneOptionsRow" id="tr_resource_pool">
+        <tr class="hidden cloneOptionsRow">
           <th>
             <label for="resourcePool">Resource pool</label>
           </th>
@@ -451,7 +447,7 @@
             <select id="resourcePool"> </select>
           </td>
         </tr>
-        <tr class="hidden cloneOptionsRow" id="tr_max_instances">
+        <tr class="hidden cloneOptionsRow">
           <th>
             <label for="maxInstances">Max number of instances</label>
           </th>
@@ -468,7 +464,8 @@
           </td>
         </tr>
         </table>
-    </td></tr>
+    </td>
+</tr>
 <script type="text/javascript">
     BS.Clouds.VMWareVSphere.init();
 </script>
