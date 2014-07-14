@@ -27,26 +27,6 @@
 <jsp:useBean id="refreshablePath" class="java.lang.String" scope="request"/>
 <jsp:useBean id="refreshSnapshotsPath" class="java.lang.String" scope="request"/>
 
-<script type="text/template" id="imagesTableRowTemplate">
-    <tr class="imagesTableRow">
-        <td class="vmName"></td>
-        <td class="snapshotName"></td>
-        <td class="cloneFolder"></td>
-        <td class="resourcePool"></td>
-        <td class="cloneBehaviour"></td>
-        <td class="maxInstances"></td>
-        <td><a href="#" class="removeVmImageLink">X</a></td>
-    </tr>
-</script>
-
-<script type="text/template" id="imagesSelectTemplate">
-    <props:selectProperty name="image">
-    <option value="">--Please select a VM--</option>
-    <optgroup label="Virtual machines" class="vmGroup"></optgroup>
-    <optgroup label="Templates" class="templatesGroup"></optgroup>
-    </props:selectProperty>
-</script>
-
 <script type="text/javascript">
     BS = BS || {};
     BS.Clouds = BS.Clouds || {};
@@ -57,10 +37,6 @@
         selectors: {
             imagesSelect: '#image',
             activeCloneBehaviour: ".cloneBehaviourRadio:checked"
-        },
-        templates: {
-            imagesTableRow: $j('#imagesTableRowTemplate').html(),
-            imagesSelect: $j('#imagesSelectTemplate').html()
         },
         init: function () {
             this.$fetchOptionsButton = $j('#vmwareFetchOptionsButton');
@@ -79,13 +55,14 @@
 
             this._lastImageId = this._imagesDataLength = 0;
             this._initImagesData();
+            this._initTemplates();
             this._bindHandlers();
             this.refreshOptions();
             this.renderImagesTable();
         },
         refreshOptions: function () {
             var self = this,
-                    $loader = $j(BS.loadingIcon);
+                $loader = $j(BS.loadingIcon).clone();
 
             if ( ! this.validateServerSettings()) {
                 return false;
@@ -346,6 +323,27 @@
         },
         _appendOption: function ($target, value) {
             $target.append($j('<option>').attr('value', value).text(value));
+        },
+        _initTemplates: function() {
+            // Prototype.js ignores script type when parsing scripts (for refresable),
+            // so custom script types do not work.
+            // Older IE try to interpret `template` tags, that approach fails too.
+            this.templates = {
+                imagesTableRow: $j('<tr class="imagesTableRow">\
+<td class="vmName"></td>\
+<td class="snapshotName"></td>\
+<td class="cloneFolder"></td>\
+<td class="resourcePool"></td>\
+<td class="cloneBehaviour"></td>\
+<td class="maxInstances"></td>\
+<td><a href="#" class="removeVmImageLink">X</a></td>\
+            </tr>'),
+                imagesSelect: $j('<select name="prop:image" id="image">\
+    <option value="">--Please select a VM--</option>\
+    <optgroup label="Virtual machines" class="vmGroup"></optgroup>\
+    <optgroup label="Templates" class="templatesGroup"></optgroup>\
+</select>')
+            }
         }
     };
 </script>
