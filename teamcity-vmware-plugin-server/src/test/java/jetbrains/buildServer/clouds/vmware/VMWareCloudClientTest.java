@@ -205,7 +205,7 @@ public class VMWareCloudClientTest extends BaseTestCase {
       }
     });
     assertEquals(5, FakeModel.instance().getVms().size());
-    final Map<String, VirtualMachine> vms = FakeModel.instance().getVms();
+    final Map<String, FakeVirtualMachine> vms = FakeModel.instance().getVms();
     assertEquals(VirtualMachinePowerState.poweredOn, vms.get(instance1.getName()).getRuntime().getPowerState());
     assertEquals(VirtualMachinePowerState.poweredOn, vms.get(instance2.getName()).getRuntime().getPowerState());
   }
@@ -241,7 +241,7 @@ public class VMWareCloudClientTest extends BaseTestCase {
       }
     });
     assertEquals(5, FakeModel.instance().getVms().size());
-    final Map<String, VirtualMachine> vms = FakeModel.instance().getVms();
+    final Map<String, FakeVirtualMachine> vms = FakeModel.instance().getVms();
     assertEquals(VirtualMachinePowerState.poweredOn, vms.get(instance1.getName()).getRuntime().getPowerState());
     assertEquals(VirtualMachinePowerState.poweredOn, vms.get(instance2.getName()).getRuntime().getPowerState());
   }
@@ -289,7 +289,7 @@ public class VMWareCloudClientTest extends BaseTestCase {
       }
     });
     assertEquals(5, FakeModel.instance().getVms().size());
-    final Map<String, VirtualMachine> vms = FakeModel.instance().getVms();
+    final Map<String, FakeVirtualMachine> vms = FakeModel.instance().getVms();
     assertEquals(VirtualMachinePowerState.poweredOn, vms.get(instance1.getName()).getRuntime().getPowerState());
     assertEquals(VirtualMachinePowerState.poweredOn, vms.get(instance2.getName()).getRuntime().getPowerState());
   }
@@ -348,6 +348,22 @@ public class VMWareCloudClientTest extends BaseTestCase {
     final VMWareCloudImage image2 = getImageByName("image2");
     FakeModel.instance().removeVmSnaphot(image2.getName(), "snap");
     startNewInstanceAndWait("image2");
+  }
+
+  public void should_power_off_if_no_guest_tools_avail(){
+    final VMWareCloudImage image_template = getImageByName("image_template");
+    final VMWareCloudInstance instance = startNewInstanceAndWait("image_template");
+    assertContains(image_template.getInstances(),  instance);
+    FakeModel.instance().getVirtualMachine(instance.getName()).disableGuestTools();
+    myClient.terminateInstance(instance);
+    new WaitFor(500) {
+      @Override
+      protected boolean condition() {
+        return instance.getStatus() == InstanceStatus.STOPPED;
+      }
+    };
+    assertNull(FakeModel.instance().getVirtualMachine(instance.getName()));
+    assertNotContains(image_template.getInstances(),  instance);
   }
 
   private static String wrapWithArraySymbols(String str) {

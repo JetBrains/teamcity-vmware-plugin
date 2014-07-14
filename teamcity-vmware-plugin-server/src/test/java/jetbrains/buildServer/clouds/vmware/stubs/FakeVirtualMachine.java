@@ -76,6 +76,7 @@ public class FakeVirtualMachine extends VirtualMachine {
     };
 
     myCustomUserData = new HashMap<String, String>();
+    enableGuestTools();
   }
 
   @Override
@@ -156,14 +157,16 @@ public class FakeVirtualMachine extends VirtualMachine {
 
   @Override
   public void shutdownGuest() throws RemoteException {
-    try {
-      Thread.sleep(GUEST_SHUTDOWN_TIMEOUT);
-      updateVersion();
-      myIsStarted.set(false);
-    } catch (InterruptedException e) {
-
+    if (myGuestInfo != null) {
+      try {
+        Thread.sleep(GUEST_SHUTDOWN_TIMEOUT);
+        updateVersion();
+        myIsStarted.set(false);
+      } catch (InterruptedException e) {
+      }
+    } else {
+      throw new RemoteException("no guest tools available");
     }
-
   }
 
   public void setTasksSuccessStatus(boolean success){
@@ -249,5 +252,15 @@ public class FakeVirtualMachine extends VirtualMachine {
 
   private void updateVersion(){
     myVersion = new Date().toString();
+  }
+
+  public void enableGuestTools(){
+    myGuestInfo = new GuestInfo();
+    Random r = new Random();
+    myGuestInfo.setIpAddress("192.168.1."  + (1+ r.nextInt(254)));
+  }
+
+  public void disableGuestTools(){
+    myGuestInfo = null;
   }
 }

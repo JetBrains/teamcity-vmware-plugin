@@ -20,7 +20,7 @@ public class FakeModel {
 
   private final Map<String, Folder> myFolders = new HashMap<String, Folder>();
   private final Map<String, ResourcePool> myResourcePools = new HashMap<String, ResourcePool>();
-  private final Map<String, VirtualMachine> myVms = new HashMap<String, VirtualMachine>();
+  private final Map<String, FakeVirtualMachine> myVms = new HashMap<String, FakeVirtualMachine>();
 
   public Map<String, Folder> getFolders() {
     return myFolders;
@@ -30,7 +30,7 @@ public class FakeModel {
     return myResourcePools;
   }
 
-  public Map<String, VirtualMachine> getVms() {
+  public Map<String, FakeVirtualMachine> getVms() {
     return myVms;
   }
 
@@ -42,7 +42,7 @@ public class FakeModel {
     return myResourcePools.get(name);
   }
 
-  public VirtualMachine getVirtualMachine(String name){
+  public FakeVirtualMachine getVirtualMachine(String name){
     return myVms.get(name);
   }
 
@@ -96,7 +96,7 @@ public class FakeModel {
     return addVM(name, isRunning, null);
   }
 
-  public VirtualMachine putVM(String name, VirtualMachine vm){
+  public VirtualMachine putVM(String name, FakeVirtualMachine vm){
     System.out.println("added VM " + name);
     myVms.put(name, vm);
     return vm;
@@ -108,7 +108,7 @@ public class FakeModel {
   }
 
   public void addVMSnapshot(String vmName, String snapshotName){
-    final FakeVirtualMachine vm = (FakeVirtualMachine)myVms.get(vmName);
+    final FakeVirtualMachine vm = myVms.get(vmName);
     if (vm == null)
       throw new IllegalArgumentException("Unable to find VM: " + vmName);
 
@@ -116,7 +116,7 @@ public class FakeModel {
   }
 
   public void removeVmSnaphot(String vmName, String snapshotName){
-    final FakeVirtualMachine vm = (FakeVirtualMachine)myVms.get(vmName);
+    final FakeVirtualMachine vm = myVms.get(vmName);
     if (vm == null)
       throw new IllegalArgumentException("Unable to find VM: " + vmName);
 
