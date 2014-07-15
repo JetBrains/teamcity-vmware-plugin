@@ -194,7 +194,7 @@ public class VMWareCloudClient implements CloudClientEx {
 
   @NotNull
   public Collection<VMWareCloudImage> getImages() throws CloudException {
-    return myImageMap.values();
+    return Collections.unmodifiableCollection(myImageMap.values());
   }
 
   @Nullable
