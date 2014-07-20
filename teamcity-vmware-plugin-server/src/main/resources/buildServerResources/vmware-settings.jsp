@@ -64,7 +64,7 @@
             var self = this,
                 $loader = $j(BS.loadingIcon).clone();
 
-            if ( ! this.validateServerSettings()) {
+            if ( !this.validateServerSettings()) {
                 return false;
             }
 
@@ -118,6 +118,10 @@
                 isValid = (/^https:\/\/.*\/sdk$/).test(url);
 
             this.clearErrors();
+
+            if (url == ''){
+              return false;
+            }
 
             if (!isValid) {
                 this.addError("Server URL doesn't seem to be correct. <br/>" +
