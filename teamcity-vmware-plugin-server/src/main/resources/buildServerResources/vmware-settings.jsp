@@ -161,7 +161,7 @@
                     cloneFolder: this._visibleValue(this.$cloneFolder),
                     resourcePool: this._visibleValue(this.$resourcePool),
                     cloneBehaviour: $j(this.selectors.activeCloneBehaviour).val(),
-                    maxInstances: this._visibleValue(this.$maxInstances) || '0'
+                    maxInstances: this._visibleValue(this.$maxInstances) || '1'
                 };
                 this._renderImageRow(newImage, newImageId);
                 this.imagesData[newImageId] = newImage;
