@@ -362,6 +362,27 @@ public class VMWareCloudClientTest extends BaseTestCase {
     assertNotContains(image_template.getInstances(),  instance);
   }
 
+  public void existing_clones_with_start_stop() throws MalformedURLException, RemoteException {
+    final VMWareCloudInstance cloneInstance = startNewInstanceAndWait("image2");
+
+    myClientParameters.setParameter("vmware_images_data", "image1;;;;START;0;X;:" +
+                                                          "image2;;;;START;0;X;:" +
+                                                          "image_template;;cf;rp;CLONE;3;X;:");
+    recreateClient();
+    boolean checked = false;
+    for (VMWareCloudImage image : myClient.getImages()) {
+      if (!"image2".equals(image.getName()))
+        continue;
+
+      final Collection<VMWareCloudInstance> instances = image.getInstances();
+      final VMWareCloudInstance singleInstance = instances.iterator().next();
+      assertEquals(1, instances.size());
+      assertEquals("image2", singleInstance.getName());
+      checked = true;
+    }
+    assertTrue(checked);
+  }
+
   private static String wrapWithArraySymbols(String str) {
     return String.format("[%s]", str);
   }

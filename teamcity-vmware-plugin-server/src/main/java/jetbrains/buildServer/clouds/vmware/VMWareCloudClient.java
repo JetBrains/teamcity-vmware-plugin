@@ -60,7 +60,7 @@ public class VMWareCloudClient implements CloudClientEx {
     }
     final List<String> errorList = new ArrayList<String>();
     try {
-      final String[] imageDataArray = imagesListData.split(";X;:");
+      final String[] imageDataArray = imagesListData.split("X;:");
       for (String imageDataStr : imageDataArray) {
         if (StringUtil.isEmpty(imageDataStr)) continue;
 
@@ -194,7 +194,7 @@ public class VMWareCloudClient implements CloudClientEx {
 
   @NotNull
   public Collection<VMWareCloudImage> getImages() throws CloudException {
-    return myImageMap.values();
+    return Collections.unmodifiableCollection(myImageMap.values());
   }
 
   @Nullable

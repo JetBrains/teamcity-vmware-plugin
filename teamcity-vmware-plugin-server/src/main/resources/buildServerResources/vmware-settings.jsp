@@ -68,7 +68,7 @@
             var self = this,
                 $loader = $j(BS.loadingIcon).clone();
 
-            if ( ! this.validateServerSettings()) {
+            if ( !this.validateServerSettings()) {
                 return false;
             }
 
@@ -123,6 +123,10 @@
 
             this.clearErrors();
 
+            if (url == ''){
+              return false;
+            }
+
             if (!isValid) {
                 this.addError("Server URL doesn't seem to be correct. <br/>" +
                 "Correct URL should look like this: <strong>https://vcenter/sdk</strong>");
@@ -161,7 +165,7 @@
                     cloneFolder: this._visibleValue(this.$cloneFolder),
                     resourcePool: this._visibleValue(this.$resourcePool),
                     cloneBehaviour: $j(this.selectors.activeCloneBehaviour).val(),
-                    maxInstances: this._visibleValue(this.$maxInstances) || '0'
+                    maxInstances: this._visibleValue(this.$maxInstances) || '1'
                 };
                 this._renderImageRow(newImage, newImageId);
                 this.imagesData[newImageId] = newImage;

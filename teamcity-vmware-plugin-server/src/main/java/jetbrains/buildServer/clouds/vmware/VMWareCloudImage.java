@@ -93,7 +93,7 @@ public class VMWareCloudImage implements CloudImage, VmInfo {
 
   @NotNull
   public Collection<VMWareCloudInstance> getInstances() {
-    return myInstances.values();
+    return Collections.unmodifiableCollection(myInstances.values());
   }
 
   @Nullable
