@@ -123,11 +123,7 @@
 
             this.clearErrors();
 
-            if (url == ''){
-              return false;
-            }
-
-            if (!isValid) {
+            if (url.length && !isValid) {
                 this.addError("Server URL doesn't seem to be correct. <br/>" +
                 "Correct URL should look like this: <strong>https://vcenter/sdk</strong>");
             }
