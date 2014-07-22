@@ -36,7 +36,9 @@
         _dataKeys: [ 'vmName', 'snapshotName', 'cloneFolder', 'resourcePool', 'cloneBehaviour', 'maxInstances'],
         selectors: {
             imagesSelect: '#image',
-            activeCloneBehaviour: ".cloneBehaviourRadio:checked"
+            cloneBehaviourRadio: ".cloneBehaviourRadio",
+            cloneOptionsRow: '.cloneOptionsRow',
+            rmImageLink: '.removeVmImageLink'
         },
         init: function () {
             this.$fetchOptionsButton = $j('#vmwareFetchOptionsButton');
@@ -52,6 +54,8 @@
             this.$maxInstances = $j("#maxInstances");
             this.$addImageButtons = $j('#vmwareAddImageButton');
             this.$fetchOptionsError = $j("#error_fetch_options");
+
+            this.selectors.activeCloneBehaviour = this.selectors.cloneBehaviourRadio + ':checked';
 
             this._lastImageId = this._imagesDataLength = 0;
             this._initImagesData();
@@ -237,14 +241,14 @@
             this.$fetchOptionsButton.on('click', this._fetchOptionsClickHandler.bind(this));
             this.$addImageButtons.on('click', this.addImage.bind(this));
             this.$options.on('change', this.selectors.imagesSelect, this.fetchSnapshots.bind(this));
-            $j("[name=cloneBehaviour]").on('change', function () {
+            $j(this.selectors.cloneBehaviourRadio).on('change', function () {
                 var isClone = $j(this.selectors.activeCloneBehaviour).val() !== 'START',
-                    $elementsToToggle = $j('.cloneOptionsRow');
+                    $elementsToToggle = $j(self.selectors.cloneOptionsRow);
 
                 $elementsToToggle.toggle(isClone);
             }.bind(this));
             this.$image.add(this.$snapshot).on('change', this.validateOptions.bind(this));
-            this.$imagesTable.on('click', '.removeVmImageLink', function () {
+            this.$imagesTable.on('click', this.selectors.rmImageLink, function () {
                 if (confirm('Are you sure?')) {
                     self.removeImage($j(this));
                 }
@@ -264,7 +268,7 @@
             this._dataKeys.forEach(function (className) {
                 $row.find('.' + className).text(rows[className]);
             });
-            $row.find('.removeVmImageLink').data('imageId', id);
+            $row.find(this.selectors.rmImageLink).data('imageId', id);
             this.$imagesTable.append($row);
         },
         _toggleImagesTable: function (show) {
