@@ -4,14 +4,11 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.vmware.vim25.mo.VirtualMachine;
 import java.rmi.RemoteException;
 import java.util.*;
-import jetbrains.buildServer.clouds.CloudErrorInfo;
 import jetbrains.buildServer.clouds.CloudImage;
-import jetbrains.buildServer.clouds.CloudInstance;
 import jetbrains.buildServer.clouds.InstanceStatus;
 import jetbrains.buildServer.clouds.vmware.VMWareCloudClient;
 import jetbrains.buildServer.clouds.vmware.VMWareCloudImage;
 import jetbrains.buildServer.clouds.vmware.VMWareCloudInstance;
-import jetbrains.buildServer.clouds.vmware.VMWareImageStartType;
 import jetbrains.buildServer.clouds.vmware.connector.VMWareApiConnector;
 import jetbrains.buildServer.clouds.vmware.errors.VMWareCloudErrorType;
 import org.jetbrains.annotations.NotNull;
@@ -21,16 +18,16 @@ import org.jetbrains.annotations.NotNull;
  *         Date: 4/24/2014
  *         Time: 1:51 PM
  */
-public class UpdateInstancesTask implements Runnable {
+public class VmwareUpdateInstancesTask implements Runnable {
 
-  private static final Logger LOG = Logger.getInstance(UpdateInstancesTask.class.getName());
-
+  private static final Logger LOG = Logger.getInstance(VmwareUpdateInstancesTask.class.getName());
 
   private VMWareApiConnector myApiConnector;
   private final VMWareCloudClient myCloudClient;
 
 
-  public UpdateInstancesTask(final VMWareApiConnector apiConnector, final VMWareCloudClient cloudClient){
+  public VmwareUpdateInstancesTask(final VMWareApiConnector apiConnector, final VMWareCloudClient cloudClient){
+    super();
     myApiConnector = apiConnector;
     myCloudClient = cloudClient;
   }
