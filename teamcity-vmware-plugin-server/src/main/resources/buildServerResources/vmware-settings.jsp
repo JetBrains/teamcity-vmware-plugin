@@ -26,7 +26,7 @@
 
 <jsp:useBean id="refreshablePath" class="java.lang.String" scope="request"/>
 <jsp:useBean id="refreshSnapshotsPath" class="java.lang.String" scope="request"/>
-
+</table>
 <script type="text/javascript">
     BS = BS || {};
     BS.Clouds = BS.Clouds || {};
@@ -352,6 +352,7 @@
     };
 </script>
 
+<table class="runnerFormTable">
   <tr>
     <th><label for="${cons.serverUrl}">Server URL: <l:star/></label></th>
     <td><props:textProperty name="${cons.serverUrl}" className="longField"/></td>
@@ -395,79 +396,82 @@
   </td>
 </tr>
 
-<tr class="vmWareSphereOptions hidden">
-    <td colspan="2">
-      <table class="runnerFormTable">
-        <tr>
-          <th>Select an image type:</th>
-          <td>
-            <input type="radio" id="cloneBehaviour_START" name="cloneBehaviour" value="START" checked="true" class="cloneBehaviourRadio"/>
-            <label for="cloneBehaviour_START">Start/Stop instance</label>
-            <br/>
-            <input type="radio" id="cloneBehaviour_CLONE" name="cloneBehaviour" value="CLONE" class="cloneBehaviourRadio"/>
-            <label for="cloneBehaviour_CLONE">Fresh clone</label>
-            <br/>
-            <input type="radio" id="cloneBehaviour_ON_DEMAND_CLONE" name="cloneBehaviour" value="ON_DEMAND_CLONE" class="cloneBehaviourRadio"/>
-            <label for="cloneBehaviour_ON_DEMAND_CLONE">On demand clone</label>
-            <br/>
-          </td>
-        </tr>
+</table>
+<bs:dialog dialogId="editVMWareImageDialog" title="Edit IMage" closeCommand="BS.editVMWareImageDialog.close()"
+           dialogClass="editVMWareImageDialog" titleId="editVMWareImageTitle"
+        ><table class="runnerFormTable">
+            <tr>
+                <th>Select an image type:</th>
+                <td>
+                    <input type="radio" id="cloneBehaviour_START" name="cloneBehaviour" value="START" checked="true" class="cloneBehaviourRadio"/>
+                    <label for="cloneBehaviour_START">Start/Stop instance</label>
+                    <br/>
+                    <input type="radio" id="cloneBehaviour_CLONE" name="cloneBehaviour" value="CLONE" class="cloneBehaviourRadio"/>
+                    <label for="cloneBehaviour_CLONE">Fresh clone</label>
+                    <br/>
+                    <input type="radio" id="cloneBehaviour_ON_DEMAND_CLONE" name="cloneBehaviour" value="ON_DEMAND_CLONE" class="cloneBehaviourRadio"/>
+                    <label for="cloneBehaviour_ON_DEMAND_CLONE">On demand clone</label>
+                    <br/>
+                </td>
+            </tr>
 
 
-        <tr>
-          <th><label for="image">Agent image:</label></th>
-          <td>
-            <div>
-              <props:selectProperty name="image"/>
-            </div>
-            <span id="error_image" class="error"></span>
-          </td>
-        </tr>
+            <tr>
+                <th><label for="image">Agent image:</label></th>
+                <td>
+                    <div>
+                        <props:selectProperty name="image"/>
+                    </div>
+                    <span id="error_image" class="error"></span>
+                </td>
+            </tr>
 
-        <tr class="hidden cloneOptionsRow"  id="tr_snapshot_name">
-          <th><label for="snapshot">Snapshot name:</label></th>
-          <td>
-            <select id="snapshot"> </select>
-          </td>
-        </tr>
+            <tr class="hidden cloneOptionsRow"  id="tr_snapshot_name">
+                <th><label for="snapshot">Snapshot name:</label></th>
+                <td>
+                    <select id="snapshot"> </select>
+                </td>
+            </tr>
 
 
-        <tr class="hidden cloneOptionsRow">
-          <th>
-            <label for="cloneFolder">Folder for clones</label>
-          </th>
-          <td>
-            <select id="cloneFolder"> </select>
-          </td>
-        </tr>
+            <tr class="hidden cloneOptionsRow">
+                <th>
+                    <label for="cloneFolder">Folder for clones</label>
+                </th>
+                <td>
+                    <select id="cloneFolder"> </select>
+                </td>
+            </tr>
 
-        <tr class="hidden cloneOptionsRow">
-          <th>
-            <label for="resourcePool">Resource pool</label>
-          </th>
-          <td>
-            <select id="resourcePool"> </select>
-          </td>
-        </tr>
-        <tr class="hidden cloneOptionsRow">
-          <th>
-            <label for="maxInstances">Max number of instances</label>
-          </th>
-          <td>
-            <div>
-              <input type="text" id="maxInstances" value="0"/>
-            </div>
-            <span id="error_max_instances" class="error"></span>
-          </td>
-        </tr>
-        <tr>
-          <td colspan="2">
-            <forms:button title="Add image" id="vmwareAddImageButton">Add image</forms:button>
-          </td>
-        </tr>
-        </table>
-    </td>
-</tr>
+            <tr class="hidden cloneOptionsRow">
+                <th>
+                    <label for="resourcePool">Resource pool</label>
+                </th>
+                <td>
+                    <select id="resourcePool"> </select>
+                </td>
+            </tr>
+            <tr class="hidden cloneOptionsRow">
+                <th>
+                    <label for="maxInstances">Max number of instances</label>
+                </th>
+                <td>
+                    <div>
+                        <input type="text" id="maxInstances" value="0"/>
+                    </div>
+                    <span id="error_max_instances" class="error"></span>
+                </td>
+            </tr>
+        </table></bs:dialog>
+
+
 <script type="text/javascript">
+    BS.editVMWareImageDialog = BS.MavenAddSettings = OO.extend(BS.AbstractModalDialog, {
+        getContainer: function() {
+            return $('editVMWareImageDialog');
+        }
+    });
     BS.Clouds.VMWareVSphere.init();
 </script>
+<forms:button title="Add image" id="vmwareAddImageButton" onclick="BS.editVMWareImageDialog.showCentered()">Add image</forms:button>
+<table class="runnerFormTable">
