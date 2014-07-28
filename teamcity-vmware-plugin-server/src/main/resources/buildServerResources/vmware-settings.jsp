@@ -263,7 +263,7 @@
             return false; // to prevent link with href='#' to scroll to the top of the page
         },
         _renderImageRow: function (rows, id) {
-            var $row = $j(this.templates.imagesTableRow);
+            var $row = $j(this.templates.imagesTableRow).clone();
 
             this._dataKeys.forEach(function (className) {
                 $row.find('.' + className).text(rows[className]);
