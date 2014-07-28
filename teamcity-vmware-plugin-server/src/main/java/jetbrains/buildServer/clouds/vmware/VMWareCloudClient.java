@@ -14,7 +14,7 @@ import jetbrains.buildServer.clouds.vmware.connector.VMWareApiConnectorImpl;
 import jetbrains.buildServer.clouds.vmware.errors.VMWareCloudErrorInfoFactory;
 import jetbrains.buildServer.clouds.vmware.errors.VMWareCloudErrorType;
 import jetbrains.buildServer.clouds.vmware.tasks.TaskStatusUpdater;
-import jetbrains.buildServer.clouds.vmware.tasks.UpdateInstancesTask;
+import jetbrains.buildServer.clouds.vmware.tasks.VmwareUpdateInstancesTask;
 import jetbrains.buildServer.clouds.vmware.web.VMWareWebConstants;
 import jetbrains.buildServer.serverSide.AgentDescription;
 import jetbrains.buildServer.serverSide.TeamCityProperties;
@@ -38,6 +38,7 @@ public class VMWareCloudClient implements CloudClientEx {
 
   private final Map<String, VMWareCloudImage> myImageMap = new HashMap<String, VMWareCloudImage>();
   private ScheduledExecutorService myScheduledExecutor;
+  private List<ScheduledFuture<?>> myFutures = new ArrayList<ScheduledFuture<?>>();
   private TaskStatusUpdater myStatusTask;
   private CloudErrorInfo myErrorInfo;
 
@@ -120,11 +121,11 @@ public class VMWareCloudClient implements CloudClientEx {
 
       if (errorList.size() == 0) {
         myScheduledExecutor = Executors.newScheduledThreadPool(2, new NamedThreadFactory("VSphere"));
-        myScheduledExecutor.scheduleWithFixedDelay(
-          new UpdateInstancesTask(myApiConnector, this), 0,
+        myFutures.add(myScheduledExecutor.scheduleWithFixedDelay(
+          new VmwareUpdateInstancesTask(myApiConnector, this), 0,
           TeamCityProperties.getLong("teamcity.vsphere.instance.status.update.delay.ms", UPDATE_INSTANCES_TASK_DELAY), TimeUnit.MILLISECONDS
-        );
-        myScheduledExecutor.scheduleWithFixedDelay(myStatusTask, 0, TASK_STATUS_UPDATER_DELAY, TimeUnit.MILLISECONDS);
+        ));
+        myFutures.add(myScheduledExecutor.scheduleWithFixedDelay(myStatusTask, 0, TASK_STATUS_UPDATER_DELAY, TimeUnit.MILLISECONDS));
       } else {
         myErrorInfo = new CloudErrorInfo(Arrays.toString(errorList.toArray()));
       }
@@ -162,6 +163,9 @@ public class VMWareCloudClient implements CloudClientEx {
   }
 
   public void dispose() {
+    for (ScheduledFuture<?> future : myFutures) {
+      future.cancel(false);
+    }
     if (myScheduledExecutor != null) {
       myScheduledExecutor.shutdown();
       try {
