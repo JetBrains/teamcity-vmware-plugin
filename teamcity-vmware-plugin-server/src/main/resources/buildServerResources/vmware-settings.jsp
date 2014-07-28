@@ -278,7 +278,7 @@
         },
         _displayImagesSelect: function ($vms) {
             var self = this,
-                $select = $j(this.templates.imagesSelect),
+                $select = $j(this.templates.imagesSelect).clone(),
                 $vmGroup = $select.find(".vmGroup"),
                 $templatesGroup = $select.find(".templatesGroup");
 
