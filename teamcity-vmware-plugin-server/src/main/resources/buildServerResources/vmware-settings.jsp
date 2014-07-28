@@ -33,12 +33,14 @@
     BS.Clouds.VMWareVSphere = BS.Clouds.VMWareVSphere || {
         refreshOptionsUrl: '<c:url value="${refreshablePath}"/>',
         refreshSnapshotsUrl: '<c:url value="${refreshSnapshotsPath}"/>',
+        optionsFetched: false,
         _dataKeys: [ 'vmName', 'snapshotName', 'cloneFolder', 'resourcePool', 'cloneBehaviour', 'maxInstances'],
         selectors: {
             imagesSelect: '#image',
             cloneBehaviourRadio: ".cloneBehaviourRadio",
             cloneOptionsRow: '.cloneOptionsRow',
-            rmImageLink: '.removeVmImageLink'
+            rmImageLink: '.removeVmImageLink',
+            editImageLink: '.editVmImageLink'
         },
         init: function () {
             this.$fetchOptionsButton = $j('#vmwareFetchOptionsButton');
@@ -52,8 +54,14 @@
             this.$cloneFolder = $j("#cloneFolder");
             this.$resourcePool = $j("#resourcePool");
             this.$maxInstances = $j("#maxInstances");
-            this.$addImageButtons = $j('#vmwareAddImageButton');
+            this.$dialogSubmitButton = $j('#vmwareAddImageButton');
             this.$fetchOptionsError = $j("#error_fetch_options");
+            this.$cancelButton = $j('#vmwareCancelAddImageButton');
+            this.$showDialogButton = $j('#vmwareShowDialogButton');
+            this.loaders = {
+                fetchOptions: $j('.fetchingServerOptions'),
+                fetchSnapshots: $j('.fetchingSnapshots')
+            };
 
             this.selectors.activeCloneBehaviour = this.selectors.cloneBehaviourRadio + ':checked';
 
@@ -65,8 +73,7 @@
             this.renderImagesTable();
         },
         refreshOptions: function () {
-            var self = this,
-                $loader = $j(BS.loadingIcon).clone();
+            var $loader = $j(BS.loadingIcon).clone();
 
             if ( !this.validateServerSettings()) {
                 return false;
@@ -74,29 +81,34 @@
 
             this.$fetchOptionsButton.attr('disabled', true);
             $loader.insertAfter(this.$fetchOptionsButton);
+            this.loaders.fetchOptions.removeClass('hidden');
+            this.$dialogSubmitButton.prop('disabled', true);
 
             BS.ajaxRequest(this.refreshOptionsUrl, {
                 parameters: BS.Clouds.Admin.CreateProfileForm.serializeParameters(),
                 onComplete: function () {
                     $loader.remove();
-                    self.$fetchOptionsButton.attr('disabled', false);
-                },
+                    this.$fetchOptionsButton.attr('disabled', false);
+                    this.loaders.fetchOptions.addClass('hidden');
+                }.bind(this),
                 onFailure: function (response) {
-                    self.addError("Unable to fetch options: " + response.getStatusText());
-                },
+                    this.addError("Unable to fetch options: " + response.getStatusText());
+                }.bind(this),
                 onSuccess: function (response) {
                     var $response = $j(response.responseXML),
-                            $errors = $response.find("errors:eq(0) error"),
-                            $vms = $response.find('VirtualMachines:eq(0) VirtualMachine'),
-                            $pools = $response.find('ResourcePools:eq(0) ResourcePool'),
-                            $folders = $response.find('Folders:eq(0) Folder');
+                        $errors = $response.find("errors:eq(0) error"),
+                        $vms = $response.find('VirtualMachines:eq(0) VirtualMachine'),
+                        $pools = $response.find('ResourcePools:eq(0) ResourcePool'),
+                        $folders = $response.find('Folders:eq(0) Folder');
 
                     if ($errors.length) {
-                        self.addError("Unable to fetch options: " + $errors.text());
+                        this.addError("Unable to fetch options: " + $errors.text());
                     } else if ($vms.length) {
-                        self.showOptions($vms, $pools, $folders);
+                        this.optionsFetched = true;
+                        this.fillOptions($vms, $pools, $folders);
+                        this.$dialogSubmitButton.prop('disabled', false);
                     }
-                }
+                }.bind(this)
             });
 
             return false; // to prevent link with href='#' to scroll to the top of the page
@@ -107,15 +119,13 @@
                     this._renderImageRow(this.imagesData[imageId], imageId);
                 }.bind(this));
             }
-            this._toggleImagesTable(!!this._imagesDataLength);
+            this._toggleImagesTable();
         },
-        showOptions: function ($vms, $pools, $folders) {
+        fillOptions: function ($vms, $pools, $folders) {
             this
-                    ._displayImagesSelect($vms)
-                    ._displayPoolsSelect($pools)
-                    ._displayFoldersSelect($folders);
-
-            this.$options.show();
+                ._displayImagesSelect($vms)
+                ._displayPoolsSelect($pools)
+                ._displayFoldersSelect($folders);
         },
         validateServerSettings: function () {
             var url = $j("#${cons.serverUrl}").val(),
@@ -155,29 +165,83 @@
 
             if (this.validateOptions()) {
                 newImageId = this._lastImageId++;
-                newImage = {
-                    vmName: this.$image.val(),
-                    snapshotName: this._visibleValue(this.$snapshot) || '[Latest Version]',
-                    cloneFolder: this._visibleValue(this.$cloneFolder),
-                    resourcePool: this._visibleValue(this.$resourcePool),
-                    cloneBehaviour: $j(this.selectors.activeCloneBehaviour).val(),
-                    maxInstances: this._visibleValue(this.$maxInstances) || '1'
-                };
+                newImage = this._collectImageData();
                 this._renderImageRow(newImage, newImageId);
                 this.imagesData[newImageId] = newImage;
                 this._imagesDataLength += 1;
                 this.saveImagesData();
-                this._toggleImagesTable(!!this._imagesDataLength);
+                this._toggleImagesTable();
             }
 
             return false; // to prevent link with href='#' to scroll to the top of the page
+        },
+        /**
+         * gathers image data from dialog markup
+         */
+        _collectImageData: function () {
+            return  {
+                vmName: this.$image.val(),
+                snapshotName: this._visibleValue(this.$snapshot) || '[Latest Version]',
+                cloneFolder: this._visibleValue(this.$cloneFolder),
+                resourcePool: this._visibleValue(this.$resourcePool),
+                cloneBehaviour: $j(this.selectors.activeCloneBehaviour).val(),
+                maxInstances: this._visibleValue(this.$maxInstances) || '1'
+            };
         },
         removeImage: function ($elem) {
             delete this.imagesData[$elem.data('imageId')];
             this._imagesDataLength -= 1;
             $elem.parents('.imagesTableRow').remove();
             this.saveImagesData();
-            this._toggleImagesTable(!!this._imagesDataLength);
+            this._toggleImagesTable();
+        },
+        editImage: function (id) {
+            this.imagesData[id] = this._collectImageData();
+            this.saveImagesData();
+            this.$imagesTable.children().remove();
+            this.renderImagesTable();
+        },
+        showEditDialog: function ($elem) {
+            var imageId = $elem.data('imageId'),
+                image = this.imagesData[imageId],
+                $_image;
+
+            if (! this.optionsFetched) {
+                // fetch options
+            } else {
+                this.$options.find(this.selectors.cloneBehaviourRadio).trigger('change', image.cloneBehaviour);
+                $_image = this.$image.find('option[value="' + image.vmName + '"]');
+
+                if (! $_image.length) {
+                    alert('could not find image')
+                } else {
+                    this.$image.trigger('change', {
+                        value: image.vmName,
+                        callback: function () {
+                            var snapshotName = image.snapshotName === '[Latest Version]' ? '' : image.snapshotName,
+                                $_snapshot = this.$snapshot.find('option[value="' + snapshotName + '"]');
+                            if (! $_snapshot.length) {
+                                alert('could not find snapshot')
+                            } else {
+                                this.$snapshot.val(snapshotName);
+                                this.$cloneFolder.trigger('change', image.cloneFolder);
+                                this.$resourcePool.trigger('change', image.resourcePool);
+                                this.$maxInstances.val(image.maxInstances);
+
+                                this.showDialog('edit', imageId);
+                            }
+                        }
+                    });
+                }
+            }
+        },
+        showDialog: function (action, imageId) {
+            action = action ? 'Edit' : 'Add';
+            $j('#VMWareImageDialogTitle').text(action + ' Image');
+
+            this.$dialogSubmitButton.val(action).data('imageId', imageId);
+
+            BS.VMWareImageDialog.showCentered();
         },
         saveImagesData: function () {
             var data = Object.keys(this.imagesData).map(function (imageId) {
@@ -192,7 +256,13 @@
 
             this.$imagesDataElem.val(data);
         },
-        fetchSnapshots: function () {
+        /**
+        * fetches snapshot list for selected image
+        * @param {function} callback
+         */
+        fetchSnapshots: function (callback) {
+            $j('#realImageInput').val(this.$image.val());
+            this.loaders.fetchSnapshots.removeClass('hidden');
             BS.ajaxRequest(this.refreshSnapshotsUrl, {
                 parameters: BS.Clouds.Admin.CreateProfileForm.serializeParameters(),
                 onFailure: function (response) {
@@ -203,6 +273,11 @@
 
                     if ($response.length) {
                         this._displaySnapshotSelect($response.find('Snapshots:eq(0) Snapshot'));
+                    }
+                    this.loaders.fetchSnapshots.addClass('hidden');
+
+                    if (_.isFunction(callback)) {
+                        callback.call(this);
                     }
                 }.bind(this)
             });
@@ -239,19 +314,66 @@
             var self = this;
 
             this.$fetchOptionsButton.on('click', this._fetchOptionsClickHandler.bind(this));
-            this.$addImageButtons.on('click', this.addImage.bind(this));
-            this.$options.on('change', this.selectors.imagesSelect, this.fetchSnapshots.bind(this));
-            $j(this.selectors.cloneBehaviourRadio).on('change', function () {
-                var isClone = $j(this.selectors.activeCloneBehaviour).val() !== 'START',
-                    $elementsToToggle = $j(self.selectors.cloneOptionsRow);
+            this.$dialogSubmitButton.on('click', function () {
+                if (this.$dialogSubmitButton.val().toLowerCase() === 'edit') {
+                    this.editImage(this.$dialogSubmitButton.data('imageId'));
+                } else {
+                    this.addImage();
+                }
+
+                BS.VMWareImageDialog.close();
+                return false;
+            }.bind(this));
+            this.$cancelButton.on('click', function () {
+                BS.VMWareImageDialog.close();
+                return false;
+            });
+            this.$showDialogButton.on('click', function () {
+                if (! this.$showDialogButton.attr('disabled')) {
+                    this.showDialog();
+                }
+                return false;
+            }.bind(this));
+
+            this.$options.on('change', this.selectors.imagesSelect, function(e, data) {
+                var callback;
+
+                if (data) {
+                    if (data.value) {
+                        this.$image.val(data.value);
+                    }
+                    callback = data.callback;
+                }
+                this.fetchSnapshots(callback);
+            }.bind(this));
+            $j(this.selectors.cloneBehaviourRadio).on('change', function (e, val) {
+                var $elementsToToggle = $j(this.selectors.cloneOptionsRow),
+                    isClone;
+
+                if (typeof val !== 'undefined') {
+                    $j(this.selectors.cloneBehaviourRadio + '[value="' + val + '"]').prop('checked', true);
+                } else {
+                    val = $j(this.selectors.activeCloneBehaviour).val()
+                }
+                isClone = val !== 'START';
 
                 $elementsToToggle.toggle(isClone);
             }.bind(this));
+            this.$cloneFolder.add(this.$resourcePool).on('change', function (e, val) {
+               if (typeof val !== 'undefined') {
+                   $j(this).val(val);
+               }
+            });
             this.$image.add(this.$snapshot).on('change', this.validateOptions.bind(this));
             this.$imagesTable.on('click', this.selectors.rmImageLink, function () {
                 if (confirm('Are you sure?')) {
                     self.removeImage($j(this));
                 }
+                return false;
+            });
+            this.$imagesTable.on('click', this.selectors.editImageLink, function () {
+                self.showEditDialog($j(this));
+
                 return false;
             });
         },
@@ -269,12 +391,14 @@
                 $row.find('.' + className).text(rows[className]);
             });
             $row.find(this.selectors.rmImageLink).data('imageId', id);
+            $row.find(this.selectors.editImageLink).data('imageId', id);
             this.$imagesTable.append($row);
         },
-        _toggleImagesTable: function (show) {
+        _toggleImagesTable: function () {
+            var toggle = !!this._imagesDataLength;
             this.$imagesTableWrapper.show();
-            this.$emptyImagesListMessage.toggle(!show);
-            this.$imagesTable.toggle(show);
+            this.$emptyImagesListMessage.toggle(!toggle);
+            this.$imagesTable.toggle(toggle);
         },
         _displayImagesSelect: function ($vms) {
             var self = this,
@@ -340,9 +464,10 @@
 <td class="resourcePool"></td>\
 <td class="cloneBehaviour"></td>\
 <td class="maxInstances"></td>\
-<td><a href="#" class="removeVmImageLink">X</a></td>\
+<td><a href="#" class="removeVmImageLink">delete</a></td>\
+<td><a href="#" class="editVmImageLink">edit</a></td>\
             </tr>'),
-                imagesSelect: $j('<select name="prop:image" id="image">\
+                imagesSelect: $j('<select name="prop:_image" id="image">\
     <option value="">--Please select a VM--</option>\
     <optgroup label="Virtual machines" class="vmGroup"></optgroup>\
     <optgroup label="Templates" class="templatesGroup"></optgroup>\
@@ -396,10 +521,18 @@
   </td>
 </tr>
 
+    <tr>
+        <td colspan="2">
+            <forms:addButton title="Add image" id="vmwareShowDialogButton">Add image</forms:addButton>
+        </td>
+    </tr>
 </table>
-<bs:dialog dialogId="editVMWareImageDialog" title="Edit IMage" closeCommand="BS.editVMWareImageDialog.close()"
-           dialogClass="editVMWareImageDialog" titleId="editVMWareImageTitle"
-        ><table class="runnerFormTable">
+<input type="hidden" name="prop:image" id="realImageInput"/>
+<bs:dialog dialogId="VMWareImageDialog" title="Add Image" closeCommand="BS.VMWareImageDialog.close()"
+           dialogClass="VMWareImageDialog vmWareSphereOptions" titleId="VMWareImageDialogTitle"
+        ><div class="fetchingServerOptions hidden"><i class="icon-refresh icon-spin"></i>Fetching server options...</div>
+    <div class="fetchingSnapshots hidden"><i class="icon-refresh icon-spin"></i>Fetching snapshots...</div>
+    <table class="runnerFormTable">
             <tr>
                 <th>Select an image type:</th>
                 <td>
@@ -420,7 +553,7 @@
                 <th><label for="image">Agent image:</label></th>
                 <td>
                     <div>
-                        <props:selectProperty name="image"/>
+                        <select name="_image" id="image"></select>
                     </div>
                     <span id="error_image" class="error"></span>
                 </td>
@@ -462,16 +595,19 @@
                     <span id="error_max_instances" class="error"></span>
                 </td>
             </tr>
-        </table></bs:dialog>
-
+        </table>
+    <div class="popupSaveButtonsBlock">
+        <forms:submit label="Add" type="button" id="vmwareAddImageButton"/>
+        <forms:button title="Cancel" id="vmwareCancelAddImageButton">Cancel</forms:button>
+    </div>
+</bs:dialog>
 
 <script type="text/javascript">
-    BS.editVMWareImageDialog = BS.MavenAddSettings = OO.extend(BS.AbstractModalDialog, {
+    BS.VMWareImageDialog = OO.extend(BS.AbstractModalDialog, {
         getContainer: function() {
-            return $('editVMWareImageDialog');
+            return $('VMWareImageDialog');
         }
     });
     BS.Clouds.VMWareVSphere.init();
 </script>
-<forms:button title="Add image" id="vmwareAddImageButton" onclick="BS.editVMWareImageDialog.showCentered()">Add image</forms:button>
 <table class="runnerFormTable">
