@@ -10,6 +10,7 @@ import java.util.Map;
 import java.util.Set;
 import jetbrains.buildServer.clouds.CloudInstanceUserData;
 import jetbrains.buildServer.clouds.InstanceStatus;
+import jetbrains.buildServer.clouds.base.connector.CloudApiConnector;
 import jetbrains.buildServer.clouds.vmware.VMWareCloudInstance;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -19,7 +20,7 @@ import org.jetbrains.annotations.Nullable;
  *         Date: 5/13/2014
  *         Time: 1:06 PM
  */
-public interface VMWareApiConnector {
+public interface VMWareApiConnector extends CloudApiConnector {
 
   String TEAMCITY_VMWARE_PREFIX = "teamcity.vmware.";
   String TEAMCITY_VMWARE_IMAGE_CHANGE_VERSION = TEAMCITY_VMWARE_PREFIX + "image.change.version";

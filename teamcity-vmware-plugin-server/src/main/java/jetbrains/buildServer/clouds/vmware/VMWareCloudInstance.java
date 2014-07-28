@@ -8,6 +8,7 @@ import java.util.Map;
 import jetbrains.buildServer.clouds.CloudErrorInfo;
 import jetbrains.buildServer.clouds.CloudInstance;
 import jetbrains.buildServer.clouds.InstanceStatus;
+import jetbrains.buildServer.clouds.vmware.connector.VmwareInstance;
 import jetbrains.buildServer.clouds.vmware.errors.VMWareCloudErrorInfo;
 import jetbrains.buildServer.clouds.vmware.errors.VMWareCloudErrorType;
 import jetbrains.buildServer.serverSide.AgentDescription;

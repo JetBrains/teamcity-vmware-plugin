@@ -8,9 +8,10 @@ import java.net.URL;
 import java.rmi.RemoteException;
 import java.util.*;
 import java.util.regex.Pattern;
-import jetbrains.buildServer.clouds.CloudErrorInfo;
 import jetbrains.buildServer.clouds.CloudInstanceUserData;
 import jetbrains.buildServer.clouds.InstanceStatus;
+import jetbrains.buildServer.clouds.base.connector.AbstractInstance;
+import jetbrains.buildServer.clouds.base.errors.TypedCloudErrorInfo;
 import jetbrains.buildServer.clouds.vmware.*;
 import jetbrains.buildServer.clouds.vmware.errors.VMWareCloudErrorType;
 import jetbrains.buildServer.util.StringUtil;
@@ -434,5 +435,26 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
           serverConnection.logout();
       }
     } catch (Exception ex){}
+  }
+
+  public InstanceStatus getInstanceStatus(@NotNull final String instanceName) {
+    try {
+      return getInstanceStatus(findEntityByName(instanceName, VirtualMachine.class));
+    } catch (RemoteException e) {
+      LOG.warn(e.toString());
+      return InstanceStatus.UNKNOWN;
+    }
+  }
+
+  public Map<String, AbstractInstance> listImageInstances(@NotNull final String imageName) {
+    return null;
+  }
+
+  public Collection<TypedCloudErrorInfo> checkImage(@NotNull final String imageName) {
+    return null;
+  }
+
+  public Collection<TypedCloudErrorInfo> checkInstance(@NotNull final String instanceName) {
+    return null;
   }
 }

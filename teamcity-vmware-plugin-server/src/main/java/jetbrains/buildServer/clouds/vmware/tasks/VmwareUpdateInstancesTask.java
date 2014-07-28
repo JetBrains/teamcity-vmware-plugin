@@ -6,6 +6,7 @@ import java.rmi.RemoteException;
 import java.util.*;
 import jetbrains.buildServer.clouds.CloudImage;
 import jetbrains.buildServer.clouds.InstanceStatus;
+import jetbrains.buildServer.clouds.base.tasks.AbstractUpdateInstancesTask;
 import jetbrains.buildServer.clouds.vmware.VMWareCloudClient;
 import jetbrains.buildServer.clouds.vmware.VMWareCloudImage;
 import jetbrains.buildServer.clouds.vmware.VMWareCloudInstance;
@@ -18,7 +19,7 @@ import org.jetbrains.annotations.NotNull;
  *         Date: 4/24/2014
  *         Time: 1:51 PM
  */
-public class VmwareUpdateInstancesTask implements Runnable {
+public class VmwareUpdateInstancesTask extends AbstractUpdateInstancesTask {
 
   private static final Logger LOG = Logger.getInstance(VmwareUpdateInstancesTask.class.getName());
 
@@ -27,7 +28,7 @@ public class VmwareUpdateInstancesTask implements Runnable {
 
 
   public VmwareUpdateInstancesTask(final VMWareApiConnector apiConnector, final VMWareCloudClient cloudClient){
-    super();
+    super(apiConnector);
     myApiConnector = apiConnector;
     myCloudClient = cloudClient;
   }
