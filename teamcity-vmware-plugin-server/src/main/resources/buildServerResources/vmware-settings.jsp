@@ -366,8 +366,12 @@
             });
             this.$image.add(this.$snapshot).on('change', this.validateOptions.bind(this));
             this.$imagesTable.on('click', this.selectors.rmImageLink, function () {
-                if (confirm('Are you sure?')) {
-                    self.removeImage($j(this));
+                var $this = $j(this),
+                    id = $this.data('imageId'),
+                    name = BS.Clouds.VMWareVSphere.imagesData[id].vmName;
+
+                if (confirm('Are you sure you want to remove the image "' + name + '"?')) {
+                    self.removeImage($this);
                 }
                 return false;
             });
