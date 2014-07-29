@@ -81,7 +81,7 @@
 
             this.$fetchOptionsButton.attr('disabled', true);
             $loader.insertAfter(this.$fetchOptionsButton);
-            this.loaders.fetchOptions.removeClass('hidden');
+            this.loaders.fetchOptions.removeClass('message_hidden');
             this.$dialogSubmitButton.prop('disabled', true);
 
             BS.ajaxRequest(this.refreshOptionsUrl, {
@@ -89,7 +89,7 @@
                 onComplete: function () {
                     $loader.remove();
                     this.$fetchOptionsButton.attr('disabled', false);
-                    this.loaders.fetchOptions.addClass('hidden');
+                    this.loaders.fetchOptions.addClass('message_hidden');
                 }.bind(this),
                 onFailure: function (response) {
                     this.addError("Unable to fetch options: " + response.getStatusText());
@@ -262,7 +262,7 @@
          */
         fetchSnapshots: function (callback) {
             $j('#realImageInput').val(this.$image.val());
-            this.loaders.fetchSnapshots.removeClass('hidden');
+            this.loaders.fetchSnapshots.removeClass('message_hidden');
             BS.ajaxRequest(this.refreshSnapshotsUrl, {
                 parameters: BS.Clouds.Admin.CreateProfileForm.serializeParameters(),
                 onFailure: function (response) {
@@ -274,7 +274,7 @@
                     if ($response.length) {
                         this._displaySnapshotSelect($response.find('Snapshots:eq(0) Snapshot'));
                     }
-                    this.loaders.fetchSnapshots.addClass('hidden');
+                    this.loaders.fetchSnapshots.addClass('message_hidden');
 
                     if (_.isFunction(callback)) {
                         callback.call(this);
@@ -480,6 +480,33 @@
         }
     };
 </script>
+<style>
+    #VMWareImageDialog .message-wrapper {
+        position: absolute;
+        top: 48px;
+        width: 100%;
+    }
+    #VMWareImageDialog .message {
+        opacity: 1;
+    }
+
+    #VMWareImageDialog .message_hidden {
+        display: none;
+        opacity: 0;
+    }
+
+    #VMWareImageDialog .message .icon-refresh {
+        margin-right: 6px;
+    }
+
+    #VMWareImageDialog .runnerFormTable th {
+        padding-left: 0;
+    }
+
+    #VMWareImageDialog .modalDialogBody {
+        padding-top: 20px;
+    }
+</style>
 
 <table class="runnerFormTable">
   <tr>
@@ -534,8 +561,9 @@
 <input type="hidden" name="prop:image" id="realImageInput"/>
 <bs:dialog dialogId="VMWareImageDialog" title="Add Image" closeCommand="BS.VMWareImageDialog.close()"
            dialogClass="VMWareImageDialog vmWareSphereOptions" titleId="VMWareImageDialogTitle"
-        ><div class="fetchingServerOptions hidden"><i class="icon-refresh icon-spin"></i>Fetching server options...</div>
-    <div class="fetchingSnapshots hidden"><i class="icon-refresh icon-spin"></i>Fetching snapshots...</div>
+        ><div class="message-wrapper"><div class="fetchingServerOptions message message_hidden"><i class="icon-refresh icon-spin"></i>Fetching server options...</div>
+        <div class="fetchingSnapshots message message_hidden"><i class="icon-refresh icon-spin"></i>Fetching snapshots...</div>
+    </div>
     <table class="runnerFormTable">
             <tr>
                 <th>Select an image type:</th>
