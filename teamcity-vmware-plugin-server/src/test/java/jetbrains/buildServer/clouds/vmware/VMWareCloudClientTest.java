@@ -5,7 +5,6 @@ import com.intellij.util.WaitFor;
 import com.vmware.vim25.OptionValue;
 import com.vmware.vim25.VirtualMachinePowerState;
 import com.vmware.vim25.mo.Task;
-import com.vmware.vim25.mo.VirtualMachine;
 import java.net.MalformedURLException;
 import java.rmi.RemoteException;
 import java.util.Collection;

@@ -9,7 +9,6 @@ import java.util.*;
 import java.util.concurrent.*;
 import jetbrains.buildServer.clouds.*;
 import jetbrains.buildServer.clouds.base.AbstractCloudClient;
-import jetbrains.buildServer.clouds.base.connector.CloudAsyncTaskExecutor;
 import jetbrains.buildServer.clouds.vmware.connector.VMWareApiConnector;
 import jetbrains.buildServer.clouds.vmware.connector.VMWareApiConnectorImpl;
 import jetbrains.buildServer.clouds.vmware.connector.VmwareInstance;

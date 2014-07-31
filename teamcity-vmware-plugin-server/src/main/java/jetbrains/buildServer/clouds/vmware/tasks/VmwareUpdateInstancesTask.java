@@ -1,7 +1,6 @@
 package jetbrains.buildServer.clouds.vmware.tasks;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.vmware.vim25.mo.VirtualMachine;
 import java.rmi.RemoteException;
 import java.util.*;
 import jetbrains.buildServer.clouds.CloudImage;

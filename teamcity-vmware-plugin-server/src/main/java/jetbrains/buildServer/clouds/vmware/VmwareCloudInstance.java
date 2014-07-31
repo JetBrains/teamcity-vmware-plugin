@@ -6,7 +6,7 @@ import jetbrains.buildServer.clouds.CloudErrorInfo;
 import jetbrains.buildServer.clouds.InstanceStatus;
 import jetbrains.buildServer.clouds.base.AbstractCloudInstance;
 import jetbrains.buildServer.clouds.vmware.connector.VmwareInstance;
-import jetbrains.buildServer.clouds.vmware.errors.VmwareCloudErrorInfo2;
+import jetbrains.buildServer.clouds.vmware.errors.VmwareCloudErrorInfo;
 import jetbrains.buildServer.clouds.vmware.errors.VMWareCloudErrorType;
 import jetbrains.buildServer.serverSide.AgentDescription;
 import org.jetbrains.annotations.NotNull;
@@ -21,25 +21,25 @@ import static jetbrains.buildServer.clouds.vmware.VMWarePropertiesNames.INSTANCE
  *         Date: 4/15/2014
  *         Time: 3:57 PM
  */
-public class VmwareCloudInstance2 extends AbstractCloudInstance implements VmInfo {
+public class VmwareCloudInstance extends AbstractCloudInstance implements VmInfo {
 
-  private static final Logger LOG = Logger.getInstance(VmwareCloudInstance2.class.getName());
+  private static final Logger LOG = Logger.getInstance(VmwareCloudInstance.class.getName());
 
   private final String myInstanceName;
-  private final VmwareCloudImage2 myImage;
+  private final VmwareCloudImage myImage;
   private InstanceStatus myStatus = InstanceStatus.UNKNOWN;
-  private final VmwareCloudErrorInfo2 myErrorInfo;
+  private final VmwareCloudErrorInfo myErrorInfo;
   private Date myStartDate;
   private String myIpAddress;
   private String mySnapshotName;
 
-  public VmwareCloudInstance2(@NotNull final VmwareCloudImage2 image, @NotNull final String instanceName, @Nullable final String snapshotName) {
+  public VmwareCloudInstance(@NotNull final VmwareCloudImage image, @NotNull final String instanceName, @Nullable final String snapshotName) {
     super(image);
     myImage = image;
     myInstanceName = instanceName;
     mySnapshotName = snapshotName;
     myStartDate = new Date();
-    myErrorInfo = new VmwareCloudErrorInfo2(this);
+    myErrorInfo = new VmwareCloudErrorInfo(this);
   }
 
   @NotNull
@@ -58,7 +58,7 @@ public class VmwareCloudInstance2 extends AbstractCloudInstance implements VmInf
   }
 
   @NotNull
-  public VmwareCloudImage2 getImage() {
+  public VmwareCloudImage getImage() {
     return myImage;
   }
 
