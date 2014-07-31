@@ -1,14 +1,13 @@
 package jetbrains.buildServer.clouds.vmware;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.vmware.vim25.VirtualMachinePowerState;
-import com.vmware.vim25.VirtualMachineRuntimeInfo;
-import com.vmware.vim25.mo.VirtualMachine;
 import java.util.Map;
 import jetbrains.buildServer.clouds.CloudErrorInfo;
 import jetbrains.buildServer.clouds.CloudInstance;
 import jetbrains.buildServer.clouds.InstanceStatus;
-import jetbrains.buildServer.clouds.vmware.errors.VMWareCloudErrorInfo;
+import jetbrains.buildServer.clouds.base.AbstractCloudInstance;
+import jetbrains.buildServer.clouds.vmware.connector.VmwareInstance;
+import jetbrains.buildServer.clouds.vmware.errors.VmwareCloudErrorInfo;
 import jetbrains.buildServer.clouds.vmware.errors.VMWareCloudErrorType;
 import jetbrains.buildServer.serverSide.AgentDescription;
 import org.jetbrains.annotations.NotNull;
@@ -23,24 +22,25 @@ import static jetbrains.buildServer.clouds.vmware.VMWarePropertiesNames.INSTANCE
  *         Date: 4/15/2014
  *         Time: 3:57 PM
  */
-public class VMWareCloudInstance implements CloudInstance, VmInfo {
+public class VmwareCloudInstance extends AbstractCloudInstance implements VmInfo {
 
-  private static final Logger LOG = Logger.getInstance(VMWareCloudInstance.class.getName());
+  private static final Logger LOG = Logger.getInstance(VmwareCloudInstance.class.getName());
 
   private final String myInstanceName;
-  private final VMWareCloudImage myImage;
+  private final VmwareCloudImage myImage;
   private InstanceStatus myStatus = InstanceStatus.UNKNOWN;
-  private final VMWareCloudErrorInfo myErrorInfo;
+  private final VmwareCloudErrorInfo myErrorInfo;
   private Date myStartDate;
   private String myIpAddress;
   private String mySnapshotName;
 
-  public VMWareCloudInstance(@NotNull final VMWareCloudImage image, @NotNull final String instanceName, @Nullable final String snapshotName) {
+  public VmwareCloudInstance(@NotNull final VmwareCloudImage image, @NotNull final String instanceName, @Nullable final String snapshotName) {
+    super(image);
     myImage = image;
     myInstanceName = instanceName;
     mySnapshotName = snapshotName;
     myStartDate = new Date();
-    myErrorInfo = new VMWareCloudErrorInfo(this);
+    myErrorInfo = new VmwareCloudErrorInfo(this);
   }
 
   @NotNull
@@ -59,7 +59,7 @@ public class VMWareCloudInstance implements CloudInstance, VmInfo {
   }
 
   @NotNull
-  public VMWareCloudImage getImage() {
+  public VmwareCloudImage getImage() {
     return myImage;
   }
 
@@ -86,26 +86,23 @@ public class VMWareCloudInstance implements CloudInstance, VmInfo {
   public void setStatus(final InstanceStatus status) {
     if (myStatus == status)
       return;
-    LOG.info(String.format("Changing %s(%s) status from %s to %s ", getName(), toString(), myStatus, status));
+    LOG.warn(String.format("Changing %s(%s) status from %s to %s ", getName(), toString(), myStatus, status));
     myStatus = status;
   }
 
-  public void updateVMInfo(@NotNull final VirtualMachine vm) {
-    if (vm.getConfig() == null){
+  public void updateVMInfo(@NotNull final VmwareInstance vm) {
+    if (!vm.isInitialized()){
       if (myStatus != InstanceStatus.SCHEDULED_TO_START) {
         setStatus(InstanceStatus.UNKNOWN); // still cloning
       }
       return;
     }
-    final VirtualMachineRuntimeInfo runtime = vm.getRuntime();
-    if (runtime != null && runtime.getPowerState() == VirtualMachinePowerState.poweredOn) {
-      if (runtime.getBootTime() != null) {
-        myStartDate = runtime.getBootTime().getTime();
-      }
+    if (vm.isPoweredOn()) {
+      myStartDate = vm.getStartDate();
       if (myStatus == InstanceStatus.STOPPED) {
         setStatus(InstanceStatus.RUNNING);
       }
-      myIpAddress = vm.getGuest() == null ? null : vm.getGuest().getIpAddress();
+      myIpAddress = vm.getIpAddress();
     } else {
       if (myStatus != InstanceStatus.SCHEDULED_TO_START && myStatus != InstanceStatus.STOPPED) {
         setStatus(InstanceStatus.STOPPED);

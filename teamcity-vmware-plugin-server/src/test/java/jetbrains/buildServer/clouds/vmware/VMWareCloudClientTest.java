@@ -16,6 +16,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import jetbrains.buildServer.BaseTestCase;
 import jetbrains.buildServer.clouds.*;
 import jetbrains.buildServer.clouds.vmware.connector.VMWareApiConnector;
+import jetbrains.buildServer.clouds.vmware.connector.VmwareInstance;
 import jetbrains.buildServer.clouds.vmware.errors.VMWareCloudErrorInfoFactory;
 import jetbrains.buildServer.clouds.vmware.stubs.FakeApiConnector;
 import jetbrains.buildServer.clouds.vmware.stubs.FakeModel;
@@ -95,10 +96,10 @@ public class VMWareCloudClientTest extends BaseTestCase {
 
     myFakeApi = new FakeApiConnector() {
       @Override
-      public Map<String, VirtualMachine> getVirtualMachines(boolean filterClones) throws RemoteException {
-        final Map<String, VirtualMachine> instances = super.getVirtualMachines(filterClones);
-        instances.put("image_template", new FakeVirtualMachine("image_template", true, false));
-        instances.put("image1", new FakeVirtualMachine("image1", false, false));
+      public Map<String, VmwareInstance> getVirtualMachines(boolean filterClones) throws RemoteException {
+        final Map<String, VmwareInstance> instances = super.getVirtualMachines(filterClones);
+        instances.put("image_template", new VmwareInstance(new FakeVirtualMachine("image_template", true, false)));
+        instances.put("image1", new VmwareInstance(new FakeVirtualMachine("image1", false, false)));
         return instances;
       }
     };
@@ -111,17 +112,17 @@ public class VMWareCloudClientTest extends BaseTestCase {
 
   public void check_startup_parameters() throws MalformedURLException, RemoteException {
     startNewInstanceAndWait("image1", Collections.singletonMap("customParam1", "customValue1"));
-    final VirtualMachine vm = myFakeApi.getVirtualMachines(true).get("image1");
-    final OptionValue[] extraConfig = vm.getConfig().getExtraConfig();
-    final String userDataEncoded = getExtraConfigValue(extraConfig, VMWarePropertiesNames.USER_DATA);
+    final VmwareInstance vm = myFakeApi.getVirtualMachines(true).get("image1");
+
+    final String userDataEncoded = vm.getProperty(VMWarePropertiesNames.USER_DATA);
     assertNotNull(userDataEncoded);
     final CloudInstanceUserData cloudInstanceUserData = CloudInstanceUserData.deserialize(userDataEncoded);
     assertEquals("customValue1", cloudInstanceUserData.getCustomAgentConfigurationParameters().get("customParam1"));
   }
 
   public void check_vm_clone() throws Exception {
-    startAndCheckCloneDeletedAfterTermination("image1", new Checker<VMWareCloudInstance>() {
-      public void check(final VMWareCloudInstance data) throws RemoteException {
+    startAndCheckCloneDeletedAfterTermination("image1", new Checker<VmwareCloudInstance>() {
+      public void check(final VmwareCloudInstance data) throws RemoteException {
         assertEquals("image1", data.getInstanceId());
         final Map<String, String> vmParams = myFakeApi.getVMParams(data.getInstanceId());
         assertNull(vmParams.get(VMWareApiConnector.TEAMCITY_VMWARE_CLONED_INSTANCE));
@@ -129,8 +130,8 @@ public class VMWareCloudClientTest extends BaseTestCase {
       }
     }, false);
     assertEquals(3, FakeModel.instance().getVms().size());
-    startAndCheckCloneDeletedAfterTermination("image_template", new Checker<VMWareCloudInstance>() {
-      public void check(final VMWareCloudInstance data) throws RemoteException {
+    startAndCheckCloneDeletedAfterTermination("image_template", new Checker<VmwareCloudInstance>() {
+      public void check(final VmwareCloudInstance data) throws RemoteException {
         assertTrue(data.getInstanceId().startsWith("image_template"));
         assertTrue(data.getInstanceId().contains("clone"));
         final Map<String, String> vmParams = myFakeApi.getVMParams(data.getInstanceId());
@@ -140,8 +141,8 @@ public class VMWareCloudClientTest extends BaseTestCase {
       }
     }, true);
     assertEquals(3, FakeModel.instance().getVms().size());
-    startAndCheckCloneDeletedAfterTermination("image2", new Checker<VMWareCloudInstance>() {
-      public void check(final VMWareCloudInstance data) throws RemoteException {
+    startAndCheckCloneDeletedAfterTermination("image2", new Checker<VmwareCloudInstance>() {
+      public void check(final VmwareCloudInstance data) throws RemoteException {
         assertTrue(data.getInstanceId().startsWith("image2"));
         assertTrue(data.getInstanceId().contains("clone"));
         final Map<String, String> vmParams = myFakeApi.getVMParams(data.getInstanceId());
@@ -155,8 +156,8 @@ public class VMWareCloudClientTest extends BaseTestCase {
 
   public void on_demand_clone_should_use_existing_vm_when_one_exists() throws Exception {
     final AtomicReference<String> instanceId = new AtomicReference<String>();
-    startAndCheckCloneDeletedAfterTermination("image2", new Checker<VMWareCloudInstance>() {
-      public void check(final VMWareCloudInstance data) throws RemoteException {
+    startAndCheckCloneDeletedAfterTermination("image2", new Checker<VmwareCloudInstance>() {
+      public void check(final VmwareCloudInstance data) throws RemoteException {
         instanceId.set(data.getInstanceId());
         assertTrue(data.getInstanceId().startsWith("image2"));
         assertTrue(data.getInstanceId().contains("clone"));
@@ -168,8 +169,8 @@ public class VMWareCloudClientTest extends BaseTestCase {
     }, false);
     assertEquals(4, FakeModel.instance().getVms().size());
     assertContains(FakeModel.instance().getVms().keySet(), instanceId.get());
-    startAndCheckCloneDeletedAfterTermination("image2", new Checker<VMWareCloudInstance>() {
-      public void check(final VMWareCloudInstance data) throws RemoteException {
+    startAndCheckCloneDeletedAfterTermination("image2", new Checker<VmwareCloudInstance>() {
+      public void check(final VmwareCloudInstance data) throws RemoteException {
         assertEquals(instanceId.get(), data.getInstanceId());
         assertTrue(data.getInstanceId().contains("clone"));
         final Map<String, String> vmParams = myFakeApi.getVMParams(data.getInstanceId());
@@ -183,20 +184,20 @@ public class VMWareCloudClientTest extends BaseTestCase {
   public void on_demand_clone_should_create_more_when_not_enough() throws Exception {
     final AtomicReference<String> instanceId = new AtomicReference<String>();
 
-    startAndCheckCloneDeletedAfterTermination("image2", new Checker<VMWareCloudInstance>() {
-      public void check(final VMWareCloudInstance data) {
+    startAndCheckCloneDeletedAfterTermination("image2", new Checker<VmwareCloudInstance>() {
+      public void check(final VmwareCloudInstance data) {
         instanceId.set(data.getInstanceId());
       }
     }, false);
     assertEquals(4, FakeModel.instance().getVms().size());
-    final VMWareCloudInstance instance1 = startAndCheckInstance("image2", new Checker<VMWareCloudInstance>() {
-      public void check(final VMWareCloudInstance data) throws RemoteException {
+    final VmwareCloudInstance instance1 = startAndCheckInstance("image2", new Checker<VmwareCloudInstance>() {
+      public void check(final VmwareCloudInstance data) throws RemoteException {
         assertEquals(instanceId.get(), data.getInstanceId());
       }
     });
     assertEquals(4, FakeModel.instance().getVms().size());
-    final VMWareCloudInstance instance2 = startAndCheckInstance("image2", new Checker<VMWareCloudInstance>() {
-      public void check(final VMWareCloudInstance data) throws RemoteException {
+    final VmwareCloudInstance instance2 = startAndCheckInstance("image2", new Checker<VmwareCloudInstance>() {
+      public void check(final VmwareCloudInstance data) throws RemoteException {
         assertNotSame(instanceId.get(), data.getInstanceId());
       }
     });
@@ -210,8 +211,8 @@ public class VMWareCloudClientTest extends BaseTestCase {
 
     final AtomicReference<String> instanceId = new AtomicReference<String>();
 
-    startAndCheckCloneDeletedAfterTermination("image2", new Checker<VMWareCloudInstance>() {
-      public void check(final VMWareCloudInstance data) throws RemoteException {
+    startAndCheckCloneDeletedAfterTermination("image2", new Checker<VmwareCloudInstance>() {
+      public void check(final VmwareCloudInstance data) throws RemoteException {
         final Map<String, String> vmParams = myFakeApi.getVMParams(data.getInstanceId());
         assertEquals("snap", vmParams.get(VMWareApiConnector.TEAMCITY_VMWARE_IMAGE_SNAPSHOT));
         instanceId.set(data.getInstanceId());
@@ -220,8 +221,8 @@ public class VMWareCloudClientTest extends BaseTestCase {
     assertEquals(4, FakeModel.instance().getVms().size());
     FakeModel.instance().addVMSnapshot("image2", "snap2");
 
-    final VMWareCloudInstance instance1 = startAndCheckInstance("image2", new Checker<VMWareCloudInstance>() {
-      public void check(final VMWareCloudInstance data) throws RemoteException {
+    final VmwareCloudInstance instance1 = startAndCheckInstance("image2", new Checker<VmwareCloudInstance>() {
+      public void check(final VmwareCloudInstance data) throws RemoteException {
         assertNotSame(instanceId.get(), data.getInstanceId());
         final Map<String, String> vmParams = myFakeApi.getVMParams(data.getInstanceId());
         assertEquals("snap2", vmParams.get(VMWareApiConnector.TEAMCITY_VMWARE_IMAGE_SNAPSHOT));
@@ -229,8 +230,8 @@ public class VMWareCloudClientTest extends BaseTestCase {
     });
     assertEquals(4, FakeModel.instance().getVms().size());
     assertNotContains(FakeModel.instance().getVms().keySet(), instanceId.get());
-    final VMWareCloudInstance instance2 = startAndCheckInstance("image2", new Checker<VMWareCloudInstance>() {
-      public void check(final VMWareCloudInstance data) throws RemoteException {
+    final VmwareCloudInstance instance2 = startAndCheckInstance("image2", new Checker<VmwareCloudInstance>() {
+      public void check(final VmwareCloudInstance data) throws RemoteException {
         assertNotSame(instanceId.get(), data.getInstanceId());
         final Map<String, String> vmParams = myFakeApi.getVMParams(data.getInstanceId());
         assertEquals("snap2", vmParams.get(VMWareApiConnector.TEAMCITY_VMWARE_IMAGE_SNAPSHOT));
@@ -251,8 +252,8 @@ public class VMWareCloudClientTest extends BaseTestCase {
 
     final AtomicReference<String> instanceId = new AtomicReference<String>();
     final String originalChangeVersion = FakeModel.instance().getVirtualMachine("image1").getConfig().getChangeVersion();
-    startAndCheckCloneDeletedAfterTermination("image1", new Checker<VMWareCloudInstance>() {
-      public void check(final VMWareCloudInstance data) throws RemoteException {
+    startAndCheckCloneDeletedAfterTermination("image1", new Checker<VmwareCloudInstance>() {
+      public void check(final VmwareCloudInstance data) throws RemoteException {
         final Map<String, String> vmParams = myFakeApi.getVMParams(data.getInstanceId());
         assertEquals("", vmParams.get(VMWareApiConnector.TEAMCITY_VMWARE_IMAGE_SNAPSHOT));
         assertEquals(originalChangeVersion, vmParams.get(VMWareApiConnector.TEAMCITY_VMWARE_IMAGE_CHANGE_VERSION));
@@ -268,8 +269,8 @@ public class VMWareCloudClientTest extends BaseTestCase {
     final String updatedChangeVersion = FakeModel.instance().getVirtualMachine("image1").getConfig().getChangeVersion();
     assertNotSame(originalChangeVersion, updatedChangeVersion);
 
-    final VMWareCloudInstance instance1 = startAndCheckInstance("image1", new Checker<VMWareCloudInstance>() {
-      public void check(final VMWareCloudInstance data) throws RemoteException {
+    final VmwareCloudInstance instance1 = startAndCheckInstance("image1", new Checker<VmwareCloudInstance>() {
+      public void check(final VmwareCloudInstance data) throws RemoteException {
         assertNotSame(instanceId.get(), data.getInstanceId());
         final Map<String, String> vmParams = myFakeApi.getVMParams(data.getInstanceId());
         assertEquals(updatedChangeVersion, vmParams.get(VMWareApiConnector.TEAMCITY_VMWARE_IMAGE_CHANGE_VERSION));
@@ -277,8 +278,8 @@ public class VMWareCloudClientTest extends BaseTestCase {
     });
     assertEquals(4, FakeModel.instance().getVms().size());
     assertNotContains(FakeModel.instance().getVms().keySet(), instanceId.get());
-    final VMWareCloudInstance instance2 = startAndCheckInstance("image1", new Checker<VMWareCloudInstance>() {
-      public void check(final VMWareCloudInstance data) throws RemoteException {
+    final VmwareCloudInstance instance2 = startAndCheckInstance("image1", new Checker<VmwareCloudInstance>() {
+      public void check(final VmwareCloudInstance data) throws RemoteException {
         assertNotSame(instanceId.get(), data.getInstanceId());
         final Map<String, String> vmParams = myFakeApi.getVMParams(data.getInstanceId());
         assertEquals(updatedChangeVersion, vmParams.get(VMWareApiConnector.TEAMCITY_VMWARE_IMAGE_CHANGE_VERSION));
@@ -298,23 +299,23 @@ public class VMWareCloudClientTest extends BaseTestCase {
 
     recreateClient();
     assertNull(myClient.getErrorInfo());
-    new WaitFor(10*1000){
+    new WaitFor(1000*1000){
       protected boolean condition() {
         int cnt = 0;
-        for (VMWareCloudImage image : myClient.getImages()) {
-          final Collection<VMWareCloudInstance> instances = image.getInstances();
+        for (VmwareCloudImage image : myClient.getImages()) {
+          final Collection<VmwareCloudInstance> instances = image.getInstances();
           cnt += instances.size();
-          for (VMWareCloudInstance instance : instances) {
+          for (VmwareCloudInstance instance : instances) {
             assertEquals(InstanceStatus.RUNNING, instance.getStatus());
           }
         }
         return cnt == 3;
       }
     };
-    for (VMWareCloudImage image : myClient.getImages()) {
-      final Collection<VMWareCloudInstance> instances = image.getInstances();
+    for (VmwareCloudImage image : myClient.getImages()) {
+      final Collection<VmwareCloudInstance> instances = image.getInstances();
       assertEquals(1, instances.size());
-      final VMWareCloudInstance instance = instances.iterator().next();
+      final VmwareCloudInstance instance = instances.iterator().next();
       if ("image1".equals(image.getName())){
         assertEquals("image1", instance.getName());
       } else if ("image2".equals(image.getName())) {
@@ -329,7 +330,7 @@ public class VMWareCloudClientTest extends BaseTestCase {
 
   public void should_limit_new_instances_count(){
     int countStarted = 0;
-    final VMWareCloudImage image_template = getImageByName("image_template");
+    final VmwareCloudImage image_template = getImageByName("image_template");
     while (myClient.canStartNewInstance(image_template)){
       final CloudInstanceUserData userData = new CloudInstanceUserData(
         image_template + "_agent", "authToken", "http://localhost:8080", 30 * 60 * 1000l, "My profile", Collections.<String, String>emptyMap());
@@ -341,21 +342,21 @@ public class VMWareCloudClientTest extends BaseTestCase {
 
   @Test(expectedExceptions = RuntimeException.class, expectedExceptionsMessageRegExp = ".*Unable to find snapshot.*")
   public void shouldnt_start_when_snapshot_is_missing(){
-    final VMWareCloudImage image2 = getImageByName("image2");
+    final VmwareCloudImage image2 = getImageByName("image2");
     FakeModel.instance().removeVmSnaphot(image2.getName(), "snap");
     startNewInstanceAndWait("image2");
   }
 
-  public void should_power_off_if_no_guest_tools_avail(){
-    final VMWareCloudImage image_template = getImageByName("image_template");
-    final VMWareCloudInstance instance = startNewInstanceAndWait("image_template");
+  public void should_power_off_if_no_guest_tools_avail() throws InterruptedException {
+    final VmwareCloudImage image_template = getImageByName("image_template");
+    final VmwareCloudInstance instance = startNewInstanceAndWait("image_template");
     assertContains(image_template.getInstances(),  instance);
     FakeModel.instance().getVirtualMachine(instance.getName()).disableGuestTools();
     myClient.terminateInstance(instance);
-    new WaitFor(500) {
+    new WaitFor(2000) {
       @Override
       protected boolean condition() {
-        return instance.getStatus() == InstanceStatus.STOPPED;
+        return instance.getStatus() == InstanceStatus.STOPPED && !image_template.getInstances().contains(instance);
       }
     };
     assertNull(FakeModel.instance().getVirtualMachine(instance.getName()));
@@ -363,19 +364,19 @@ public class VMWareCloudClientTest extends BaseTestCase {
   }
 
   public void existing_clones_with_start_stop() throws MalformedURLException, RemoteException {
-    final VMWareCloudInstance cloneInstance = startNewInstanceAndWait("image2");
+    final VmwareCloudInstance cloneInstance = startNewInstanceAndWait("image2");
 
     myClientParameters.setParameter("vmware_images_data", "image1;;;;START;0;X;:" +
                                                           "image2;;;;START;0;X;:" +
                                                           "image_template;;cf;rp;CLONE;3;X;:");
     recreateClient();
     boolean checked = false;
-    for (VMWareCloudImage image : myClient.getImages()) {
+    for (VmwareCloudImage image : myClient.getImages()) {
       if (!"image2".equals(image.getName()))
         continue;
 
-      final Collection<VMWareCloudInstance> instances = image.getInstances();
-      final VMWareCloudInstance singleInstance = instances.iterator().next();
+      final Collection<VmwareCloudInstance> instances = image.getInstances();
+      final VmwareCloudInstance singleInstance = instances.iterator().next();
       assertEquals(1, instances.size());
       assertEquals("image2", singleInstance.getName());
       checked = true;
@@ -388,13 +389,13 @@ public class VMWareCloudClientTest extends BaseTestCase {
   }
 
   private void startAndCheckCloneDeletedAfterTermination(String imageName,
-                                                         Checker<VMWareCloudInstance> instanceChecker,
+                                                         Checker<VmwareCloudInstance> instanceChecker,
                                                          boolean shouldBeDeleted) throws Exception {
-    final VMWareCloudInstance instance = startAndCheckInstance(imageName, instanceChecker);
+    final VmwareCloudInstance instance = startAndCheckInstance(imageName, instanceChecker);
     terminateAndDeleteIfNecessary(shouldBeDeleted, instance);
   }
 
-  private void terminateAndDeleteIfNecessary(final boolean shouldBeDeleted, final VMWareCloudInstance instance) throws RemoteException {
+  private void terminateAndDeleteIfNecessary(final boolean shouldBeDeleted, final VmwareCloudInstance instance) throws RemoteException {
     myClient.terminateInstance(instance);
     final String name = instance.getName();
     final WaitFor waitFor = new WaitFor(10 * 1000) {
@@ -404,7 +405,7 @@ public class VMWareCloudClientTest extends BaseTestCase {
           if (shouldBeDeleted) {
             return (myFakeApi.getVirtualMachines(false).get(name) == null);
           } else {
-            return myFakeApi.getInstanceDetails(name).getRuntime().getPowerState() == VirtualMachinePowerState.poweredOff;
+            return myFakeApi.getInstanceDetails(name).getInstanceStatus() == InstanceStatus.STOPPED;
           }
         } catch (RemoteException e) {
           return false;
@@ -414,24 +415,24 @@ public class VMWareCloudClientTest extends BaseTestCase {
     waitFor.assertCompleted("template clone should be deleted after execution");
   }
 
-  private VMWareCloudInstance startAndCheckInstance(final String imageName, final Checker<VMWareCloudInstance> instanceChecker) throws Exception {
-    final VMWareCloudInstance instance = startNewInstanceAndWait(imageName);
+  private VmwareCloudInstance startAndCheckInstance(final String imageName, final Checker<VmwareCloudInstance> instanceChecker) throws Exception {
+    final VmwareCloudInstance instance = startNewInstanceAndWait(imageName);
     new WaitFor(10 * 1000) {
 
       @Override
       protected boolean condition() {
-        final VirtualMachine vm;
+        final VmwareInstance vm;
         try {
           vm = myFakeApi.getVirtualMachines(false).get(instance.getName());
-          return vm != null && myFakeApi.getInstanceStatus(vm) == InstanceStatus.RUNNING;
+          return vm != null && vm.getInstanceStatus() == InstanceStatus.RUNNING;
         } catch (RemoteException e) {
           return false;
         }
       }
     };
-    final VirtualMachine vm = myFakeApi.getVirtualMachines(false).get(instance.getName());
+    final VmwareInstance vm = myFakeApi.getVirtualMachines(false).get(instance.getName());
     assertNotNull("instance " + instance.getName() + " must exists", vm);
-    assertEquals("Must be running", InstanceStatus.RUNNING, myFakeApi.getInstanceStatus(vm));
+    assertEquals("Must be running", InstanceStatus.RUNNING, vm.getInstanceStatus());
     if (instanceChecker != null) {
       instanceChecker.check(instance);
     }
@@ -439,22 +440,22 @@ public class VMWareCloudClientTest extends BaseTestCase {
   }
 
 
-  private VMWareCloudInstance startNewInstanceAndWait(String imageName) {
+  private VmwareCloudInstance startNewInstanceAndWait(String imageName) {
     return startNewInstanceAndWait(imageName, new HashMap<String, String>());
   }
 
-  private VMWareCloudInstance startNewInstanceAndWait(String imageName, Map<String, String> parameters) {
+  private VmwareCloudInstance startNewInstanceAndWait(String imageName, Map<String, String> parameters) {
     final CloudInstanceUserData userData = new CloudInstanceUserData(
       imageName + "_agent", "authToken", "http://localhost:8080", 30 * 60 * 1000l, "My profile", parameters);
-    final VMWareCloudInstance vmWareCloudInstance = myClient.startNewInstance(getImageByName(imageName), userData);
+    final VmwareCloudInstance vmwareCloudInstance = myClient.startNewInstance(getImageByName(imageName), userData);
     final WaitFor waitFor = new WaitFor(10 * 1000) {
       @Override
       protected boolean condition() {
-        return vmWareCloudInstance.getStatus() == InstanceStatus.RUNNING;
+        return vmwareCloudInstance.getStatus() == InstanceStatus.RUNNING;
       }
     };
     waitFor.assertCompleted();
-    return vmWareCloudInstance;
+    return vmwareCloudInstance;
   }
 
   private static String getExtraConfigValue(final OptionValue[] extraConfig, final String key) {
@@ -466,10 +467,10 @@ public class VMWareCloudClientTest extends BaseTestCase {
     return null;
   }
 
-  private VMWareCloudImage getImageByName(final String name) {
+  private VmwareCloudImage getImageByName(final String name) {
     for (CloudImage image : myClient.getImages()) {
       if (image.getName().equals(name)) {
-        return (VMWareCloudImage)image;
+        return (VmwareCloudImage)image;
       }
     }
     throw new RuntimeException("unable to find image by name: " + name);

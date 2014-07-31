@@ -2,19 +2,20 @@ package jetbrains.buildServer.clouds.vmware;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
-import com.vmware.vim25.LocalizedMethodFault;
-import com.vmware.vim25.VirtualMachineConfigInfo;
 import com.vmware.vim25.mo.Task;
-import com.vmware.vim25.mo.VirtualMachine;
 import java.rmi.RemoteException;
 import java.text.SimpleDateFormat;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.Callable;
 import jetbrains.buildServer.clouds.*;
+import jetbrains.buildServer.clouds.base.AbstractCloudImage;
+import jetbrains.buildServer.clouds.base.connector.CloudAsyncTaskExecutor;
+import jetbrains.buildServer.clouds.base.connector.TaskCallbackHandler;
 import jetbrains.buildServer.clouds.vmware.connector.VMWareApiConnector;
-import jetbrains.buildServer.clouds.vmware.errors.VMWareCloudErrorInfo;
+import jetbrains.buildServer.clouds.vmware.connector.VmwareInstance;
+import jetbrains.buildServer.clouds.vmware.connector.VmwareTaskWrapper;
+import jetbrains.buildServer.clouds.vmware.errors.VmwareCloudErrorInfo;
 import jetbrains.buildServer.clouds.vmware.errors.VMWareCloudErrorType;
-import jetbrains.buildServer.clouds.vmware.tasks.TaskStatusUpdater;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -23,40 +24,40 @@ import org.jetbrains.annotations.Nullable;
  *         Date: 4/15/2014
  *         Time: 3:58 PM
  */
-public class VMWareCloudImage implements CloudImage, VmInfo {
+public class VmwareCloudImage extends AbstractCloudImage implements VmInfo {
 
-  private static final Logger LOG = Logger.getInstance(VMWareCloudImage.class.getName());
+  private static final Logger LOG = Logger.getInstance(VmwareCloudImage.class.getName());
 
   private final String myImageName;
-  private final Map<String, VMWareCloudInstance> myInstances;
+  private final Map<String, VmwareCloudInstance> myInstances;
   private final VMWareImageType myImageType;
   private final VMWareImageStartType myStartType;
   @Nullable private final String mySnapshotName;
-  private final VMWareCloudErrorInfo myErrorInfo;
+  private final VmwareCloudErrorInfo myErrorInfo;
   private final String myResourcePool;
   private final String myFolder;
   private final VMWareApiConnector myApiConnector;
   private final int myMaxInstances;
-  @NotNull private final TaskStatusUpdater myStatusTask;
+  @NotNull private final CloudAsyncTaskExecutor myAsyncClient;
 
-  public VMWareCloudImage(@NotNull final VMWareApiConnector apiConnector,
+  public VmwareCloudImage(@NotNull final VMWareApiConnector apiConnector,
                           @NotNull final String imageName,
                           @NotNull final VMWareImageType imageType,
                           @Nullable final String folder,
                           @Nullable final String resourcePool,
                           @Nullable final String snapshotName,
                           @Nullable final InstanceStatus imageInstanceStatus,
-                          @NotNull final TaskStatusUpdater statusTask,
+                          @NotNull final CloudAsyncTaskExecutor asyncClient,
                           @NotNull final VMWareImageStartType startType,
                           final int maxInstances) {
-    myErrorInfo = new VMWareCloudErrorInfo(this);
+    myErrorInfo = new VmwareCloudErrorInfo(this);
     myImageName = imageName;
     myImageType = imageType;
     myFolder = folder;
     myResourcePool = resourcePool;
     mySnapshotName = StringUtil.isEmpty(snapshotName) ? null : snapshotName;
     myApiConnector = apiConnector;
-    myStatusTask = statusTask;
+    myAsyncClient = asyncClient;
     myMaxInstances = maxInstances;
     if (myImageType == VMWareImageType.TEMPLATE && startType == VMWareImageStartType.START) {
       myStartType = VMWareImageStartType.CLONE;
@@ -64,11 +65,11 @@ public class VMWareCloudImage implements CloudImage, VmInfo {
       myStartType = startType;
     }
     if (myStartType == VMWareImageStartType.START) {
-      final VMWareCloudInstance imageInstance = new VMWareCloudInstance(this, imageName, snapshotName);
+      final VmwareCloudInstance imageInstance = new VmwareCloudInstance(this, imageName, snapshotName);
       imageInstance.setStatus(imageInstanceStatus);
       myInstances = Collections.singletonMap(imageName, imageInstance);
     } else {
-      myInstances = new HashMap<String, VMWareCloudInstance>();
+      myInstances = new HashMap<String, VmwareCloudInstance>();
     }
   }
 
@@ -92,13 +93,18 @@ public class VMWareCloudImage implements CloudImage, VmInfo {
   }
 
   @NotNull
-  public Collection<VMWareCloudInstance> getInstances() {
+  public Collection<VmwareCloudInstance> getInstances() {
     return Collections.unmodifiableCollection(myInstances.values());
   }
 
   @Nullable
-  public CloudInstance findInstanceById(@NotNull String instanceId) {
+  public VmwareCloudInstance findInstanceById(@NotNull String instanceId) {
     return myInstances.get(instanceId);
+  }
+
+  @Override
+  public void createInstance(@NotNull final String instanceName) {
+
   }
 
   @Nullable
@@ -106,7 +112,7 @@ public class VMWareCloudImage implements CloudImage, VmInfo {
     return myErrorInfo.getErrorInfo();
   }
 
-  private synchronized VMWareCloudInstance getOrCreateInstance() throws RemoteException, InterruptedException {
+  private synchronized VmwareCloudInstance getOrCreateInstance() throws RemoteException, InterruptedException {
     if (myStartType.isUseOriginal()) {
       LOG.info("Won't create a new instance - using original");
       return myInstances.get(myImageName);
@@ -126,54 +132,51 @@ public class VMWareCloudImage implements CloudImage, VmInfo {
 
     if (!myStartType.isDeleteAfterStop()) {
       // on demand clone
-      final Map<String, VirtualMachine> clones = myApiConnector.getClones(myImageName);
+      final Map<String, VmwareInstance> vmClones = myApiConnector.getClones(myImageName);
 
       // start an existsing one.
-      final VirtualMachine imageVM = myApiConnector.getInstanceDetails(myImageName);
-      if (imageVM == null) {
+      final VmwareInstance imageVm = myApiConnector.getInstanceDetails(myImageName);
+      if (imageVm == null) {
         throw new IllegalArgumentException("Unable to get VM details: " + mySnapshotName);
       }
-      final VirtualMachineConfigInfo config = imageVM.getConfig();
-      for (VirtualMachine vm : clones.values()) {
-        if (myApiConnector.getInstanceStatus(vm) == InstanceStatus.STOPPED) {
-          final Map<String, String> teamcityParams = myApiConnector.getTeamcityParams(vm);
-          final String vmName = vm.getName();
-          final VMWareCloudInstance instance = myInstances.get(vmName);
+      for (VmwareInstance vmInstance : vmClones.values()) {
+        if (vmInstance.getInstanceStatus() == InstanceStatus.STOPPED) {
+
+          final String vmName = vmInstance.getName();
+          final VmwareCloudInstance instance = myInstances.get(vmName);
 
           // checking if this instance is already starting.
           if (instance != null && instance.getStatus() != InstanceStatus.STOPPED)
             continue;
 
           if (latestSnapshotName == null) {
-            if (!config.getChangeVersion().equals(vm.getConfig().getChangeVersion())) {
-              LOG.info(String.format("Change version for %s is outdated: '%s' vs '%s'", vmName, vm.getConfig().getChangeVersion(), config.getChangeVersion()));
+            if (imageVm.getChangeVersion() == null || !imageVm.getChangeVersion().equals(vmInstance.getChangeVersion())) {
+              LOG.info(String.format("Change version for %s is outdated: '%s' vs '%s'", vmName, vmInstance.getChangeVersion(), imageVm.getChangeVersion()));
               deleteInstance(instance);
               continue;
             }
           } else {
-            if (!latestSnapshotName.equals(teamcityParams.get(VMWareApiConnector.TEAMCITY_VMWARE_IMAGE_SNAPSHOT))) {
-              LOG.info(String.format("VM %s Snapshot is not the latest one: '%s' vs '%s'",
-                                     vmName,
-                                     teamcityParams.get(VMWareApiConnector.TEAMCITY_VMWARE_IMAGE_SNAPSHOT),
-                                     latestSnapshotName));
+            final String snapshotName = vmInstance.getProperty(VMWareApiConnector.TEAMCITY_VMWARE_IMAGE_SNAPSHOT);
+            if (!latestSnapshotName.equals(snapshotName)) {
+              LOG.info(String.format("VM %s Snapshot is not the latest one: '%s' vs '%s'", vmName, snapshotName, latestSnapshotName));
               deleteInstance(instance);
               continue;
             }
           }
           LOG.info("Will use existing VM with name " + vmName);
-          return instance == null ? new VMWareCloudInstance(this, vmName, latestSnapshotName) : instance;
+          return instance == null ? new VmwareCloudInstance(this, vmName, latestSnapshotName) : instance;
         }
       }
     }
     // wasn't able to find an existing candidate, so will clone into a new VM
     final String newVmName = generateNewVmName();
     LOG.info("Will create a new VM with name " + newVmName);
-    return new VMWareCloudInstance(this, newVmName, latestSnapshotName);
+    return new VmwareCloudInstance(this, newVmName, latestSnapshotName);
   }
 
-  public synchronized VMWareCloudInstance startInstance(@NotNull final CloudInstanceUserData cloudInstanceUserData) {
+  public synchronized VmwareCloudInstance startInstance(@NotNull final CloudInstanceUserData cloudInstanceUserData) {
     try {
-      final VMWareCloudInstance instance = getOrCreateInstance();
+      final VmwareCloudInstance instance = getOrCreateInstance();
       boolean willClone = !myApiConnector.checkVirtualMachineExists(instance.getName());
       LOG.info("Will clone for " + instance.getName() + ": " + willClone);
       instance.setStatus(InstanceStatus.SCHEDULED_TO_START);
@@ -181,16 +184,21 @@ public class VMWareCloudImage implements CloudImage, VmInfo {
         addInstance(instance);
       }
       if (willClone) {
-        final Task task = myApiConnector.cloneVm(instance, myResourcePool, myFolder);
-        myStatusTask.submit(task, new ImageStatusTaskWrapper(instance) {
+        myAsyncClient.executeAsync(
+          new VmwareTaskWrapper(new Callable<Task>() {
+          public Task call() throws Exception {
+            return myApiConnector.cloneVm(instance, myResourcePool, myFolder);
+          }}
+          ),
+          new ImageStatusTaskWrapper(instance) {
           @Override
           public void onSuccess() {
             cloneVmSuccessHandler(instance, cloudInstanceUserData);
           }
 
           @Override
-          public void onError(final LocalizedMethodFault fault) {
-            super.onError(fault);
+          public void onError(final Throwable th) {
+            super.onError(th);
             removeInstance(instance.getName());
           }
         });
@@ -203,50 +211,43 @@ public class VMWareCloudImage implements CloudImage, VmInfo {
     }
   }
 
-  private synchronized void cloneVmSuccessHandler(@NotNull final VMWareCloudInstance instance, @NotNull final CloudInstanceUserData cloudInstanceUserData) {
+  private synchronized void cloneVmSuccessHandler(@NotNull final VmwareCloudInstance instance, @NotNull final CloudInstanceUserData cloudInstanceUserData) {
     instance.setStatus(InstanceStatus.STARTING);
-    try {
-      final Task startInstanceTask = myApiConnector.startInstance(instance,
-                                                                  instance.getName(),
-                                                                  cloudInstanceUserData);
-
-      myStatusTask.submit(startInstanceTask, new ImageStatusTaskWrapper(instance) {
-        @Override
-        public void onSuccess() {
-          reconfigureVmTask(instance, cloudInstanceUserData);
-        }
-      });
-    } catch (RemoteException e) {
-      e.printStackTrace();
-    } catch (InterruptedException e) {
-      e.printStackTrace();
-    }
+    myAsyncClient.executeAsync(new VmwareTaskWrapper(new Callable<Task>() {
+      public Task call() throws Exception {
+        return myApiConnector.startInstance(instance, instance.getName(), cloudInstanceUserData);
+      }
+    }), new ImageStatusTaskWrapper(instance) {
+      @Override
+      public void onSuccess() {
+        reconfigureVmTask(instance, cloudInstanceUserData);
+      }
+    });
   }
 
-  private synchronized void reconfigureVmTask(@NotNull final VMWareCloudInstance instance, @NotNull final CloudInstanceUserData cloudInstanceUserData) {
+  private synchronized void reconfigureVmTask(@NotNull final VmwareCloudInstance instance, @NotNull final CloudInstanceUserData cloudInstanceUserData) {
     final Task task;
-    try {
-      task = myApiConnector.reconfigureInstance(instance, instance.getName(), cloudInstanceUserData);
-      myStatusTask.submit(task, new ImageStatusTaskWrapper(instance) {
-        @Override
-        public void onSuccess() {
-          instance.setStatus(InstanceStatus.RUNNING);
-          instance.clearAllErrors();
-          LOG.info("Instance started successfully");
-        }
-      });
-    } catch (RemoteException e) {
-      e.printStackTrace();
-    }
+    myAsyncClient.executeAsync(new VmwareTaskWrapper(new Callable<Task>() {
+      public Task call() throws Exception {
+        return myApiConnector.reconfigureInstance(instance, instance.getName(), cloudInstanceUserData);
+      }
+    }), new ImageStatusTaskWrapper(instance) {
+      @Override
+      public void onSuccess() {
+        instance.setStatus(InstanceStatus.RUNNING);
+        instance.clearAllErrors();
+        LOG.info("Instance started successfully");
+      }
+    });
   }
 
   public void updateRunningInstances(final ProcessImageInstancesTask task) {
-    for (VMWareCloudInstance instance : myInstances.values()) {
+    for (VmwareCloudInstance instance : myInstances.values()) {
       task.processInstance(instance);
     }
   }
 
-  public void populateInstances(final Map<String, VirtualMachine> currentInstances) {
+  public void populateInstances(final Map<String, VmwareInstance> currentInstances) {
     final List<String> instances2add = new ArrayList<String>();
     final List<String> instances2remove = new ArrayList<String>();
 
@@ -265,18 +266,17 @@ public class VMWareCloudImage implements CloudImage, VmInfo {
       removeInstance(name);
     }
     for (String name : instances2add) {
-      final VirtualMachine vm = currentInstances.get(name);
-      final Map<String, String> teamcityParams = myApiConnector.getTeamcityParams(vm);
-      final String snapshotName = teamcityParams.get(VMWareApiConnector.TEAMCITY_VMWARE_IMAGE_SNAPSHOT);
+      final VmwareInstance vmInstance = currentInstances.get(name);
+      final String snapshotName = vmInstance.getProperty(VMWareApiConnector.TEAMCITY_VMWARE_IMAGE_SNAPSHOT);
 
-      final VMWareCloudInstance instance = new VMWareCloudInstance(this, name, StringUtil.isEmpty(snapshotName) ? null : snapshotName);
-      instance.setStatus(myApiConnector.getInstanceStatus(vm));
+      final VmwareCloudInstance instance = new VmwareCloudInstance(this, name, StringUtil.isEmpty(snapshotName) ? null : snapshotName);
+      instance.setStatus(vmInstance.getInstanceStatus());
       addInstance(instance);
     }
   }
 
 
-  public void stopInstance(@NotNull final VMWareCloudInstance instance) throws RemoteException, InterruptedException {
+  public void stopInstance(@NotNull final VmwareCloudInstance instance) throws RemoteException, InterruptedException {
     LOG.info("Stopping instance " + instance.getName());
     myApiConnector.stopInstance(instance);
     instance.setStatus(InstanceStatus.STOPPED);
@@ -285,12 +285,19 @@ public class VMWareCloudImage implements CloudImage, VmInfo {
     }
   }
 
-  private void deleteInstance(@NotNull final VMWareCloudInstance instance) throws RemoteException, InterruptedException {
+  private void deleteInstance(@NotNull final VmwareCloudInstance instance) throws RemoteException, InterruptedException {
     if (instance.getErrorInfo() == null) {
       LOG.info("Will delete instance " + instance.getName());
-      final Task task = myApiConnector.deleteVirtualMachine(myApiConnector.getInstanceDetails(instance.getName()));
-      myStatusTask.submit(task, new TaskStatusUpdater.TaskCallbackAdapter());
-      removeInstance(instance.getName());
+      final VmwareInstance vmInstance = myApiConnector.getInstanceDetails(instance.getName());
+      if (vmInstance != null){
+        myAsyncClient.executeAsync(vmInstance.deleteInstance(), new TaskCallbackHandler(){
+          @Override
+          public void onSuccess() {
+            super.onSuccess();
+            removeInstance(instance.getName());
+          }
+        });
+      }
     } else {
       LOG.warn(String.format("Won't delete instance %s with error: %s (%s)",
                              instance.getName(), instance.getErrorInfo().getMessage(), instance.getErrorInfo().getDetailedMessage()));
@@ -302,7 +309,7 @@ public class VMWareCloudImage implements CloudImage, VmInfo {
       return myApiConnector.isInstanceStopped(getId());
     }
     final List<String> runningInstancesNames = new ArrayList<String>();
-    for (Map.Entry<String, VMWareCloudInstance> entry : myInstances.entrySet()) {
+    for (Map.Entry<String, VmwareCloudInstance> entry : myInstances.entrySet()) {
       if (entry.getValue().getStatus() != InstanceStatus.STOPPED)
         runningInstancesNames.add(entry.getKey());
     }
@@ -330,12 +337,12 @@ public class VMWareCloudImage implements CloudImage, VmInfo {
     return String.format("%s-clone-%s%s", getId(), sdf.format(new Date()), Integer.toHexString(r.nextInt(256)));
   }
 
-  public void addInstance(@NotNull final VMWareCloudInstance instance){
+  public void addInstance(@NotNull final VmwareCloudInstance instance){
     LOG.info(String.format("Image %s, put instance %s", myImageName, instance.getName()));
     myInstances.put(instance.getName(), instance);
   }
 
-  private void removeInstance(@NotNull final String name){
+  public void removeInstance(@NotNull final String name){
     LOG.info(String.format("Image %s, remove instance %s", myImageName, name));
     myInstances.remove(name);
   }
@@ -353,23 +360,22 @@ public class VMWareCloudImage implements CloudImage, VmInfo {
   }
 
   public static interface ProcessImageInstancesTask{
-    void processInstance(@NotNull final VMWareCloudInstance instance);
+    void processInstance(@NotNull final VmwareCloudInstance instance);
   }
 
-  private static class ImageStatusTaskWrapper extends TaskStatusUpdater.TaskCallbackAdapter {
+  private static class ImageStatusTaskWrapper extends TaskCallbackHandler {
 
+    @NotNull protected final VmwareCloudInstance myInstance;
 
-    @NotNull protected final VMWareCloudInstance myInstance;
-
-    public ImageStatusTaskWrapper(@NotNull final VMWareCloudInstance instance) {
+    public ImageStatusTaskWrapper(@NotNull final VmwareCloudInstance instance) {
       myInstance = instance;
     }
 
     @Override
-    public void onError(final LocalizedMethodFault fault) {
-      if (fault != null) {
-        myInstance.setErrorType(VMWareCloudErrorType.CUSTOM, fault.getLocalizedMessage());
-        LOG.info("An error occured: " + fault.getLocalizedMessage() + " during processing " + myInstance.getName());
+    public void onError(final Throwable th) {
+      if (th != null) {
+        myInstance.setErrorType(VMWareCloudErrorType.CUSTOM, th.getMessage());
+        LOG.info("An error occured: " + th.getLocalizedMessage() + " during processing " + myInstance.getName());
       } else {
         myInstance.setErrorType(VMWareCloudErrorType.CUSTOM, "Unknown error during processing instance " + myInstance.getName());
         LOG.info("Unknown error during processing " + myInstance.getName());

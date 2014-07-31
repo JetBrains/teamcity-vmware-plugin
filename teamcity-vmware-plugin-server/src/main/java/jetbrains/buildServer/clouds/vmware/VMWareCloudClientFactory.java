@@ -3,6 +3,7 @@ package jetbrains.buildServer.clouds.vmware;
 import java.net.MalformedURLException;
 import java.rmi.RemoteException;
 import jetbrains.buildServer.clouds.*;
+import jetbrains.buildServer.clouds.vmware.connector.VMWareApiConnector;
 import jetbrains.buildServer.serverSide.AgentDescription;
 import jetbrains.buildServer.serverSide.InvalidProperty;
 import jetbrains.buildServer.serverSide.PropertiesProcessor;
@@ -70,6 +71,7 @@ public class VMWareCloudClientFactory implements CloudClientFactory {
   }
 
   public boolean canBeAgentOfType(@NotNull AgentDescription agentDescription) {
-    return true;
+    final Map<String, String> configParams = agentDescription.getConfigurationParameters();
+    return configParams.containsValue(VMWareApiConnector.TEAMCITY_VMWARE_IMAGE_NAME);
   }
 }

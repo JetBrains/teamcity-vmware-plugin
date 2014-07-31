@@ -8,9 +8,10 @@ import java.net.URL;
 import java.rmi.RemoteException;
 import java.util.*;
 import java.util.regex.Pattern;
-import jetbrains.buildServer.clouds.CloudErrorInfo;
 import jetbrains.buildServer.clouds.CloudInstanceUserData;
 import jetbrains.buildServer.clouds.InstanceStatus;
+import jetbrains.buildServer.clouds.base.connector.AbstractInstance;
+import jetbrains.buildServer.clouds.base.errors.TypedCloudErrorInfo;
 import jetbrains.buildServer.clouds.vmware.*;
 import jetbrains.buildServer.clouds.vmware.errors.VMWareCloudErrorType;
 import jetbrains.buildServer.util.StringUtil;
@@ -95,45 +96,35 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
   }
 
   @NotNull
-  public Map<String, VirtualMachine> getVirtualMachines(boolean filterClones) throws RemoteException {
+  public Map<String, VmwareInstance> getVirtualMachines(boolean filterClones) throws RemoteException {
     final Map<String, VirtualMachine> allVms = findAllEntitiesAsMap(VirtualMachine.class);
-    final Map<String, VirtualMachine> filteredVms = new HashMap<String, VirtualMachine>();
+    final Map<String, VmwareInstance> filteredVms = new HashMap<String, VmwareInstance>();
     for (String vmName : allVms.keySet()) {
       final VirtualMachine vm = allVms.get(vmName);
-      final VirtualMachineConfigInfo config = vm.getConfig();
-      if (config == null) {
+      final VmwareInstance vmInstance = new VmwareInstance(vm);
+      if (!vmInstance.isInitialized()) {
         if (!filterClones) {
-          filteredVms.put(vmName, vm);
+          filteredVms.put(vmName, vmInstance);
         }
         continue;
       }
-      final OptionValue[] extraConfig = config.getExtraConfig();
-      boolean isClone = false;
-      for (OptionValue optionValue : extraConfig) {
-        if (TEAMCITY_VMWARE_CLONED_INSTANCE.equals(optionValue.getKey()) && Boolean.valueOf(String.valueOf(optionValue.getValue()))) {
-          isClone = true;
-          break;
-        }
-      }
+      final boolean isClone = "true".equals(vmInstance.getProperty(TEAMCITY_VMWARE_CLONED_INSTANCE));
       if (!isClone || !filterClones) {
-        filteredVms.put(vmName, vm);
+        filteredVms.put(vmName, vmInstance);
       }
     }
     return filteredVms;
   }
 
-  public Map<String, VirtualMachine> getClones(@NotNull final String imageName) throws RemoteException {
+  public Map<String, VmwareInstance> getClones(@NotNull final String imageName) throws RemoteException {
     final Map<String, VirtualMachine> allVms = findAllEntitiesAsMap(VirtualMachine.class);
-    final Map<String, VirtualMachine> filteredVms = new HashMap<String, VirtualMachine>();
-    for (Map.Entry<String, VirtualMachine> entry : allVms.entrySet()) {
-      final VirtualMachine vm = entry.getValue();
-      final OptionValue[] extraConfig = vm.getConfig().getExtraConfig();
+    final Map<String, VmwareInstance> filteredVms = new HashMap<String, VmwareInstance>();
+    for (String vmName : allVms.keySet()) {
+      final VirtualMachine vm = allVms.get(vmName);
 
-      for (OptionValue optionValue : extraConfig) {
-        if (TEAMCITY_VMWARE_IMAGE_NAME.equals(optionValue.getKey()) &&
-            imageName.equals(optionValue.getValue())) {
-          filteredVms.put(entry.getKey(), entry.getValue());
-        }
+      final VmwareInstance vmInstance = new VmwareInstance(vm);
+      if (imageName.equals(vmInstance.getProperty(TEAMCITY_VMWARE_IMAGE_NAME))){
+        filteredVms.put(vmName, vmInstance);
       }
     }
     return filteredVms;
@@ -195,7 +186,7 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
   }
 
   @Nullable
-  public Task startInstance(@NotNull final VMWareCloudInstance instance, @NotNull final String agentName, @NotNull final CloudInstanceUserData userData)
+  public Task startInstance(@NotNull final VmwareCloudInstance instance, @NotNull final String agentName, @NotNull final CloudInstanceUserData userData)
     throws RemoteException, InterruptedException {
     final VirtualMachine vm = findEntityByName(instance.getInstanceId(), VirtualMachine.class);
     if (vm != null) {
@@ -206,7 +197,7 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
     return null;
   }
 
-  public Task reconfigureInstance(@NotNull final VMWareCloudInstance instance, @NotNull final String agentName, @NotNull final CloudInstanceUserData userData)
+  public Task reconfigureInstance(@NotNull final VmwareCloudInstance instance, @NotNull final String agentName, @NotNull final CloudInstanceUserData userData)
     throws RemoteException {
     final VirtualMachine vm = findEntityByName(instance.getInstanceId(), VirtualMachine.class);
     final VirtualMachineConfigSpec spec = new VirtualMachineConfigSpec();
@@ -222,7 +213,7 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
   }
 
   @Nullable
-  public Task cloneVm(@NotNull final VMWareCloudInstance instance, @NotNull String resourcePool,@NotNull String folder) throws RemoteException {
+  public Task cloneVm(@NotNull final VmwareCloudInstance instance, @NotNull String resourcePool,@NotNull String folder) throws RemoteException {
     final String imageName = instance.getImage().getName();
     LOG.info(String.format("Attempting to clone VM %s into %s", imageName, instance.getName()));
     VirtualMachine vm = findEntityByName(imageName, VirtualMachine.class);
@@ -301,7 +292,7 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
     return optionValue;
   }
 
-  public void stopInstance(@NotNull final VMWareCloudInstance instance) {
+  public void stopInstance(@NotNull final VmwareCloudInstance instance) {
     instance.setStatus(InstanceStatus.SCHEDULED_TO_STOP);
     try {
       VirtualMachine vm = findEntityByName(instance.getInstanceId(), VirtualMachine.class);
@@ -316,7 +307,7 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
     }
   }
 
-  private void doShutdown(@NotNull final VMWareCloudInstance instance, @NotNull VirtualMachine vm) throws RemoteException, InterruptedException {
+  private void doShutdown(@NotNull final VmwareCloudInstance instance, @NotNull VirtualMachine vm) throws RemoteException, InterruptedException {
     try {
       instance.setStatus(InstanceStatus.STOPPING);
       vm.shutdownGuest();
@@ -340,11 +331,7 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
     instance.setStatus(InstanceStatus.STOPPED);
   }
 
-  public Task deleteVirtualMachine(final VirtualMachine vm) throws RemoteException, InterruptedException {
-    return vm.destroy_Task();
-  }
-
-  public void restartInstance(VMWareCloudInstance instance) throws RemoteException {
+  public void restartInstance(VmwareCloudInstance instance) throws RemoteException {
     final VirtualMachine vm = findEntityByName(instance.getInstanceId(), VirtualMachine.class);
     if (vm != null) {
       vm.rebootGuest();
@@ -381,8 +368,9 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
     return false;
   }
 
-  public VirtualMachine getInstanceDetails(String instanceName) throws RemoteException {
-    return findEntityByName(instanceName, VirtualMachine.class);
+  public VmwareInstance getInstanceDetails(String instanceName) throws RemoteException {
+    final VirtualMachine entity = findEntityByName(instanceName, VirtualMachine.class);
+    return entity == null ? null : new VmwareInstance(entity);
   }
 
   @Nullable
@@ -434,5 +422,26 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
           serverConnection.logout();
       }
     } catch (Exception ex){}
+  }
+
+  public InstanceStatus getInstanceStatus(@NotNull final String instanceName) {
+    try {
+      return getInstanceStatus(findEntityByName(instanceName, VirtualMachine.class));
+    } catch (RemoteException e) {
+      LOG.warn(e.toString());
+      return InstanceStatus.UNKNOWN;
+    }
+  }
+
+  public Map<String, AbstractInstance> listImageInstances(@NotNull final String imageName) {
+    return null;
+  }
+
+  public Collection<TypedCloudErrorInfo> checkImage(@NotNull final String imageName) {
+    return null;
+  }
+
+  public Collection<TypedCloudErrorInfo> checkInstance(@NotNull final String instanceName) {
+    return null;
   }
 }
