@@ -6,7 +6,11 @@
       <root url="jar://$TeamCityDistribution$/lib/servlet-api.jar!/" />
     </CLASSES>
     <JAVADOC />
-    <SOURCES />
+    <SOURCES>
+      <root url="file://$PROJECT_DIR$/../../BuildServer/clouds/cloud-api/src" />
+      <root url="file://$PROJECT_DIR$/../../BuildServer/clouds/cloud-server/src" />
+      <root url="file://$PROJECT_DIR$/../../BuildServer/clouds/cloud-shared/src" />
+    </SOURCES>
     <jarDirectory url="file://$TeamCityDistribution$/webapps/ROOT/WEB-INF/lib" recursive="false" />
   </library>
 </component>
