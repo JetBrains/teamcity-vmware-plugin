@@ -17,7 +17,7 @@ import org.testng.annotations.Test;
  *         Time: 3:16 PM
  */
 @Test
-public class VmwareCloudImageTest extends BaseTestCase {
+public class VmwareCloudImage2Test extends BaseTestCase {
 
   private CloudAsyncTaskExecutor myStatusTask;
   private VMWareApiConnector myApiConnector;
@@ -31,13 +31,13 @@ public class VmwareCloudImageTest extends BaseTestCase {
   }
 
   public void checkImageType() throws MalformedURLException, RemoteException {
-    assertEquals(VMWareImageStartType.CLONE, new VmwareCloudImage(myApiConnector,
+    assertEquals(VMWareImageStartType.CLONE, new VmwareCloudImage2(myApiConnector,
       "myImage", VMWareImageType.TEMPLATE, "folder", "pool", null, InstanceStatus.RUNNING, myStatusTask, VMWareImageStartType.START, 1).getStartType());
 
-    assertEquals(VMWareImageStartType.START, new VmwareCloudImage(myApiConnector,
+    assertEquals(VMWareImageStartType.START, new VmwareCloudImage2(myApiConnector,
       "myImage", VMWareImageType.INSTANCE, "folder", "pool", "snapshot", InstanceStatus.RUNNING, myStatusTask,VMWareImageStartType.START, 1).getStartType());
 
-    assertEquals(VMWareImageStartType.ON_DEMAND_CLONE, new VmwareCloudImage(myApiConnector,
+    assertEquals(VMWareImageStartType.ON_DEMAND_CLONE, new VmwareCloudImage2(myApiConnector,
       "myImage", VMWareImageType.INSTANCE, "folder", "pool", "snapshot", InstanceStatus.RUNNING, myStatusTask,VMWareImageStartType.ON_DEMAND_CLONE, 1).getStartType());
   }
 

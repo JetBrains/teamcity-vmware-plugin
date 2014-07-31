@@ -3,11 +3,10 @@ package jetbrains.buildServer.clouds.vmware;
 import com.intellij.openapi.diagnostic.Logger;
 import java.util.Map;
 import jetbrains.buildServer.clouds.CloudErrorInfo;
-import jetbrains.buildServer.clouds.CloudInstance;
 import jetbrains.buildServer.clouds.InstanceStatus;
 import jetbrains.buildServer.clouds.base.AbstractCloudInstance;
 import jetbrains.buildServer.clouds.vmware.connector.VmwareInstance;
-import jetbrains.buildServer.clouds.vmware.errors.VmwareCloudErrorInfo;
+import jetbrains.buildServer.clouds.vmware.errors.VmwareCloudErrorInfo2;
 import jetbrains.buildServer.clouds.vmware.errors.VMWareCloudErrorType;
 import jetbrains.buildServer.serverSide.AgentDescription;
 import org.jetbrains.annotations.NotNull;
@@ -22,25 +21,25 @@ import static jetbrains.buildServer.clouds.vmware.VMWarePropertiesNames.INSTANCE
  *         Date: 4/15/2014
  *         Time: 3:57 PM
  */
-public class VmwareCloudInstance extends AbstractCloudInstance implements VmInfo {
+public class VmwareCloudInstance2 extends AbstractCloudInstance implements VmInfo {
 
-  private static final Logger LOG = Logger.getInstance(VmwareCloudInstance.class.getName());
+  private static final Logger LOG = Logger.getInstance(VmwareCloudInstance2.class.getName());
 
   private final String myInstanceName;
-  private final VmwareCloudImage myImage;
+  private final VmwareCloudImage2 myImage;
   private InstanceStatus myStatus = InstanceStatus.UNKNOWN;
-  private final VmwareCloudErrorInfo myErrorInfo;
+  private final VmwareCloudErrorInfo2 myErrorInfo;
   private Date myStartDate;
   private String myIpAddress;
   private String mySnapshotName;
 
-  public VmwareCloudInstance(@NotNull final VmwareCloudImage image, @NotNull final String instanceName, @Nullable final String snapshotName) {
+  public VmwareCloudInstance2(@NotNull final VmwareCloudImage2 image, @NotNull final String instanceName, @Nullable final String snapshotName) {
     super(image);
     myImage = image;
     myInstanceName = instanceName;
     mySnapshotName = snapshotName;
     myStartDate = new Date();
-    myErrorInfo = new VmwareCloudErrorInfo(this);
+    myErrorInfo = new VmwareCloudErrorInfo2(this);
   }
 
   @NotNull
@@ -59,7 +58,7 @@ public class VmwareCloudInstance extends AbstractCloudInstance implements VmInfo
   }
 
   @NotNull
-  public VmwareCloudImage getImage() {
+  public VmwareCloudImage2 getImage() {
     return myImage;
   }
 

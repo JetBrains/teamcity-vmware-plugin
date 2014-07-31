@@ -11,13 +11,13 @@ import org.jetbrains.annotations.Nullable;
  *         Date: 7/4/2014
  *         Time: 3:31 PM
  */
-public class VmwareCloudErrorInfo {
+public class VmwareCloudErrorInfo2 {
 
   private final Map<VMWareCloudErrorType, String> myErrorTypeSet;
   private CloudErrorInfo myErrorInfo = null;
   private final VmInfo myVmInfo;
 
-  public VmwareCloudErrorInfo(@NotNull final VmInfo vmInfo) {
+  public VmwareCloudErrorInfo2(@NotNull final VmInfo vmInfo) {
     this.myVmInfo = vmInfo;
     myErrorTypeSet = new HashMap<VMWareCloudErrorType, String>();
   }

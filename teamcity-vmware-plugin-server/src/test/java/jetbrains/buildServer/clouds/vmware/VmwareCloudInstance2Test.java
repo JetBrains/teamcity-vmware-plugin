@@ -11,7 +11,7 @@ import org.testng.annotations.Test;
  *         Time: 4:25 PM
  */
 @Test
-public class VmwareCloudInstanceTest extends BaseTestCase {
+public class VmwareCloudInstance2Test extends BaseTestCase {
 
   @BeforeMethod
   public void setUp() throws Exception {
