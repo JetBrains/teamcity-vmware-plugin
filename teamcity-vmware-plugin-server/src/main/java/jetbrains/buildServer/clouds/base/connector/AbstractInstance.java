@@ -2,6 +2,7 @@ package jetbrains.buildServer.clouds.base.connector;
 
 import java.util.Date;
 import java.util.Map;
+import jetbrains.buildServer.clouds.InstanceStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -10,38 +11,27 @@ import org.jetbrains.annotations.Nullable;
  *         Date: 7/25/2014
  *         Time: 5:17 PM
  */
-public class AbstractInstance {
+public abstract class AbstractInstance {
   private final String myName;
-  private Date myStartDate;
-  private String myIpAddress;
-
-  @Nullable
-  private final Map<String, String> myProperties;
 
 
-  public AbstractInstance(@NotNull final String name, @Nullable final Map<String, String> properties) {
+  public AbstractInstance(@NotNull final String name) {
     myName = name;
-    myProperties = properties;
   }
 
   public String getName() {
     return myName;
   }
 
-  public Date getStartDate() {
-    return myStartDate;
-  }
 
-  public String getIpAddress() {
-    return myIpAddress;
-  }
+  public abstract boolean isInitialized();
 
-  public boolean isInitialized(){
-    return myProperties != null;
-  }
+  public abstract Date getStartDate();
+
+  public abstract String getIpAddress();
+
+  public abstract InstanceStatus getInstanceStatus();
 
   @Nullable
-  public Map<String, String> getProperties() {
-    return myProperties;
-  }
+  public abstract String getProperty(String name);
 }

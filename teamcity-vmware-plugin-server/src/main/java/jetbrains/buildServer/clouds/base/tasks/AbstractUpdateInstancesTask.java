@@ -10,6 +10,7 @@ import jetbrains.buildServer.clouds.InstanceStatus;
 import jetbrains.buildServer.clouds.base.AbstractCloudClient;
 import jetbrains.buildServer.clouds.base.AbstractCloudImage;
 import jetbrains.buildServer.clouds.base.AbstractCloudInstance;
+import jetbrains.buildServer.clouds.base.connector.AbstractInstance;
 import jetbrains.buildServer.clouds.base.connector.CloudApiConnector;
 import jetbrains.buildServer.clouds.base.errors.TypedCloudErrorInfo;
 import org.jetbrains.annotations.NotNull;
@@ -35,8 +36,8 @@ public abstract class AbstractUpdateInstancesTask implements Runnable {
     for (final AbstractCloudImage image : images) {
       final String imageName = image.getName();
       image.updateErrors(myConnector.checkImage(imageName));
-      final Collection<String> realInstanceNames = myConnector.listImageInstances(imageName);
-      for (String realInstanceName : realInstanceNames) {
+      final Map<String, AbstractInstance> realInstances = myConnector.listImageInstances(imageName);
+      for (String realInstanceName : realInstances.keySet()) {
         if (image.findInstanceById(realInstanceName) == null){
            image.createInstance(realInstanceName);
         }
@@ -54,7 +55,7 @@ public abstract class AbstractUpdateInstancesTask implements Runnable {
 
       for (final AbstractCloudInstance cloudInstance : image.getInstances()) {
         final String instanceName = cloudInstance.getName();
-        if (!realInstanceNames.contains(instanceName)){
+        if (!realInstances.containsKey(instanceName)){
           image.removeInstance(instanceName);
         }
         cloudInstance.updateErrors(myConnector.checkInstance(instanceName));

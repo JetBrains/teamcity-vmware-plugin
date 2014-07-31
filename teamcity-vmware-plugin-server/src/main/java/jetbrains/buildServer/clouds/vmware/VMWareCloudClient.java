@@ -2,18 +2,19 @@ package jetbrains.buildServer.clouds.vmware;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
-import com.vmware.vim25.mo.VirtualMachine;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.rmi.RemoteException;
 import java.util.*;
 import java.util.concurrent.*;
 import jetbrains.buildServer.clouds.*;
+import jetbrains.buildServer.clouds.base.AbstractCloudClient;
+import jetbrains.buildServer.clouds.base.connector.CloudAsyncTaskExecutor;
 import jetbrains.buildServer.clouds.vmware.connector.VMWareApiConnector;
 import jetbrains.buildServer.clouds.vmware.connector.VMWareApiConnectorImpl;
+import jetbrains.buildServer.clouds.vmware.connector.VmwareInstance;
 import jetbrains.buildServer.clouds.vmware.errors.VMWareCloudErrorInfoFactory;
 import jetbrains.buildServer.clouds.vmware.errors.VMWareCloudErrorType;
-import jetbrains.buildServer.clouds.vmware.tasks.TaskStatusUpdater;
 import jetbrains.buildServer.clouds.vmware.tasks.VmwareUpdateInstancesTask;
 import jetbrains.buildServer.clouds.vmware.web.VMWareWebConstants;
 import jetbrains.buildServer.serverSide.AgentDescription;
@@ -27,7 +28,7 @@ import org.jetbrains.annotations.Nullable;
  *         Date: 4/15/2014
  *         Time: 3:23 PM
  */
-public class VMWareCloudClient implements CloudClientEx {
+public class VMWareCloudClient extends AbstractCloudClient{
 
   private static final Logger LOG = Logger.getInstance(VMWareCloudClient.class.getName());
 
@@ -36,11 +37,11 @@ public class VMWareCloudClient implements CloudClientEx {
 
   private final VMWareApiConnector myApiConnector;
 
-  private final Map<String, VMWareCloudImage> myImageMap = new HashMap<String, VMWareCloudImage>();
+  private final Map<String, VmwareCloudImage> myImageMap = new HashMap<String, VmwareCloudImage>();
   private ScheduledExecutorService myScheduledExecutor;
   private List<ScheduledFuture<?>> myFutures = new ArrayList<ScheduledFuture<?>>();
-  private TaskStatusUpdater myStatusTask;
   private CloudErrorInfo myErrorInfo;
+
 
   public VMWareCloudClient(@NotNull final CloudClientParameters cloudClientParameters) throws MalformedURLException, RemoteException {
     this(cloudClientParameters, new VMWareApiConnectorImpl(
@@ -53,7 +54,6 @@ public class VMWareCloudClient implements CloudClientEx {
 
   VMWareCloudClient(@NotNull final CloudClientParameters cloudClientParameters, @NotNull final VMWareApiConnector apiConnector) throws MalformedURLException, RemoteException {
     myApiConnector = apiConnector;
-    myStatusTask = new TaskStatusUpdater();
 
     final String imagesListData = cloudClientParameters.getParameter(VMWareWebConstants.IMAGES_DATA);
     if (imagesListData == null) {
@@ -73,23 +73,23 @@ public class VMWareCloudClient implements CloudClientEx {
         String behaviourStr = split[4];
         String maxInstancesStr = split[5];
 
-        final VirtualMachine vm = myApiConnector.getInstanceDetails(vmName);
+        final VmwareInstance instance = myApiConnector.getInstanceDetails(vmName);
 
-        if (vm == null) {
+        if (instance == null) {
           errorList.add(VMWareCloudErrorInfoFactory.noSuchVM(vmName).getMessage());
           break;
         }
 
         final VMWareImageStartType startType = VMWareImageStartType.valueOf(behaviourStr);
-        final VMWareImageType imageType = vm.getConfig().isTemplate() ? VMWareImageType.TEMPLATE : VMWareImageType.INSTANCE;
+        final VMWareImageType imageType = instance.isReadonly() ? VMWareImageType.TEMPLATE : VMWareImageType.INSTANCE;
         if (startType.isUseOriginal()) {
           if (imageType == VMWareImageType.TEMPLATE){
             errorList.add(VMWareCloudErrorInfoFactory.error("Cannot use image % as Start/Stop - it's readonly", vmName).getMessage());
             break;
           }
-          final VMWareCloudImage cloudImage = new VMWareCloudImage(
+          final VmwareCloudImage cloudImage = new VmwareCloudImage(
             myApiConnector, vmName, imageType, cloneFolder, resourcePool, snapshotName,
-            myApiConnector.getInstanceStatus(vm), myStatusTask, startType, 0);
+            instance.getInstanceStatus(), myAsyncTaskExecutor, startType, 0);
           myImageMap.put(vmName, cloudImage);
         } else {
           int maxInstances = 0;
@@ -110,9 +110,9 @@ public class VMWareCloudClient implements CloudClientEx {
 
 
 
-          final VMWareCloudImage cloudImage = new VMWareCloudImage(
+          final VmwareCloudImage cloudImage = new VmwareCloudImage(
             myApiConnector, vmName, imageType, cloneFolder, resourcePool, snapshotName,
-            myApiConnector.getInstanceStatus(vm), myStatusTask, startType, maxInstances);
+            null, myAsyncTaskExecutor, startType, maxInstances);
           myImageMap.put(vmName, cloudImage);
         }
       }
@@ -125,7 +125,7 @@ public class VMWareCloudClient implements CloudClientEx {
           new VmwareUpdateInstancesTask(myApiConnector, this), 0,
           TeamCityProperties.getLong("teamcity.vsphere.instance.status.update.delay.ms", UPDATE_INSTANCES_TASK_DELAY), TimeUnit.MILLISECONDS
         ));
-        myFutures.add(myScheduledExecutor.scheduleWithFixedDelay(myStatusTask, 0, TASK_STATUS_UPDATER_DELAY, TimeUnit.MILLISECONDS));
+        myAsyncTaskExecutor.start("VSphere");
       } else {
         myErrorInfo = new CloudErrorInfo(Arrays.toString(errorList.toArray()));
       }
@@ -134,15 +134,15 @@ public class VMWareCloudClient implements CloudClientEx {
 
 
   @NotNull
-  public VMWareCloudInstance startNewInstance(@NotNull final CloudImage cloudImage, @NotNull final CloudInstanceUserData cloudInstanceUserData) throws QuotaException {
+  public VmwareCloudInstance startNewInstance(@NotNull final CloudImage cloudImage, @NotNull final CloudInstanceUserData cloudInstanceUserData) throws QuotaException {
     LOG.info("Attempting to start new Instance for image " + cloudImage.getName());
-    final VMWareCloudImage vCloudImage = (VMWareCloudImage)cloudImage;
+    final VmwareCloudImage vCloudImage = (VmwareCloudImage)cloudImage;
     return vCloudImage.startInstance(cloudInstanceUserData);
   }
 
   public void restartInstance(@NotNull CloudInstance cloudInstance) {
     try {
-      myApiConnector.restartInstance((VMWareCloudInstance)cloudInstance);
+      myApiConnector.restartInstance((VmwareCloudInstance)cloudInstance);
     } catch (RemoteException e) {
       e.printStackTrace();
     }
@@ -151,7 +151,7 @@ public class VMWareCloudClient implements CloudClientEx {
   public void terminateInstance(@NotNull final CloudInstance cloudInstance) {
     myScheduledExecutor.submit(new Runnable() {
       public void run() {
-        final VMWareCloudInstance vInstance = (VMWareCloudInstance)cloudInstance;
+        final VmwareCloudInstance vInstance = (VmwareCloudInstance)cloudInstance;
         try {
           vInstance.getImage().stopInstance(vInstance);
         } catch (Exception e) {
@@ -197,7 +197,7 @@ public class VMWareCloudClient implements CloudClientEx {
   }
 
   @NotNull
-  public Collection<VMWareCloudImage> getImages() throws CloudException {
+  public Collection<VmwareCloudImage> getImages() throws CloudException {
     return Collections.unmodifiableCollection(myImageMap.values());
   }
 
@@ -208,7 +208,7 @@ public class VMWareCloudClient implements CloudClientEx {
 
   public boolean canStartNewInstance(@NotNull CloudImage cloudImage) {
     try {
-      VMWareCloudImage vCloudImage = (VMWareCloudImage)cloudImage;
+      VmwareCloudImage vCloudImage = (VmwareCloudImage)cloudImage;
       return vCloudImage.canStartNewInstance();
     } catch (RemoteException e) {
       if (myErrorInfo == null) {

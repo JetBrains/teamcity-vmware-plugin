@@ -2,6 +2,7 @@ package jetbrains.buildServer.clouds.base;
 
 import java.util.*;
 import jetbrains.buildServer.clouds.*;
+import jetbrains.buildServer.clouds.base.connector.CloudAsyncTaskExecutor;
 import jetbrains.buildServer.clouds.base.errors.CloudErrorMap;
 import jetbrains.buildServer.clouds.base.errors.TypedCloudErrorInfo;
 import jetbrains.buildServer.clouds.base.errors.UpdatableCloudErrorProvider;
@@ -18,10 +19,12 @@ public abstract class AbstractCloudClient implements CloudClientEx, UpdatableClo
   protected final CloudErrorMap myErrorHolder;
   protected Map<String, AbstractCloudImage> myImageMap;
   protected UpdatableCloudErrorProvider myErrorProvider;
+  protected final CloudAsyncTaskExecutor myAsyncTaskExecutor;
 
 
   public AbstractCloudClient() {
     myErrorHolder = new CloudErrorMap();
+    myAsyncTaskExecutor = new CloudAsyncTaskExecutor();
   }
 
   public AbstractCloudClient(@NotNull final Collection<? extends AbstractCloudImage> images) {

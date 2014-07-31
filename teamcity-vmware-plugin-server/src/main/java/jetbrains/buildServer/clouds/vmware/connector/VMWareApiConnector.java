@@ -7,11 +7,10 @@ import com.vmware.vim25.mo.Task;
 import com.vmware.vim25.mo.VirtualMachine;
 import java.rmi.RemoteException;
 import java.util.Map;
-import java.util.Set;
 import jetbrains.buildServer.clouds.CloudInstanceUserData;
 import jetbrains.buildServer.clouds.InstanceStatus;
 import jetbrains.buildServer.clouds.base.connector.CloudApiConnector;
-import jetbrains.buildServer.clouds.vmware.VMWareCloudInstance;
+import jetbrains.buildServer.clouds.vmware.VmwareCloudInstance;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,9 +28,9 @@ public interface VMWareApiConnector extends CloudApiConnector {
   String TEAMCITY_VMWARE_CLONED_INSTANCE = TEAMCITY_VMWARE_PREFIX + "cloned.instance";
 
   @NotNull
-  Map<String, VirtualMachine> getVirtualMachines(boolean filterClones) throws RemoteException;
+  Map<String, VmwareInstance> getVirtualMachines(boolean filterClones) throws RemoteException;
 
-  Map<String, VirtualMachine> getClones(@NotNull final String imageName) throws RemoteException;
+  Map<String, VmwareInstance> getClones(@NotNull final String imageName) throws RemoteException;
 
   Map<String, String> getVMParams(@NotNull final String vmName) throws RemoteException;
 
@@ -48,14 +47,14 @@ public interface VMWareApiConnector extends CloudApiConnector {
   String getLatestSnapshot(@NotNull final String vmName,@NotNull final String snapshotNameMask) throws RemoteException;
 
   @Nullable
-  Task startInstance(VMWareCloudInstance instance, String agentName, CloudInstanceUserData userData)
+  Task startInstance(VmwareCloudInstance instance, String agentName, CloudInstanceUserData userData)
     throws RemoteException, InterruptedException;
 
-  Task reconfigureInstance(@NotNull final VMWareCloudInstance instance,
+  Task reconfigureInstance(@NotNull final VmwareCloudInstance instance,
                            @NotNull final String agentName,
                            @NotNull final CloudInstanceUserData userData) throws RemoteException;
 
-  Task cloneVm(@NotNull final VMWareCloudInstance instance, @NotNull String resourcePool,@NotNull String folder) throws RemoteException;
+  Task cloneVm(@NotNull final VmwareCloudInstance instance, @NotNull String resourcePool,@NotNull String folder) throws RemoteException;
 
   boolean isStartedByTeamcity(String instanceName) throws RemoteException;
 
@@ -63,11 +62,9 @@ public interface VMWareApiConnector extends CloudApiConnector {
 
   boolean ensureSnapshotExists(String instanceName, String snapshotName) throws RemoteException;
 
-  void stopInstance(VMWareCloudInstance instance);
+  void stopInstance(VmwareCloudInstance instance);
 
-  Task deleteVirtualMachine(VirtualMachine vm) throws RemoteException, InterruptedException;
-
-  void restartInstance(VMWareCloudInstance instance) throws RemoteException;
+  void restartInstance(VmwareCloudInstance instance) throws RemoteException;
 
   boolean checkCloneFolderExists(@NotNull String cloneFolderName);
 
@@ -76,7 +73,7 @@ public interface VMWareApiConnector extends CloudApiConnector {
   boolean checkVirtualMachineExists(@NotNull String vmName);
 
   @Nullable
-  VirtualMachine getInstanceDetails(String instanceName) throws RemoteException;
+  VmwareInstance getInstanceDetails(String instanceName) throws RemoteException;
 
   @Nullable
   String getImageName(@NotNull final VirtualMachine vm);

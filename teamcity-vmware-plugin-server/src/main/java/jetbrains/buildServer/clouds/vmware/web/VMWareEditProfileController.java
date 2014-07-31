@@ -12,6 +12,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import jetbrains.buildServer.clouds.vmware.connector.VMWareApiConnector;
 import jetbrains.buildServer.clouds.vmware.connector.VMWareApiConnectorImpl;
+import jetbrains.buildServer.clouds.vmware.connector.VmwareInstance;
 import jetbrains.buildServer.controllers.ActionErrors;
 import jetbrains.buildServer.controllers.BaseFormXmlController;
 import jetbrains.buildServer.controllers.BasePropertiesBean;
@@ -80,18 +81,18 @@ public class VMWareEditProfileController extends BaseFormXmlController {
     }
   }
 
-  private Element getVirtualMachinesAsElement(@NotNull final Map<String, VirtualMachine> vmMap){
+  private Element getVirtualMachinesAsElement(@NotNull final Map<String, VmwareInstance> vmMap){
     Element element = new Element("VirtualMachines");
-    final List<VirtualMachine> values = new ArrayList<VirtualMachine>(vmMap.values());
-    Collections.sort(values, new Comparator<VirtualMachine>() {
-      public int compare(@NotNull final VirtualMachine o1, @NotNull final VirtualMachine o2) {
+    final List<VmwareInstance> values = new ArrayList<VmwareInstance>(vmMap.values());
+    Collections.sort(values, new Comparator<VmwareInstance>() {
+      public int compare(@NotNull final VmwareInstance o1, @NotNull final VmwareInstance o2) {
         return StringUtil.compare(o1.getName(), o2.getName());
       }
     });
-    for (VirtualMachine vm : values) {
+    for (VmwareInstance vm : values) {
       Element vmElement = new Element("VirtualMachine");
       vmElement.setAttribute("name", vm.getName());
-      vmElement.setAttribute("template", String.valueOf(vm.getConfig().isTemplate()));
+      vmElement.setAttribute("template", String.valueOf(vm.isReadonly()));
       element.addContent(vmElement);
     }
     return element;

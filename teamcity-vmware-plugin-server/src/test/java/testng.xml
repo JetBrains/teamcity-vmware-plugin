@@ -2,8 +2,8 @@
   <test name="VMware plugin server tests">
     <classes>
       <class name="jetbrains.buildServer.clouds.vmware.VMWareCloudClientTest"/>
-      <class name="jetbrains.buildServer.clouds.vmware.VMWareCloudInstanceTest"/>
-      <class name="jetbrains.buildServer.clouds.vmware.VMWareCloudImageTest"/>
+      <class name="jetbrains.buildServer.clouds.vmware.VmwareCloudInstanceTest"/>
+      <class name="jetbrains.buildServer.clouds.vmware.VmwareCloudImageTest"/>
     </classes>
   </test>
 </suite>
