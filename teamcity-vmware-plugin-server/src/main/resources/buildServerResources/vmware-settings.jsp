@@ -40,7 +40,8 @@
             cloneBehaviourRadio: ".cloneBehaviourRadio",
             cloneOptionsRow: '.cloneOptionsRow',
             rmImageLink: '.removeVmImageLink',
-            editImageLink: '.editVmImageLink'
+            editImageLink: '.editVmImageLink',
+            imagesTableRow: '.imagesTableRow'
         },
         init: function () {
             this.$fetchOptionsButton = $j('#vmwareFetchOptionsButton');
@@ -66,33 +67,46 @@
             this.selectors.activeCloneBehaviour = this.selectors.cloneBehaviourRadio + ':checked';
 
             this._lastImageId = this._imagesDataLength = 0;
+            this._toggleDialogShowButton();
             this._initImagesData();
             this._initTemplates();
             this._bindHandlers();
-            this.refreshOptions();
+            this.fetchOptions();
             this.renderImagesTable();
         },
-        refreshOptions: function () {
+        _fetchOptionsInProgress: function () {
+            return this.fetchOptionsDeferred ?
+                this.fetchOptionsDeferred.state() === 'pending' :
+                false;
+        },
+        fetchOptions: function () {
             var $loader = $j(BS.loadingIcon).clone();
 
-            if ( !this.validateServerSettings()) {
+            if ( this._fetchOptionsInProgress() || !this.validateServerSettings()) {
                 return false;
             }
 
-            this.$fetchOptionsButton.attr('disabled', true);
+            this.fetchOptionsDeferred = $j.Deferred()
+                .fail(function (errorText) {
+                    this.addError("Unable to fetch options: " + errorText);
+                    BS.VMWareImageDialog.close();
+                }.bind(this));
+
+            this._toggleFetchOptionsButton();
+            this._toggleDialogSubmitButton();
+            this._toggleLoadingMessage('fetchOptions', true);
             $loader.insertAfter(this.$fetchOptionsButton);
-            this.loaders.fetchOptions.removeClass('message_hidden');
-            this.$dialogSubmitButton.prop('disabled', true);
 
             BS.ajaxRequest(this.refreshOptionsUrl, {
                 parameters: BS.Clouds.Admin.CreateProfileForm.serializeParameters(),
                 onComplete: function () {
                     $loader.remove();
-                    this.$fetchOptionsButton.attr('disabled', false);
-                    this.loaders.fetchOptions.addClass('message_hidden');
+                    this._toggleFetchOptionsButton(true);
+                    this._toggleLoadingMessage('fetchOptions');
                 }.bind(this),
                 onFailure: function (response) {
-                    this.addError("Unable to fetch options: " + response.getStatusText());
+                    this.fetchOptionsDeferred.reject(response.getStatusText());
+
                 }.bind(this),
                 onSuccess: function (response) {
                     var $response = $j(response.responseXML),
@@ -102,11 +116,13 @@
                         $folders = $response.find('Folders:eq(0) Folder');
 
                     if ($errors.length) {
-                        this.addError("Unable to fetch options: " + $errors.text());
+                        this.fetchOptionsDeferred.reject($errors.text());
                     } else if ($vms.length) {
                         this.optionsFetched = true;
                         this.fillOptions($vms, $pools, $folders);
-                        this.$dialogSubmitButton.prop('disabled', false);
+                        this._toggleDialogSubmitButton(true);
+                        this._toggleDialogShowButton(true);
+                        this.fetchOptionsDeferred.resolve();
                     }
                 }.bind(this)
             });
@@ -127,6 +143,9 @@
                 ._displayPoolsSelect($pools)
                 ._displayFoldersSelect($folders);
         },
+        /**
+         * Validates server URL and displays error if URL seems to be incorrect
+         */
         validateServerSettings: function () {
             var url = $j("#${cons.serverUrl}").val(),
                 isValid = (/^https:\/\/.*\/sdk$/).test(url);
@@ -145,33 +164,40 @@
                 isValid = true;
 
             // checking properties
-            this.clearErrors($j("#error_image").add("#error_max_instances"));
+            this.clearOptionsErrors(['image', 'instances']);
 
             if ( ! this.$image.val()) {
-                this.addError("Please select a VM", $j("#error_image"));
+                this.addOptionError("Please select a VM", "image");
                 isValid = false;
             }
 
             if (maxInstances != '' && ! $j.isNumeric(maxInstances)) {
-                this.addError("Must be number", $j("#error_max_instances"));
+                this.addOptionError("Must be number", "instances");
                 isValid = false;
+            }
+
+            if (this._isClone()) {
+                if (!this.$cloneFolder.val()) {
+                    this.addOptionError("Please select folder", "folder");
+                    isValid = false;
+                }
+                if (!this.$resourcePool.val()) {
+                    this.addOptionError("Please select pool", "pool");
+                    isValid = false;
+                }
             }
 
             return isValid;
         },
         addImage: function () {
-            var newImage,
-                newImageId;
-
-            if (this.validateOptions()) {
-                newImageId = this._lastImageId++;
+            var newImageId = this._lastImageId++,
                 newImage = this._collectImageData();
-                this._renderImageRow(newImage, newImageId);
-                this.imagesData[newImageId] = newImage;
-                this._imagesDataLength += 1;
-                this.saveImagesData();
-                this._toggleImagesTable();
-            }
+
+            this._renderImageRow(newImage, newImageId);
+            this.imagesData[newImageId] = newImage;
+            this._imagesDataLength += 1;
+            this.saveImagesData();
+            this._toggleImagesTable();
 
             return false; // to prevent link with href='#' to scroll to the top of the page
         },
@@ -191,52 +217,40 @@
         removeImage: function ($elem) {
             delete this.imagesData[$elem.data('imageId')];
             this._imagesDataLength -= 1;
-            $elem.parents('.imagesTableRow').remove();
+            $elem.parents(this.selectors.imagesTableRow).remove();
             this.saveImagesData();
             this._toggleImagesTable();
         },
         editImage: function (id) {
             this.imagesData[id] = this._collectImageData();
             this.saveImagesData();
-            this.$imagesTable.children().remove();
+            this.$imagesTable.find(this.selectors.imagesTableRow).remove();
             this.renderImagesTable();
         },
         showEditDialog: function ($elem) {
-            var imageId = $elem.data('imageId'),
-                image = this.imagesData[imageId],
-                $_image;
+            var imageId = $elem.data('imageId');
 
-            if (! this.optionsFetched) {
-                // fetch options
-            } else {
+            this.showDialog('edit', imageId);
+
+            this.fetchOptionsDeferred.then(function () {
+                var image = this.imagesData[imageId];
+
                 this.$options.find(this.selectors.cloneBehaviourRadio).trigger('change', image.cloneBehaviour);
-                $_image = this.$image.find('option[value="' + image.vmName + '"]');
+                this.$cloneFolder.trigger('change', image.cloneFolder);
+                this.$resourcePool.trigger('change', image.resourcePool);
+                this.$maxInstances.trigger('change', image.maxInstances);
 
-                if (! $_image.length) {
-                    alert('could not find image')
-                } else {
-                    this.$image.trigger('change', {
-                        value: image.vmName,
-                        callback: function () {
-                            var snapshotName = image.snapshotName === '[Latest Version]' ? '' : image.snapshotName,
-                                $_snapshot = this.$snapshot.find('option[value="' + snapshotName + '"]');
-                            if (! $_snapshot.length) {
-                                alert('could not find snapshot')
-                            } else {
-                                this.$snapshot.val(snapshotName);
-                                this.$cloneFolder.trigger('change', image.cloneFolder);
-                                this.$resourcePool.trigger('change', image.resourcePool);
-                                this.$maxInstances.val(image.maxInstances);
+                this.$image.trigger('change', image.vmName);
+                this.fetchSnapshotsDeferred
+                    .then(function () {
+                        this.$snapshot.trigger('change', image.snapshotName === '[Latest Version]' ? '' : image.snapshotName);
+                    }.bind(this));
+            }.bind(this));
 
-                                this.showDialog('edit', imageId);
-                            }
-                        }
-                    });
-                }
-            }
         },
         showDialog: function (action, imageId) {
             action = action ? 'Edit' : 'Add';
+            this.clearOptionsErrors();
             $j('#VMWareImageDialogTitle').text(action + ' Image');
 
             this.$dialogSubmitButton.val(action).data('imageId', imageId);
@@ -256,29 +270,41 @@
 
             this.$imagesDataElem.val(data);
         },
+        _fetchSnapshotsInProgress: function () {
+            return this.fetchSnapshotsDeferred ?
+            this.fetchSnapshotsDeferred.state() === 'pending' :
+                    false;
+        },
         /**
-        * fetches snapshot list for selected image
-        * @param {function} callback
+         * fetches snapshot list for selected image
          */
-        fetchSnapshots: function (callback) {
+        fetchSnapshots: function () {
+            if (this._fetchSnapshotsInProgress()) {
+                return false;
+            }
+            this.fetchSnapshotsDeferred = $j.Deferred();
             $j('#realImageInput').val(this.$image.val());
-            this.loaders.fetchSnapshots.removeClass('message_hidden');
+            this._toggleLoadingMessage('fetchSnapshots', true);
+            if (this._isClone()) {
+                this._toggleDialogSubmitButton();
+            }
             BS.ajaxRequest(this.refreshSnapshotsUrl, {
                 parameters: BS.Clouds.Admin.CreateProfileForm.serializeParameters(),
                 onFailure: function (response) {
                     console.error('something went wrong', response);
+                    this.fetchSnapshotsDeferred.reject();
                 },
                 onSuccess: function (response) {
                     var $response = $j(response.responseXML);
 
+                    this._toggleDialogSubmitButton(true);
+
                     if ($response.length) {
                         this._displaySnapshotSelect($response.find('Snapshots:eq(0) Snapshot'));
                     }
-                    this.loaders.fetchSnapshots.addClass('message_hidden');
+                    this._toggleLoadingMessage('fetchSnapshots');
 
-                    if (_.isFunction(callback)) {
-                        callback.call(this);
-                    }
+                    this.fetchSnapshotsDeferred.resolve();
                 }.bind(this)
             });
         },
@@ -289,14 +315,25 @@
             (target || this.$fetchOptionsError)
                     .append($j("<div>").html(errorHTML));
         },
+        addOptionError: function (errorHTML, optionName) {
+          this.addError(errorHTML, $j('.option-error_' + optionName));
+        },
+        /**
+         * @param {string[]} [options]
+         */
+        clearOptionsErrors: function (options) {
+          options || [ 'image', 'snapshot', 'folder', 'pool', 'instances'].forEach(function (optionName) {
+              this.clearErrors($j('.option-error_' + optionName));
+          }.bind(this));
+        },
         _initImagesData: function () {
             var self = this,
-                    rawImagesData = this.$imagesDataElem.val() || '',
-                    imagesData = rawImagesData && rawImagesData.split(';X;:') || [];
+                rawImagesData = this.$imagesDataElem.val() || '',
+                imagesData = rawImagesData && rawImagesData.split(';X;:') || [];
 
             this.imagesData = imagesData.reduce(function (accumulator, imageDataStr) {
                 var props = imageDataStr.split(';'),
-                        id;
+                    id;
 
                 // drop images without vmName
                 if (props[0].length) {
@@ -313,62 +350,23 @@
         _bindHandlers: function () {
             var self = this;
 
+            //// Click Handlers
             this.$fetchOptionsButton.on('click', this._fetchOptionsClickHandler.bind(this));
-            this.$dialogSubmitButton.on('click', function () {
-                if (this.$dialogSubmitButton.val().toLowerCase() === 'edit') {
-                    this.editImage(this.$dialogSubmitButton.data('imageId'));
-                } else {
-                    this.addImage();
-                }
-
-                BS.VMWareImageDialog.close();
-                return false;
-            }.bind(this));
-            this.$cancelButton.on('click', function () {
-                BS.VMWareImageDialog.close();
-                return false;
-            });
             this.$showDialogButton.on('click', function () {
                 if (! this.$showDialogButton.attr('disabled')) {
                     this.showDialog();
                 }
                 return false;
             }.bind(this));
-
-            this.$options.on('change', this.selectors.imagesSelect, function(e, data) {
-                var callback;
-
-                if (data) {
-                    if (data.value) {
-                        this.$image.val(data.value);
-                    }
-                    callback = data.callback;
-                }
-                this.fetchSnapshots(callback);
-            }.bind(this));
-            $j(this.selectors.cloneBehaviourRadio).on('change', function (e, val) {
-                var $elementsToToggle = $j(this.selectors.cloneOptionsRow),
-                    isClone;
-
-                if (typeof val !== 'undefined') {
-                    $j(this.selectors.cloneBehaviourRadio + '[value="' + val + '"]').prop('checked', true);
-                } else {
-                    val = $j(this.selectors.activeCloneBehaviour).val()
-                }
-                isClone = val !== 'START';
-
-                $elementsToToggle.toggle(isClone);
-            }.bind(this));
-            this.$cloneFolder.add(this.$resourcePool).on('change', function (e, val) {
-               if (typeof val !== 'undefined') {
-                   $j(this).val(val);
-               }
+            this.$dialogSubmitButton.on('click', this._submitDialogClickHandler.bind(this));
+            this.$cancelButton.on('click', function () {
+                BS.VMWareImageDialog.close();
+                return false;
             });
-            this.$image.add(this.$snapshot).on('change', this.validateOptions.bind(this));
             this.$imagesTable.on('click', this.selectors.rmImageLink, function () {
                 var $this = $j(this),
-                    id = $this.data('imageId'),
-                    name = BS.Clouds.VMWareVSphere.imagesData[id].vmName;
+                        id = $this.data('imageId'),
+                        name = BS.Clouds.VMWareVSphere.imagesData[id].vmName;
 
                 if (confirm('Are you sure you want to remove the image "' + name + '"?')) {
                     self.removeImage($this);
@@ -380,13 +378,68 @@
 
                 return false;
             });
+
+            //// Change Handlers
+            // - clone behaviour
+            $j(this.selectors.cloneBehaviourRadio).on('change', function (e, val) {
+                var $elementsToToggle = $j(this.selectors.cloneOptionsRow);
+
+                if (typeof val !== 'undefined') {
+                    $j(this.selectors.cloneBehaviourRadio + '[value="' + val + '"]').prop('checked', true);
+                }
+
+                $elementsToToggle.toggle(this._isClone());
+            }.bind(this));
+            // - image
+            this.$options.on('change', this.selectors.imagesSelect, function(e, value) {
+                this._validateSelectChange(this.$image, value);
+
+                this.fetchSnapshots();
+            }.bind(this));
+            // - snapshot
+            // - folder
+            // - pool
+            this.$snapshot.add(this.$cloneFolder).add(this.$resourcePool).on('change', function (e, val) {
+                this._validateSelectChange($j(e.target), val);
+            }.bind(this));
+
+            this.$image.add(this.$snapshot).on('change', this.validateOptions.bind(this));
+
+            // - instances
+            this.$maxInstances.on('change', function (e, val) {
+                $j(this).val(val);
+            });
+        },
+        _validateSelectChange: function ($elem, value) {
+            var errId = $elem.attr('data-err-id');
+
+            if (typeof value !== 'undefined') {
+                if (! $elem.find('option[value="' + value + '"]').length) {
+                    this.addOptionError("The " + errId + " '" + value + "' does not exist", errId);
+                } else {
+                    $elem.val(value);
+                }
+            }
         },
         _fetchOptionsClickHandler: function () {
             if (this.$fetchOptionsButton.attr('disabled') !== 'true') { // it may be undefined
-                this.refreshOptions();
+                this.fetchOptions();
             }
 
             return false; // to prevent link with href='#' to scroll to the top of the page
+        },
+        _submitDialogClickHandler: function() {
+            if (this.validateOptions()) {
+                if (this.$dialogSubmitButton.val().toLowerCase() === 'edit') {
+                    this.editImage(this.$dialogSubmitButton.data('imageId'));
+                } else {
+                    this.addImage();
+                }
+
+                BS.VMWareImageDialog.close();
+            }
+
+            return false;
         },
         _renderImageRow: function (rows, id) {
             var $row = $j(this.templates.imagesTableRow).clone();
@@ -423,6 +476,7 @@
             var self = this;
 
             this.$resourcePool.children().remove();
+            this._appendOption(this.$resourcePool, '', '--Please select pool--');
             $pools.each(function () {
                 self._appendOption(self.$resourcePool, $j(this).attr('name'));
             });
@@ -433,6 +487,7 @@
             var self = this;
 
             this.$cloneFolder.children().remove();
+            this._appendOption(this.$cloneFolder, '', '--Please select folder--');
             $folders.each(function () {
                 self._appendOption(self.$cloneFolder, $j(this).attr('name'));
             });
@@ -450,11 +505,26 @@
                 self._appendOption(self.$snapshot, $j(this).attr("name"));
             });
         },
+        _isClone: function () {
+            return $j(this.selectors.activeCloneBehaviour).val() !== 'START';
+        },
+        _toggleDialogSubmitButton: function (enable) {
+            this.$dialogSubmitButton.prop('disabled', !enable);
+        },
+        _toggleFetchOptionsButton: function (enable) {
+            this.$fetchOptionsButton.prop('disabled', !enable);
+        },
+        _toggleDialogShowButton: function (enable) {
+            this.$showDialogButton.attr('disabled', !enable);
+        },
+        _toggleLoadingMessage: function (loaderName, show) {
+            this.loaders[loaderName][show ? 'removeClass' : 'addClass']('message_hidden');
+        },
         _visibleValue: function (elem) {
             return elem.is(":visible") ? elem.val() : '';
         },
-        _appendOption: function ($target, value) {
-            $target.append($j('<option>').attr('value', value).text(value));
+        _appendOption: function ($target, value, text) {
+            $target.append($j('<option>').attr('value', value).text(text || value));
         },
         _initTemplates: function() {
             // Prototype.js ignores script type when parsing scripts (for refresable),
@@ -471,7 +541,7 @@
 <td><a href="#" class="removeVmImageLink">delete</a></td>\
 <td><a href="#" class="editVmImageLink">edit</a></td>\
             </tr>'),
-                imagesSelect: $j('<select name="prop:_image" id="image">\
+                imagesSelect: $j('<select name="prop:_image" id="image" data-err-id="image">\
     <option value="">--Please select a VM--</option>\
     <optgroup label="Virtual machines" class="vmGroup"></optgroup>\
     <optgroup label="Templates" class="templatesGroup"></optgroup>\
@@ -585,16 +655,17 @@
                 <th><label for="image">Agent image:</label></th>
                 <td>
                     <div>
-                        <select name="_image" id="image"></select>
+                        <select name="_image" id="image" data-err-id="image"></select>
                     </div>
-                    <span id="error_image" class="error"></span>
+                    <span class="error option-error option-error_image"></span>
                 </td>
             </tr>
 
             <tr class="hidden cloneOptionsRow"  id="tr_snapshot_name">
                 <th><label for="snapshot">Snapshot name:</label></th>
                 <td>
-                    <select id="snapshot"> </select>
+                    <select id="snapshot" data-err-id="snapshot"></select>
+                    <span class="error option-error option-error_snapshot"></span>
                 </td>
             </tr>
 
@@ -604,7 +675,8 @@
                     <label for="cloneFolder">Folder for clones</label>
                 </th>
                 <td>
-                    <select id="cloneFolder"> </select>
+                    <select id="cloneFolder" data-err-id="folder"></select>
+                    <span class="error option-error option-error_folder"></span>
                 </td>
             </tr>
 
@@ -613,7 +685,8 @@
                     <label for="resourcePool">Resource pool</label>
                 </th>
                 <td>
-                    <select id="resourcePool"> </select>
+                    <select id="resourcePool" data-err-id="pool"> </select>
+                    <span class="error option-error option-error_pool"></span>
                 </td>
             </tr>
             <tr class="hidden cloneOptionsRow">
@@ -624,7 +697,7 @@
                     <div>
                         <input type="text" id="maxInstances" value="0"/>
                     </div>
-                    <span id="error_max_instances" class="error"></span>
+                    <span class="error option-error option-error_instances"></span>
                 </td>
             </tr>
         </table>
