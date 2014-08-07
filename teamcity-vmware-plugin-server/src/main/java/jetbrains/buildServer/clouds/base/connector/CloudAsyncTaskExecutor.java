@@ -1,8 +1,12 @@
 package jetbrains.buildServer.clouds.base.connector;
 
 import com.intellij.openapi.diagnostic.Logger;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.*;
 import jetbrains.buildServer.util.NamedThreadFactory;
+import jetbrains.buildServer.util.executors.ExecutorsFactory;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Sergey.Pak
@@ -15,14 +19,15 @@ public class CloudAsyncTaskExecutor {
 
   private ScheduledExecutorService myExecutor;
   private final ConcurrentMap<Future<CloudTaskResult>, TaskCallbackHandler> myExecutingTasks;
+  private final List<ScheduledFuture<?>> myScheduledFutures = new ArrayList<ScheduledFuture<?>>();
 
-  public CloudAsyncTaskExecutor() {
+  public CloudAsyncTaskExecutor(String prefix) {
     myExecutingTasks = new ConcurrentHashMap<Future<CloudTaskResult>, TaskCallbackHandler>();
+    myExecutor = ExecutorsFactory.newFixedScheduledDaemonExecutor(prefix, 2);
   }
 
-  public void start(String clientName){
-    myExecutor = Executors.newSingleThreadScheduledExecutor(new NamedThreadFactory(clientName));
-    myExecutor.scheduleWithFixedDelay(new Runnable() {
+  public void start(){
+    scheduleWithFixedDelay(new Runnable() {
       public void run() {
         checkTasks();
       }
@@ -36,6 +41,16 @@ public class CloudAsyncTaskExecutor {
   public void executeAsync(final AsyncCloudTask operation, final TaskCallbackHandler callbackHandler) {
     final Future<CloudTaskResult> future = operation.executeAsync();
     myExecutingTasks.put(future, callbackHandler);
+  }
+
+  public ScheduledFuture<?> scheduleWithFixedDelay(@NotNull final Runnable task, final long initialDelay, final long delay, final TimeUnit unit){
+    final ScheduledFuture<?> scheduledFuture = myExecutor.scheduleWithFixedDelay(task, initialDelay, delay, unit);
+    myScheduledFutures.add(scheduledFuture);
+    return scheduledFuture;
+  }
+
+  public Future<?> submit(Runnable r){
+    return myExecutor.submit(r);
   }
 
   private void checkTasks() {
@@ -59,10 +74,15 @@ public class CloudAsyncTaskExecutor {
   }
 
   public void dispose(){
+    for (ScheduledFuture<?> future : myScheduledFutures) {
+      future.cancel(true);
+    }
     myExecutor.shutdown();
     try {
       myExecutor.awaitTermination(30, TimeUnit.SECONDS);
-    } catch (InterruptedException e) {}
+    } catch (InterruptedException e) {
+
+    }
     myExecutingTasks.clear();
   }
 

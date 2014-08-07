@@ -22,16 +22,20 @@ public abstract class AbstractCloudClient implements CloudClientEx, UpdatableClo
   protected final CloudAsyncTaskExecutor myAsyncTaskExecutor;
 
 
-  public AbstractCloudClient() {
+  public AbstractCloudClient(@NotNull final String description) {
     myErrorHolder = new CloudErrorMap();
-    myAsyncTaskExecutor = new CloudAsyncTaskExecutor();
+    myAsyncTaskExecutor = new CloudAsyncTaskExecutor(description);
   }
 
-  public AbstractCloudClient(@NotNull final Collection<? extends AbstractCloudImage> images) {
-    this();
+  public AbstractCloudClient(@NotNull final String description, @NotNull final Collection<? extends AbstractCloudImage> images) {
+    this(description);
     for (AbstractCloudImage image : images) {
       myImageMap.put(image.getName(), image);
     }
+  }
+
+  public void dispose() {
+    myAsyncTaskExecutor.dispose();
   }
 
   @NotNull

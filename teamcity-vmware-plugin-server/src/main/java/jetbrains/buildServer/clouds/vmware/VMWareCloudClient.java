@@ -2,9 +2,11 @@ package jetbrains.buildServer.clouds.vmware;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
+import freemarker.template.SimpleDate;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.rmi.RemoteException;
+import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.*;
 import jetbrains.buildServer.clouds.*;
@@ -19,6 +21,7 @@ import jetbrains.buildServer.clouds.vmware.web.VMWareWebConstants;
 import jetbrains.buildServer.serverSide.AgentDescription;
 import jetbrains.buildServer.serverSide.TeamCityProperties;
 import jetbrains.buildServer.util.NamedThreadFactory;
+import jetbrains.buildServer.util.executors.ExecutorsFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -37,9 +40,9 @@ public class VMWareCloudClient extends AbstractCloudClient{
   private final VMWareApiConnector myApiConnector;
 
   private final Map<String, VmwareCloudImage> myImageMap = new HashMap<String, VmwareCloudImage>();
-  private ScheduledExecutorService myScheduledExecutor;
   private List<ScheduledFuture<?>> myFutures = new ArrayList<ScheduledFuture<?>>();
   private CloudErrorInfo myErrorInfo;
+  private boolean myIsInitialized = false;
 
 
   public VMWareCloudClient(@NotNull final CloudClientParameters cloudClientParameters) throws MalformedURLException, RemoteException {
@@ -52,6 +55,7 @@ public class VMWareCloudClient extends AbstractCloudClient{
   }
 
   VMWareCloudClient(@NotNull final CloudClientParameters cloudClientParameters, @NotNull final VMWareApiConnector apiConnector) throws MalformedURLException, RemoteException {
+    super(cloudClientParameters.getProfileDescription());
     myApiConnector = apiConnector;
 
     final String imagesListData = cloudClientParameters.getParameter(VMWareWebConstants.IMAGES_DATA);
@@ -119,12 +123,12 @@ public class VMWareCloudClient extends AbstractCloudClient{
     } finally {
 
       if (errorList.size() == 0) {
-        myScheduledExecutor = Executors.newScheduledThreadPool(2, new NamedThreadFactory("VSphere"));
-        myFutures.add(myScheduledExecutor.scheduleWithFixedDelay(
+        myAsyncTaskExecutor.start();
+        myFutures.add(myAsyncTaskExecutor.scheduleWithFixedDelay(
           new VmwareUpdateInstancesTask(myApiConnector, this), 0,
           TeamCityProperties.getLong("teamcity.vsphere.instance.status.update.delay.ms", UPDATE_INSTANCES_TASK_DELAY), TimeUnit.MILLISECONDS
         ));
-        myAsyncTaskExecutor.start("VSphere");
+        myIsInitialized = true;
       } else {
         myErrorInfo = new CloudErrorInfo(Arrays.toString(errorList.toArray()));
       }
@@ -148,7 +152,7 @@ public class VMWareCloudClient extends AbstractCloudClient{
   }
 
   public void terminateInstance(@NotNull final CloudInstance cloudInstance) {
-    myScheduledExecutor.submit(new Runnable() {
+    myAsyncTaskExecutor.submit(new Runnable() {
       public void run() {
         final VmwareCloudInstance vInstance = (VmwareCloudInstance)cloudInstance;
         try {
@@ -162,20 +166,11 @@ public class VMWareCloudClient extends AbstractCloudClient{
   }
 
   public void dispose() {
-    for (ScheduledFuture<?> future : myFutures) {
-      future.cancel(false);
-    }
-    if (myScheduledExecutor != null) {
-      myScheduledExecutor.shutdown();
-      try {
-        myScheduledExecutor.awaitTermination(2, TimeUnit.MINUTES);
-      } catch (InterruptedException e) {}
-    }
-    myApiConnector.dispose();
+    super.dispose();
   }
 
   public boolean isInitialized() {
-    return myScheduledExecutor != null;
+    return myIsInitialized;
   }
 
   @Nullable

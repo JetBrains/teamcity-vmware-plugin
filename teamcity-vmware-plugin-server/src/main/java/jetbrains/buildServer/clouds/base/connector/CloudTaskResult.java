@@ -1,5 +1,8 @@
 package jetbrains.buildServer.clouds.base.connector;
 
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
 /**
  * @author Sergey.Pak
  *         Date: 7/29/2014
@@ -16,10 +19,11 @@ public class CloudTaskResult {
     this(false, null, null);
   }
 
-  public CloudTaskResult(final String description) {
+  public CloudTaskResult(@Nullable final String description) {
     this(false, description, null);
   }
-  public CloudTaskResult(final boolean hasErrors, final String description, final Throwable throwable) {
+
+  public CloudTaskResult(final boolean hasErrors, @Nullable final String description, @Nullable final Throwable throwable) {
     myHasErrors = hasErrors;
     myDescription = description;
     myThrowable = throwable;

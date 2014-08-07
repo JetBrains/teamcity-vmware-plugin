@@ -25,9 +25,9 @@ public class VmwareCloudImageTest extends BaseTestCase {
   @BeforeMethod
   public void setUp() throws Exception {
     super.setUp();
-    myStatusTask = new CloudAsyncTaskExecutor();
+    myStatusTask = new CloudAsyncTaskExecutor("Test-vmware");
     myApiConnector = new FakeApiConnector();
-    myStatusTask.start("Test-vmware");
+    myStatusTask.start();
   }
 
   public void checkImageType() throws MalformedURLException, RemoteException {
