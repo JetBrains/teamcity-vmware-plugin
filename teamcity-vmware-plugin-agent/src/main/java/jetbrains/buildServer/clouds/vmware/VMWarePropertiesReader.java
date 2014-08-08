@@ -3,7 +3,7 @@ package jetbrains.buildServer.clouds.vmware;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.text.StringUtil;
+import jetbrains.buildServer.util.StringUtil;
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
@@ -104,7 +104,7 @@ public class VMWarePropertiesReader {
       e.printStackTrace();
     }
     final ExecResult execResult = SimpleCommandLineProcessRunner.runCommand(commandLine, new byte[0]);
-    return execResult.getStdout();
+    return StringUtil.trim(execResult.getStdout());
   }
 
   private static boolean checkVmwareToolsInstalled(){
