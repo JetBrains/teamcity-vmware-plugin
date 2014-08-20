@@ -538,8 +538,8 @@
 <td class="resourcePool"></td>\
 <td class="cloneBehaviour"></td>\
 <td class="maxInstances"></td>\
-<td><a href="#" class="removeVmImageLink">delete</a></td>\
 <td><a href="#" class="editVmImageLink">edit</a></td>\
+<td><a href="#" class="removeVmImageLink">delete</a></td>\
             </tr>'),
                 imagesSelect: $j('<select name="prop:_image" id="image" data-err-id="image">\
     <option value="">--Please select a VM--</option>\
@@ -614,7 +614,8 @@
         <th>Resource pool</th>
         <th>Start behaviour</th>
         <th>Max number of instances</th>
-        <th>Delete</th>
+        <th></th>
+        <th></th>
       </tr>
       </tbody>
     </table>
