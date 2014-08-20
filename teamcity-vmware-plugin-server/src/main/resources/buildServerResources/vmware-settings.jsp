@@ -586,12 +586,12 @@
 
   <tr>
     <th><label for="${cons.username}">Username: <l:star/></label></th>
-    <td><props:textProperty name="${cons.username}"/></td>
+    <td><props:textProperty name="${cons.username}" className="longField"/></td>
   </tr>
 
   <tr>
     <td><label for="secure:${cons.password}">Password: <l:star/></label></td>
-    <td><props:passwordProperty name="secure:${cons.password}"/></td>
+    <td><props:passwordProperty name="secure:${cons.password}" className="longField"/></td>
   </tr>
   <tr>
     <td colspan="2">
