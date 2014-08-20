@@ -576,6 +576,13 @@
     #VMWareImageDialog .modalDialogBody {
         padding-top: 20px;
     }
+
+    .imagesOuterWrapper {
+        padding-left: 8px;
+    }
+    .imagesTableWrapper {
+        margin-bottom: 0.5em;
+    }
 </style>
 
 <table class="runnerFormTable">
@@ -590,7 +597,7 @@
   </tr>
 
   <tr>
-    <td><label for="secure:${cons.password}">Password: <l:star/></label></td>
+    <th><label for="secure:${cons.password}">Password: <l:star/></label></th>
     <td><props:passwordProperty name="secure:${cons.password}" className="longField"/></td>
   </tr>
   <tr>
@@ -601,34 +608,30 @@
       </div>
     </td>
   </tr>
-
-<tr class="imagesTableWrapper hidden">
-  <td colspan="2">
-    <span class="emptyImagesListMessage hidden">You haven't added any images yet.</span>
-    <table id="vmwareImagesTable" class="imagesTable runnerFormTable hidden">
-      <tbody>
-      <tr>
-        <th>Image name</th>
-        <th>Snapshot</th>
-        <th>Clone folder</th>
-        <th>Resource pool</th>
-        <th>Start behaviour</th>
-        <th>Max number of instances</th>
-        <th></th>
-        <th></th>
-      </tr>
-      </tbody>
-    </table>
-    <props:hiddenProperty name="${cons.imagesData}"/>
-  </td>
-</tr>
-
-    <tr>
-        <td colspan="2">
-            <forms:addButton title="Add image" id="vmwareShowDialogButton">Add image</forms:addButton>
-        </td>
-    </tr>
 </table>
+
+<div class="imagesOuterWrapper">
+    <h3 class="title_underlined">Images</h3>
+    <div class="imagesTableWrapper hidden">
+        <span class="emptyImagesListMessage hidden">You haven't added any images yet.</span>
+        <table id="vmwareImagesTable" class="settings imagesTable hidden">
+          <tbody>
+          <tr>
+            <th class="name">Image name</th>
+            <th class="name">Snapshot</th>
+            <th class="name">Clone folder</th>
+            <th class="name">Resource pool</th>
+            <th class="name">Start behaviour</th>
+            <th class="name">Max # of instances</th>
+            <th class="name" colspan="2"></th>
+          </tr>
+          </tbody>
+        </table>
+        <props:hiddenProperty name="${cons.imagesData}"/>
+    </div>
+    <forms:addButton title="Add image" id="vmwareShowDialogButton">Add image</forms:addButton>
+</div>
+
 <input type="hidden" name="prop:image" id="realImageInput"/>
 <bs:dialog dialogId="VMWareImageDialog" title="Add Image" closeCommand="BS.VMWareImageDialog.close()"
            dialogClass="VMWareImageDialog vmWareSphereOptions" titleId="VMWareImageDialogTitle"
