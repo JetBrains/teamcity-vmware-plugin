@@ -72,6 +72,6 @@ public class VMWareCloudClientFactory implements CloudClientFactory {
 
   public boolean canBeAgentOfType(@NotNull AgentDescription agentDescription) {
     final Map<String, String> configParams = agentDescription.getConfigurationParameters();
-    return configParams.containsValue(VMWareApiConnector.TEAMCITY_VMWARE_IMAGE_NAME);
+    return configParams.containsKey(VMWarePropertiesNames.IMAGE_NAME);
   }
 }
