@@ -406,9 +406,11 @@
             this.$image.add(this.$snapshot).on('change', this.validateOptions.bind(this));
 
             // - instances
-//            this.$maxInstances.on('change', function (e, val) {
-//                $j(this).val(val);
-//            });
+            this.$maxInstances.on('change', function (e, val) {
+              if (typeof(val) != 'undefined') {
+                $j(this).val(val);
+              }
+            });
         },
         _validateSelectChange: function ($elem, value) {
             var errId = $elem.attr('data-err-id');
