@@ -407,7 +407,9 @@
 
             // - instances
             this.$maxInstances.on('change', function (e, val) {
+              if (typeof(val) != 'undefined') {
                 $j(this).val(val);
+              }
             });
         },
         _validateSelectChange: function ($elem, value) {

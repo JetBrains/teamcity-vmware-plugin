@@ -314,7 +314,7 @@ public class VmwareCloudImage extends AbstractCloudImage implements VmInfo {
         runningInstancesNames.add(entry.getKey());
     }
     final boolean canStartMore = myErrorInfo.getErrorInfo() == null && (myMaxInstances == 0 || runningInstancesNames.size() < myMaxInstances);
-    LOG.info(String.format("Running count: %d %s, can start more: %s",
+    LOG.debug(String.format("Running count: %d %s, can start more: %s",
                            runningInstancesNames.size(), Arrays.toString(runningInstancesNames.toArray()), String.valueOf(canStartMore)));
     return canStartMore;
   }
