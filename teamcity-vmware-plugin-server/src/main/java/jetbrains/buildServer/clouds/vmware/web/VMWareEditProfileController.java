@@ -37,13 +37,15 @@ public class VMWareEditProfileController extends BaseFormXmlController {
   @NotNull private final String myJspPath;
   @NotNull private final String myHtmlPath;
   @NotNull private final String mySnapshotsPath;
+    private final PluginDescriptor myPluginDescriptor;
 
   public VMWareEditProfileController(@NotNull final SBuildServer server,
                                       @NotNull final PluginDescriptor pluginDescriptor,
                                      @NotNull final WebControllerManager manager) {
     super(server);
     myHtmlPath = pluginDescriptor.getPluginResourcesPath("vmware-settings.html");
-    myJspPath = pluginDescriptor.getPluginResourcesPath("vmware-settings.jsp");
+    myPluginDescriptor = pluginDescriptor;
+    myJspPath = myPluginDescriptor.getPluginResourcesPath("vmware-settings.jsp");
     mySnapshotsPath = pluginDescriptor.getPluginResourcesPath("vmware-getsnapshotlist.html");
     manager.registerController(myHtmlPath, this);
     manager.registerController(pluginDescriptor.getPluginResourcesPath("vmware-getsnapshotlist.html"), new GetSnapshotsListController());
@@ -54,6 +56,7 @@ public class VMWareEditProfileController extends BaseFormXmlController {
     ModelAndView mv = new ModelAndView(myJspPath);
     mv.getModel().put("refreshablePath", myHtmlPath);
     mv.getModel().put("refreshSnapshotsPath", mySnapshotsPath);
+    mv.getModel().put("resPath", myPluginDescriptor.getPluginResourcesPath());
     return mv;
   }
 

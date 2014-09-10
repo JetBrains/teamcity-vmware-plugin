@@ -1,0 +1,32 @@
+#VMWareImageDialog .message-wrapper {
+    position: absolute;
+    top: 48px;
+    width: 100%;
+}
+#VMWareImageDialog .message {
+    opacity: 1;
+}
+
+#VMWareImageDialog .message_hidden {
+    display: none;
+    opacity: 0;
+}
+
+#VMWareImageDialog .message .icon-refresh {
+    margin-right: 6px;
+}
+
+#VMWareImageDialog .runnerFormTable th {
+    padding-left: 0;
+}
+
+#VMWareImageDialog .modalDialogBody {
+    padding-top: 20px;
+}
+
+.imagesOuterWrapper {
+    padding-left: 8px;
+}
+.imagesTableWrapper {
+    margin-bottom: 0.5em;
+}
