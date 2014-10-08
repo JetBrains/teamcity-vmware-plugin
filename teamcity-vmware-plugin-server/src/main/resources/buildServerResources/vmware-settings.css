@@ -30,3 +30,18 @@
 .imagesTableWrapper {
     margin-bottom: 0.5em;
 }
+
+.settings .remove,
+.edit {
+    width: 5%;
+    padding: 0.5em;
+    text-align: center;
+}
+
+.settings .maxInstances,
+.settings .maxInstances.name {
+    width: 80px;
+    max-width: 80px;
+    padding: 1px 6px;
+    text-align: center;
+}

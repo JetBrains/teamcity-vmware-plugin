@@ -67,7 +67,7 @@
             <th class="name">Clone folder</th>
             <th class="name">Resource pool</th>
             <th class="name">Start behaviour</th>
-            <th class="name">Max # of instances</th>
+            <th class="name maxInstances">Max # of instances</th>
             <th class="name" colspan="2"></th>
           </tr>
           </tbody>

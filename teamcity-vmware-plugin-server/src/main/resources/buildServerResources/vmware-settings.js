@@ -341,7 +341,7 @@ BS.Clouds.VMWareVSphere = BS.Clouds.VMWareVSphere || {
         this.$imagesTable.on('click', this.selectors.rmImageLink, function () {
             var $this = $j(this),
                 id = $this.data('imageId'),
-                name = BS.Clouds.VMWareVSphere.imagesData[id].vmName;
+                name = self.imagesData[id].vmName;
 
             if (confirm('Are you sure you want to remove the image "' + name + '"?')) {
                 self.removeImage($this);
@@ -515,8 +515,8 @@ BS.Clouds.VMWareVSphere = BS.Clouds.VMWareVSphere || {
 <td class="resourcePool"></td>\
 <td class="cloneBehaviour"></td>\
 <td class="maxInstances"></td>\
-<td><a href="#" class="editVmImageLink">edit</a></td>\
-<td><a href="#" class="removeVmImageLink">delete</a></td>\
+<td class="edit"><a href="#" class="editVmImageLink">edit</a></td>\
+<td class="remove"><a href="#" class="removeVmImageLink">delete</a></td>\
             </tr>'),
             imagesSelect: $j('<select name="prop:_image" id="image" data-err-id="image">\
     <option value="">--Please select a VM--</option>\
