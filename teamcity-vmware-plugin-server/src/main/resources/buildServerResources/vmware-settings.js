@@ -1,7 +1,6 @@
 BS = BS || {};
 BS.Clouds = BS.Clouds || {};
 BS.Clouds.VMWareVSphere = BS.Clouds.VMWareVSphere || {
-    optionsFetched: false,
     _dataKeys: [ 'vmName', 'snapshotName', 'cloneFolder', 'resourcePool', 'cloneBehaviour', 'maxInstances'],
     selectors: {
         imagesSelect: '#image',
@@ -48,7 +47,7 @@ BS.Clouds.VMWareVSphere = BS.Clouds.VMWareVSphere || {
     },
     _fetchOptionsInProgress: function () {
         return this.fetchOptionsDeferred ?
-        this.fetchOptionsDeferred.state() === 'pending' :
+            this.fetchOptionsDeferred.state() === 'pending' :
             false;
     },
     fetchOptions: function () {
@@ -59,9 +58,26 @@ BS.Clouds.VMWareVSphere = BS.Clouds.VMWareVSphere || {
         }
 
         this.fetchOptionsDeferred = $j.Deferred()
+            .done(function (response) {
+                var $response = $j(response.responseXML),
+                    $vms = $response.find('VirtualMachines:eq(0) VirtualMachine'),
+                    $pools = $response.find('ResourcePools:eq(0) ResourcePool'),
+                    $folders = $response.find('Folders:eq(0) Folder');
+
+                if ($vms.length) {
+                    this.fillOptions($vms, $pools, $folders);
+                    this._toggleDialogSubmitButton(true);
+                    this._toggleDialogShowButton(true);
+                }
+            }.bind(this))
             .fail(function (errorText) {
                 this.addError("Unable to fetch options: " + errorText);
                 BS.VMWareImageDialog.close();
+            }.bind(this))
+            .always(function () {
+                $loader.remove();
+                this._toggleFetchOptionsButton(true);
+                this._toggleLoadingMessage('fetchOptions');
             }.bind(this));
 
         this._toggleFetchOptionsButton();
@@ -71,30 +87,17 @@ BS.Clouds.VMWareVSphere = BS.Clouds.VMWareVSphere || {
 
         BS.ajaxRequest(this.refreshOptionsUrl, {
             parameters: BS.Clouds.Admin.CreateProfileForm.serializeParameters(),
-            onComplete: function () {
-                $loader.remove();
-                this._toggleFetchOptionsButton(true);
-                this._toggleLoadingMessage('fetchOptions');
-            }.bind(this),
             onFailure: function (response) {
                 this.fetchOptionsDeferred.reject(response.getStatusText());
-
             }.bind(this),
             onSuccess: function (response) {
                 var $response = $j(response.responseXML),
-                    $errors = $response.find("errors:eq(0) error"),
-                    $vms = $response.find('VirtualMachines:eq(0) VirtualMachine'),
-                    $pools = $response.find('ResourcePools:eq(0) ResourcePool'),
-                    $folders = $response.find('Folders:eq(0) Folder');
+                    $errors = $response.find("errors:eq(0) error");
 
                 if ($errors.length) {
                     this.fetchOptionsDeferred.reject($errors.text());
                 } else if ($vms.length) {
-                    this.optionsFetched = true;
-                    this.fillOptions($vms, $pools, $folders);
-                    this._toggleDialogSubmitButton(true);
-                    this._toggleDialogShowButton(true);
-                    this.fetchOptionsDeferred.resolve();
+                    this.fetchOptionsDeferred.resolve(response);
                 }
             }.bind(this)
         });
@@ -416,7 +419,7 @@ BS.Clouds.VMWareVSphere = BS.Clouds.VMWareVSphere || {
         return false;
     },
     _renderImageRow: function (rows, id) {
-        var $row = $j(this.templates.imagesTableRow).clone();
+        var $row = this.templates.imagesTableRow.clone();
 
         this._dataKeys.forEach(function (className) {
             $row.find('.' + className).text(rows[className]);
@@ -433,7 +436,7 @@ BS.Clouds.VMWareVSphere = BS.Clouds.VMWareVSphere || {
     },
     _displayImagesSelect: function ($vms) {
         var self = this,
-            $select = $j(this.templates.imagesSelect).clone(),
+            $select = this.templates.imagesSelect.clone(),
             $vmGroup = $select.find(".vmGroup"),
             $templatesGroup = $select.find(".templatesGroup");
 
