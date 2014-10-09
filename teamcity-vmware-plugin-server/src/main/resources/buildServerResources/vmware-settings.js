@@ -96,7 +96,7 @@ BS.Clouds.VMWareVSphere = BS.Clouds.VMWareVSphere || {
 
                 if ($errors.length) {
                     this.fetchOptionsDeferred.reject($errors.text());
-                } else if ($vms.length) {
+                } else {
                     this.fetchOptionsDeferred.resolve(response);
                 }
             }.bind(this)
