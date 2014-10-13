@@ -28,7 +28,9 @@
 <jsp:useBean id="refreshSnapshotsPath" class="java.lang.String" scope="request"/>
 </table>
 
-<bs:linkCSS>${resPath}vmware-settings.css</bs:linkCSS>
+<script type="text/javascript">
+    BS.LoadStyleSheetDynamically("<c:url value='${resPath}vmware-settings.css'/>");
+</script>
 
 <table class="runnerFormTable">
   <tr>
