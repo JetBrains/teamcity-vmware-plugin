@@ -82,13 +82,15 @@ BS.Clouds.VMWareVSphere = BS.Clouds.VMWareVSphere || {
                     $pools = $response.find('ResourcePools:eq(0) ResourcePool'),
                     $folders = $response.find('Folders:eq(0) Folder');
 
+                this.$response = $response;
+
                 if ($vms.length) {
                     this.fillOptions($vms, $pools, $folders);
                     this._toggleDialogSubmitButton(true);
                     this._toggleDialogShowButton(true);
                 }
 
-                this.validateImages($response);
+                this.validateImages();
             }.bind(this))
             .fail(function (errorText) {
                 this.addError("Unable to fetch options: " + errorText);
@@ -435,6 +437,7 @@ BS.Clouds.VMWareVSphere = BS.Clouds.VMWareVSphere || {
                 this.addImage();
             }
 
+            this.validateImages();
             BS.VMWareImageDialog.close();
         }
 
@@ -547,7 +550,7 @@ BS.Clouds.VMWareVSphere = BS.Clouds.VMWareVSphere || {
 </select>')
         }
     },
-    validateImages: function ($response) {
+    validateImages: function () {
         var updateIcon = function(imageId, type, title, symbol) {
             var $icon = this.$imagesTable.find(this.selectors.imagesTableRow + '[data-image-id=' + imageId + '] .sourceIcon');
 
@@ -574,13 +577,16 @@ BS.Clouds.VMWareVSphere = BS.Clouds.VMWareVSphere || {
 
         Object.keys(this.imagesData).forEach(function (imageId) {
             var name = this.imagesData[imageId].vmName,
-                machine = $response.find('VirtualMachine[name="' + name + '"]');
+                machine = this.$response.find('VirtualMachine[name="' + name + '"]');
 
             if (! machine.length) {
                 return updateIcon(imageId, 'error', 'Nonexistent source');
-            } else {
-                updateIcon(imageId, 'info', machine.attr('template') == 'true' ? 'Template' : 'Image', machine.attr('template') == 'true' ? 'T' : 'I');
             }
+
+            if (machine.attr('template') == 'true' && this.imagesData[imageId].cloneBehaviour === 'START') {
+                return updateIcon(imageId, 'error', 'START behaviour cannot be selected for templates');
+            }
+            updateIcon(imageId, 'info', machine.attr('template') == 'true' ? 'Template' : 'Image', machine.attr('template') == 'true' ? 'T' : 'I');
         }.bind(this));
     }
 };
