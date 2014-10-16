@@ -1,3 +1,21 @@
+/*
+ *
+ *  * Copyright 2000-2014 JetBrains s.r.o.
+ *  *
+ *  * Licensed under the Apache License, Version 2.0 (the "License");
+ *  * you may not use this file except in compliance with the License.
+ *  * You may obtain a copy of the License at
+ *  *
+ *  * http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  * Unless required by applicable law or agreed to in writing, software
+ *  * distributed under the License is distributed on an "AS IS" BASIS,
+ *  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  * See the License for the specific language governing permissions and
+ *  * limitations under the License.
+ *
+ */
+
 package jetbrains.buildServer.clouds.vmware;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -21,7 +39,7 @@ import static jetbrains.buildServer.clouds.vmware.VMWarePropertiesNames.INSTANCE
  *         Date: 4/15/2014
  *         Time: 3:57 PM
  */
-public class VmwareCloudInstance extends AbstractCloudInstance implements VmInfo {
+public class VmwareCloudInstance extends AbstractCloudInstance<VmwareCloudImage> implements VmInfo {
 
   private static final Logger LOG = Logger.getInstance(VmwareCloudInstance.class.getName());
 
@@ -34,7 +52,7 @@ public class VmwareCloudInstance extends AbstractCloudInstance implements VmInfo
   private String mySnapshotName;
 
   public VmwareCloudInstance(@NotNull final VmwareCloudImage image, @NotNull final String instanceName, @Nullable final String snapshotName) {
-    super(image);
+    super(image, instanceName, instanceName);
     myImage = image;
     myInstanceName = instanceName;
     mySnapshotName = snapshotName;

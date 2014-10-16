@@ -1,9 +1,9 @@
 <component name="libraryTable">
   <library name="server">
     <CLASSES>
-      <root url="file://$TeamCityDistribution$/webapps/ROOT/WEB-INF/lib" />
-      <root url="jar://$TeamCityDistribution$/lib/jsp-api.jar!/" />
-      <root url="jar://$TeamCityDistribution$/lib/servlet-api.jar!/" />
+      <root url="file://$PROJECT_DIR$/../../BuildServer/.idea_artifacts/dist-teamcity-tomcat/webapps/ROOT/WEB-INF/lib" />
+      <root url="jar://$PROJECT_DIR$/../../BuildServer/.idea_artifacts/dist-teamcity-tomcat/lib/jsp-api.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../../BuildServer/.idea_artifacts/dist-teamcity-tomcat/lib/servlet-api.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
@@ -11,6 +11,6 @@
       <root url="file://$PROJECT_DIR$/../../BuildServer/clouds/cloud-server/src" />
       <root url="file://$PROJECT_DIR$/../../BuildServer/clouds/cloud-shared/src" />
     </SOURCES>
-    <jarDirectory url="file://$TeamCityDistribution$/webapps/ROOT/WEB-INF/lib" recursive="false" />
+    <jarDirectory url="file://$PROJECT_DIR$/../../BuildServer/.idea_artifacts/dist-teamcity-tomcat/webapps/ROOT/WEB-INF/lib" recursive="false" />
   </library>
 </component>

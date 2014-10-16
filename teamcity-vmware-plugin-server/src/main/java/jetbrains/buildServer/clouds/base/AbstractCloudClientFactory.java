@@ -1,3 +1,21 @@
+/*
+ *
+ *  * Copyright 2000-2014 JetBrains s.r.o.
+ *  *
+ *  * Licensed under the Apache License, Version 2.0 (the "License");
+ *  * you may not use this file except in compliance with the License.
+ *  * You may obtain a copy of the License at
+ *  *
+ *  * http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  * Unless required by applicable law or agreed to in writing, software
+ *  * distributed under the License is distributed on an "AS IS" BASIS,
+ *  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  * See the License for the specific language governing permissions and
+ *  * limitations under the License.
+ *
+ */
+
 package jetbrains.buildServer.clouds.base;
 
 import java.util.ArrayList;
@@ -14,7 +32,12 @@ import org.jetbrains.annotations.Nullable;
  *         Date: 7/22/2014
  *         Time: 1:51 PM
  */
-public abstract class AbstractCloudClientFactory implements CloudClientFactory {
+public abstract class AbstractCloudClientFactory <
+  D extends AbstractCloudImageDetails,
+  I extends AbstractCloudImage,
+  C extends AbstractCloudClient>
+
+  implements CloudClientFactory {
 
   public AbstractCloudClientFactory(@NotNull final CloudRegistrar cloudRegistrar) {
     cloudRegistrar.registerCloudFactory(this);
@@ -27,25 +50,17 @@ public abstract class AbstractCloudClientFactory implements CloudClientFactory {
     if (profileErrors != null && profileErrors.length > 0){
       return createNewClient(state, params, profileErrors);
     }
-    final AbstractCloudImageDetails[] imageDetailsList = parseImageData(imagesData);
-
-    final List<AbstractCloudImage> images = new ArrayList<AbstractCloudImage>();
-    for (AbstractCloudImageDetails imageDetails : imageDetailsList) {
-      images.add(checkAndCreateImage(imageDetails));
-    }
-    return createNewClient(state, images, params);
+    final Collection<D> imageDetailsList = parseImageData(imagesData);
+    return createNewClient(state, imageDetailsList, params);
   }
 
-  public abstract  <T extends AbstractCloudClient, G extends AbstractCloudImage> T createNewClient(
-    @NotNull final CloudState state, @NotNull final Collection<G> images, @NotNull final CloudClientParameters params);
+  public abstract C createNewClient(
+    @NotNull final CloudState state, @NotNull final Collection<D> images, @NotNull final CloudClientParameters params);
 
-  public abstract <T extends AbstractCloudClient> T createNewClient(
+  public abstract C createNewClient(
     @NotNull final CloudState state, @NotNull final CloudClientParameters params, TypedCloudErrorInfo[] profileErrors);
 
-  public abstract <T extends AbstractCloudImageDetails> T[] parseImageData(String imageData);
-
-  @Nullable
-  protected abstract <T extends AbstractCloudImageDetails, G extends AbstractCloudImage> G checkAndCreateImage(@NotNull final T imageDetails);
+  public abstract Collection<D> parseImageData(String imageData);
 
   @Nullable
   protected abstract TypedCloudErrorInfo[] checkClientParams(@NotNull final CloudClientParameters params);

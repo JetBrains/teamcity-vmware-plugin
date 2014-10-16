@@ -1,8 +1,24 @@
+/*
+ *
+ *  * Copyright 2000-2014 JetBrains s.r.o.
+ *  *
+ *  * Licensed under the Apache License, Version 2.0 (the "License");
+ *  * you may not use this file except in compliance with the License.
+ *  * You may obtain a copy of the License at
+ *  *
+ *  * http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  * Unless required by applicable law or agreed to in writing, software
+ *  * distributed under the License is distributed on an "AS IS" BASIS,
+ *  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  * See the License for the specific language governing permissions and
+ *  * limitations under the License.
+ *
+ */
+
 package jetbrains.buildServer.clouds.base.connector;
 
 import com.intellij.openapi.diagnostic.Logger;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.*;
 import jetbrains.buildServer.util.NamedThreadFactory;
 import jetbrains.buildServer.util.executors.ExecutorsFactory;
@@ -19,15 +35,11 @@ public class CloudAsyncTaskExecutor {
 
   private ScheduledExecutorService myExecutor;
   private final ConcurrentMap<Future<CloudTaskResult>, TaskCallbackHandler> myExecutingTasks;
-  private final List<ScheduledFuture<?>> myScheduledFutures = new ArrayList<ScheduledFuture<?>>();
 
   public CloudAsyncTaskExecutor(String prefix) {
     myExecutingTasks = new ConcurrentHashMap<Future<CloudTaskResult>, TaskCallbackHandler>();
     myExecutor = ExecutorsFactory.newFixedScheduledDaemonExecutor(prefix, 2);
-  }
-
-  public void start(){
-    scheduleWithFixedDelay(new Runnable() {
+    myExecutor.scheduleWithFixedDelay(new Runnable() {
       public void run() {
         checkTasks();
       }
@@ -44,9 +56,7 @@ public class CloudAsyncTaskExecutor {
   }
 
   public ScheduledFuture<?> scheduleWithFixedDelay(@NotNull final Runnable task, final long initialDelay, final long delay, final TimeUnit unit){
-    final ScheduledFuture<?> scheduledFuture = myExecutor.scheduleWithFixedDelay(task, initialDelay, delay, unit);
-    myScheduledFutures.add(scheduledFuture);
-    return scheduledFuture;
+    return myExecutor.scheduleWithFixedDelay(task, initialDelay, delay, unit);
   }
 
   public Future<?> submit(Runnable r){
@@ -59,7 +69,6 @@ public class CloudAsyncTaskExecutor {
         final TaskCallbackHandler handler = myExecutingTasks.get(executingTask);
         try {
           final CloudTaskResult result = executingTask.get();
-          myExecutingTasks.remove(executingTask);
           handler.onComplete();
           if (result.isHasErrors()) {
             handler.onError(result.getThrowable());
@@ -67,22 +76,19 @@ public class CloudAsyncTaskExecutor {
             handler.onSuccess();
           }
         } catch (Exception e) {
-
+          LOG.info("Error: " + e.toString());
+          handler.onError(e);
         }
+        myExecutingTasks.remove(executingTask);
       }
     }
   }
 
   public void dispose(){
-    for (ScheduledFuture<?> future : myScheduledFutures) {
-      future.cancel(true);
-    }
     myExecutor.shutdown();
     try {
       myExecutor.awaitTermination(30, TimeUnit.SECONDS);
-    } catch (InterruptedException e) {
-
-    }
+    } catch (InterruptedException e) {}
     myExecutingTasks.clear();
   }
 

@@ -16,14 +16,31 @@
  *
  */
 
-package jetbrains.buildServer.clouds.vmware;
+package jetbrains.buildServer.clouds.base.types;
 
 /**
  * @author Sergey.Pak
- *         Date: 7/4/2014
- *         Time: 7:06 PM
+ *         Date: 9/18/2014
+ *         Time: 1:23 PM
  */
-public interface VmInfo {
-  String getName();
-  String getSnapshotName();
+public enum CloudCloneType {
+  START_STOP (false, true),
+  FRESH_CLONE (true, false),
+  ON_DEMAND_CLONE(false, false)
+  ;
+  private final boolean myDeleteAfterStop;
+  private final boolean myUseOriginal;
+
+  CloudCloneType(final boolean deleteAfterStop, final boolean useOriginal) {
+    myDeleteAfterStop = deleteAfterStop;
+    myUseOriginal = useOriginal;
+  }
+
+  public boolean isDeleteAfterStop() {
+    return myDeleteAfterStop;
+  }
+
+  public boolean isUseOriginal() {
+    return myUseOriginal;
+  }
 }

@@ -1,3 +1,21 @@
+/*
+ *
+ *  * Copyright 2000-2014 JetBrains s.r.o.
+ *  *
+ *  * Licensed under the Apache License, Version 2.0 (the "License");
+ *  * you may not use this file except in compliance with the License.
+ *  * You may obtain a copy of the License at
+ *  *
+ *  * http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  * Unless required by applicable law or agreed to in writing, software
+ *  * distributed under the License is distributed on an "AS IS" BASIS,
+ *  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  * See the License for the specific language governing permissions and
+ *  * limitations under the License.
+ *
+ */
+
 package jetbrains.buildServer.clouds.vmware.connector;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -10,6 +28,8 @@ import java.util.*;
 import java.util.regex.Pattern;
 import jetbrains.buildServer.clouds.CloudInstanceUserData;
 import jetbrains.buildServer.clouds.InstanceStatus;
+import jetbrains.buildServer.clouds.base.AbstractCloudImage;
+import jetbrains.buildServer.clouds.base.AbstractCloudInstance;
 import jetbrains.buildServer.clouds.base.connector.AbstractInstance;
 import jetbrains.buildServer.clouds.base.errors.TypedCloudErrorInfo;
 import jetbrains.buildServer.clouds.vmware.*;
@@ -116,14 +136,28 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
     return filteredVms;
   }
 
-  public Map<String, VmwareInstance> getClones(@NotNull final String imageName) throws RemoteException {
-    final Map<String, VirtualMachine> allVms = findAllEntitiesAsMap(VirtualMachine.class);
+  public Map<String, VmwareInstance> listImageInstances(@NotNull final VmwareCloudImage image)  {
+    if(image.getImageDetails().getCloneType().isUseOriginal()){
+      try {
+        final VirtualMachine vmEntity = findEntityByName(image.getName(), VirtualMachine.class);
+        final VmwareInstance vmInstance = new VmwareInstance(vmEntity);
+        return Collections.singletonMap(image.getName(), vmInstance);
+      } catch (RemoteException e) {
+        return Collections.emptyMap();
+      }
+    }
+    Map<String, VirtualMachine> allVms;
+    try {
+      allVms = findAllEntitiesAsMap(VirtualMachine.class);
+    } catch (RemoteException e) {
+      allVms = new HashMap<String, VirtualMachine>();
+    }
     final Map<String, VmwareInstance> filteredVms = new HashMap<String, VmwareInstance>();
     for (String vmName : allVms.keySet()) {
       final VirtualMachine vm = allVms.get(vmName);
 
       final VmwareInstance vmInstance = new VmwareInstance(vm);
-      if (imageName.equals(vmInstance.getProperty(TEAMCITY_VMWARE_IMAGE_NAME))){
+      if (image.getName().equals(vmInstance.getProperty(TEAMCITY_VMWARE_IMAGE_NAME))){
         filteredVms.put(vmName, vmInstance);
       }
     }
@@ -424,24 +458,20 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
     } catch (Exception ex){}
   }
 
-  public InstanceStatus getInstanceStatus(@NotNull final String instanceName) {
+  public InstanceStatus getInstanceStatus(@NotNull final VmwareCloudInstance instance) {
     try {
-      return getInstanceStatus(findEntityByName(instanceName, VirtualMachine.class));
+      return getInstanceStatus(findEntityByName(instance.getName(), VirtualMachine.class));
     } catch (RemoteException e) {
       LOG.warn(e.toString());
       return InstanceStatus.UNKNOWN;
     }
   }
 
-  public Map<String, AbstractInstance> listImageInstances(@NotNull final String imageName) {
-    return null;
+  public Collection<TypedCloudErrorInfo> checkImage(@NotNull final VmwareCloudImage image) {
+    return Collections.emptyList();
   }
 
-  public Collection<TypedCloudErrorInfo> checkImage(@NotNull final String imageName) {
-    return null;
-  }
-
-  public Collection<TypedCloudErrorInfo> checkInstance(@NotNull final String instanceName) {
-    return null;
+  public Collection<TypedCloudErrorInfo> checkInstance(@NotNull final VmwareCloudInstance instance) {
+    return Collections.emptyList();
   }
 }

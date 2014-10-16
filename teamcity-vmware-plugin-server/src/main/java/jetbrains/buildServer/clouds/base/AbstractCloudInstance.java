@@ -1,6 +1,25 @@
+/*
+ *
+ *  * Copyright 2000-2014 JetBrains s.r.o.
+ *  *
+ *  * Licensed under the Apache License, Version 2.0 (the "License");
+ *  * you may not use this file except in compliance with the License.
+ *  * You may obtain a copy of the License at
+ *  *
+ *  * http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  * Unless required by applicable law or agreed to in writing, software
+ *  * distributed under the License is distributed on an "AS IS" BASIS,
+ *  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  * See the License for the specific language governing permissions and
+ *  * limitations under the License.
+ *
+ */
+
 package jetbrains.buildServer.clouds.base;
 
 import java.util.Collection;
+import java.util.Date;
 import java.util.Map;
 import jetbrains.buildServer.clouds.CloudErrorInfo;
 import jetbrains.buildServer.clouds.CloudImage;
@@ -17,15 +36,33 @@ import org.jetbrains.annotations.Nullable;
  *         Date: 7/22/2014
  *         Time: 1:51 PM
  */
-public abstract class AbstractCloudInstance implements CloudInstance, UpdatableCloudErrorProvider {
+public abstract class AbstractCloudInstance<T extends AbstractCloudImage> implements CloudInstance, UpdatableCloudErrorProvider {
 
   private UpdatableCloudErrorProvider myErrorProvider;
-  protected InstanceStatus myStatus;
-  protected final AbstractCloudImage myImage;
+  protected InstanceStatus myStatus = InstanceStatus.UNKNOWN;
 
-  protected AbstractCloudInstance(@NotNull final AbstractCloudImage image) {
+  @NotNull
+  protected final T myImage;
+  private Date myStartDate = new Date();
+  private String myNetworkIdentify = null;
+  private final String myName;
+  private final String myInstanceId;
+
+  protected AbstractCloudInstance(@NotNull final T image, @NotNull final String name, @NotNull final String instanceId) {
     myImage = image;
+    myName = name;
+    myInstanceId = instanceId;
     myErrorProvider = new CloudErrorMap();
+  }
+
+  @NotNull
+  public String getName() {
+    return myName;
+  }
+
+  @NotNull
+  public String getInstanceId() {
+    return myInstanceId;
   }
 
   public void updateErrors(@Nullable final Collection<TypedCloudErrorInfo> errors) {
@@ -33,7 +70,7 @@ public abstract class AbstractCloudInstance implements CloudInstance, UpdatableC
   }
 
   @NotNull
-  public CloudImage getImage() {
+  public T getImage() {
     return myImage;
   }
 
@@ -52,7 +89,29 @@ public abstract class AbstractCloudInstance implements CloudInstance, UpdatableC
     return myStatus;
   }
 
-  public void setStatus(final InstanceStatus status) {
+  public void setStatus(@NotNull final InstanceStatus status) {
     myStatus = status;
+  }
+
+  @NotNull
+  public Date getStartedTime() {
+    return myStartDate;
+  }
+
+  public void refreshStartDate(){
+    setStartDate(new Date());
+  }
+
+  public void setStartDate(final Date startDate) {
+    myStartDate = startDate;
+  }
+
+  public void setNetworkIdentify(final String networkIdentify) {
+    myNetworkIdentify = networkIdentify;
+  }
+
+  @Nullable
+  public String getNetworkIdentity() {
+    return null;
   }
 }

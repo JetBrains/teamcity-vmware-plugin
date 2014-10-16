@@ -27,20 +27,7 @@ public class VmwareCloudImageTest extends BaseTestCase {
     super.setUp();
     myStatusTask = new CloudAsyncTaskExecutor("Test-vmware");
     myApiConnector = new FakeApiConnector();
-    myStatusTask.start();
   }
-
-  public void checkImageType() throws MalformedURLException, RemoteException {
-    assertEquals(VMWareImageStartType.CLONE, new VmwareCloudImage(myApiConnector,
-      "myImage", VMWareImageType.TEMPLATE, "folder", "pool", null, InstanceStatus.RUNNING, myStatusTask, VMWareImageStartType.START, 1).getStartType());
-
-    assertEquals(VMWareImageStartType.START, new VmwareCloudImage(myApiConnector,
-      "myImage", VMWareImageType.INSTANCE, "folder", "pool", "snapshot", InstanceStatus.RUNNING, myStatusTask,VMWareImageStartType.START, 1).getStartType());
-
-    assertEquals(VMWareImageStartType.ON_DEMAND_CLONE, new VmwareCloudImage(myApiConnector,
-      "myImage", VMWareImageType.INSTANCE, "folder", "pool", "snapshot", InstanceStatus.RUNNING, myStatusTask,VMWareImageStartType.ON_DEMAND_CLONE, 1).getStartType());
-  }
-
 
   @AfterMethod
   public void tearDown() throws Exception {
