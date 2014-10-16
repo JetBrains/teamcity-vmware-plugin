@@ -16,6 +16,7 @@
  *
  */
 
+/* Add/edit dialog */
 #VMWareImageDialog {
     width: auto;
 }
@@ -51,6 +52,19 @@
 }
 .imagesTableWrapper {
     margin-bottom: 0.5em;
+}
+/* Images Table */
+
+.imagesTableRow:hover .imageName,
+.imagesTableRow:hover .snapshot,
+.imagesTableRow:hover .folder,
+.imagesTableRow:hover .pool,
+.imagesTableRow:hover .behaviour,
+.imagesTableRow:hover .pool,
+.imagesTableRow:hover .maxInstances,
+.imagesTableRow:hover .edit {
+    background-color: #ffffcc;
+    color: #25419d;
 }
 
 .settings .remove,
