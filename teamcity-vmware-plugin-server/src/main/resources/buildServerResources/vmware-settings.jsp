@@ -30,7 +30,9 @@
 <jsp:useBean id="refreshSnapshotsPath" class="java.lang.String" scope="request"/>
 </table>
 
-<bs:linkCSS>${resPath}vmware-settings.css</bs:linkCSS>
+<script type="text/javascript">
+    BS.LoadStyleSheetDynamically("<c:url value='${resPath}vmware-settings.css'/>");
+</script>
 
 <table class="runnerFormTable">
   <tr>
@@ -66,9 +68,9 @@
           <tr>
             <th class="name">Image name</th>
             <th class="name">Snapshot</th>
-            <th class="name">Clone folder</th>
-            <th class="name">Resource pool</th>
-            <th class="name">Start behaviour</th>
+            <th class="name hidden">Clone folder</th>
+            <th class="name hidden">Resource pool</th>
+            <th class="name">behaviour</th>
             <th class="name maxInstances">Max # of instances</th>
             <th class="name" colspan="2"></th>
           </tr>
@@ -79,6 +81,7 @@
     <forms:addButton title="Add image" id="vmwareShowDialogButton">Add image</forms:addButton>
 </div>
 
+<i></i>
 <input type="hidden" name="prop:image" id="realImageInput"/>
 <bs:dialog dialogId="VMWareImageDialog" title="Add Image" closeCommand="BS.VMWareImageDialog.close()"
            dialogClass="VMWareImageDialog vmWareSphereOptions" titleId="VMWareImageDialogTitle"
@@ -86,36 +89,38 @@
         <div class="fetchingSnapshots message message_hidden"><i class="icon-refresh icon-spin"></i>Fetching snapshots...</div>
     </div>
     <table class="runnerFormTable">
+
+        <tr>
+            <th><label for="image">Source:</label></th>
+            <td>
+                <div>
+                    <select name="_image" id="image" data-err-id="image" class="longField"></select>
+                </div>
+                <span class="error option-error option-error_image"></span>
+            </td>
+        </tr>
+
             <tr>
                 <th>Select an image type:</th>
                 <td>
-                    <input type="radio" id="cloneBehaviour_START" name="cloneBehaviour" value="START" checked="true" class="cloneBehaviourRadio"/>
-                    <label for="cloneBehaviour_START">Start/Stop instance</label>
-                    <br/>
                     <input type="radio" id="cloneBehaviour_CLONE" name="cloneBehaviour" value="CLONE" class="cloneBehaviourRadio"/>
                     <label for="cloneBehaviour_CLONE">Fresh clone</label>
                     <br/>
                     <input type="radio" id="cloneBehaviour_ON_DEMAND_CLONE" name="cloneBehaviour" value="ON_DEMAND_CLONE" class="cloneBehaviourRadio"/>
                     <label for="cloneBehaviour_ON_DEMAND_CLONE">On demand clone</label>
                     <br/>
-                </td>
-            </tr>
-
-
-            <tr>
-                <th><label for="image">Agent image:</label></th>
-                <td>
-                    <div>
-                        <select name="_image" id="image" data-err-id="image"></select>
-                    </div>
-                    <span class="error option-error option-error_image"></span>
+                    <input type="radio" id="cloneBehaviour_START" name="cloneBehaviour" value="START" class="cloneBehaviourRadio"/>
+                    <label for="cloneBehaviour_START">Start/Stop instance</label>
+                    <br/>
                 </td>
             </tr>
 
             <tr class="hidden cloneOptionsRow"  id="tr_snapshot_name">
                 <th><label for="snapshot">Snapshot name:</label></th>
                 <td>
-                    <select id="snapshot" data-err-id="snapshot"></select>
+                    <select id="snapshot" data-err-id="snapshot" class="longField">
+                        <option>[Latest version]</option>
+                    </select>
                     <span class="error option-error option-error_snapshot"></span>
                 </td>
             </tr>
@@ -126,7 +131,7 @@
                     <label for="cloneFolder">Folder for clones</label>
                 </th>
                 <td>
-                    <select id="cloneFolder" data-err-id="folder"></select>
+                    <select id="cloneFolder" data-err-id="folder" class="longField"></select>
                     <span class="error option-error option-error_folder"></span>
                 </td>
             </tr>
@@ -136,7 +141,7 @@
                     <label for="resourcePool">Resource pool</label>
                 </th>
                 <td>
-                    <select id="resourcePool" data-err-id="pool"> </select>
+                    <select id="resourcePool" data-err-id="pool" class="longField"></select>
                     <span class="error option-error option-error_pool"></span>
                 </td>
             </tr>
@@ -146,7 +151,7 @@
                 </th>
                 <td>
                     <div>
-                        <input type="text" id="maxInstances" value="0"/>
+                        <input type="text" id="maxInstances" value="1" class="longField"/>
                     </div>
                     <span class="error option-error option-error_instances"></span>
                 </td>

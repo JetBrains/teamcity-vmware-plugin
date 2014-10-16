@@ -16,6 +16,10 @@
  *
  */
 
+#VMWareImageDialog {
+    width: auto;
+}
+
 #VMWareImageDialog .message-wrapper {
     position: absolute;
     top: 48px;
@@ -62,4 +66,26 @@
     max-width: 80px;
     padding: 1px 6px;
     text-align: center;
+}
+
+.sourceIcon {
+    display: inline-block;
+    border-radius: 100%;
+    background-color: #4477ff;
+    color: #fff;
+    width: 20px;
+    height: 20px;
+    margin-right: 6px;
+    line-height: 20px;
+    font-size: 12px;
+    text-align: center;
+    font-family: "Helvetica Neue", Arial, sans-serif;
+}
+
+.sourceIcon_unknown {
+    background-color: #e5e5e5;
+}
+
+.sourceIcon_error {
+    background-color: #aa1111;
 }
