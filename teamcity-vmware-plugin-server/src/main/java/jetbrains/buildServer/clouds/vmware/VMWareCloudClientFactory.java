@@ -69,12 +69,13 @@ public class VMWareCloudClientFactory extends AbstractCloudClientFactory<VmwareC
   }
 
   @Override
-  public Collection<VmwareCloudImageDetails> parseImageData(final String imageData) {
-    return parseImageDataInternal(imageData);
+  public Collection<VmwareCloudImageDetails> parseImageData(@NotNull final CloudClientParameters params) {
+    return parseImageDataInternal(params);
   }
 
-  static Collection<VmwareCloudImageDetails> parseImageDataInternal(final String imageData) {
-    final String[] split = imageData.split(";X;:");
+  static Collection<VmwareCloudImageDetails> parseImageDataInternal(final CloudClientParameters params) {
+    final String imagesData = params.getParameter("vmware_images_data");
+    final String[] split = imagesData.split(";X;:");
     List<VmwareCloudImageDetails> images = new ArrayList<VmwareCloudImageDetails>();
     for (String s : split) {
       final VmwareCloudImageDetails e = VmwareCloudImageDetails.fromString(s.trim());

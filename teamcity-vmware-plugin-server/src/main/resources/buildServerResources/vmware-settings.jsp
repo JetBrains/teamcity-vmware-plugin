@@ -103,13 +103,13 @@
             <tr>
                 <th>Select an image type:</th>
                 <td>
-                    <input type="radio" id="cloneBehaviour_CLONE" name="cloneBehaviour" value="CLONE" class="cloneBehaviourRadio"/>
+                    <input type="radio" id="cloneBehaviour_CLONE" name="cloneBehaviour" value="FRESH_CLONE" class="cloneBehaviourRadio"/>
                     <label for="cloneBehaviour_CLONE">Fresh clone</label>
                     <br/>
                     <input type="radio" id="cloneBehaviour_ON_DEMAND_CLONE" name="cloneBehaviour" value="ON_DEMAND_CLONE" class="cloneBehaviourRadio"/>
                     <label for="cloneBehaviour_ON_DEMAND_CLONE">On demand clone</label>
                     <br/>
-                    <input type="radio" id="cloneBehaviour_START" name="cloneBehaviour" value="START" class="cloneBehaviourRadio"/>
+                    <input type="radio" id="cloneBehaviour_START" name="cloneBehaviour" value="START_STOP" class="cloneBehaviourRadio"/>
                     <label for="cloneBehaviour_START">Start/Stop instance</label>
                     <br/>
                 </td>

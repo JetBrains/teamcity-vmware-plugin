@@ -365,10 +365,10 @@ public class VmwareCloudImage extends AbstractCloudImage<VmwareCloudInstance> im
     public void onError(final Throwable th) {
       if (th != null) {
         myInstance.setErrorType(VMWareCloudErrorType.CUSTOM, th.getMessage());
-        LOG.info("An error occured: " + th.getLocalizedMessage() + " during processing " + myInstance.getName());
+        LOG.warn("An error occured: " + th.getLocalizedMessage() + " during processing " + myInstance.getName());
       } else {
         myInstance.setErrorType(VMWareCloudErrorType.CUSTOM, "Unknown error during processing instance " + myInstance.getName());
-        LOG.info("Unknown error during processing " + myInstance.getName());
+        LOG.warn("Unknown error during processing " + myInstance.getName());
       }
     }
   }

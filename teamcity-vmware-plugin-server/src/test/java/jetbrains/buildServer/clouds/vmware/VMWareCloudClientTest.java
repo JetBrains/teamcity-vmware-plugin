@@ -58,7 +58,7 @@ public class VMWareCloudClientTest extends BaseTestCase {
     FakeModel.instance().addVM("image_template");
     FakeModel.instance().addVMSnapshot("image2", "snap");
     final Collection<VmwareCloudImageDetails> images
-      = VMWareCloudClientFactory.parseImageDataInternal(myClientParameters.getParameter("vmware_images_data"));
+      = VMWareCloudClientFactory.parseImageDataInternal(myClientParameters);
 
     myClient = new VMWareCloudClient(myClientParameters, images, myFakeApi);
     assertNull(myClient.getErrorInfo());
@@ -482,8 +482,7 @@ public class VMWareCloudClientTest extends BaseTestCase {
 
   private void recreateClient() throws MalformedURLException, RemoteException {
     myClient.dispose();
-    final Collection<VmwareCloudImageDetails> images
-      = VMWareCloudClientFactory.parseImageDataInternal(myClientParameters.getParameter("vmware_images_data"));
+    final Collection<VmwareCloudImageDetails> images = VMWareCloudClientFactory.parseImageDataInternal(myClientParameters);
     myClient = new VMWareCloudClient(myClientParameters, images, myFakeApi);
   }
 
