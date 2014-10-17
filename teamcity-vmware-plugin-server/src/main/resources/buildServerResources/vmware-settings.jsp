@@ -94,9 +94,9 @@
             <th>Source:&nbsp;<l:star/></th>
             <td>
                 <div>
-                    <select name="_image" id="image" data-err-id="name" data-id="name" class="longField"></select>
+                    <select name="_image" id="image" class="longField" data-id="sourceName" data-err-id="sourceName"></select>
                 </div>
-                <span class="error option-error option-error_name"></span>
+                <span class="error option-error option-error_sourceName"></span>
             </td>
         </tr>
 
@@ -104,15 +104,15 @@
                 <th>Behaviour:&nbsp;<l:star/></th>
                 <td>
                     <div>
-                        <input type="radio" id="cloneBehaviour_CLONE" name="cloneBehaviour" value="FRESH_CLONE" class="cloneBehaviourRadio" data-id="behaviour"/>
+                        <input type="radio" id="cloneBehaviour_CLONE" name="cloneBehaviour" value="FRESH_CLONE" class="cloneBehaviourRadio" data-id="behaviour" data-err-id="behaviour"/>
                         <label for="cloneBehaviour_CLONE">Fresh clone</label>
                     </div>
                     <div>
-                        <input type="radio" id="cloneBehaviour_ON_DEMAND_CLONE" name="cloneBehaviour" value="ON_DEMAND_CLONE" class="cloneBehaviourRadio" data-id="behaviour"/>
+                        <input type="radio" id="cloneBehaviour_ON_DEMAND_CLONE" name="cloneBehaviour" value="ON_DEMAND_CLONE" class="cloneBehaviourRadio" data-id="behaviour" data-err-id="behaviour"/>
                         <label for="cloneBehaviour_ON_DEMAND_CLONE">On demand clone</label>
                     </div>
                     <div>
-                        <input type="radio" id="cloneBehaviour_START" name="cloneBehaviour" value="START_STOP" class="cloneBehaviourRadio" data-id="behaviour"/>
+                        <input type="radio" id="cloneBehaviour_START" name="cloneBehaviour" value="START_STOP" class="cloneBehaviourRadio" data-id="behaviour" data-err-id="behaviour"/>
                         <label for="cloneBehaviour_START">Start/Stop instance</label>
                     </div>
                     <span class="error option-error option-error_behaviour"></span>
@@ -122,7 +122,7 @@
             <tr class="hidden cloneOptionsRow"  id="tr_snapshot_name">
                 <th>Snapshot name:&nbsp;<l:star/></th>
                 <td>
-                    <select id="snapshot" data-err-id="snapshot" class="longField" data-id="snapshot">
+                    <select id="snapshot" class="longField" data-id="snapshot" data-err-id="snapshot">
                         <option>[Latest version]</option>
                     </select>
                     <span class="error option-error option-error_snapshot"></span>
@@ -133,7 +133,7 @@
             <tr class="hidden cloneOptionsRow">
                 <th>Folder for clones:&nbsp;<l:star/></th>
                 <td>
-                    <select id="cloneFolder" data-err-id="folder" class="longField" data-id="folder"></select>
+                    <select id="cloneFolder" class="longField" data-id="folder" data-err-id="folder"></select>
                     <span class="error option-error option-error_folder"></span>
                 </td>
             </tr>
@@ -141,7 +141,7 @@
             <tr class="hidden cloneOptionsRow">
                 <th>Resource pool:&nbsp;<l:star/></th>
                 <td>
-                    <select id="resourcePool" data-err-id="pool" class="longField" data-id="pool"></select>
+                    <select id="resourcePool" class="longField" data-id="pool" data-err-id="pool"></select>
                     <span class="error option-error option-error_pool"></span>
                 </td>
             </tr>
@@ -149,9 +149,9 @@
                 <th>Max number of instances:&nbsp;<l:star/></th>
                 <td>
                     <div>
-                        <input type="text" id="maxInstances" value="1" class="longField" data-id="maxInstances"/>
+                        <input type="text" id="maxInstances" value="1" class="longField" data-id="maxInstances" data-err-id="maxInstances"/>
                     </div>
-                    <span class="error option-error option-error_instances"></span>
+                    <span class="error option-error option-error_maxInstances"></span>
                 </td>
             </tr>
         </table>
