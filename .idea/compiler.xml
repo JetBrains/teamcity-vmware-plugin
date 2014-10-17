@@ -4,6 +4,7 @@
     <option name="DEFAULT_COMPILER" value="Javac" />
     <excludeFromCompile>
       <directory url="file://$PROJECT_DIR$/../../BuildServer/.idea_artifacts/dist-teamcity-tomcat" includeSubdirectories="true" />
+      <directory url="file://$TeamCityDistribution$" includeSubdirectories="true" />
     </excludeFromCompile>
     <resourceExtensions />
     <wildcardResourcePatterns>
@@ -34,4 +35,3 @@
     </bytecodeTargetLevel>
   </component>
 </project>
-
