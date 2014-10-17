@@ -91,7 +91,7 @@
     <table class="runnerFormTable">
 
         <tr>
-            <th><label for="image">Source:</label></th>
+            <th>Source:&nbsp;<l:star/></th>
             <td>
                 <div>
                     <select name="_image" id="image" data-err-id="name" data-id="name" class="longField"></select>
@@ -101,7 +101,7 @@
         </tr>
 
             <tr>
-                <th>Behaviour:</th>
+                <th>Behaviour:&nbsp;<l:star/></th>
                 <td>
                     <div>
                         <input type="radio" id="cloneBehaviour_CLONE" name="cloneBehaviour" value="FRESH_CLONE" class="cloneBehaviourRadio" data-id="behaviour"/>
@@ -120,7 +120,7 @@
             </tr>
 
             <tr class="hidden cloneOptionsRow"  id="tr_snapshot_name">
-                <th><label for="snapshot">Snapshot name:</label></th>
+                <th>Snapshot name:&nbsp;<l:star/></th>
                 <td>
                     <select id="snapshot" data-err-id="snapshot" class="longField" data-id="snapshot">
                         <option>[Latest version]</option>
@@ -131,9 +131,7 @@
 
 
             <tr class="hidden cloneOptionsRow">
-                <th>
-                    <label for="cloneFolder">Folder for clones</label>
-                </th>
+                <th>Folder for clones:&nbsp;<l:star/></th>
                 <td>
                     <select id="cloneFolder" data-err-id="folder" class="longField" data-id="folder"></select>
                     <span class="error option-error option-error_folder"></span>
@@ -141,18 +139,14 @@
             </tr>
 
             <tr class="hidden cloneOptionsRow">
-                <th>
-                    <label for="resourcePool">Resource pool</label>
-                </th>
+                <th>Resource pool:&nbsp;<l:star/></th>
                 <td>
                     <select id="resourcePool" data-err-id="pool" class="longField" data-id="pool"></select>
                     <span class="error option-error option-error_pool"></span>
                 </td>
             </tr>
             <tr class="hidden cloneOptionsRow">
-                <th>
-                    <label for="maxInstances">Max number of instances</label>
-                </th>
+                <th>Max number of instances:&nbsp;<l:star/></th>
                 <td>
                     <div>
                         <input type="text" id="maxInstances" value="1" class="longField" data-id="maxInstances"/>
