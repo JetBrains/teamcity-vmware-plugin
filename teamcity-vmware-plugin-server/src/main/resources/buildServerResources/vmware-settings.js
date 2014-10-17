@@ -28,7 +28,6 @@ BS.Clouds.VMWareVSphere = BS.Clouds.VMWareVSphere || {
         editImageLink: '.editVmImageLink',
         imagesTableRow: '.imagesTableRow'
     },
-    _image: {},
     init: function (refreshOptionsUrl, refreshSnapshotsUrl, imagesDataElemId, serverUrlElemId) {
         this.refreshOptionsUrl = refreshOptionsUrl;
         this.refreshSnapshotsUrl = refreshSnapshotsUrl;
@@ -59,6 +58,7 @@ BS.Clouds.VMWareVSphere = BS.Clouds.VMWareVSphere || {
         this.selectors.activeCloneBehaviour = this.selectors.cloneBehaviourRadio + ':checked';
 
         this._lastImageId = this._imagesDataLength = 0;
+        this._initImage();
         this._toggleDialogShowButton();
         this._initImagesData();
         this._bindHandlers();
@@ -161,45 +161,6 @@ BS.Clouds.VMWareVSphere = BS.Clouds.VMWareVSphere || {
 
         return isValid;
     },
-    validateOptions: function (options) {
-        var maxInstances = this._image.maxInstances,
-            isValid = true;
-
-        if (options && ! $j.isArray(options)) {
-            options = [options];
-        }
-
-        this.clearOptionsErrors(options);
-
-        // checking properties
-        if ( ! this._image.sourceName) {
-            this.addOptionError("Please select a VM", "image");
-            isValid = false;
-        }
-
-        if (this._image.type === 'template' && this._image.behaviour === 'START') {
-            this.addOptionError("Templates cannot have START behaviour", "behaviour");
-            isValid = false;
-        }
-
-        if ( ! maxInstances || ! $j.isNumeric(maxInstances) || maxInstances < 1) {
-            this.addOptionError("Must be positive number", "instances");
-            isValid = false;
-        }
-
-        if (this._isClone()) {
-            if ( ! this._image.folder) {
-                this.addOptionError("Please select folder", "folder");
-                isValid = false;
-            }
-            if ( ! this._image.pool) {
-                this.addOptionError("Please select pool", "pool");
-                isValid = false;
-            }
-        }
-
-        return isValid;
-    },
     addImage: function () {
         var newImageId = this._lastImageId++,
             newImage = this._image;
@@ -228,7 +189,6 @@ BS.Clouds.VMWareVSphere = BS.Clouds.VMWareVSphere || {
     showEditDialog: function ($elem) {
         var imageId = $elem.parents(this.selectors.imagesTableRow).data('image-id');
 
-        this._image = $j.extend({}, this.imagesData[imageId]);
         this.showDialog('edit', imageId);
 
         this.fetchOptionsDeferred.then(function () {
@@ -236,9 +196,10 @@ BS.Clouds.VMWareVSphere = BS.Clouds.VMWareVSphere || {
         }.bind(this));
     },
     showDialog: function (action, imageId) {
-        this.clearOptionsErrors();
         $j('#VMWareImageDialogTitle').text((action ? 'Edit' : 'Add') + ' Image');
 
+        this._initImage(); this.clearOptionsErrors(); // fix: 'ESC' closes dialog without calling custom `close`
+        typeof imageId !== 'undefined' && (this._image = $j.extend({}, this.imagesData[imageId]));
         this.$dialogSubmitButton.val(action ? 'Save' : 'Add').data('image-id', imageId);
 
         BS.VMWareImageDialog.showCentered();
@@ -354,7 +315,6 @@ BS.Clouds.VMWareVSphere = BS.Clouds.VMWareVSphere || {
         var editDelegates = this.selectors.imagesTableRow + ' .highlight, ' + this.selectors.editImageLink;
         this.$imagesTable.on('click', editDelegates, function () {
             self.showEditDialog($j(this));
-
             return false;
         });
 
@@ -572,11 +532,56 @@ BS.Clouds.VMWareVSphere = BS.Clouds.VMWareVSphere || {
 <td class="edit highlight"><a href="#" class="editVmImageLink">edit</a></td>\
 <td class="remove"><a href="#" class="removeVmImageLink">delete</a></td>\
         </tr>'),
-        imagesSelect: $j('<select name="prop:_image" id="image" data-err-id="image" class="longField">\
+        imagesSelect: $j('<select name="prop:_image" id="image" data-err-id="name" data-id="name" class="longField">\
 <option value="">--Please select a VM--</option>\
 <optgroup label="Virtual machines" class="vmGroup"></optgroup>\
 <optgroup label="Templates" class="templatesGroup"></optgroup>\
 </select>')
+    },
+    validateOptions: function (options) {
+        var maxInstances = this._image.maxInstances,
+            isValid = true;
+
+        if (options && ! $j.isArray(options)) {
+            options = [options];
+        }
+
+        this.clearOptionsErrors(options);
+
+        // checking properties
+        if ( ! this._image.sourceName) {
+            this.addOptionError("Please select a VM", "name");
+            isValid = false;
+        } else {
+            var machine = this.$response.find('VirtualMachine[name="' + this._image.sourceName + '"]');
+            if (! machine.length) {
+                this.addOptionError("Source " + this._image.sourceName + " cannot be found", "name");
+                isValid = false;
+            } else {
+                if (machine.attr('template') == 'true' && this._image.behaviour === 'START') {
+                    this.addOptionError("START behaviour cannot be selected for templates", "behaviour");
+                    isValid = false;
+                }
+            }
+        }
+
+        if ( ! maxInstances || ! $j.isNumeric(maxInstances) || maxInstances < 1) {
+            this.addOptionError("Must be positive number", "instances");
+            isValid = false;
+        }
+
+        if (this._isClone()) {
+            if ( ! this._image.folder) {
+                this.addOptionError("Please select folder", "folder");
+                isValid = false;
+            }
+            if ( ! this._image.pool) {
+                this.addOptionError("Please select pool", "pool");
+                isValid = false;
+            }
+        }
+
+        return isValid;
     },
     validateImages: function () {
         var updateIcon = function(imageId, type, title, symbol) {
@@ -618,18 +623,18 @@ BS.Clouds.VMWareVSphere = BS.Clouds.VMWareVSphere || {
         }.bind(this));
     },
     resetDataAndDialog: function () {
-        this._image = {};
+        this._initImage();
 
         if (this.$response) {
             this._triggerDialogChange();
         }
+        this.clearOptionsErrors();
     },
     _triggerDialogChange: function () {
         var image = this._image;
 
         this.$image.trigger('change', image.sourceName || '');
-        this.$options.find(this.selectors.cloneBehaviourRadio).trigger('change', image.behaviour);
-        //this.$snapshot.trigger('change', image.snapshot || '');
+        this.$options.find(this.selectors.cloneBehaviourRadio).trigger('change', image.behaviour || '');
         this.fetchSnapshotsDeferred && this.fetchSnapshotsDeferred
             .then(function () {
                 this.$snapshot.trigger('change', image.snapshot === '[Latest Version]' ? '' : image.snapshot);
@@ -637,7 +642,13 @@ BS.Clouds.VMWareVSphere = BS.Clouds.VMWareVSphere || {
         this.$resourcePool.trigger('change', image.pool || '');
         this.$cloneFolder.trigger('change', image.folder || '');
         this.$maxInstances.trigger('change', image.maxInstances || '');
+    },
+    _initImage: function () {
+        this._image = {
+            maxInstances: 1
+        };
     }
+
 };
 
 BS.VMWareImageDialog = OO.extend(BS.AbstractModalDialog, {
