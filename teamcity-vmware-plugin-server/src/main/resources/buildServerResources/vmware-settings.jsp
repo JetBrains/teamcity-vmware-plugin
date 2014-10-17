@@ -104,7 +104,7 @@
                 <th>Select an image type:</th>
                 <td>
                     <div>
-                        <input type="radio" id="cloneBehaviour_CLONE" name="cloneBehaviour" value="CLONE" class="cloneBehaviourRadio" data-id="behaviour"/>
+                        <input type="radio" id="cloneBehaviour_CLONE" name="cloneBehaviour" value="FRESH_CLONE" class="cloneBehaviourRadio" data-id="behaviour"/>
                         <label for="cloneBehaviour_CLONE">Fresh clone</label>
                     </div>
                     <div>
@@ -112,7 +112,7 @@
                         <label for="cloneBehaviour_ON_DEMAND_CLONE">On demand clone</label>
                     </div>
                     <div>
-                        <input type="radio" id="cloneBehaviour_START" name="cloneBehaviour" value="START" class="cloneBehaviourRadio" data-id="behaviour"/>
+                        <input type="radio" id="cloneBehaviour_START" name="cloneBehaviour" value="START_STOP" class="cloneBehaviourRadio" data-id="behaviour"/>
                         <label for="cloneBehaviour_START">Start/Stop instance</label>
                     </div>
                     <span class="error option-error option-error_behaviour"></span>
