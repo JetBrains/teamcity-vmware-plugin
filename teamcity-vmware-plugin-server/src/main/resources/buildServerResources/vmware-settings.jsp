@@ -94,14 +94,14 @@
             <th><label for="image">Source:</label></th>
             <td>
                 <div>
-                    <select name="_image" id="image" data-err-id="image" data-id="name" class="longField"></select>
+                    <select name="_image" id="image" data-err-id="name" data-id="name" class="longField"></select>
                 </div>
                 <span class="error option-error option-error_name"></span>
             </td>
         </tr>
 
             <tr>
-                <th>Select an image type:</th>
+                <th>Behaviour:</th>
                 <td>
                     <div>
                         <input type="radio" id="cloneBehaviour_CLONE" name="cloneBehaviour" value="FRESH_CLONE" class="cloneBehaviourRadio" data-id="behaviour"/>
