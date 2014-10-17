@@ -66,7 +66,7 @@
         <table id="vmwareImagesTable" class="settings imagesTable hidden">
           <tbody>
           <tr>
-            <th class="name">Image name</th>
+            <th class="name">Template or Machine</th>
             <th class="name">Snapshot</th>
             <th class="name hidden">Clone folder</th>
             <th class="name hidden">Resource pool</th>

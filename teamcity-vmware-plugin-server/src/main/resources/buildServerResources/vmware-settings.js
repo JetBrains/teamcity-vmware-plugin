@@ -619,7 +619,7 @@ BS.Clouds.VMWareVSphere = BS.Clouds.VMWareVSphere || {
             if (machine.attr('template') == 'true' && this.imagesData[imageId].behaviour === 'START') {
                 return updateIcon(imageId, 'error', 'START behaviour cannot be selected for templates');
             }
-            updateIcon(imageId, 'info', machine.attr('template') == 'true' ? 'Template' : 'Image', machine.attr('template') == 'true' ? 'T' : 'I');
+            updateIcon(imageId, 'info', machine.attr('template') == 'true' ? 'Template' : 'Machine', machine.attr('template') == 'true' ? 'T' : 'M');
         }.bind(this));
     },
     resetDataAndDialog: function () {
