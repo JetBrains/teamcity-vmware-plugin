@@ -103,17 +103,18 @@
             <tr>
                 <th>Behaviour:&nbsp;<l:star/></th>
                 <td>
+                    <input type="hidden" class="behaviour__value" data-id="behaviour" data-err-id="behaviour"/>
                     <div>
-                        <input type="radio" id="cloneBehaviour_CLONE" name="cloneBehaviour" value="FRESH_CLONE" class="cloneBehaviourRadio" data-id="behaviour" data-err-id="behaviour"/>
-                        <label for="cloneBehaviour_CLONE">Fresh clone</label>
-                    </div>
-                    <div>
-                        <input type="radio" id="cloneBehaviour_ON_DEMAND_CLONE" name="cloneBehaviour" value="ON_DEMAND_CLONE" class="cloneBehaviourRadio" data-id="behaviour" data-err-id="behaviour"/>
+                        <input type="radio" id="cloneBehaviour_ON_DEMAND_CLONE" name="cloneBehaviour" value="ON_DEMAND_CLONE" class="behaviour__switch behaviour__switch_radio"/>
                         <label for="cloneBehaviour_ON_DEMAND_CLONE">On demand clone</label>
                     </div>
                     <div>
-                        <input type="radio" id="cloneBehaviour_START" name="cloneBehaviour" value="START_STOP" class="cloneBehaviourRadio" data-id="behaviour" data-err-id="behaviour"/>
-                        <label for="cloneBehaviour_START">Start/Stop instance</label>
+                        <input type="checkbox" id="cloneBehaviour_FRESH_CLONE" name="cloneBehaviour" value="FRESH_CLONE" class="behaviour__switch behaviour__switch_checkbox"/>
+                        <label for="cloneBehaviour_FRESH_CLONE">Fresh clone</label>
+                    </div>
+                    <div>
+                        <input type="radio" id="cloneBehaviour_START_STOP" name="cloneBehaviour" value="START_STOP" class="behaviour__switch behaviour__switch_radio"/>
+                        <label for="cloneBehaviour_START_STOP">Start/Stop instance</label>
                     </div>
                     <span class="error option-error option-error_behaviour"></span>
                 </td>

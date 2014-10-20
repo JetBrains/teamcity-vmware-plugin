@@ -47,13 +47,18 @@
     padding-top: 20px;
 }
 
+#VMWareImageDialog .behaviour__switch_checkbox {
+    margin-left: 26px;
+}
+
+/* Images Table */
+
 .imagesOuterWrapper {
     padding-left: 8px;
 }
 .imagesTableWrapper {
     margin-bottom: 0.5em;
 }
-/* Images Table */
 
 .imagesTableRow:hover .highlight {
     background-color: #ffffcc;
