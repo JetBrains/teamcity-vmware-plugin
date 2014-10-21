@@ -46,9 +46,9 @@ public class VMWareCloudClientTest extends BaseTestCase {
     myClientParameters.setParameter("serverUrl", "http://localhost:8080");
     myClientParameters.setParameter("username", "un");
     myClientParameters.setParameter("password", "pw");
-    myClientParameters.setParameter("vmware_images_data", "image1;;;;START_STOP;3;X;:" +
-                                                          "image2;snap*;cf;rp;ON_DEMAND_CLONE;3;X;:" +
-                                                          "image_template;;cf;rp;FRESH_CLONE;3;X;:");
+    myClientParameters.setParameter("vmware_images_data", "[{sourceName:'image1', behaviour:'START_STOP'}," +
+                                                          "{sourceName:'image2',snapshot:'snap*',folder:'cf',pool:'rp',maxInstances:3,behaviour:'ON_DEMAND_CLONE'}," +
+                                                          "{sourceName:'image_template',folder:'cf',pool:'rp',maxInstances:3,behaviour:'FRESH_CLONE'}]");
 
     myFakeApi = new FakeApiConnector();
     FakeModel.instance().addFolder("cf");
@@ -248,9 +248,9 @@ public class VMWareCloudClientTest extends BaseTestCase {
   }
 
   public void on_demand_clone_should_create_new_when_version_changes() throws Exception {
-    myClientParameters.setParameter("vmware_images_data", "image1;;cf;rp;ON_DEMAND_CLONE;3;X;:" +
-                                                          "image2;snap*;cf;rp;ON_DEMAND_CLONE;3;X;:" +
-                                                          "image_template;;cf;rp;FRESH_CLONE;3;X;:");
+    myClientParameters.setParameter("vmware_images_data","[{sourceName:'image1',folder:'cf',pool:'rp',maxInstances:3, behaviour:'ON_DEMAND_CLONE'}," +
+                                                         "{sourceName:'image2',snapshot:'snap*',folder:'cf',pool:'rp',maxInstances:3,behaviour:'ON_DEMAND_CLONE'}," +
+                                                         "{sourceName:'image_template',folder:'cf',pool:'rp',maxInstances:3,behaviour:'FRESH_CLONE'}]");
     recreateClient();
 
 
@@ -369,10 +369,10 @@ public class VMWareCloudClientTest extends BaseTestCase {
 
   public void existing_clones_with_start_stop() throws MalformedURLException, RemoteException {
     final VmwareCloudInstance cloneInstance = startNewInstanceAndWait("image2");
+    myClientParameters.setParameter("vmware_images_data", "[{sourceName:'image1', behaviour:'START_STOP'}," +
+                                                          "{sourceName:'image2', behaviour:'START_STOP'}," +
+                                                          "{sourceName:'image_template',folder:'cf',pool:'rp',maxInstances:3,behaviour:'FRESH_CLONE'}]");
 
-    myClientParameters.setParameter("vmware_images_data", "image1;;;;START_STOP;0;X;:" +
-                                                          "image2;;;;START_STOP;0;X;:" +
-                                                          "image_template;;cf;rp;FRESH_CLONE;3;X;:");
     recreateClient();
     boolean checked = false;
     for (VmwareCloudImage image : myClient.getImages()) {
