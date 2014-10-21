@@ -18,6 +18,7 @@
 
 package jetbrains.buildServer.clouds.vmware;
 
+import com.google.gson.Gson;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import java.net.MalformedURLException;
@@ -75,14 +76,9 @@ public class VMWareCloudClientFactory extends AbstractCloudClientFactory<VmwareC
 
   static Collection<VmwareCloudImageDetails> parseImageDataInternal(final CloudClientParameters params) {
     final String imagesData = params.getParameter("vmware_images_data");
-    final String[] split = imagesData.split(";X;:");
-    List<VmwareCloudImageDetails> images = new ArrayList<VmwareCloudImageDetails>();
-    for (String s : split) {
-      final VmwareCloudImageDetails e = VmwareCloudImageDetails.fromString(s.trim());
-      if (e != null)
-        images.add(e);
-    }
-    return images;
+    Gson gson = new Gson();
+    final VmwareCloudImageDetails[] details = gson.fromJson(imagesData, VmwareCloudImageDetails[].class);
+    return Arrays.asList(details);
   }
 
   @Nullable

@@ -18,6 +18,7 @@
 
 package jetbrains.buildServer.clouds.vmware;
 
+import com.google.gson.annotations.SerializedName;
 import jetbrains.buildServer.clouds.base.beans.AbstractCloudImageDetails;
 import jetbrains.buildServer.clouds.base.types.CloudCloneType;
 import jetbrains.buildServer.util.StringUtil;
@@ -29,41 +30,35 @@ import org.jetbrains.annotations.NotNull;
  *         Time: 5:37 PM
  */
 public class VmwareCloudImageDetails extends AbstractCloudImageDetails {
-  private final String myVmName;
+  @SerializedName("sourceName")
+  private final String mySourceName;
+  @SerializedName("folder")
   private final String myFolderName;
+  @SerializedName("pool")
   private final String myResourcePoolName;
+  @SerializedName("snapshot")
   private final String mySnapshotName;
+  @SerializedName("behaviour")
   private final CloudCloneType myCloneType;
-  private final int myMaxInstancesCount;
+  @SerializedName("maxInstances")
+  private final int myMaxInstances;
 
-  public static VmwareCloudImageDetails fromString(@NotNull final String s){
-    final String[] split = s.split(";");
-    String vmName = split[0];
-    String snapshotName = split[1];
-    String cloneFolder = split[2];
-    String resourcePool = split[3];
-    String behaviourStr = split[4];
-    String maxInstancesStr = split[5];
-
-    return new VmwareCloudImageDetails(vmName, snapshotName, cloneFolder, resourcePool, CloudCloneType.valueOf(behaviourStr), Integer.parseInt(maxInstancesStr));
-  }
-
-  private VmwareCloudImageDetails(final String vmName,
-                                  final String snapshotName,
-                                  final String folderName,
-                                 final String resourcePoolName,
-                                 final CloudCloneType cloneType,
-                                 final int maxInstancesCount) {
-    myVmName = vmName;
+  public VmwareCloudImageDetails(@NotNull final String sourceName,
+                                 final String snapshotName,
+                                 @NotNull final String folderName,
+                                 @NotNull final String resourcePoolName,
+                                 @NotNull final CloudCloneType cloneType,
+                                 final int maxInstances) {
+    mySourceName = sourceName;
     myFolderName = folderName;
     myResourcePoolName = resourcePoolName;
     mySnapshotName = StringUtil.isEmpty(snapshotName) ? null : snapshotName;
     myCloneType = cloneType;
-    myMaxInstancesCount = maxInstancesCount;
+    myMaxInstances = maxInstances;
   }
 
-  public String getVmName() {
-    return myVmName;
+  public String getSourceName() {
+    return mySourceName;
   }
 
   public String getFolderName() {
@@ -82,7 +77,7 @@ public class VmwareCloudImageDetails extends AbstractCloudImageDetails {
     return myCloneType;
   }
 
-  public int getMaxInstancesCount() {
-    return myMaxInstancesCount;
+  public int getMaxInstances() {
+    return myMaxInstances;
   }
 }

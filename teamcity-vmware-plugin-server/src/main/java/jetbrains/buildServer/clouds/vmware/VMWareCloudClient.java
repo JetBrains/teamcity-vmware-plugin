@@ -79,7 +79,7 @@ public class VMWareCloudClient extends AbstractCloudClient<VmwareCloudInstance, 
     final VMWareApiConnector apiConnector = (VMWareApiConnector)myApiConnector;
 
     /*
-    final VmwareInstance instance = apiConnector.getInstanceDetails(imageDetails.getVmName());
+    final VmwareInstance instance = apiConnector.getInstanceDetails(imageDetails.getSourceName());
 
     if (instance == null) {
       errorList.add(VMWareCloudErrorInfoFactory.noSuchVM(vmName).getMessage());

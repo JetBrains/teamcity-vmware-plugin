@@ -27,13 +27,11 @@ import java.util.*;
 import java.util.concurrent.Callable;
 import jetbrains.buildServer.clouds.*;
 import jetbrains.buildServer.clouds.base.AbstractCloudImage;
-import jetbrains.buildServer.clouds.base.connector.AbstractInstance;
 import jetbrains.buildServer.clouds.base.connector.CloudAsyncTaskExecutor;
 import jetbrains.buildServer.clouds.base.connector.TaskCallbackHandler;
 import jetbrains.buildServer.clouds.vmware.connector.VMWareApiConnector;
 import jetbrains.buildServer.clouds.vmware.connector.VmwareInstance;
 import jetbrains.buildServer.clouds.vmware.connector.VmwareTaskWrapper;
-import jetbrains.buildServer.clouds.vmware.errors.VmwareCloudErrorInfo;
 import jetbrains.buildServer.clouds.vmware.errors.VMWareCloudErrorType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -54,17 +52,17 @@ public class VmwareCloudImage extends AbstractCloudImage<VmwareCloudInstance> im
   public VmwareCloudImage(@NotNull final VMWareApiConnector apiConnector,
                           @NotNull final VmwareCloudImageDetails imageDetails,
                           @NotNull final CloudAsyncTaskExecutor asyncTaskExecutor) {
-    super(imageDetails.getVmName(), imageDetails.getVmName());
+    super(imageDetails.getSourceName(), imageDetails.getSourceName());
     myImageDetails = imageDetails;
     myApiConnector = apiConnector;
     myAsyncTaskExecutor = asyncTaskExecutor;
     final Map<String, VmwareInstance> realInstances = myApiConnector.listImageInstances(this);
     myInstances.clear();
     if (imageDetails.getCloneType().isUseOriginal()) {
-      final VmwareCloudInstance imageInstance = new VmwareCloudInstance(this, imageDetails.getVmName(), null);
-      myInstances.put(myImageDetails.getVmName(), imageInstance);
+      final VmwareCloudInstance imageInstance = new VmwareCloudInstance(this, imageDetails.getSourceName(), null);
+      myInstances.put(myImageDetails.getSourceName(), imageInstance);
 
-      final VmwareInstance vmwareInstance = realInstances.get(imageDetails.getVmName());
+      final VmwareInstance vmwareInstance = realInstances.get(imageDetails.getSourceName());
       if (vmwareInstance != null) {
         imageInstance.setStatus(vmwareInstance.getInstanceStatus());
       } else {
@@ -94,12 +92,12 @@ public class VmwareCloudImage extends AbstractCloudImage<VmwareCloudInstance> im
 
     if (myImageDetails.getCloneType().isUseOriginal()) {
       LOG.info("Won't create a new instance - using original");
-      return myInstances.get(myImageDetails.getVmName());
+      return myInstances.get(myImageDetails.getSourceName());
     }
 
     String latestSnapshotName = null;
     if (myImageDetails.getSnapshotName() != null) { ////means latest clone of snapshot that fits a mask
-      latestSnapshotName = myApiConnector.getLatestSnapshot(myImageDetails.getVmName(), myImageDetails.getSnapshotName());
+      latestSnapshotName = myApiConnector.getLatestSnapshot(myImageDetails.getSourceName(), myImageDetails.getSnapshotName());
       if (latestSnapshotName == null) {
         setErrorType(VMWareCloudErrorType.IMAGE_SNAPSHOT_NOT_EXISTS);
         throw new IllegalArgumentException("Unable to find snapshot: " + myImageDetails.getSnapshotName());
@@ -114,7 +112,7 @@ public class VmwareCloudImage extends AbstractCloudImage<VmwareCloudInstance> im
       final Map<String, VmwareInstance> vmClones = myApiConnector.listImageInstances(this);
 
       // start an existsing one.
-      final VmwareInstance imageVm = myApiConnector.getInstanceDetails(myImageDetails.getVmName());
+      final VmwareInstance imageVm = myApiConnector.getInstanceDetails(myImageDetails.getSourceName());
       if (imageVm == null) {
         throw new IllegalArgumentException("Unable to get VM details: " + myImageDetails.getSnapshotName());
       }
@@ -308,7 +306,7 @@ public class VmwareCloudImage extends AbstractCloudImage<VmwareCloudInstance> im
         runningInstancesNames.add(entry.getKey());
     }
 
-    final boolean canStartMore = getErrorInfo() == null && (runningInstancesNames.size() < myImageDetails.getMaxInstancesCount());
+    final boolean canStartMore = getErrorInfo() == null && (runningInstancesNames.size() < myImageDetails.getMaxInstances());
     LOG.debug(String.format("Running count: %d %s, can start more: %s",
                            runningInstancesNames.size(), Arrays.toString(runningInstancesNames.toArray()), String.valueOf(canStartMore)));
     return canStartMore;
@@ -326,12 +324,12 @@ public class VmwareCloudImage extends AbstractCloudImage<VmwareCloudInstance> im
   }
 
   public void addInstance(@NotNull final VmwareCloudInstance instance){
-    LOG.info(String.format("Image %s, put instance %s", myImageDetails.getVmName(), instance.getName()));
+    LOG.info(String.format("Image %s, put instance %s", myImageDetails.getSourceName(), instance.getName()));
     myInstances.put(instance.getName(), instance);
   }
 
   public void removeInstance(@NotNull final String name){
-    LOG.info(String.format("Image %s, remove instance %s", myImageDetails.getVmName(), name));
+    LOG.info(String.format("Image %s, remove instance %s", myImageDetails.getSourceName(), name));
     myInstances.remove(name);
   }
 

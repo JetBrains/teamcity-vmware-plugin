@@ -25,5 +25,6 @@
     <orderEntry type="module" module-name="resolve-helper" scope="PROVIDED" />
     <orderEntry type="library" name="BuildServer" level="project" />
     <orderEntry type="library" name="server-src" level="project" />
+    <orderEntry type="library" name="com.google.code.gson:gson:2.3" level="project" />
   </component>
 </module>
