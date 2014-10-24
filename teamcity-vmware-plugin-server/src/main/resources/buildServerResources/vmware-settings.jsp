@@ -76,7 +76,9 @@
           </tr>
           </tbody>
         </table>
-        <props:hiddenProperty name="${cons.imagesData}"/>
+        <jsp:useBean id="propertiesBean" scope="request" type="jetbrains.buildServer.controllers.BasePropertiesBean"/>
+        <c:set var="imagesData" value="${propertiesBean.properties[cons.imagesData]}"/>
+        <input type="hidden" name="prop:${cons.imagesData}" id="${cons.imagesData}" value="<c:out value="${imagesData}"/>"/>
     </div>
     <forms:addButton title="Add image" id="vmwareShowDialogButton">Add image</forms:addButton>
 </div>

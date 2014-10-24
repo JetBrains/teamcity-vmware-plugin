@@ -210,17 +210,16 @@ BS.Clouds.VMWareVSphere = BS.Clouds.VMWareVSphere || (function () {
             BS.VMWareImageDialog.showCentered();
         },
         saveImagesData: function () {
-            var data = Object.keys(this.imagesData).map(function (imageId) {
-                return this._dataKeys.map(function (key) {
-                    return this.imagesData[imageId][key];
-                }.bind(this)).join(';').replace(/\[Latest version]/g, '');
-            }.bind(this)).join(';X;:');
+            var imageData = Object.keys(this.imagesData).reduce(function (accumulator, id) {
+                var _val = $j.extend({}, this.imagesData[id]);
 
-            if (data.length) {
-                data+= ';X;:';
-            }
+                delete _val.$image;
+                accumulator.push(_val);
 
-            this.$imagesDataElem.val(data);
+                return accumulator;
+            }.bind(this), []);
+
+            this.$imagesDataElem.val(JSON.stringify(imageData));
         },
         _fetchSnapshotsInProgress: function () {
             return this.fetchSnapshotsDeferred ?
@@ -301,23 +300,16 @@ BS.Clouds.VMWareVSphere = BS.Clouds.VMWareVSphere || (function () {
         },
         _initImagesData: function () {
             var self = this,
-                rawImagesData = this.$imagesDataElem.val() || '',
-                imagesData = rawImagesData && rawImagesData.split(';X;:') || [],
-                namePropIndex = this._dataKeys.indexOf('sourceName');
+                rawImagesData = this.$imagesDataElem.val() || '[]',
+                imagesData = JSON.parse(rawImagesData);
 
             this.imagesData = imagesData.reduce(function (accumulator, imageDataStr) {
-                var props = imageDataStr.split(';'),
-                    id;
-
-                // drop images without name
-                if (props[namePropIndex].length) {
-                    id = self._lastImageId++;
-                    accumulator[id] = {};
-                    self._dataKeys.forEach(function(key, index) {
-                        accumulator[id][key] = props[index];
-                    });
+                // drop images without sourceName
+                if (imageDataStr.sourceName) {
+                    accumulator[self._lastImageId++] = imageDataStr;
                     self._imagesDataLength++;
                 }
+
                 return accumulator;
             }, {});
         },
