@@ -79,7 +79,7 @@ public interface VMWareApiConnector extends CloudApiConnector<VmwareCloudImage, 
 
   boolean ensureSnapshotExists(String instanceName, String snapshotName) throws RemoteException;
 
-  void stopInstance(VmwareCloudInstance instance);
+  Task stopInstance(VmwareCloudInstance instance);
 
   void restartInstance(VmwareCloudInstance instance) throws RemoteException;
 

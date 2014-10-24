@@ -87,10 +87,11 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
     return myServiceInstance.getRootFolder();
   }
 
+  @NotNull
   protected <T extends ManagedEntity> T findEntityByName(String name, Class<T> instanceType) throws RemoteException {
     ManagedEntity entity = new InventoryNavigator(getRootFolder()).searchManagedEntity(instanceType.getSimpleName(), name);
     if (entity == null) {
-      return null;
+      throw new RemoteException(String.format("Unable to find %s '%s'", instanceType.getSimpleName(), name));
     }
     return (T)entity;
   }
@@ -136,6 +137,7 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
     return filteredVms;
   }
 
+  @NotNull
   public Map<String, VmwareInstance> listImageInstances(@NotNull final VmwareCloudImage image)  {
     if(image.getImageDetails().getCloneType().isUseOriginal()){
       try {
@@ -297,6 +299,9 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
 
   public boolean isInstanceStopped(String instanceName) throws RemoteException {
     final VirtualMachine vm = findEntityByName(instanceName, VirtualMachine.class);
+    if (vm == null) {
+      throw new RemoteException("Cannot find VM " + instanceName);
+    }
     if (vm.getRuntime() != null) {
       return vm.getRuntime().getPowerState() == VirtualMachinePowerState.poweredOff;
     }
@@ -326,14 +331,14 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
     return optionValue;
   }
 
-  public void stopInstance(@NotNull final VmwareCloudInstance instance) {
-    instance.setStatus(InstanceStatus.SCHEDULED_TO_STOP);
+  public Task stopInstance(@NotNull final VmwareCloudInstance instance) {
+    instance.setStatus(InstanceStatus.STOPPING);
     try {
       VirtualMachine vm = findEntityByName(instance.getInstanceId(), VirtualMachine.class);
       if (vm != null) {
-        doShutdown(instance, vm);
+        return doShutdown(instance, vm);
       } else {
-        instance.setStatus(InstanceStatus.ERROR);
+        throw new RemoteException("Instance is not available: " + instance.getName());
       }
     } catch (Exception ex) {
       instance.setErrorType(VMWareCloudErrorType.INSTANCE_CANNOT_STOP);
@@ -341,28 +346,97 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
     }
   }
 
-  private void doShutdown(@NotNull final VmwareCloudInstance instance, @NotNull VirtualMachine vm) throws RemoteException, InterruptedException {
+  private Task doShutdown(@NotNull final VmwareCloudInstance instance, @NotNull final VirtualMachine vm) throws RemoteException {
     try {
-      instance.setStatus(InstanceStatus.STOPPING);
-      vm.shutdownGuest();
-      long shutdownStartTime = System.currentTimeMillis();
-      while (getInstanceStatus(vm) != InstanceStatus.STOPPED && (System.currentTimeMillis() - shutdownStartTime) < SHUTDOWN_TIMEOUT) {
-        Thread.sleep(5000);
-        vm = findEntityByName(instance.getInstanceId(), VirtualMachine.class);
-      }
-      if (getInstanceStatus(vm) != InstanceStatus.STOPPED) {
-        throw new RuntimeException("Stop timeout(" + SHUTDOWN_TIMEOUT + ") elapsed.");
-      }
+      guestShutdown(instance, vm);
+      final long shutdownStartTime = System.currentTimeMillis();
+      return new Task(null, null){
+        private final TaskInfo myInfo = new TaskInfo();
 
-    } catch (Exception ex) {
-      LOG.warn("Unable to stop using Guest Shutdown: " + ex.toString());
-      final Task task = vm.powerOffVM_Task();
-      final String powerOffResult = task.waitForTask();
-      if (!Task.SUCCESS.equals(powerOffResult)) {
-        instance.setErrorType(VMWareCloudErrorType.INSTANCE_CANNOT_STOP);
-      }
+        {myInfo.setState(TaskInfoState.running);}
+
+        @Override
+        public String waitForTask() throws RemoteException, InterruptedException {
+          if (waitForStatus(shutdownStartTime, 5000) != InstanceStatus.STOPPED) {
+            myInfo.setState(TaskInfoState.error);
+          } else {
+            myInfo.setState(TaskInfoState.success);
+          }
+          return myInfo.getState().name();
+        }
+
+        @Override
+        public String waitForTask(final int runningDelayInMillSecond, final int queuedDelayInMillSecond) throws RemoteException, InterruptedException {
+          if (runningDelayInMillSecond >= (System.currentTimeMillis() -  shutdownStartTime)){
+            return waitForTask();
+          } else {
+            final InstanceStatus instanceStatus = waitForStatus(runningDelayInMillSecond, 5000);
+            if (instanceStatus == InstanceStatus.STOPPED){
+              myInfo.setState(TaskInfoState.success);
+            }
+          }
+          return myInfo.getState().name();
+        }
+
+        @Override
+        public TaskInfo getTaskInfo() throws RemoteException {
+          try {
+            final InstanceStatus instanceStatus = waitForStatus(0, 5000);
+            if (instanceStatus == InstanceStatus.STOPPED){
+              myInfo.setState(TaskInfoState.success);
+            }
+          } catch (InterruptedException e) {
+            e.printStackTrace();
+          }
+          return myInfo;
+        }
+
+        public InstanceStatus waitForStatus(long maxWaitTime, long delay) throws RemoteException, InterruptedException {
+          VirtualMachine vmCopy = findEntityByName(instance.getInstanceId(), VirtualMachine.class);
+          final long startHere = System.currentTimeMillis();
+          while (getInstanceStatus(vmCopy) != InstanceStatus.STOPPED && (System.currentTimeMillis() - shutdownStartTime) < SHUTDOWN_TIMEOUT) {
+            if ((System.currentTimeMillis() - startHere) <= maxWaitTime) {
+              break;
+            }
+            Thread.sleep(delay);
+            vmCopy = findEntityByName(instance.getInstanceId(), VirtualMachine.class);
+          }
+          return getInstanceStatus(vmCopy);
+        }
+
+        @Override
+        public void cancelTask() throws RemoteException {
+          // do nothing;
+        }
+      };
+    } catch (RemoteException e) {
+      LOG.info("Will attempt to force shutdown due to error: " + e.toString());
+      return forceShutdown(vm);
     }
-    instance.setStatus(InstanceStatus.STOPPED);
+  }
+
+  private void guestShutdown(final VmwareCloudInstance instance, final VirtualMachine vm) throws RemoteException {
+    try {
+      vm.shutdownGuest();
+    } catch (ToolsUnavailable e) {
+      LOG.warn(String.format("Guest tools not installed or unavailable for '%s'", instance.getName()));
+      throw e;
+    } catch (InvalidState e) {
+      final VirtualMachineRuntimeInfo runtime = vm.getRuntime();
+      final String powerStateInfo = runtime==null ? "no runtime info" : runtime.getPowerState().name();
+      LOG.warn(String.format("Invalid power state for '%s': %s", instance.getName(), powerStateInfo));
+      throw e;
+    } catch (TaskInProgress e) {
+      LOG.warn(String.format("Already task in progress for '%s': '%s'", instance.getName(), e.getTask().getType()));
+      throw e;
+    } catch (RuntimeFault runtimeFault) {
+      LOG.warn(String.format("Runtime fault in guest shutdown for '%s': '%s'", instance.getName(), runtimeFault.toString()));
+      throw runtimeFault;
+    }
+  }
+
+  private Task forceShutdown(@NotNull final VirtualMachine vm) throws RemoteException {
+    return vm.powerOffVM_Task();
   }
 
   public void restartInstance(VmwareCloudInstance instance) throws RemoteException {

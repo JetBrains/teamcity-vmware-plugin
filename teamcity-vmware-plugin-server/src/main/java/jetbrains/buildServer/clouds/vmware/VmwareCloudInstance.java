@@ -100,10 +100,10 @@ public class VmwareCloudInstance extends AbstractCloudInstance<VmwareCloudImage>
     return mySnapshotName;
   }
 
-  public void setStatus(final InstanceStatus status) {
+  public void setStatus(@NotNull final InstanceStatus status) {
     if (myStatus == status)
       return;
-    LOG.warn(String.format("Changing %s(%s) status from %s to %s ", getName(), toString(), myStatus, status));
+    LOG.info(String.format("Changing %s(%x) status from %s to %s ", getName(), hashCode(), myStatus, status));
     myStatus = status;
   }
 

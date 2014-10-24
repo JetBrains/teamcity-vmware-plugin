@@ -19,10 +19,7 @@
 package jetbrains.buildServer.clouds.base.tasks;
 
 import com.intellij.openapi.diagnostic.Logger;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import jetbrains.buildServer.clouds.InstanceStatus;
 import jetbrains.buildServer.clouds.base.AbstractCloudClient;
 import jetbrains.buildServer.clouds.base.AbstractCloudImage;
@@ -63,9 +60,13 @@ public class UpdateInstancesTask<G extends AbstractCloudInstance<T>, T extends A
           }
           final InstanceStatus realInstanceStatus = myConnector.getInstanceStatus(instance);
           LOG.info(String.format("Found instance: %s. Status: %s", realInstanceName, realInstanceStatus.getText()));
-          if (realInstanceStatus != null && isStatusPermanent(instance.getStatus()) && isStatusPermanent(realInstanceStatus) && realInstanceStatus != instance.getStatus()) {
+          if (isStatusPermanent(instance.getStatus())
+              && isStatusPermanent(realInstanceStatus)
+              && realInstanceStatus != instance.getStatus()) {
             LOG.info(String.format("Updated instance '%s' status to %s based on API information", realInstanceName, realInstanceStatus));
             instance.setStatus(realInstanceStatus);
+          } else if (instance.getStatus() == InstanceStatus.STOPPED) {
+            instance.updateErrors(null);
           }
         }
 

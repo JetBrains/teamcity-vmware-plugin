@@ -157,6 +157,9 @@ public class VmwareCloudImage extends AbstractCloudImage<VmwareCloudInstance> im
       final VmwareCloudInstance instance = getOrCreateInstance();
       boolean willClone = !myApiConnector.checkVirtualMachineExists(instance.getName());
       LOG.info("Will clone for " + instance.getName() + ": " + willClone);
+      if (willClone && myImageDetails.getMaxInstances() <= myInstances.size()){
+        throw new QuotaException(String.format("Cannot clone '%s' into '%s' - limit exceeded", myImageDetails.getSourceName(), instance.getName()));
+      }
       instance.setStatus(InstanceStatus.SCHEDULED_TO_START);
       if (!myInstances.containsKey(instance.getName())) {
         addInstance(instance);
@@ -259,11 +262,22 @@ public class VmwareCloudImage extends AbstractCloudImage<VmwareCloudInstance> im
 
   public void terminateInstance(@NotNull final VmwareCloudInstance instance) {
     LOG.info("Stopping instance " + instance.getName());
-    myApiConnector.stopInstance(instance);
-    instance.setStatus(InstanceStatus.STOPPED);
-    if (myImageDetails.getCloneType().isDeleteAfterStop()) { // we only destroy proper instances.
-      deleteInstance(instance);
-    }
+    instance.setStatus(InstanceStatus.SCHEDULED_TO_STOP);
+    myAsyncTaskExecutor.executeAsync(new VmwareTaskWrapper(new Callable<Task>() {
+      public Task call() throws Exception {
+        return myApiConnector.stopInstance(instance);
+      }
+    }), new ImageStatusTaskWrapper(instance){
+
+      @Override
+      public void onComplete() {
+        instance.setStatus(InstanceStatus.STOPPED);
+        if (myImageDetails.getCloneType().isDeleteAfterStop()) { // we only destroy proper instances.
+          deleteInstance(instance);
+        }
+      }
+    });
+
   }
 
   private void deleteInstance(@NotNull final VmwareCloudInstance instance){
@@ -300,13 +314,17 @@ public class VmwareCloudImage extends AbstractCloudImage<VmwareCloudInstance> im
         return false;
       }
     }
+
+    if (getErrorInfo() != null){
+      LOG.debug("Can't start new instance, if image is erroneous");
+      return false;
+    }
     final List<String> runningInstancesNames = new ArrayList<String>();
     for (Map.Entry<String, VmwareCloudInstance> entry : myInstances.entrySet()) {
       if (entry.getValue().getStatus() != InstanceStatus.STOPPED)
         runningInstancesNames.add(entry.getKey());
     }
-
-    final boolean canStartMore = getErrorInfo() == null && (runningInstancesNames.size() < myImageDetails.getMaxInstances());
+    final boolean canStartMore =  runningInstancesNames.size() < myImageDetails.getMaxInstances();
     LOG.debug(String.format("Running count: %d %s, can start more: %s",
                            runningInstancesNames.size(), Arrays.toString(runningInstancesNames.toArray()), String.valueOf(canStartMore)));
     return canStartMore;

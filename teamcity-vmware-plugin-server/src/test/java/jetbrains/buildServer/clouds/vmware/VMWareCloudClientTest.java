@@ -354,7 +354,7 @@ public class VMWareCloudClientTest extends BaseTestCase {
   public void should_power_off_if_no_guest_tools_avail() throws InterruptedException {
     final VmwareCloudImage image_template = getImageByName("image_template");
     final VmwareCloudInstance instance = startNewInstanceAndWait("image_template");
-    assertContains(image_template.getInstances(),  instance);
+    assertContains(image_template.getInstances(), instance);
     FakeModel.instance().getVirtualMachine(instance.getName()).disableGuestTools();
     myClient.terminateInstance(instance);
     new WaitFor(2000) {
@@ -364,7 +364,7 @@ public class VMWareCloudClientTest extends BaseTestCase {
       }
     };
     assertNull(FakeModel.instance().getVirtualMachine(instance.getName()));
-    assertNotContains(image_template.getInstances(),  instance);
+    assertNotContains(image_template.getInstances(), instance);
   }
 
   public void existing_clones_with_start_stop() throws MalformedURLException, RemoteException {
@@ -386,6 +386,23 @@ public class VMWareCloudClientTest extends BaseTestCase {
       checked = true;
     }
     assertTrue(checked);
+  }
+
+  public void dont_exceed_max_instances_limit_fresh_clones() throws RemoteException, MalformedURLException {
+    final VmwareCloudInstance[] instances = new VmwareCloudInstance[]{startNewInstanceAndWait("image_template"),
+      startNewInstanceAndWait("image_template")};
+    // shutdown all instances
+    for (VmwareCloudInstance instance : instances) {
+      FakeModel.instance().getVirtualMachine(instance.getName()).powerOffVM_Task();
+    }
+    recreateClient();
+    startNewInstanceAndWait("image_template");
+    try {
+      startNewInstanceAndWait("image_template");
+      fail("Should not clone, because limit exceeded");
+    } catch (QuotaException qex){
+      assertTrue(qex.getMessage().contains("image_template"));
+    }
   }
 
   private static String wrapWithArraySymbols(String str) {
@@ -442,7 +459,6 @@ public class VMWareCloudClientTest extends BaseTestCase {
     }
     return instance;
   }
-
 
   private VmwareCloudInstance startNewInstanceAndWait(String imageName) {
     return startNewInstanceAndWait(imageName, new HashMap<String, String>());
