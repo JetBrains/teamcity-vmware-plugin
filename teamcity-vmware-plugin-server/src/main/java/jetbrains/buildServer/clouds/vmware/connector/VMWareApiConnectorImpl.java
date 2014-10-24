@@ -335,11 +335,7 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
     instance.setStatus(InstanceStatus.STOPPING);
     try {
       VirtualMachine vm = findEntityByName(instance.getInstanceId(), VirtualMachine.class);
-      if (vm != null) {
-        return doShutdown(instance, vm);
-      } else {
-        throw new RemoteException("Instance is not available: " + instance.getName());
-      }
+      return doShutdown(instance, vm);
     } catch (Exception ex) {
       instance.setErrorType(VMWareCloudErrorType.INSTANCE_CANNOT_STOP);
       throw new RuntimeException(ex);
@@ -395,7 +391,7 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
           VirtualMachine vmCopy = findEntityByName(instance.getInstanceId(), VirtualMachine.class);
           final long startHere = System.currentTimeMillis();
           while (getInstanceStatus(vmCopy) != InstanceStatus.STOPPED && (System.currentTimeMillis() - shutdownStartTime) < SHUTDOWN_TIMEOUT) {
-            if ((System.currentTimeMillis() - startHere) <= maxWaitTime) {
+            if ((System.currentTimeMillis() - startHere) >= maxWaitTime) {
               break;
             }
             Thread.sleep(delay);

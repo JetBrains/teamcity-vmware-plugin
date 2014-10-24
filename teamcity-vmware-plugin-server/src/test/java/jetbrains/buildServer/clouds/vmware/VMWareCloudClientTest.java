@@ -224,7 +224,6 @@ public class VMWareCloudClientTest extends BaseTestCase {
     }, false);
     assertEquals(4, FakeModel.instance().getVms().size());
     FakeModel.instance().addVMSnapshot("image2", "snap2");
-
     final VmwareCloudInstance instance1 = startAndCheckInstance("image2", new Checker<VmwareCloudInstance>() {
       public void check(final VmwareCloudInstance data) throws RemoteException {
         assertNotSame(instanceId.get(), data.getInstanceId());
@@ -409,15 +408,21 @@ public class VMWareCloudClientTest extends BaseTestCase {
     return String.format("[%s]", str);
   }
 
-  private void startAndCheckCloneDeletedAfterTermination(String imageName,
+  private VmwareCloudInstance startAndCheckCloneDeletedAfterTermination(String imageName,
                                                          Checker<VmwareCloudInstance> instanceChecker,
                                                          boolean shouldBeDeleted) throws Exception {
     final VmwareCloudInstance instance = startAndCheckInstance(imageName, instanceChecker);
     terminateAndDeleteIfNecessary(shouldBeDeleted, instance);
+    return instance;
   }
 
   private void terminateAndDeleteIfNecessary(final boolean shouldBeDeleted, final VmwareCloudInstance instance) throws RemoteException {
     myClient.terminateInstance(instance);
+    new WaitFor(5*1000){
+      protected boolean condition() {
+        return instance.getStatus()==InstanceStatus.STOPPED;
+      }
+    }.assertCompleted();
     final String name = instance.getName();
     final WaitFor waitFor = new WaitFor(10 * 1000) {
       @Override
