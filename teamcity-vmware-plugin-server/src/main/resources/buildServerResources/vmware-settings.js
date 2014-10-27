@@ -24,7 +24,7 @@ BS.Clouds.VMWareVSphere = BS.Clouds.VMWareVSphere || (function () {
         ON_DEMAND_CLONE = 'ON_DEMAND_CLONE';
     
     return {
-        _dataKeys: [ 'sourceName', 'snapshot', 'folder', 'pool', 'behaviour', 'maxInstances'],
+        _dataKeys: [ 'sourceName', 'snapshot', 'folder', 'pool', 'maxInstances'],
         selectors: {
             imagesSelect: '#image',
             behaviourSwitch: ".behaviour__switch",
@@ -473,12 +473,19 @@ BS.Clouds.VMWareVSphere = BS.Clouds.VMWareVSphere || (function () {
 
             return false;
         },
-        _renderImageRow: function (rows, id) {
-            var $row = this.templates.imagesTableRow.clone().attr('data-image-id', id);
+        _renderImageRow: function (props, id) {
+            var $row = this.templates.imagesTableRow.clone().attr('data-image-id', id),
+                behaviourTexts = {};
 
             this._dataKeys.forEach(function (className) {
-                $row.find('.' + className).text(rows[className]);
+                $row.find('.' + className).text(props[className]);
             });
+
+            behaviourTexts[START_STOP] = 'Start/Stop';
+            behaviourTexts[ON_DEMAND_CLONE] = 'Clone';
+            behaviourTexts[FRESH_CLONE] = 'Clone; Delete';
+
+            $row.find('.behaviour').text(behaviourTexts[props.behaviour]);
             $row.find(this.selectors.rmImageLink).data('image-id', id);
             $row.find(this.selectors.editImageLink).data('image-id', id);
             this.$imagesTable.append($row);

@@ -60,17 +60,17 @@
 </table>
 
 <div class="imagesOuterWrapper">
-    <h3 class="title_underlined">Images</h3>
+    <h3 class="title_underlined">Agent images</h3>
     <div class="imagesTableWrapper hidden">
-        <span class="emptyImagesListMessage hidden">You haven't added any images yet.</span>
+        <span class="emptyImagesListMessage hidden">You haven't added any agent images yet.</span>
         <table id="vmwareImagesTable" class="settings imagesTable hidden">
           <tbody>
           <tr>
-            <th class="name">Template or Machine</th>
+            <th class="name">Agent image</th>
             <th class="name">Snapshot</th>
             <th class="name hidden">Clone folder</th>
             <th class="name hidden">Resource pool</th>
-            <th class="name">behaviour</th>
+            <th class="name">Behaviour</th>
             <th class="name maxInstances">Max # of instances</th>
             <th class="name" colspan="2"></th>
           </tr>
@@ -93,7 +93,7 @@
     <table class="runnerFormTable">
 
         <tr>
-            <th>Source:&nbsp;<l:star/></th>
+            <th>Agent image:&nbsp;<l:star/></th>
             <td>
                 <div>
                     <select name="_image" id="image" class="longField" data-id="sourceName" data-err-id="sourceName"></select>
@@ -108,15 +108,15 @@
                     <input type="hidden" class="behaviour__value" data-id="behaviour" data-err-id="behaviour"/>
                     <div>
                         <input type="radio" id="cloneBehaviour_ON_DEMAND_CLONE" name="cloneBehaviour" value="ON_DEMAND_CLONE" class="behaviour__switch behaviour__switch_radio"/>
-                        <label for="cloneBehaviour_ON_DEMAND_CLONE">On demand clone</label>
+                        <label for="cloneBehaviour_ON_DEMAND_CLONE">Clone a new virtual machine</label>
                     </div>
                     <div>
                         <input type="checkbox" id="cloneBehaviour_FRESH_CLONE" name="cloneBehaviour" value="FRESH_CLONE" class="behaviour__switch behaviour__switch_checkbox"/>
-                        <label for="cloneBehaviour_FRESH_CLONE">Fresh clone</label>
+                        <label for="cloneBehaviour_FRESH_CLONE">Delete machine after a build finishes</label>
                     </div>
                     <div>
                         <input type="radio" id="cloneBehaviour_START_STOP" name="cloneBehaviour" value="START_STOP" class="behaviour__switch behaviour__switch_radio"/>
-                        <label for="cloneBehaviour_START_STOP">Start/Stop instance</label>
+                        <label for="cloneBehaviour_START_STOP">Start/Stop existing instance</label>
                     </div>
                     <span class="error option-error option-error_behaviour"></span>
                 </td>
