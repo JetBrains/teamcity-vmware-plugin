@@ -203,7 +203,7 @@ BS.Clouds.VMWareVSphere = BS.Clouds.VMWareVSphere || (function () {
         showDialog: function (action, imageId) {
             $j('#VMWareImageDialogTitle').text((action ? 'Edit' : 'Add') + ' Image');
 
-            this._initImage(); this._displayedErrors = {}; this.clearOptionsErrors(); // fix: 'ESC' closes dialog without calling custom `close`
+            this._triggerDialogChange(); this._initImage(); this._displayedErrors = {}; this.clearOptionsErrors(); // fix: 'ESC' closes dialog without calling custom `close`
             typeof imageId !== 'undefined' && (this._image = $j.extend({}, this.imagesData[imageId]));
             this.$dialogSubmitButton.val(action ? 'Save' : 'Add').data('image-id', imageId);
 
@@ -234,7 +234,6 @@ BS.Clouds.VMWareVSphere = BS.Clouds.VMWareVSphere || (function () {
                 return false;
             }
             this.fetchSnapshotsDeferred = $j.Deferred();
-            $j('#realImageInput').val(this.$image.val());
             this._toggleLoadingMessage('fetchSnapshots', true);
             if (this._isClone()) {
                 this._toggleDialogSubmitButton();
@@ -301,7 +300,14 @@ BS.Clouds.VMWareVSphere = BS.Clouds.VMWareVSphere || (function () {
         _initImagesData: function () {
             var self = this,
                 rawImagesData = this.$imagesDataElem.val() || '[]',
+                imagesData;
+
+            try {
                 imagesData = JSON.parse(rawImagesData);
+            } catch (e) {
+                imagesData = [];
+                BS.Log.error('Bad images data: ' + rawImagesData);
+            }
 
             this.imagesData = imagesData.reduce(function (accumulator, imageDataStr) {
                 // drop images without sourceName
@@ -374,15 +380,18 @@ BS.Clouds.VMWareVSphere = BS.Clouds.VMWareVSphere || (function () {
                     $j(this.selectors.behaviourSwitch).prop('checked', false);
                     $j('#cloneBehaviour_' + value).prop('checked', true);
                     freshClone.prop('disabled', value === START_STOP);
-
-                    if (value === FRESH_CLONE) {
-                        onDemandClone.prop('checked', true);
-                    }
                 }
+
+                if ((value || this._image.behaviour) === FRESH_CLONE) {
+                    onDemandClone.prop('checked', true);
+                }
+
                 this.clearErrors(e.target.getAttribute('data-err-id'));
                 $elementsToToggle.toggle(this._isClone());
 
-                if (! this._isClone()) {
+                if (this._isClone()) {
+                    this.fetchSnapshots();
+                } else {
                     $elementsToToggle.each(function () {
                         delete self._image[this.getAttribute('data-id')];
                     })
@@ -543,6 +552,9 @@ BS.Clouds.VMWareVSphere = BS.Clouds.VMWareVSphere || (function () {
             $snapshots.each(function () {
                 self._appendOption(self.$snapshot, $j(this).attr("name"));
             });
+        },
+        _clearSnapshotsSelect: function () {
+            this._displaySnapshotSelect([]);
         },
         _isClone: function () {
             return !!(this._image.behaviour && this._image.behaviour !== START_STOP);
@@ -707,6 +719,7 @@ BS.Clouds.VMWareVSphere = BS.Clouds.VMWareVSphere || (function () {
         },
         _initImage: function () {
             this._image = {
+                behaviour: ON_DEMAND_CLONE,
                 maxInstances: 1
             };
         }

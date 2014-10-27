@@ -83,8 +83,6 @@
     <forms:addButton title="Add image" id="vmwareShowDialogButton">Add image</forms:addButton>
 </div>
 
-<i></i>
-<input type="hidden" name="prop:image" id="realImageInput"/>
 <bs:dialog dialogId="VMWareImageDialog" title="Add Image" closeCommand="BS.VMWareImageDialog.close()"
            dialogClass="VMWareImageDialog vmWareSphereOptions" titleId="VMWareImageDialogTitle"
         ><div class="message-wrapper"><div class="fetchingServerOptions message message_hidden"><i class="icon-refresh icon-spin"></i>Fetching server options...</div>
