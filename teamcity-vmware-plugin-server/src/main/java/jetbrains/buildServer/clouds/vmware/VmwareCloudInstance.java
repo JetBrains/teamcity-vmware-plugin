@@ -47,7 +47,6 @@ public class VmwareCloudInstance extends AbstractCloudInstance<VmwareCloudImage>
   private final VmwareCloudImage myImage;
   private InstanceStatus myStatus = InstanceStatus.UNKNOWN;
   private final VmwareCloudErrorInfo myErrorInfo;
-  private Date myStartDate;
   private String myIpAddress;
   private String mySnapshotName;
 
@@ -56,7 +55,6 @@ public class VmwareCloudInstance extends AbstractCloudInstance<VmwareCloudImage>
     myImage = image;
     myInstanceName = instanceName;
     mySnapshotName = snapshotName;
-    myStartDate = new Date();
     myErrorInfo = new VmwareCloudErrorInfo(this);
   }
 
@@ -80,10 +78,6 @@ public class VmwareCloudInstance extends AbstractCloudInstance<VmwareCloudImage>
     return myImage;
   }
 
-  @NotNull
-  public Date getStartedTime() {
-    return myStartDate;
-  }
 
   @Nullable
   public String getNetworkIdentity() {
@@ -115,7 +109,6 @@ public class VmwareCloudInstance extends AbstractCloudInstance<VmwareCloudImage>
       return;
     }
     if (vm.isPoweredOn()) {
-      myStartDate = vm.getStartDate();
       if (myStatus == InstanceStatus.STOPPED) {
         setStatus(InstanceStatus.RUNNING);
       }
