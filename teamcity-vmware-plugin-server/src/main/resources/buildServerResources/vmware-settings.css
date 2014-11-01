@@ -16,6 +16,10 @@
  *
  */
 
+.section-header {
+    margin: 13px 0 13px 8px;
+}
+
 /* Add/edit dialog */
 #VMWareImageDialog {
     width: auto;

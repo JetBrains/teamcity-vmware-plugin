@@ -30,6 +30,7 @@
 <jsp:useBean id="refreshSnapshotsPath" class="java.lang.String" scope="request"/>
 </table>
 
+<h2 class="noBorder section-header">Cloud Access Information</h2>
 <script type="text/javascript">
     BS.LoadStyleSheetDynamically("<c:url value='${resPath}vmware-settings.css'/>");
 </script>
@@ -59,8 +60,8 @@
   </tr>
 </table>
 
+<h2 class="noBorder section-header">Agent Images</h2>
 <div class="imagesOuterWrapper">
-    <h3 class="title_underlined">Agent images</h3>
     <div class="imagesTableWrapper hidden">
         <span class="emptyImagesListMessage hidden">You haven't added any agent images yet.</span>
         <table id="vmwareImagesTable" class="settings imagesTable hidden">
