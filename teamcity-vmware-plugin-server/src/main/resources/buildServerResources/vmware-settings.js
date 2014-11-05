@@ -601,6 +601,7 @@ BS.Clouds.VMWareVSphere = BS.Clouds.VMWareVSphere || (function () {
 </select>')
         },
         _errors: {
+            badParam: 'Bad parameter',
             required: 'Required field cannot be left blank',
             templateStart: 'START_STOP behaviour cannot be selected for templates',
             positiveNumber: 'Must be positive number',
@@ -688,17 +689,22 @@ BS.Clouds.VMWareVSphere = BS.Clouds.VMWareVSphere || (function () {
             }.bind(this);
 
             Object.keys(this.imagesData).forEach(function (imageId) {
-                var name = this.imagesData[imageId].sourceName,
-                    machine = this.$response.find('VirtualMachine[name="' + name + '"]');
+                var machine = this.imagesData[imageId],
+                    name = machine.sourceName,
+                    $machine = this.$response.find('VirtualMachine[name="' + name + '"]');
 
-                if (! machine.length) {
+                if (! $machine.length) {
                     return updateIcon(imageId, 'error', 'Nonexistent source');
                 }
 
-                if (machine.attr('template') == 'true' && this.imagesData[imageId].behaviour === START_STOP) {
+                if ($machine.attr('template') == 'true' && this.imagesData[imageId].behaviour === START_STOP) {
                     return updateIcon(imageId, 'error', this._errors.templateStart);
                 }
-                updateIcon(imageId, 'info', machine.attr('template') == 'true' ? 'Template' : 'Machine', machine.attr('template') == 'true' ? 'T' : 'M');
+
+                if (! machine.behaviour || ! machine.maxInstances) {
+                    return updateIcon(imageId, 'error', this._errors.badParam);
+                }
+                updateIcon(imageId, 'info', $machine.attr('template') == 'true' ? 'Template' : 'Machine', $machine.attr('template') == 'true' ? 'T' : 'M');
             }.bind(this));
         },
         resetDataAndDialog: function () {
