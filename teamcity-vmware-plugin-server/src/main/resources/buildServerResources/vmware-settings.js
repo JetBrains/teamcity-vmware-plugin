@@ -518,7 +518,7 @@ BS.Clouds.VMWareVSphere = BS.Clouds.VMWareVSphere || (function () {
                 $templatesGroup = $select.find(".templatesGroup");
 
             $vms.each(function () {
-                self._appendOption($j(this).attr('template') == 'false' ? $vmGroup : $templatesGroup, $j(this).attr('name'));
+                self._appendOption($j(this).attr('template') == 'true' ? $templatesGroup : $vmGroup, $j(this).attr('name'));
             });
 
             this.$image.replaceWith($select);
@@ -602,9 +602,9 @@ BS.Clouds.VMWareVSphere = BS.Clouds.VMWareVSphere || (function () {
         },
         _errors: {
             required: 'Required field cannot be left blank',
-                templateStart: 'START_STOP behaviour cannot be selected for templates',
-                positiveNumber: 'Must be positive number',
-                nonexistent: "The %%elem%% &laquo;%%val%%&raquo; does not exist"
+            templateStart: 'START_STOP behaviour cannot be selected for templates',
+            positiveNumber: 'Must be positive number',
+            nonexistent: 'The %%elem%% &laquo;%%val%%&raquo; does not exist'
         },
         validateOptions: function (options) {
             var maxInstances = this._image.maxInstances,
