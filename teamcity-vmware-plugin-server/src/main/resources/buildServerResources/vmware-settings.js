@@ -233,7 +233,22 @@ BS.Clouds.VMWareVSphere = BS.Clouds.VMWareVSphere || (function () {
             if (this._fetchSnapshotsInProgress()) {
                 return false;
             }
-            this.fetchSnapshotsDeferred = $j.Deferred();
+            this.fetchSnapshotsDeferred = $j.Deferred()
+                .done(function (response) {
+                    var $response = $j(response.responseXML);
+
+                    this._toggleDialogSubmitButton(true);
+
+                    if ($response.length) {
+                        this._displaySnapshotSelect($response.find('Snapshots:eq(0) Snapshot'));
+                    }
+                    this._toggleLoadingMessage('fetchSnapshots');
+
+                    return response;
+                }.bind(this))
+                .fail(function (response) {
+                    BS.Log.error(response);
+                });
             this._toggleLoadingMessage('fetchSnapshots', true);
             if (this._isClone()) {
                 this._toggleDialogSubmitButton();
@@ -244,16 +259,7 @@ BS.Clouds.VMWareVSphere = BS.Clouds.VMWareVSphere || (function () {
                     this.fetchSnapshotsDeferred.reject(response);
                 },
                 onSuccess: function (response) {
-                    var $response = $j(response.responseXML);
-
-                    this._toggleDialogSubmitButton(true);
-
-                    if ($response.length) {
-                        this._displaySnapshotSelect($response.find('Snapshots:eq(0) Snapshot'));
-                    }
-                    this._toggleLoadingMessage('fetchSnapshots');
-
-                    this.fetchSnapshotsDeferred.resolve();
+                    this.fetchSnapshotsDeferred.resolve(response);
                 }.bind(this)
             });
         },
@@ -657,7 +663,7 @@ BS.Clouds.VMWareVSphere = BS.Clouds.VMWareVSphere || (function () {
             return isValid;
         },
         validateImages: function () {
-            var updateIcon = function(imageId, type, title, symbol) {
+            var updateIcon = function (imageId, type, title, symbol) {
                 var $icon = this.$imagesTable.find(this.selectors.imagesTableRow + '[data-image-id=' + imageId + '] .sourceIcon');
 
                 $icon.removeClass().addClass('sourceIcon').removeAttr('title');
