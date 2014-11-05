@@ -233,6 +233,8 @@ BS.Clouds.VMWareVSphere = BS.Clouds.VMWareVSphere || (function () {
             if (this._fetchSnapshotsInProgress()) {
                 return false;
             }
+
+            $j('#realImageInput').val(this.$image.val());
             this.fetchSnapshotsDeferred = $j.Deferred()
                 .done(function (response) {
                     var $response = $j(response.responseXML);
