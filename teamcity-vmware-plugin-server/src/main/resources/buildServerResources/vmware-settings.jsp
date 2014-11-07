@@ -107,17 +107,17 @@
                 <td>
                     <input type="hidden" class="behaviour__value" data-id="behaviour" data-err-id="behaviour"/>
                     <div>
-                        <input type="radio" id="cloneBehaviour_ON_DEMAND_CLONE" name="cloneBehaviour" value="ON_DEMAND_CLONE" class="behaviour__switch behaviour__switch_radio"/>
+                        <input type="checkbox" id="cloneBehaviour_ON_DEMAND_CLONE" name="cloneBehaviour" value="ON_DEMAND_CLONE" class="behaviour__switch behaviour__switch_radio"/>
                         <label for="cloneBehaviour_ON_DEMAND_CLONE">Clone a new virtual machine</label>
                     </div>
                     <div>
                         <input type="checkbox" id="cloneBehaviour_FRESH_CLONE" name="cloneBehaviour" value="FRESH_CLONE" class="behaviour__switch behaviour__switch_checkbox"/>
                         <label for="cloneBehaviour_FRESH_CLONE">Delete machine after a build finishes</label>
                     </div>
-                    <div>
-                        <input type="radio" id="cloneBehaviour_START_STOP" name="cloneBehaviour" value="START_STOP" class="behaviour__switch behaviour__switch_radio"/>
-                        <label for="cloneBehaviour_START_STOP">Start/Stop existing instance</label>
-                    </div>
+                    <%--<div>--%>
+                        <%--<input type="radio" id="cloneBehaviour_START_STOP" name="cloneBehaviour" value="START_STOP" class="behaviour__switch behaviour__switch_radio"/>--%>
+                        <%--<label for="cloneBehaviour_START_STOP">Start/Stop existing instance</label>--%>
+                    <%--</div>--%>
                     <span class="error option-error option-error_behaviour"></span>
                 </td>
             </tr>
