@@ -65,9 +65,9 @@ BS.Clouds.VMWareVSphere = BS.Clouds.VMWareVSphere || (function () {
             this._lastImageId = this._imagesDataLength = 0;
             this._initImage();
             this._toggleDialogShowButton();
+            this.fetchOptions();
             this._initImagesData();
             this._bindHandlers();
-            this.fetchOptions();
             this.renderImagesTable();
         },
         _fetchOptionsInProgress: function () {
@@ -328,6 +328,11 @@ BS.Clouds.VMWareVSphere = BS.Clouds.VMWareVSphere || (function () {
 
                 return accumulator;
             }, {});
+            this.fetchOptionsDeferred && this.fetchOptionsDeferred.done(function () {
+                Object.keys(this.imagesData).forEach(function (i, key) {
+                    this.imagesData[key].$image = this._getSourceByName(this.imagesData[key].sourceName);
+                }.bind(this))
+            }.bind(this));
         },
         _bindHandlers: function () {
             var self = this;
@@ -358,6 +363,7 @@ BS.Clouds.VMWareVSphere = BS.Clouds.VMWareVSphere || (function () {
             this.$options.on('change', this.selectors.imagesSelect, function(e, value) {
                 if (arguments.length === 1) { // native change by user
                     this._image.sourceName = e.target.value;
+                    this._image.$image = this._getSourceByName(e.target.value);
                 } else {
                     this._tryToUpdateSelect(this.$image, value);
                 }
