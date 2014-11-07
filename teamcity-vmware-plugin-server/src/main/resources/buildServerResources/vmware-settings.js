@@ -377,26 +377,26 @@ BS.Clouds.VMWareVSphere = BS.Clouds.VMWareVSphere || (function () {
             // - clone behaviour
             this.$behaviour.on('change', function (e, value) {
                 var $elementsToToggle = $j(this.selectors.cloneOptionsRow),
+                    startStop = $j('#cloneBehaviour_' + START_STOP),
                     freshClone = $j('#cloneBehaviour_' + FRESH_CLONE),
                     onDemandClone = $j('#cloneBehaviour_' + ON_DEMAND_CLONE);
 
                 if (arguments.length === 1) { // triggered by UI
-                    freshClone.prop('disabled', !onDemandClone.is(':checked'));
+                    freshClone.prop('disabled', startStop.is(':checked'));
 
-                    if (! onDemandClone.is(':checked')) {
-                        this._image.behaviour = START_STOP;
+                    if (startStop.is(':checked')) {
+                        this._image.behaviour = startStop.val();
                     } else if (freshClone.is(':checked')) { // onDemandClone is checked as startStop is not
-                        this._image.behaviour = FRESH_CLONE;
-                    } else {
-                        this._image.behaviour = ON_DEMAND_CLONE;
+                        this._image.behaviour = freshClone.val();
+                        //onDemandClone.prop('checked', true); // just in case
+                    } else if (onDemandClone.is(':checked')){
+                        this._image.behaviour = onDemandClone.val();
                     }
                 } else {
                     $j(this.selectors.behaviourSwitch).prop('checked', false);
                     $j('#cloneBehaviour_' + value).prop('checked', true);
                     freshClone.prop('disabled', value === START_STOP);
                 }
-
-                freshClone.siblings('label').toggleClass('grey', ! onDemandClone.is(':checked'));
 
                 if ((value || this._image.behaviour) === FRESH_CLONE) {
                     onDemandClone.prop('checked', true);
