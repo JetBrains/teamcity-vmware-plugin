@@ -372,6 +372,7 @@ BS.Clouds.VMWareVSphere = BS.Clouds.VMWareVSphere || (function () {
                     this.fetchSnapshots();
                 }
 
+                $j('#cloneBehaviour_' + START_STOP).prop('disabled', this._isTemplate());
                 this.validateOptions(e.target.getAttribute('data-id'));
             }.bind(this));
             // - clone behaviour
