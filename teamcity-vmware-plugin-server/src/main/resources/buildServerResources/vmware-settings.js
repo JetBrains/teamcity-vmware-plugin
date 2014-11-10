@@ -560,18 +560,19 @@ BS.Clouds.VMWareVSphere = BS.Clouds.VMWareVSphere || (function () {
             return this;
         },
         _displaySnapshotSelect: function ($snapshots) {
-            var self = this;
+            var self = this,
+                isAvailable = $snapshots.length && !($snapshots.length === 1 && ! $snapshots[0].getAttribute('value'));
 
-            this.$snapshot
-                .children().remove().end()
-                .append('<option value="">[Latest version]</option>');
+            this.$snapshot.children().remove();
+            $j('#tr_snapshot_name').toggle(this._isClone() && isAvailable);
 
-            $snapshots.each(function () {
-                self._appendOption(self.$snapshot, $j(this).attr('name'));
-            });
-        },
-        _clearSnapshotsSelect: function () {
-            this._displaySnapshotSelect([]);
+            if (isAvailable) {
+                $snapshots.each(function () {
+                    self._appendOption(self.$snapshot, $j(this).attr('value'), $j(this).attr('name'));
+                });
+            } else {
+                this._image.snapshot = '';
+            }
         },
         _isClone: function () {
             return !!(this._image.behaviour && this._image.behaviour !== START_STOP);
