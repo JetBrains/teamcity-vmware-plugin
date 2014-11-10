@@ -305,7 +305,7 @@ public class VmwareCloudImage extends AbstractCloudImage<VmwareCloudInstance, Vm
 
   private String generateNewVmName() {
     Random r = new Random();
-    SimpleDateFormat sdf = new SimpleDateFormat("MMdd-hhmmss");
+    SimpleDateFormat sdf = new SimpleDateFormat("MMdd-HHmmss");
     return String.format("%s-clone-%s%s", getId(), sdf.format(new Date()), Integer.toHexString(r.nextInt(256)));
   }
 
