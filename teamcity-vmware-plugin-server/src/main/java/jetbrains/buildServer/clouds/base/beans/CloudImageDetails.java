@@ -16,31 +16,20 @@
  *
  */
 
-package jetbrains.buildServer.clouds.base.types;
+package jetbrains.buildServer.clouds.base.beans;
+
+import jetbrains.buildServer.clouds.base.types.CloneBehaviour;
 
 /**
  * @author Sergey.Pak
- *         Date: 9/18/2014
- *         Time: 1:23 PM
+ *         Date: 8/1/2014
+ *         Time: 4:45 PM
  */
-public enum CloudCloneType {
-  START_STOP (false, true),
-  FRESH_CLONE (true, false),
-  ON_DEMAND_CLONE(false, false)
-  ;
-  private final boolean myDeleteAfterStop;
-  private final boolean myUseOriginal;
+public interface CloudImageDetails {
 
-  CloudCloneType(final boolean deleteAfterStop, final boolean useOriginal) {
-    myDeleteAfterStop = deleteAfterStop;
-    myUseOriginal = useOriginal;
-  }
+  CloneBehaviour getBehaviour();
 
-  public boolean isDeleteAfterStop() {
-    return myDeleteAfterStop;
-  }
+  int getMaxInstances();
 
-  public boolean isUseOriginal() {
-    return myUseOriginal;
-  }
+  String getSourceName();
 }

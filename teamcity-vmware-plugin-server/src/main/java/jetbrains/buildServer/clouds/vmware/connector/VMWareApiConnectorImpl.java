@@ -139,7 +139,7 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
 
   @NotNull
   public Map<String, VmwareInstance> listImageInstances(@NotNull final VmwareCloudImage image)  {
-    if(image.getImageDetails().getCloneType().isUseOriginal()){
+    if(image.getImageDetails().getBehaviour().isUseOriginal()){
       try {
         final VirtualMachine vmEntity = findEntityByName(image.getName(), VirtualMachine.class);
         final VmwareInstance vmInstance = new VmwareInstance(vmEntity);

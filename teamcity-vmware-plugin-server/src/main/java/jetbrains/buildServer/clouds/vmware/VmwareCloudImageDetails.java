@@ -19,8 +19,8 @@
 package jetbrains.buildServer.clouds.vmware;
 
 import com.google.gson.annotations.SerializedName;
-import jetbrains.buildServer.clouds.base.beans.AbstractCloudImageDetails;
-import jetbrains.buildServer.clouds.base.types.CloudCloneType;
+import jetbrains.buildServer.clouds.base.beans.CloudImageDetails;
+import jetbrains.buildServer.clouds.base.types.CloneBehaviour;
 import jetbrains.buildServer.util.StringUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -29,7 +29,7 @@ import org.jetbrains.annotations.NotNull;
  *         Date: 10/16/2014
  *         Time: 5:37 PM
  */
-public class VmwareCloudImageDetails extends AbstractCloudImageDetails {
+public class VmwareCloudImageDetails implements CloudImageDetails {
   @SerializedName("sourceName")
   private final String mySourceName;
   @SerializedName("folder")
@@ -39,7 +39,7 @@ public class VmwareCloudImageDetails extends AbstractCloudImageDetails {
   @SerializedName("snapshot")
   private final String mySnapshotName;
   @SerializedName("behaviour")
-  private final CloudCloneType myCloneType;
+  private final CloneBehaviour myCloneBehaviour;
   @SerializedName("maxInstances")
   private final int myMaxInstances;
 
@@ -47,13 +47,13 @@ public class VmwareCloudImageDetails extends AbstractCloudImageDetails {
                                  final String snapshotName,
                                  @NotNull final String folderName,
                                  @NotNull final String resourcePoolName,
-                                 @NotNull final CloudCloneType cloneType,
+                                 @NotNull final CloneBehaviour cloneBehaviour,
                                  final int maxInstances) {
     mySourceName = sourceName;
     myFolderName = folderName;
     myResourcePoolName = resourcePoolName;
     mySnapshotName = StringUtil.isEmpty(snapshotName) ? null : snapshotName;
-    myCloneType = cloneType;
+    myCloneBehaviour = cloneBehaviour;
     myMaxInstances = maxInstances;
   }
 
@@ -73,8 +73,8 @@ public class VmwareCloudImageDetails extends AbstractCloudImageDetails {
     return mySnapshotName;
   }
 
-  public CloudCloneType getCloneType() {
-    return myCloneType;
+  public CloneBehaviour getBehaviour() {
+    return myCloneBehaviour;
   }
 
   public int getMaxInstances() {

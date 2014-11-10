@@ -19,23 +19,12 @@
 package jetbrains.buildServer.clouds.vmware;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.text.StringUtil;
-import java.rmi.RemoteException;
 import java.util.*;
-import java.util.concurrent.*;
 import jetbrains.buildServer.clouds.*;
 import jetbrains.buildServer.clouds.base.AbstractCloudClient;
-import jetbrains.buildServer.clouds.base.AbstractCloudImage;
-import jetbrains.buildServer.clouds.base.beans.AbstractCloudImageDetails;
 import jetbrains.buildServer.clouds.base.tasks.UpdateInstancesTask;
 import jetbrains.buildServer.clouds.vmware.connector.VMWareApiConnector;
-import jetbrains.buildServer.clouds.vmware.connector.VmwareInstance;
-import jetbrains.buildServer.clouds.vmware.errors.VMWareCloudErrorInfoFactory;
-import jetbrains.buildServer.clouds.vmware.errors.VMWareCloudErrorType;
-import jetbrains.buildServer.clouds.vmware.tasks.VmwareUpdateInstancesTask;
-import jetbrains.buildServer.clouds.vmware.web.VMWareWebConstants;
 import jetbrains.buildServer.serverSide.AgentDescription;
-import jetbrains.buildServer.serverSide.TeamCityProperties;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -52,9 +41,8 @@ public class VMWareCloudClient extends AbstractCloudClient<VmwareCloudInstance, 
 
 
   public VMWareCloudClient(@NotNull final CloudClientParameters cloudClientParameters,
-                           @NotNull final Collection<VmwareCloudImageDetails> imageDetails,
                            @NotNull final VMWareApiConnector apiConnector) {
-    super(cloudClientParameters, imageDetails, apiConnector);
+    super(cloudClientParameters, apiConnector);
     myIsInitialized = true;
   }
 
@@ -77,46 +65,6 @@ public class VMWareCloudClient extends AbstractCloudClient<VmwareCloudInstance, 
   @Override
   protected VmwareCloudImage checkAndCreateImage(@NotNull final VmwareCloudImageDetails imageDetails) {
     final VMWareApiConnector apiConnector = (VMWareApiConnector)myApiConnector;
-
-    /*
-    final VmwareInstance instance = apiConnector.getInstanceDetails(imageDetails.getSourceName());
-
-    if (instance == null) {
-      errorList.add(VMWareCloudErrorInfoFactory.noSuchVM(vmName).getMessage());
-      break;
-    }
-
-    final VMWareImageStartType startType = VMWareImageStartType.valueOf(behaviourStr);
-    final VMWareImageType imageType = instance.isReadonly() ? VMWareImageType.TEMPLATE : VMWareImageType.INSTANCE;
-    if (startType.isUseOriginal()) {
-      if (imageType == VMWareImageType.TEMPLATE){
-        errorList.add(VMWareCloudErrorInfoFactory.error("Cannot use image % as Start/Stop - it's readonly", vmName).getMessage());
-        break;
-      }
-      final VmwareCloudImage cloudImage = new VmwareCloudImage(
-        myApiConnector, vmName, imageType, cloneFolder, resourcePool, snapshotName,
-        instance.getInstanceStatus(), myAsyncTaskExecutor, startType, 0);
-      myImageMap.put(vmName, cloudImage);
-    } else {
-      int maxInstances = 0;
-      try {
-        maxInstances = Integer.parseInt(maxInstancesStr);
-      } catch (Exception ex) {
-      }
-
-      if (!myApiConnector.checkCloneFolderExists(cloneFolder)) {
-        errorList.add(VMWareCloudErrorInfoFactory.noSuchFolder(cloneFolder).getMessage());
-        break;
-      }
-
-      if (!myApiConnector.checkResourcePoolExists(resourcePool)) {
-        errorList.add(VMWareCloudErrorInfoFactory.noSuchResourcePool(resourcePool).getMessage());
-        break;
-      }
-
-    }
-    */
-
     return new VmwareCloudImage(apiConnector, imageDetails, myAsyncTaskExecutor);
   }
 

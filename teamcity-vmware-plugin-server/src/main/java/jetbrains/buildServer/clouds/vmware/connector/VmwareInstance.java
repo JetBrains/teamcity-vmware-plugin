@@ -30,6 +30,7 @@ import java.util.concurrent.Callable;
 import jetbrains.buildServer.clouds.InstanceStatus;
 import jetbrains.buildServer.clouds.base.connector.AbstractInstance;
 import jetbrains.buildServer.clouds.base.connector.AsyncCloudTask;
+import jetbrains.buildServer.util.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -128,5 +129,9 @@ public class VmwareInstance extends AbstractInstance {
         return myVm.destroy_Task();
       }
     });
+  }
+
+  public String getSnapshotName(){
+    return StringUtil.nullIfEmpty(getProperty(VMWareApiConnector.TEAMCITY_VMWARE_IMAGE_SNAPSHOT));
   }
 }

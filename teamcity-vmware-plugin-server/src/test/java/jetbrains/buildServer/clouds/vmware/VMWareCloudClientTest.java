@@ -57,10 +57,8 @@ public class VMWareCloudClientTest extends BaseTestCase {
     FakeModel.instance().addVM("image2");
     FakeModel.instance().addVM("image_template");
     FakeModel.instance().addVMSnapshot("image2", "snap");
-    final Collection<VmwareCloudImageDetails> images
-      = VMWareCloudClientFactory.parseImageDataInternal(myClientParameters);
 
-    myClient = new VMWareCloudClient(myClientParameters, images, myFakeApi);
+    recreateClient();
     assertNull(myClient.getErrorInfo());
   }
 
@@ -404,6 +402,16 @@ public class VMWareCloudClientTest extends BaseTestCase {
     }
   }
 
+  @Test(expectedExceptions = QuotaException.class, expectedExceptionsMessageRegExp = "Unable to start more instances of image image2")
+  public void check_max_instances_count_on_profile_start() throws MalformedURLException, RemoteException {
+    startNewInstanceAndWait("image2");
+    startNewInstanceAndWait("image2");
+    startNewInstanceAndWait("image2");
+    System.setProperty("teamcity.vsphere.instance.status.update.delay.ms", "25000");
+    recreateClient();
+    startNewInstanceAndWait("image2");
+  }
+
   private static String wrapWithArraySymbols(String str) {
     return String.format("[%s]", str);
   }
@@ -502,9 +510,12 @@ public class VMWareCloudClientTest extends BaseTestCase {
   }
 
   private void recreateClient() throws MalformedURLException, RemoteException {
-    myClient.dispose();
+    if (myClient != null) {
+      myClient.dispose();
+    }
     final Collection<VmwareCloudImageDetails> images = VMWareCloudClientFactory.parseImageDataInternal(myClientParameters);
-    myClient = new VMWareCloudClient(myClientParameters, images, myFakeApi);
+    myClient = new VMWareCloudClient(myClientParameters, myFakeApi);
+    myClient.populateImagesData(images);
   }
 
   @AfterMethod
@@ -512,6 +523,7 @@ public class VMWareCloudClientTest extends BaseTestCase {
     super.tearDown();
     if (myClient != null) {
       myClient.dispose();
+      myClient = null;
     }
     FakeModel.instance().clear();
   }

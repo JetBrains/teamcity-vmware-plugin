@@ -22,7 +22,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import jetbrains.buildServer.clouds.*;
-import jetbrains.buildServer.clouds.base.beans.AbstractCloudImageDetails;
+import jetbrains.buildServer.clouds.base.beans.CloudImageDetails;
 import jetbrains.buildServer.clouds.base.errors.TypedCloudErrorInfo;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -32,10 +32,7 @@ import org.jetbrains.annotations.Nullable;
  *         Date: 7/22/2014
  *         Time: 1:51 PM
  */
-public abstract class AbstractCloudClientFactory <
-  D extends AbstractCloudImageDetails,
-  I extends AbstractCloudImage,
-  C extends AbstractCloudClient>
+public abstract class AbstractCloudClientFactory <D extends CloudImageDetails,C extends AbstractCloudClient>
 
   implements CloudClientFactory {
 
@@ -45,12 +42,18 @@ public abstract class AbstractCloudClientFactory <
 
   @NotNull
   public CloudClientEx createNewClient(@NotNull final CloudState state, @NotNull final CloudClientParameters params) {
+    try {
     final TypedCloudErrorInfo[] profileErrors = checkClientParams(params);
     if (profileErrors != null && profileErrors.length > 0){
       return createNewClient(state, params, profileErrors);
     }
     final Collection<D> imageDetailsList = parseImageData(params);
-    return createNewClient(state, imageDetailsList, params);
+      final C newClient = createNewClient(state, imageDetailsList, params);
+      newClient.populateImagesData(imageDetailsList);
+      return newClient;
+    } catch (Exception ex){
+      return createNewClient(state, params, new TypedCloudErrorInfo[]{new TypedCloudErrorInfo(ex.getMessage(), ex.getMessage())});
+    }
   }
 
   public abstract C createNewClient(

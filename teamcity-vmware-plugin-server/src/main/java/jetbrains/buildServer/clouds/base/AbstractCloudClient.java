@@ -21,7 +21,7 @@ package jetbrains.buildServer.clouds.base;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import jetbrains.buildServer.clouds.*;
-import jetbrains.buildServer.clouds.base.beans.AbstractCloudImageDetails;
+import jetbrains.buildServer.clouds.base.beans.CloudImageDetails;
 import jetbrains.buildServer.clouds.base.connector.CloudApiConnector;
 import jetbrains.buildServer.clouds.base.connector.CloudAsyncTaskExecutor;
 import jetbrains.buildServer.clouds.base.errors.CloudErrorMap;
@@ -37,7 +37,7 @@ import org.jetbrains.annotations.Nullable;
  *         Date: 7/22/2014
  *         Time: 1:49 PM
  */
-public abstract class AbstractCloudClient<G extends AbstractCloudInstance<T>, T extends AbstractCloudImage<G>, D extends AbstractCloudImageDetails>
+public abstract class AbstractCloudClient<G extends AbstractCloudInstance<T>, T extends AbstractCloudImage<G,D>, D extends CloudImageDetails>
   implements CloudClientEx, UpdatableCloudErrorProvider {
 
   protected final CloudErrorMap myErrorHolder;
@@ -46,18 +46,12 @@ public abstract class AbstractCloudClient<G extends AbstractCloudInstance<T>, T 
   protected final CloudAsyncTaskExecutor myAsyncTaskExecutor;
   @NotNull protected CloudApiConnector myApiConnector;
 
-  public AbstractCloudClient(@NotNull final CloudClientParameters params, @NotNull final Collection<D> imageDetails, @NotNull final CloudApiConnector apiConnector) {
+  public AbstractCloudClient(@NotNull final CloudClientParameters params, @NotNull final CloudApiConnector apiConnector) {
     myErrorHolder = new CloudErrorMap();
     myAsyncTaskExecutor = new CloudAsyncTaskExecutor(params.getProfileDescription());
     myImageMap = new HashMap<String, T>();
     myErrorProvider = new CloudErrorMap();
     myApiConnector = apiConnector;
-    for (D details : imageDetails) {
-      T image = checkAndCreateImage(details);
-      myImageMap.put(image.getName(), image);
-    }
-    final UpdateInstancesTask<G, T, ?> updateInstancesTask = createUpdateInstancesTask();
-    myAsyncTaskExecutor.scheduleWithFixedDelay(updateInstancesTask, 20, 20, TimeUnit.SECONDS);
   }
 
   public void dispose() {
@@ -83,6 +77,16 @@ public abstract class AbstractCloudClient<G extends AbstractCloudInstance<T>, T 
   public boolean canStartNewInstance(@NotNull final CloudImage baseImage) {
     final T image = (T)baseImage;
     return image.canStartNewInstance();
+  }
+
+  public void populateImagesData(@NotNull final Collection<D> imageDetails){
+    for (D details : imageDetails) {
+      T image = checkAndCreateImage(details);
+      myImageMap.put(image.getName(), image);
+    }
+    final UpdateInstancesTask<G, T, ?> updateInstancesTask = createUpdateInstancesTask();
+    updateInstancesTask.run();
+    myAsyncTaskExecutor.scheduleWithFixedDelay(updateInstancesTask, 20, 20, TimeUnit.SECONDS);
   }
 
   protected abstract T checkAndCreateImage(@NotNull final D imageDetails);

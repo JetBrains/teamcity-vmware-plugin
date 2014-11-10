@@ -20,7 +20,6 @@ package jetbrains.buildServer.clouds.vmware;
 
 import com.google.gson.Gson;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.text.StringUtil;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.rmi.RemoteException;
@@ -30,8 +29,6 @@ import jetbrains.buildServer.clouds.base.AbstractCloudClientFactory;
 import jetbrains.buildServer.clouds.base.errors.TypedCloudErrorInfo;
 import jetbrains.buildServer.clouds.vmware.connector.VMWareApiConnector;
 import jetbrains.buildServer.clouds.vmware.connector.VMWareApiConnectorImpl;
-import jetbrains.buildServer.clouds.vmware.connector.VmwareInstance;
-import jetbrains.buildServer.clouds.vmware.errors.VMWareCloudErrorInfoFactory;
 import jetbrains.buildServer.clouds.vmware.web.VMWareWebConstants;
 import jetbrains.buildServer.serverSide.AgentDescription;
 import jetbrains.buildServer.serverSide.InvalidProperty;
@@ -45,7 +42,7 @@ import org.jetbrains.annotations.Nullable;
  *         Date: 4/16/2014
  *         Time: 6:28 PM
  */
-public class VMWareCloudClientFactory extends AbstractCloudClientFactory<VmwareCloudImageDetails, VmwareCloudImage, VMWareCloudClient> {
+public class VMWareCloudClientFactory extends AbstractCloudClientFactory<VmwareCloudImageDetails, VMWareCloudClient> {
 
   private static final Logger LOG = Logger.getInstance(VMWareCloudClientFactory.class.getName());
   @NotNull private final String myHtmlPath;
@@ -61,12 +58,12 @@ public class VMWareCloudClientFactory extends AbstractCloudClientFactory<VmwareC
   public VMWareCloudClient createNewClient(@NotNull final CloudState state,
                                            @NotNull final Collection<VmwareCloudImageDetails> images,
                                            @NotNull final CloudClientParameters params) {
-    return new VMWareCloudClient(params, images, createConnectorFromParams(params));
+    return new VMWareCloudClient(params, createConnectorFromParams(params));
   }
 
   @Override
   public VMWareCloudClient createNewClient(@NotNull final CloudState state, @NotNull final CloudClientParameters params, final TypedCloudErrorInfo[] profileErrors) {
-    return new VMWareCloudClient(params, Collections.<VmwareCloudImageDetails>emptyList(), createConnectorFromParams(params));
+    return new VMWareCloudClient(params, createConnectorFromParams(params));
   }
 
   @Override

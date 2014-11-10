@@ -34,7 +34,7 @@ import org.jetbrains.annotations.Nullable;
  *         Date: 7/22/2014
  *         Time: 1:52 PM
  */
-public class UpdateInstancesTask<G extends AbstractCloudInstance<T>, T extends AbstractCloudImage<G>, F extends AbstractCloudClient<G, T, ?>> implements Runnable {
+public class UpdateInstancesTask<G extends AbstractCloudInstance<T>, T extends AbstractCloudImage<G,?>, F extends AbstractCloudClient<G, T, ?>> implements Runnable {
   private static final Logger LOG = Logger.getInstance(UpdateInstancesTask.class.getName());
 
   @NotNull private final CloudApiConnector myConnector;
@@ -47,6 +47,7 @@ public class UpdateInstancesTask<G extends AbstractCloudInstance<T>, T extends A
   }
 
   public void run() {
+    final Map<InstanceStatus, List<String>> instancesByStatus = new HashMap<InstanceStatus, List<String>>();
     try {
       final Collection<T> images = myClient.getImages();
       for (final T image : images) {
@@ -59,14 +60,14 @@ public class UpdateInstancesTask<G extends AbstractCloudInstance<T>, T extends A
             continue;
           }
           final InstanceStatus realInstanceStatus = myConnector.getInstanceStatus(instance);
-          LOG.info(String.format("Found instance: %s. Status: %s", realInstanceName, realInstanceStatus.getText()));
-          if (isStatusPermanent(instance.getStatus())
-              && isStatusPermanent(realInstanceStatus)
-              && realInstanceStatus != instance.getStatus()) {
+          if (!instancesByStatus.containsKey(realInstanceStatus)){
+            instancesByStatus.put(realInstanceStatus, new ArrayList<String>());
+          }
+          instancesByStatus.get(realInstanceStatus).add(realInstanceName);
+
+          if (realInstanceStatus != null && isStatusPermanent(instance.getStatus()) && isStatusPermanent(realInstanceStatus) && realInstanceStatus != instance.getStatus()) {
             LOG.info(String.format("Updated instance '%s' status to %s based on API information", realInstanceName, realInstanceStatus));
             instance.setStatus(realInstanceStatus);
-          } else if (instance.getStatus() == InstanceStatus.STOPPED) {
-            instance.updateErrors(null);
           }
         }
 
@@ -93,9 +94,15 @@ public class UpdateInstancesTask<G extends AbstractCloudInstance<T>, T extends A
         for (String instanceName : instancesToRemove) {
           image.removeInstance(instanceName);
         }
+        image.detectNewInstances(realInstances);
       }
     } catch (Exception ex){
       LOG.warn(ex.toString(), ex);
+    } finally {
+      //logging here:
+      for (InstanceStatus instanceStatus : instancesByStatus.keySet()) {
+        LOG.info(String.format("Instances in '%s' status: %s", instanceStatus.getText(), Arrays.toString(instancesByStatus.get(instanceStatus).toArray())));
+      }
     }
   }
 
