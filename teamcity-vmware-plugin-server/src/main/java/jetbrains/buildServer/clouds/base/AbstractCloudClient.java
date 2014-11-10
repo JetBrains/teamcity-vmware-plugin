@@ -19,6 +19,7 @@
 package jetbrains.buildServer.clouds.base;
 
 import java.util.*;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import jetbrains.buildServer.clouds.*;
 import jetbrains.buildServer.clouds.base.beans.CloudImageDetails;
@@ -80,13 +81,17 @@ public abstract class AbstractCloudClient<G extends AbstractCloudInstance<T>, T 
   }
 
   public void populateImagesData(@NotNull final Collection<D> imageDetails){
+    populateImagesData(imageDetails, 20, 20);
+  }
+
+  protected void populateImagesData(@NotNull final Collection<D> imageDetails, long initialDelaySec, long delaySec){
     for (D details : imageDetails) {
       T image = checkAndCreateImage(details);
       myImageMap.put(image.getName(), image);
     }
     final UpdateInstancesTask<G, T, ?> updateInstancesTask = createUpdateInstancesTask();
     updateInstancesTask.run();
-    myAsyncTaskExecutor.scheduleWithFixedDelay(updateInstancesTask, 20, 20, TimeUnit.SECONDS);
+    myAsyncTaskExecutor.scheduleWithFixedDelay(updateInstancesTask, initialDelaySec, delaySec, TimeUnit.SECONDS);
   }
 
   protected abstract T checkAndCreateImage(@NotNull final D imageDetails);

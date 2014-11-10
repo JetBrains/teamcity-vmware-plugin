@@ -25,6 +25,7 @@ import com.vmware.vim25.mo.Task;
 import com.vmware.vim25.mo.VirtualMachine;
 import java.rmi.RemoteException;
 import java.util.Map;
+import jetbrains.buildServer.clouds.CloudException;
 import jetbrains.buildServer.clouds.CloudInstanceUserData;
 import jetbrains.buildServer.clouds.InstanceStatus;
 import jetbrains.buildServer.clouds.base.connector.CloudApiConnector;
@@ -104,5 +105,5 @@ public interface VMWareApiConnector extends CloudApiConnector<VmwareCloudImage, 
   void dispose();
 
   @NotNull
-  Map<String, VmwareInstance> listImageInstances(@NotNull final VmwareCloudImage image);
+  Map<String, VmwareInstance> listImageInstances(@NotNull final VmwareCloudImage image) throws CloudException;
 }

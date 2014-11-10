@@ -4,22 +4,29 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.WaitFor;
 import com.vmware.vim25.OptionValue;
 import com.vmware.vim25.VirtualMachinePowerState;
+import com.vmware.vim25.mo.ManagedEntity;
 import com.vmware.vim25.mo.Task;
 import java.net.MalformedURLException;
+import java.rmi.Remote;
 import java.rmi.RemoteException;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import jetbrains.buildServer.BaseTestCase;
 import jetbrains.buildServer.clouds.*;
+import jetbrains.buildServer.clouds.base.tasks.UpdateInstancesTask;
 import jetbrains.buildServer.clouds.vmware.connector.VMWareApiConnector;
 import jetbrains.buildServer.clouds.vmware.connector.VmwareInstance;
 import jetbrains.buildServer.clouds.vmware.errors.VMWareCloudErrorInfoFactory;
 import jetbrains.buildServer.clouds.vmware.stubs.FakeApiConnector;
 import jetbrains.buildServer.clouds.vmware.stubs.FakeModel;
 import jetbrains.buildServer.clouds.vmware.stubs.FakeVirtualMachine;
+import org.jetbrains.annotations.NotNull;
 import org.testng.SkipException;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
@@ -412,6 +419,60 @@ public class VMWareCloudClientTest extends BaseTestCase {
     startNewInstanceAndWait("image2");
   }
 
+  public void do_not_clear_image_instances_list_on_error() throws MalformedURLException, RemoteException {
+    final AtomicBoolean failure = new AtomicBoolean(false);
+    final AtomicLong lastApiCallTime = new AtomicLong(0);
+    final AtomicLong lastUpdateTime = new AtomicLong(0);
+    myFakeApi = new FakeApiConnector(){
+      @Override
+      protected <T extends ManagedEntity> Collection<T> findAllEntities(final Class<T> instanceType) throws RemoteException {
+        lastApiCallTime.set(System.currentTimeMillis());
+        if (failure.get()){
+          throw new RemoteException("Cannot connect");
+        }
+        return super.findAllEntities(instanceType);
+      }
+
+      @Override
+      protected <T extends ManagedEntity> Map<String, T> findAllEntitiesAsMap(final Class<T> instanceType) throws RemoteException {
+        lastApiCallTime.set(System.currentTimeMillis());
+        if (failure.get()){
+          throw new RemoteException("Cannot connect");
+        }
+        return super.findAllEntitiesAsMap(instanceType);
+      }
+
+      @Override
+      protected <T extends ManagedEntity> T findEntityByName(final String name, final Class<T> instanceType) throws RemoteException {
+        lastApiCallTime.set(System.currentTimeMillis());
+        if (failure.get()){
+          throw new RemoteException("Cannot connect");
+        }
+        return super.findEntityByName(name, instanceType);
+      }
+    };
+    recreateClient(2, lastUpdateTime);
+    startNewInstanceAndWait("image2");
+    startNewInstanceAndWait("image2");
+    startNewInstanceAndWait("image2");
+    failure.set(true);
+    final long problemStart = System.currentTimeMillis();
+    new WaitFor(5*1000){
+
+      @Override
+      protected boolean condition() {
+        return lastUpdateTime.get() > problemStart;
+      }
+    }.assertCompleted("Should have been checked at least once - delay set to 2 sec");
+
+    assertEquals(3, getImageByName("image2").getInstances().size());
+  }
+
+
+
+
+
+
   private static String wrapWithArraySymbols(String str) {
     return String.format("[%s]", str);
   }
@@ -515,6 +576,31 @@ public class VMWareCloudClientTest extends BaseTestCase {
     }
     final Collection<VmwareCloudImageDetails> images = VMWareCloudClientFactory.parseImageDataInternal(myClientParameters);
     myClient = new VMWareCloudClient(myClientParameters, myFakeApi);
+    myClient.populateImagesData(images);
+  }
+
+  private void recreateClient(final long updateDelay, final AtomicLong lastUpdateTime) throws MalformedURLException, RemoteException {
+    if (myClient != null) {
+      myClient.dispose();
+    }
+    final Collection<VmwareCloudImageDetails> images = VMWareCloudClientFactory.parseImageDataInternal(myClientParameters);
+    myClient = new VMWareCloudClient(myClientParameters, myFakeApi){
+      @Override
+      public void populateImagesData(@NotNull final Collection<VmwareCloudImageDetails> imageDetails) {
+        super.populateImagesData(imageDetails, updateDelay, updateDelay);
+      }
+
+      @Override
+      protected UpdateInstancesTask<VmwareCloudInstance, VmwareCloudImage, VMWareCloudClient> createUpdateInstancesTask() {
+        return new UpdateInstancesTask<VmwareCloudInstance, VmwareCloudImage, VMWareCloudClient>(myFakeApi, this){
+          @Override
+          public void run() {
+            super.run();
+            lastUpdateTime.set(System.currentTimeMillis());
+          }
+        };
+      }
+    };
     myClient.populateImagesData(images);
   }
 

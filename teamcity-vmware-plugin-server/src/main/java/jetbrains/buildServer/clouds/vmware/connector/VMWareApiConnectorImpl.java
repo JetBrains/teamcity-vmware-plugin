@@ -26,6 +26,7 @@ import java.net.URL;
 import java.rmi.RemoteException;
 import java.util.*;
 import java.util.regex.Pattern;
+import jetbrains.buildServer.clouds.CloudException;
 import jetbrains.buildServer.clouds.CloudInstanceUserData;
 import jetbrains.buildServer.clouds.InstanceStatus;
 import jetbrains.buildServer.clouds.base.AbstractCloudImage;
@@ -138,7 +139,7 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
   }
 
   @NotNull
-  public Map<String, VmwareInstance> listImageInstances(@NotNull final VmwareCloudImage image)  {
+  public Map<String, VmwareInstance> listImageInstances(@NotNull final VmwareCloudImage image) throws CloudException {
     if(image.getImageDetails().getBehaviour().isUseOriginal()){
       try {
         final VirtualMachine vmEntity = findEntityByName(image.getName(), VirtualMachine.class);
@@ -152,7 +153,7 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
     try {
       allVms = findAllEntitiesAsMap(VirtualMachine.class);
     } catch (RemoteException e) {
-      allVms = new HashMap<String, VirtualMachine>();
+      throw new CloudException(e.getMessage(), e);
     }
     final Map<String, VmwareInstance> filteredVms = new HashMap<String, VmwareInstance>();
     for (String vmName : allVms.keySet()) {
