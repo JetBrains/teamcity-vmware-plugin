@@ -26,11 +26,13 @@ import java.rmi.RemoteException;
 import java.util.Map;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import jetbrains.buildServer.clouds.vmware.VMWareCloudConstants;
 import jetbrains.buildServer.clouds.vmware.connector.VMWareApiConnector;
 import jetbrains.buildServer.clouds.vmware.connector.VMWareApiConnectorImpl;
 import jetbrains.buildServer.controllers.BaseFormXmlController;
 import jetbrains.buildServer.controllers.BasePropertiesBean;
 import jetbrains.buildServer.controllers.admin.projects.PluginPropertiesUtil;
+import jetbrains.buildServer.serverSide.TeamCityProperties;
 import jetbrains.buildServer.web.openapi.PluginDescriptor;
 import jetbrains.buildServer.web.openapi.WebControllerManager;
 import org.jdom.Element;
@@ -66,14 +68,21 @@ public class GetSnapshotsListController extends BaseFormXmlController {
     try {
       final VMWareApiConnector myApiConnector = new VMWareApiConnectorImpl(new URL(serverUrl),username, password);
       final Map<String, VirtualMachineSnapshotTree> snapshotList = myApiConnector.getSnapshotList(imageName);
-      Element element = new Element("Snapshots");
-      element.setAttribute("vmName", imageName);
-      for (String snapshotName : snapshotList.keySet()) {
-        Element vmElement = new Element("Snapshot");
-        vmElement.setAttribute("name", snapshotName);
-        element.addContent(vmElement);
+      Element snapshots = new Element("Snapshots");
+      snapshots.setAttribute("vmName", imageName);
+      if (TeamCityProperties.getBoolean(VMWareCloudConstants.SHOW_CURRENT_VERSION_SNAPSHOT)){
+        Element currentVersion = new Element("Snapshot");
+        currentVersion.setAttribute("name", "<Current Version>");
+        currentVersion.setAttribute("value", "");
+        snapshots.addContent(currentVersion);
       }
-      xmlResponse.addContent(element);
+      for (String snapshotName : snapshotList.keySet()) {
+        Element snap = new Element("Snapshot");
+        snap.setAttribute("name", snapshotName);
+        snap.setAttribute("value", snapshotName);
+        snapshots.addContent(snap);
+      }
+      xmlResponse.addContent(snapshots);
 
     } catch (MalformedURLException e) {
       e.printStackTrace();

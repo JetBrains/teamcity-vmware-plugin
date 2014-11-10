@@ -27,7 +27,5 @@ import org.jetbrains.annotations.NotNull;
  */
 public interface VMWareCloudConstants {
   @NotNull String TYPE = "vmw";
-  @NotNull String VM_TYPE = "VirtualMachine";
-  @NotNull String FOLDER_TYPE = "Folder";
-
+  @NotNull String SHOW_CURRENT_VERSION_SNAPSHOT = "teamcity.clouds.vmware.show.current.version";
 }
