@@ -108,15 +108,16 @@
                     <input type="hidden" class="behaviour__value" data-id="behaviour" data-err-id="behaviour"/>
                     <div>
                         <input type="radio" id="cloneBehaviour_ON_DEMAND_CLONE" name="cloneBehaviour" value="ON_DEMAND_CLONE" class="behaviour__switch behaviour__switch_radio"/>
-                        <label for="cloneBehaviour_ON_DEMAND_CLONE">Clone a new virtual machine</label>
+                        <label for="cloneBehaviour_ON_DEMAND_CLONE">Clone the selected virtual machine</label>
                     </div>
                     <div>
                         <input type="checkbox" id="cloneBehaviour_FRESH_CLONE" name="cloneBehaviour" value="FRESH_CLONE" class="behaviour__switch behaviour__switch_checkbox"/>
-                        <label for="cloneBehaviour_FRESH_CLONE">Delete machine after a build finishes</label>
+                        <label for="cloneBehaviour_FRESH_CLONE">Delete the clone after stopping</label>
+                        <%--<div class="grayNote">The clones are deleted if source snapshot changes</div>--%>
                     </div>
                     <div>
                         <input type="radio" id="cloneBehaviour_START_STOP" name="cloneBehaviour" value="START_STOP" class="behaviour__switch behaviour__switch_radio"/>
-                        <label for="cloneBehaviour_START_STOP">Start/Stop existing instance</label>
+                        <label for="cloneBehaviour_START_STOP">Use the selected virtual machine</label>
                     </div>
                     <span class="error option-error option-error_behaviour"></span>
                 </td>
@@ -125,9 +126,7 @@
             <tr class="hidden cloneOptionsRow"  id="tr_snapshot_name">
                 <th>Snapshot name:&nbsp;<l:star/></th>
                 <td>
-                    <select id="snapshot" class="longField" data-id="snapshot" data-err-id="snapshot">
-                        <option>[Latest version]</option>
-                    </select>
+                    <select id="snapshot" class="longField" data-id="snapshot" data-err-id="snapshot"></select>
                     <span class="error option-error option-error_snapshot"></span>
                 </td>
             </tr>
