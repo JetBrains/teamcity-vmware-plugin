@@ -567,6 +567,10 @@ BS.Clouds.VMWareVSphere = BS.Clouds.VMWareVSphere || (function () {
             $j('#tr_snapshot_name').toggle(this._isClone() && isAvailable);
 
             if (isAvailable) {
+                if ($snapshots.length === 1) {
+                    this._image.snapshot = $snapshots.attr('value');
+                }
+
                 $snapshots.each(function () {
                     self._appendOption(self.$snapshot, $j(this).attr('value'), $j(this).attr('name'));
                 });
