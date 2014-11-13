@@ -203,7 +203,8 @@ BS.Clouds.VMWareVSphere = BS.Clouds.VMWareVSphere || (function () {
         showDialog: function (action, imageId) {
             $j('#VMWareImageDialogTitle').text((action ? 'Edit' : 'Add') + ' Image');
 
-            this._triggerDialogChange(); this._initImage(); this._displayedErrors = {}; this.clearOptionsErrors(); // fix: 'ESC' closes dialog without calling custom `close`
+            BS.Hider.addHideFunction('VMWareImageDialog', this.resetDataAndDialog.bind(this));
+
             typeof imageId !== 'undefined' && (this._image = $j.extend({}, this.imagesData[imageId]));
             this.$dialogSubmitButton.val(action ? 'Save' : 'Add').data('image-id', imageId);
 
@@ -730,6 +731,7 @@ BS.Clouds.VMWareVSphere = BS.Clouds.VMWareVSphere || (function () {
             if (this.$response) {
                 this._triggerDialogChange();
             }
+
             this.clearOptionsErrors();
         },
         _triggerDialogChange: function () {
@@ -772,10 +774,5 @@ BS.Clouds.VMWareVSphere = BS.Clouds.VMWareVSphere || (function () {
 BS.VMWareImageDialog = OO.extend(BS.AbstractModalDialog, {
     getContainer: function() {
         return $('VMWareImageDialog');
-    },
-    close: function () {
-        BS.Clouds.VMWareVSphere.resetDataAndDialog();
-        BS.AbstractModalDialog.close.apply(this);
-        return false;
     }
 });
