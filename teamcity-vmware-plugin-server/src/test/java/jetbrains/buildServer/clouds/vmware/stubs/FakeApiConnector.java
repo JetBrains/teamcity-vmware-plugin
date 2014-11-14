@@ -20,7 +20,7 @@ public class FakeApiConnector extends VMWareApiConnectorImpl {
   }
 
   @Override
-  protected <T extends ManagedEntity> T findEntityByName(final String name, final Class<T> instanceType) throws VmwareCheckedCloudException {
+  protected <T extends ManagedEntity> T findEntityByNameNullable(final String name, final Class<T> instanceType) throws VmwareCheckedCloudException {
     if (instanceType == Folder.class){
       return (T)FakeModel.instance().getFolder(name);
     } else if (instanceType == ResourcePool.class){

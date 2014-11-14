@@ -216,6 +216,12 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
   @Nullable
   public String getLatestSnapshot(@NotNull final String vmName, @NotNull final String snapshotNameMask) throws VmwareCheckedCloudException {
     final Map<String, VirtualMachineSnapshotTree> snapshotList = getSnapshotList(vmName);
+    return getLatestSnapshot(snapshotNameMask, snapshotList);
+  }
+
+  private String getLatestSnapshot(final String snapshotNameMask, final Map<String, VirtualMachineSnapshotTree> snapshotList) {
+    if (snapshotNameMask == null)
+      return null;
     if (!snapshotNameMask.contains("*") && !snapshotNameMask.contains("?")) {
       return snapshotList.containsKey(snapshotNameMask) ? snapshotNameMask : null;
     }
@@ -586,9 +592,12 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
       if (vm == null){
         return new TypedCloudErrorInfo[]{new TypedCloudErrorInfo("NoVM", "No such VM: " + vmName)};
       }
-      final Map<String, VirtualMachineSnapshotTree> snapshotList = getSnapshotList(vm);
-      if (StringUtil.isNotEmpty(snapshotName) && snapshotList.get(snapshotName) == null){
-        return new TypedCloudErrorInfo[]{new TypedCloudErrorInfo("NoSnapshot", "No such snapshot: " + snapshotName)};
+      if (snapshotName != null) {
+        final Map<String, VirtualMachineSnapshotTree> snapshotList = getSnapshotList(vm);
+        final String latestSnapshot = getLatestSnapshot(snapshotName, snapshotList);
+        if (StringUtil.isNotEmpty(snapshotName) && latestSnapshot == null) {
+          return new TypedCloudErrorInfo[]{new TypedCloudErrorInfo("NoSnapshot", "No such snapshot: " + snapshotName)};
+        }
       }
     } catch (VmwareCheckedCloudException e) {
       return new TypedCloudErrorInfo[]{TypedCloudErrorInfo.fromException(e)};
