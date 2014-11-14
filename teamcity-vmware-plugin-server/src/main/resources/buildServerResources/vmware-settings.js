@@ -365,6 +365,7 @@ BS.Clouds.VMWareVSphere = BS.Clouds.VMWareVSphere || (function () {
                 if (arguments.length === 1) { // native change by user
                     this._image.sourceName = e.target.value;
                     this._image.$image = this._getSourceByName(e.target.value);
+                    delete this._image.snapshot;
                 } else {
                     this._tryToUpdateSelect(this.$image, value);
                 }
@@ -484,7 +485,9 @@ BS.Clouds.VMWareVSphere = BS.Clouds.VMWareVSphere || (function () {
             return false;
         },
         _cancelDialogClickHandler: function () {
-            return BS.VMWareImageDialog.close();
+            BS.VMWareImageDialog.close();
+
+            return false;
         },
         _submitDialogClickHandler: function() {
             if (this.validateOptions()) {
