@@ -18,16 +18,22 @@
 
 package jetbrains.buildServer.clouds.base.errors;
 
-import java.util.Collection;
-import jetbrains.buildServer.clouds.CloudErrorProvider;
-import org.jetbrains.annotations.Nullable;
-
 /**
  * @author Sergey.Pak
- *         Date: 7/24/2014
- *         Time: 2:41 PM
+ *         Date: 11/12/2014
+ *         Time: 5:54 PM
  */
-public interface UpdatableCloudErrorProvider extends CloudErrorProvider {
+public class CheckedCloudException extends Exception {
 
-  void updateErrors(TypedCloudErrorInfo... errors);
+  public CheckedCloudException(final Throwable cause) {
+    super(cause);
+  }
+
+  public CheckedCloudException(final String message) {
+    super(message);
+  }
+
+  public CheckedCloudException(final String message, final Throwable cause) {
+    super(message, cause);
+  }
 }

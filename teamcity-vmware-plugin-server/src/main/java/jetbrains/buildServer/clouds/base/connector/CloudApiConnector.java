@@ -24,6 +24,7 @@ import jetbrains.buildServer.clouds.CloudException;
 import jetbrains.buildServer.clouds.InstanceStatus;
 import jetbrains.buildServer.clouds.base.AbstractCloudImage;
 import jetbrains.buildServer.clouds.base.AbstractCloudInstance;
+import jetbrains.buildServer.clouds.base.errors.CheckedCloudException;
 import jetbrains.buildServer.clouds.base.errors.TypedCloudErrorInfo;
 import org.jetbrains.annotations.NotNull;
 
@@ -34,11 +35,17 @@ import org.jetbrains.annotations.NotNull;
  */
 public interface CloudApiConnector<T extends AbstractCloudImage, G extends AbstractCloudInstance> {
 
+  void test() throws CheckedCloudException;
+
+  @NotNull
   InstanceStatus getInstanceStatus(@NotNull final G instance);
 
-  Map<String, ? extends AbstractInstance> listImageInstances(@NotNull final T image) throws CloudException;
+  @NotNull
+  Map<String, ? extends AbstractInstance> listImageInstances(@NotNull final T image) throws CheckedCloudException;
 
-  Collection<TypedCloudErrorInfo> checkImage(@NotNull final T image);
+  @NotNull
+  TypedCloudErrorInfo[] checkImage(@NotNull final T image);
 
-  Collection<TypedCloudErrorInfo> checkInstance(@NotNull final G instance);
+  @NotNull
+  TypedCloudErrorInfo[] checkInstance(@NotNull final G instance);
 }

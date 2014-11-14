@@ -29,6 +29,8 @@ import jetbrains.buildServer.clouds.CloudException;
 import jetbrains.buildServer.clouds.CloudInstanceUserData;
 import jetbrains.buildServer.clouds.InstanceStatus;
 import jetbrains.buildServer.clouds.base.connector.CloudApiConnector;
+import jetbrains.buildServer.clouds.base.errors.CheckedCloudException;
+import jetbrains.buildServer.clouds.vmware.errors.VmwareCheckedCloudException;
 import jetbrains.buildServer.clouds.vmware.VmwareCloudImage;
 import jetbrains.buildServer.clouds.vmware.VmwareCloudInstance;
 import org.jetbrains.annotations.NotNull;
@@ -47,42 +49,44 @@ public interface VMWareApiConnector extends CloudApiConnector<VmwareCloudImage, 
   String TEAMCITY_VMWARE_IMAGE_NAME = TEAMCITY_VMWARE_PREFIX + "image.name";
   String TEAMCITY_VMWARE_CLONED_INSTANCE = TEAMCITY_VMWARE_PREFIX + "cloned.instance";
 
-  @NotNull
-  Map<String, VmwareInstance> getVirtualMachines(boolean filterClones) throws RemoteException;
-
-  Map<String, String> getVMParams(@NotNull final String vmName) throws RemoteException;
+  void test() throws VmwareCheckedCloudException;
 
   @NotNull
-  Map<String, Folder> getFolders() throws RemoteException;
+  Map<String, VmwareInstance> getVirtualMachines(boolean filterClones) throws VmwareCheckedCloudException;
+
+  Map<String, String> getVMParams(@NotNull final String vmName) throws VmwareCheckedCloudException;
 
   @NotNull
-  Map<String, ResourcePool> getResourcePools() throws RemoteException;
+  Map<String, Folder> getFolders() throws VmwareCheckedCloudException;
 
   @NotNull
-  Map<String, VirtualMachineSnapshotTree> getSnapshotList(String vmName) throws RemoteException;
+  Map<String, ResourcePool> getResourcePools() throws VmwareCheckedCloudException;
+
+  @NotNull
+  Map<String, VirtualMachineSnapshotTree> getSnapshotList(String vmName) throws VmwareCheckedCloudException;
 
   @Nullable
-  String getLatestSnapshot(@NotNull final String vmName,@NotNull final String snapshotNameMask) throws RemoteException;
+  String getLatestSnapshot(@NotNull final String vmName,@NotNull final String snapshotNameMask) throws VmwareCheckedCloudException;
 
   @Nullable
   Task startInstance(VmwareCloudInstance instance, String agentName, CloudInstanceUserData userData)
-    throws RemoteException, InterruptedException;
+    throws VmwareCheckedCloudException, InterruptedException;
 
   Task reconfigureInstance(@NotNull final VmwareCloudInstance instance,
                            @NotNull final String agentName,
-                           @NotNull final CloudInstanceUserData userData) throws RemoteException;
+                           @NotNull final CloudInstanceUserData userData) throws VmwareCheckedCloudException;
 
-  Task cloneVm(@NotNull final VmwareCloudInstance instance, @NotNull String resourcePool,@NotNull String folder) throws RemoteException;
+  Task cloneVm(@NotNull final VmwareCloudInstance instance, @NotNull String resourcePool,@NotNull String folder) throws VmwareCheckedCloudException;
 
-  boolean isStartedByTeamcity(String instanceName) throws RemoteException;
+  boolean isStartedByTeamcity(String instanceName) throws VmwareCheckedCloudException;
 
-  boolean isInstanceStopped(String instanceName) throws RemoteException;
+  boolean isInstanceStopped(String instanceName) throws VmwareCheckedCloudException;
 
-  boolean ensureSnapshotExists(String instanceName, String snapshotName) throws RemoteException;
+  boolean ensureSnapshotExists(String instanceName, String snapshotName) throws VmwareCheckedCloudException;
 
   Task stopInstance(VmwareCloudInstance instance);
 
-  void restartInstance(VmwareCloudInstance instance) throws RemoteException;
+  void restartInstance(VmwareCloudInstance instance) throws VmwareCheckedCloudException;
 
   boolean checkCloneFolderExists(@NotNull String cloneFolderName);
 
@@ -90,8 +94,8 @@ public interface VMWareApiConnector extends CloudApiConnector<VmwareCloudImage, 
 
   boolean checkVirtualMachineExists(@NotNull String vmName);
 
-  @Nullable
-  VmwareInstance getInstanceDetails(String instanceName) throws RemoteException;
+  @NotNull
+  VmwareInstance getInstanceDetails(String instanceName) throws VmwareCheckedCloudException;
 
   @Nullable
   String getImageName(@NotNull final VirtualMachine vm);
@@ -105,5 +109,5 @@ public interface VMWareApiConnector extends CloudApiConnector<VmwareCloudImage, 
   void dispose();
 
   @NotNull
-  Map<String, VmwareInstance> listImageInstances(@NotNull final VmwareCloudImage image) throws CloudException;
+  Map<String, VmwareInstance> listImageInstances(@NotNull final VmwareCloudImage image) throws VmwareCheckedCloudException;
 }

@@ -26,9 +26,11 @@ import java.rmi.RemoteException;
 import java.util.*;
 import jetbrains.buildServer.clouds.*;
 import jetbrains.buildServer.clouds.base.AbstractCloudClientFactory;
+import jetbrains.buildServer.clouds.base.errors.CheckedCloudException;
 import jetbrains.buildServer.clouds.base.errors.TypedCloudErrorInfo;
 import jetbrains.buildServer.clouds.vmware.connector.VMWareApiConnector;
 import jetbrains.buildServer.clouds.vmware.connector.VMWareApiConnectorImpl;
+import jetbrains.buildServer.clouds.vmware.errors.VmwareCheckedCloudException;
 import jetbrains.buildServer.clouds.vmware.web.VMWareWebConstants;
 import jetbrains.buildServer.serverSide.AgentDescription;
 import jetbrains.buildServer.serverSide.InvalidProperty;
@@ -58,12 +60,21 @@ public class VMWareCloudClientFactory extends AbstractCloudClientFactory<VmwareC
   public VMWareCloudClient createNewClient(@NotNull final CloudState state,
                                            @NotNull final Collection<VmwareCloudImageDetails> images,
                                            @NotNull final CloudClientParameters params) {
-    return new VMWareCloudClient(params, createConnectorFromParams(params));
+    final VMWareApiConnector apiConnector = createConnectorFromParams(params);;
+    final VMWareCloudClient vmWareCloudClient = new VMWareCloudClient(params, apiConnector);
+    try {
+      apiConnector.test();
+    } catch (CheckedCloudException e) {
+      vmWareCloudClient.updateErrors(TypedCloudErrorInfo.fromException(e));
+    }
+    return vmWareCloudClient;
   }
 
   @Override
   public VMWareCloudClient createNewClient(@NotNull final CloudState state, @NotNull final CloudClientParameters params, final TypedCloudErrorInfo[] profileErrors) {
-    return new VMWareCloudClient(params, createConnectorFromParams(params));
+    final VMWareCloudClient client = new VMWareCloudClient(params, createConnectorFromParams(params));
+    client.updateErrors(profileErrors);
+    return client;
   }
 
   @Override
@@ -127,8 +138,6 @@ public class VMWareCloudClientFactory extends AbstractCloudClientFactory<VmwareC
       try {
         return new VMWareApiConnectorImpl(new URL(serverUrl), username, password);
       } catch (MalformedURLException e) {
-        LOG.warn(e.toString(), e);
-      } catch (RemoteException e) {
         LOG.warn(e.toString(), e);
       }
     }

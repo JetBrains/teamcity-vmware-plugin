@@ -21,16 +21,14 @@ package jetbrains.buildServer.clouds.vmware.web;
 import com.intellij.openapi.diagnostic.Logger;
 import com.vmware.vim25.mo.Folder;
 import com.vmware.vim25.mo.ResourcePool;
-import com.vmware.vim25.mo.VirtualMachine;
-import java.net.MalformedURLException;
 import java.net.URL;
-import java.rmi.RemoteException;
 import java.util.*;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import jetbrains.buildServer.clouds.vmware.connector.VMWareApiConnector;
 import jetbrains.buildServer.clouds.vmware.connector.VMWareApiConnectorImpl;
 import jetbrains.buildServer.clouds.vmware.connector.VmwareInstance;
+import jetbrains.buildServer.clouds.vmware.errors.VmwareErrorMessages;
 import jetbrains.buildServer.controllers.ActionErrors;
 import jetbrains.buildServer.controllers.BaseFormXmlController;
 import jetbrains.buildServer.controllers.BasePropertiesBean;
@@ -38,7 +36,6 @@ import jetbrains.buildServer.controllers.admin.projects.PluginPropertiesUtil;
 import jetbrains.buildServer.serverSide.SBuildServer;
 import jetbrains.buildServer.util.StringUtil;
 import jetbrains.buildServer.web.openapi.*;
-import org.apache.commons.lang.ObjectUtils;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.web.servlet.ModelAndView;
@@ -97,7 +94,11 @@ public class VMWareEditProfileController extends BaseFormXmlController {
       xmlResponse.addContent(getResourcePoolsAsElement(myApiConnector.getResourcePools()));
     } catch (Exception ex) {
       LOG.warn("Unable to get vCenter details: " + ex.toString());
-      errors.addError("errorFetchResults", ex.toString());
+      errors.addError(
+        "errorFetchResults",
+        VmwareErrorMessages.getInstance().getFriendlyErrorMessage(
+          ex, "Please check the connection parameters. See the teamcity-clouds.log for details")
+      );
       writeErrors(xmlResponse, errors);
     }
   }

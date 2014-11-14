@@ -18,6 +18,7 @@
 
 package jetbrains.buildServer.clouds.base;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
 import java.util.Map;
@@ -28,6 +29,7 @@ import jetbrains.buildServer.clouds.InstanceStatus;
 import jetbrains.buildServer.clouds.base.errors.CloudErrorMap;
 import jetbrains.buildServer.clouds.base.errors.TypedCloudErrorInfo;
 import jetbrains.buildServer.clouds.base.errors.UpdatableCloudErrorProvider;
+import jetbrains.buildServer.clouds.vmware.errors.VmwareErrorMessages;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -52,7 +54,7 @@ public abstract class AbstractCloudInstance<T extends AbstractCloudImage> implem
     myImage = image;
     myName = name;
     myInstanceId = instanceId;
-    myErrorProvider = new CloudErrorMap();
+    myErrorProvider = new CloudErrorMap(VmwareErrorMessages.getInstance(), "Unable to get instance details. See details");
   }
 
   @NotNull
@@ -65,7 +67,8 @@ public abstract class AbstractCloudInstance<T extends AbstractCloudImage> implem
     return myInstanceId;
   }
 
-  public void updateErrors(@Nullable final Collection<TypedCloudErrorInfo> errors) {
+
+  public void updateErrors(TypedCloudErrorInfo... errors) {
     myErrorProvider.updateErrors(errors);
   }
 

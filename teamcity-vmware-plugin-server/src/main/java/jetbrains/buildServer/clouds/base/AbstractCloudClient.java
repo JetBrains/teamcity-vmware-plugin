@@ -29,6 +29,7 @@ import jetbrains.buildServer.clouds.base.errors.CloudErrorMap;
 import jetbrains.buildServer.clouds.base.errors.TypedCloudErrorInfo;
 import jetbrains.buildServer.clouds.base.errors.UpdatableCloudErrorProvider;
 import jetbrains.buildServer.clouds.base.tasks.UpdateInstancesTask;
+import jetbrains.buildServer.clouds.vmware.errors.VmwareErrorMessages;
 import jetbrains.buildServer.serverSide.AgentDescription;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -41,17 +42,15 @@ import org.jetbrains.annotations.Nullable;
 public abstract class AbstractCloudClient<G extends AbstractCloudInstance<T>, T extends AbstractCloudImage<G,D>, D extends CloudImageDetails>
   implements CloudClientEx, UpdatableCloudErrorProvider {
 
-  protected final CloudErrorMap myErrorHolder;
   protected final Map<String, T> myImageMap;
   protected final UpdatableCloudErrorProvider myErrorProvider;
   protected final CloudAsyncTaskExecutor myAsyncTaskExecutor;
   @NotNull protected CloudApiConnector myApiConnector;
 
   public AbstractCloudClient(@NotNull final CloudClientParameters params, @NotNull final CloudApiConnector apiConnector) {
-    myErrorHolder = new CloudErrorMap();
     myAsyncTaskExecutor = new CloudAsyncTaskExecutor(params.getProfileDescription());
     myImageMap = new HashMap<String, T>();
-    myErrorProvider = new CloudErrorMap();
+    myErrorProvider = new CloudErrorMap(VmwareErrorMessages.getInstance(), "Unable to initialize cloud client. See details");
     myApiConnector = apiConnector;
   }
 
@@ -111,7 +110,7 @@ public abstract class AbstractCloudClient<G extends AbstractCloudInstance<T>, T 
     return Collections.unmodifiableCollection(myImageMap.values());
   }
 
-  public void updateErrors(@Nullable final Collection<TypedCloudErrorInfo> errors) {
+  public void updateErrors(final TypedCloudErrorInfo... errors) {
     myErrorProvider.updateErrors(errors);
   }
 

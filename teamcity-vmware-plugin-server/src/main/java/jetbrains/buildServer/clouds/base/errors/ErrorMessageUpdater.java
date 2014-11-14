@@ -18,16 +18,18 @@
 
 package jetbrains.buildServer.clouds.base.errors;
 
-import java.util.Collection;
-import jetbrains.buildServer.clouds.CloudErrorProvider;
-import org.jetbrains.annotations.Nullable;
-
 /**
  * @author Sergey.Pak
- *         Date: 7/24/2014
- *         Time: 2:41 PM
+ *         Date: 11/13/2014
+ *         Time: 2:13 PM
  */
-public interface UpdatableCloudErrorProvider extends CloudErrorProvider {
+public interface ErrorMessageUpdater {
 
-  void updateErrors(TypedCloudErrorInfo... errors);
+  String getFriendlyErrorMessage(String message);
+
+  String getFriendlyErrorMessage(String message, String defaultMessage);
+
+  String getFriendlyErrorMessage(Throwable th);
+
+  String getFriendlyErrorMessage(Throwable th, String defaultMessage);
 }

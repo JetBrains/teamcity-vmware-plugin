@@ -18,10 +18,7 @@
 
 package jetbrains.buildServer.clouds.base;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 import jetbrains.buildServer.clouds.CloudErrorInfo;
 import jetbrains.buildServer.clouds.CloudImage;
 import jetbrains.buildServer.clouds.CloudInstance;
@@ -31,6 +28,7 @@ import jetbrains.buildServer.clouds.base.connector.AbstractInstance;
 import jetbrains.buildServer.clouds.base.errors.CloudErrorMap;
 import jetbrains.buildServer.clouds.base.errors.TypedCloudErrorInfo;
 import jetbrains.buildServer.clouds.base.errors.UpdatableCloudErrorProvider;
+import jetbrains.buildServer.clouds.vmware.errors.VmwareErrorMessages;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -48,7 +46,7 @@ public abstract class AbstractCloudImage<T extends AbstractCloudInstance, G exte
   protected AbstractCloudImage(String name, String id) {
     myName = name;
     myId = id;
-    myErrorProvider = new CloudErrorMap();
+    myErrorProvider = new CloudErrorMap(VmwareErrorMessages.getInstance(), "Unable to process cloud image. See details");
     myInstances = new HashMap<String, T>();
   }
 
@@ -62,7 +60,7 @@ public abstract class AbstractCloudImage<T extends AbstractCloudInstance, G exte
     return myName;
   }
 
-  public void updateErrors(@Nullable final Collection<TypedCloudErrorInfo> errors) {
+  public void updateErrors(TypedCloudErrorInfo... errors) {
     myErrorProvider.updateErrors(errors);
   }
 

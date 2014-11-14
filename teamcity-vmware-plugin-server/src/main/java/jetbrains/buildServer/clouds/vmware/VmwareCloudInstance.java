@@ -20,17 +20,12 @@ package jetbrains.buildServer.clouds.vmware;
 
 import com.intellij.openapi.diagnostic.Logger;
 import java.util.Map;
-import jetbrains.buildServer.clouds.CloudErrorInfo;
 import jetbrains.buildServer.clouds.InstanceStatus;
 import jetbrains.buildServer.clouds.base.AbstractCloudInstance;
 import jetbrains.buildServer.clouds.vmware.connector.VmwareInstance;
-import jetbrains.buildServer.clouds.vmware.errors.VmwareCloudErrorInfo;
-import jetbrains.buildServer.clouds.vmware.errors.VMWareCloudErrorType;
 import jetbrains.buildServer.serverSide.AgentDescription;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.Date;
 
 import static jetbrains.buildServer.clouds.vmware.VMWarePropertiesNames.INSTANCE_NAME;
 
@@ -46,7 +41,6 @@ public class VmwareCloudInstance extends AbstractCloudInstance<VmwareCloudImage>
   private final String myInstanceName;
   private final VmwareCloudImage myImage;
   private InstanceStatus myStatus = InstanceStatus.UNKNOWN;
-  private final VmwareCloudErrorInfo myErrorInfo;
   private String myIpAddress;
   private String mySnapshotName;
 
@@ -55,7 +49,6 @@ public class VmwareCloudInstance extends AbstractCloudInstance<VmwareCloudImage>
     myImage = image;
     myInstanceName = instanceName;
     mySnapshotName = snapshotName;
-    myErrorInfo = new VmwareCloudErrorInfo(this);
   }
 
   @NotNull
@@ -118,27 +111,6 @@ public class VmwareCloudInstance extends AbstractCloudInstance<VmwareCloudImage>
         setStatus(InstanceStatus.STOPPED);
       }
     }
-  }
-
-  public void setErrorType(@NotNull final VMWareCloudErrorType errorType) {
-    setErrorType(errorType, null);
-  }
-
-  public void setErrorType(@NotNull final VMWareCloudErrorType errorType, @Nullable final String errorMessage) {
-    myErrorInfo.setErrorType(errorType, errorMessage);
-  }
-
-  public void clearErrorType(@NotNull final VMWareCloudErrorType errorType) {
-    myErrorInfo.clearErrorType(errorType);
-  }
-
-  public void clearAllErrors(){
-    myErrorInfo.clearAllErrors();
-  }
-
-  @Nullable
-  public CloudErrorInfo getErrorInfo(){
-    return myErrorInfo.getErrorInfo();
   }
 
   public boolean containsAgent(@NotNull AgentDescription agentDescription) {

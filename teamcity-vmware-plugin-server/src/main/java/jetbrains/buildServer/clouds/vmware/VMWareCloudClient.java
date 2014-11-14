@@ -22,6 +22,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import java.util.*;
 import jetbrains.buildServer.clouds.*;
 import jetbrains.buildServer.clouds.base.AbstractCloudClient;
+import jetbrains.buildServer.clouds.base.errors.TypedCloudErrorInfo;
 import jetbrains.buildServer.clouds.base.tasks.UpdateInstancesTask;
 import jetbrains.buildServer.clouds.vmware.connector.VMWareApiConnector;
 import jetbrains.buildServer.serverSide.AgentDescription;
@@ -78,7 +79,4 @@ public class VMWareCloudClient extends AbstractCloudClient<VmwareCloudInstance, 
     return agentDescription.getAvailableParameters().get(VMWarePropertiesNames.INSTANCE_NAME);
   }
 
-  public void clearErrorInfo(){
-
-  }
 }

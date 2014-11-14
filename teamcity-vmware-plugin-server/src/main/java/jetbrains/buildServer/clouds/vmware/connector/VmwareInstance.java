@@ -24,7 +24,6 @@ import com.vmware.vim25.VirtualMachinePowerState;
 import com.vmware.vim25.VirtualMachineRuntimeInfo;
 import com.vmware.vim25.mo.Task;
 import com.vmware.vim25.mo.VirtualMachine;
-import java.rmi.RemoteException;
 import java.util.*;
 import java.util.concurrent.Callable;
 import jetbrains.buildServer.clouds.InstanceStatus;
@@ -123,7 +122,7 @@ public class VmwareInstance extends AbstractInstance {
     return config == null ? null : config.getChangeVersion();
   }
 
-  public AsyncCloudTask deleteInstance() throws RemoteException {
+  public AsyncCloudTask deleteInstance(){
     return new VmwareTaskWrapper(new Callable<Task>() {
       public Task call() throws Exception {
         return myVm.destroy_Task();

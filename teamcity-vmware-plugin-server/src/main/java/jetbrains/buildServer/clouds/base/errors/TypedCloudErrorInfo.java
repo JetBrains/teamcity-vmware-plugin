@@ -33,6 +33,14 @@ public class TypedCloudErrorInfo{
   private final String myDetails;
   private final Throwable myThrowable;
 
+  public static TypedCloudErrorInfo fromException(Throwable th){
+    return new TypedCloudErrorInfo(th.getMessage(), th.getMessage(), th.toString(), th);
+  }
+
+  public TypedCloudErrorInfo(@NotNull final String message) {
+    this(message, message, null, null);
+  }
+
   public TypedCloudErrorInfo(@NotNull final String type, @NotNull final String message) {
     this(type, message, null, null);
   }
@@ -66,4 +74,6 @@ public class TypedCloudErrorInfo{
   public Throwable getThrowable() {
     return myThrowable;
   }
+
+
 }

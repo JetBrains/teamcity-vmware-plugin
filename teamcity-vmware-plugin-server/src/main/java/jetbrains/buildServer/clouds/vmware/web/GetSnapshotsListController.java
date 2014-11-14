@@ -18,6 +18,7 @@
 
 package jetbrains.buildServer.clouds.vmware.web;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.vmware.vim25.VirtualMachineSnapshotTree;
 import com.vmware.vim25.mo.VirtualMachine;
 import java.net.MalformedURLException;
@@ -26,6 +27,7 @@ import java.rmi.RemoteException;
 import java.util.Map;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import jetbrains.buildServer.clouds.vmware.errors.VmwareCheckedCloudException;
 import jetbrains.buildServer.clouds.vmware.VMWareCloudConstants;
 import jetbrains.buildServer.clouds.vmware.connector.VMWareApiConnector;
 import jetbrains.buildServer.clouds.vmware.connector.VMWareApiConnectorImpl;
@@ -45,6 +47,8 @@ import org.springframework.web.servlet.ModelAndView;
  *         Time: 4:07 PM
  */
 public class GetSnapshotsListController extends BaseFormXmlController {
+
+  private static final Logger LOG = Logger.getInstance(GetSnapshotsListController.class.getName());
 
   public GetSnapshotsListController() {
 
@@ -70,12 +74,10 @@ public class GetSnapshotsListController extends BaseFormXmlController {
       final Map<String, VirtualMachineSnapshotTree> snapshotList = myApiConnector.getSnapshotList(imageName);
       Element snapshots = new Element("Snapshots");
       snapshots.setAttribute("vmName", imageName);
-      if (TeamCityProperties.getBoolean(VMWareCloudConstants.SHOW_CURRENT_VERSION_SNAPSHOT)){
-        Element currentVersion = new Element("Snapshot");
-        currentVersion.setAttribute("name", "<Current Version>");
-        currentVersion.setAttribute("value", "");
-        snapshots.addContent(currentVersion);
-      }
+      Element currentVersion = new Element("Snapshot");
+      currentVersion.setAttribute("name", "<Current Version>");
+      currentVersion.setAttribute("value", "");
+      snapshots.addContent(currentVersion);
       for (String snapshotName : snapshotList.keySet()) {
         Element snap = new Element("Snapshot");
         snap.setAttribute("name", snapshotName);
@@ -84,10 +86,11 @@ public class GetSnapshotsListController extends BaseFormXmlController {
       }
       xmlResponse.addContent(snapshots);
 
+    } catch (VmwareCheckedCloudException e) {
+      LOG.warn("Unable to get snapshot list: " + e.toString());
+      LOG.debug("Unable to get snapshot list: " + e.toString(), e);
     } catch (MalformedURLException e) {
-      e.printStackTrace();
-    } catch (RemoteException e) {
-      e.printStackTrace();
+      LOG.warn("Unable to get snapshot list: " + e.toString());
     }
 
   }

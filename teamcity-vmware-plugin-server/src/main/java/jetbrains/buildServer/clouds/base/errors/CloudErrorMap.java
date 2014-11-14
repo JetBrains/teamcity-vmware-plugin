@@ -30,31 +30,43 @@ import org.jetbrains.annotations.Nullable;
  */
 public class CloudErrorMap implements UpdatableCloudErrorProvider {
   protected final Map<String, TypedCloudErrorInfo> myErrors;
+  private final ErrorMessageUpdater myMessageUpdater;
   private CloudErrorInfo myErrorInfo;
+  private final String myDefaultMessage;
 
-  public CloudErrorMap() {
+  public CloudErrorMap(final ErrorMessageUpdater messageUpdater, final String defaultMessage) {
+    myMessageUpdater = messageUpdater;
     myErrors = new HashMap<String, TypedCloudErrorInfo>();
+    myDefaultMessage = defaultMessage;
   }
 
-  public void updateErrors(@Nullable final Collection<TypedCloudErrorInfo> errors){
+  public void updateErrors(@Nullable final TypedCloudErrorInfo... errors){
     myErrorInfo = null;
     if (errors != null) {
       myErrors.clear();
-      myErrors.putAll(mapFromCollection(errors));
+      myErrors.putAll(mapFromArray(errors));
       if (myErrors.size() == 0)
         return;
       if (myErrors.size() == 1) {
         final TypedCloudErrorInfo err = myErrors.values().iterator().next();
-        if (err.getThrowable() != null) {
-          myErrorInfo = new CloudErrorInfo(err.getMessage(), err.getDetails(), err.getThrowable());
+        final String message = err.getMessage();
+        final String friendlyErrorMessage = myMessageUpdater.getFriendlyErrorMessage(message);
+        final String details;
+        if (!friendlyErrorMessage.equals(message)){
+          details = message + "\n" + err.getDetails();
         } else {
-          myErrorInfo = new CloudErrorInfo(err.getMessage(), err.getDetails());
+          details = err.getDetails();
+        }
+        if (err.getThrowable() != null) {
+          myErrorInfo = new CloudErrorInfo(friendlyErrorMessage, details, err.getThrowable());
+        } else {
+          myErrorInfo = new CloudErrorInfo(friendlyErrorMessage, details);
         }
       } else {
         final StringBuilder msgBuilder = new StringBuilder();
         final StringBuilder detailsBuilder = new StringBuilder();
         for (TypedCloudErrorInfo errorInfo : myErrors.values()) {
-          msgBuilder.append(",").append(errorInfo.getMessage());
+          msgBuilder.append(",").append(myMessageUpdater.getFriendlyErrorMessage(errorInfo.getMessage()));
           detailsBuilder.append(",\n[").append(errorInfo.getDetails()).append("]");
         }
         myErrorInfo = new CloudErrorInfo(msgBuilder.substring(1), detailsBuilder.substring(2));
@@ -62,9 +74,9 @@ public class CloudErrorMap implements UpdatableCloudErrorProvider {
     }
   }
 
-  private static Map<String, TypedCloudErrorInfo> mapFromCollection(final Collection<TypedCloudErrorInfo> collection){
+  private static Map<String, TypedCloudErrorInfo> mapFromArray(final TypedCloudErrorInfo[] array){
     final Map<String, TypedCloudErrorInfo> map = new HashMap<String, TypedCloudErrorInfo>();
-    for (TypedCloudErrorInfo errorInfo : collection) {
+    for (TypedCloudErrorInfo errorInfo : array) {
       map.put(errorInfo.getType(), errorInfo);
     }
     return map;

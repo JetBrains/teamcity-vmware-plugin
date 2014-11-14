@@ -52,6 +52,9 @@ public class UpdateInstancesTask<G extends AbstractCloudInstance<T>, T extends A
       final Collection<T> images = myClient.getImages();
       for (final T image : images) {
         image.updateErrors(myConnector.checkImage(image));
+        if (image.getErrorInfo() != null) {
+          continue;
+        }
         final Map<String, AbstractInstance> realInstances = myConnector.listImageInstances(image);
         for (String realInstanceName : realInstances.keySet()) {
           final G instance = image.findInstanceById(realInstanceName);
