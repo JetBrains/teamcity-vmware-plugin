@@ -38,7 +38,7 @@ import org.testng.annotations.Test;
  *         Time: 1:04 PM
  */
 @Test
-public class VMWareCloudClientTest extends BaseTestCase {
+public class VmwareCloudIntegrationTest extends BaseTestCase {
 
   private VMWareCloudClient myClient;
   private FakeApiConnector myFakeApi;
