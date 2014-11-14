@@ -570,7 +570,6 @@ BS.Clouds.VMWareVSphere = BS.Clouds.VMWareVSphere || (function () {
                 isAvailable = $snapshots.length && !($snapshots.length === 1 && ! $snapshots[0].getAttribute('value'));
 
             this.$snapshot.children().remove();
-            $j('#tr_snapshot_name').toggle(this._isClone() && isAvailable);
 
             if (isAvailable) {
                 if ($snapshots.length === 1) {

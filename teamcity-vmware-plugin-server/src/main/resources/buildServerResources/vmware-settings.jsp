@@ -23,6 +23,7 @@
 <%@ taglib prefix="forms" tagdir="/WEB-INF/tags/forms" %>
 <%@ taglib prefix="util" uri="/WEB-INF/functions/util" %>
 <%@ taglib prefix="bs" tagdir="/WEB-INF/tags" %>
+<%@ taglib prefix="intprop" uri="/WEB-INF/functions/intprop" %>
 <%--@elvariable id="resPath" type="java.lang.String"--%>
 <jsp:useBean id="cons" class="jetbrains.buildServer.clouds.vmware.web.VMWareWebConstants"/>
 
@@ -98,6 +99,7 @@
                 <div>
                     <select name="_image" id="image" class="longField" data-id="sourceName" data-err-id="sourceName"></select>
                 </div>
+                <div class="grayNote">Templates unlike Virtual Machines cannot be started without cloning</div>
                 <span class="error option-error option-error_sourceName"></span>
             </td>
         </tr>
@@ -107,26 +109,35 @@
                 <td>
                     <input type="hidden" class="behaviour__value" data-id="behaviour" data-err-id="behaviour"/>
                     <div>
-                        <input type="radio" id="cloneBehaviour_ON_DEMAND_CLONE" name="cloneBehaviour" value="ON_DEMAND_CLONE" class="behaviour__switch behaviour__switch_radio"/>
-                        <label for="cloneBehaviour_ON_DEMAND_CLONE">Clone the selected virtual machine</label>
-                    </div>
-                    <div>
-                        <input type="checkbox" id="cloneBehaviour_FRESH_CLONE" name="cloneBehaviour" value="FRESH_CLONE" class="behaviour__switch behaviour__switch_checkbox"/>
-                        <label for="cloneBehaviour_FRESH_CLONE">Delete the clone after stopping</label>
-                        <%--<div class="grayNote">The clones are deleted if source snapshot changes</div>--%>
+                        <input type="radio" id="cloneBehaviour_FRESH_CLONE" name="cloneBehaviour" value="FRESH_CLONE" class="behaviour__switch behaviour__switch_radio"/>
+                        <label for="cloneBehaviour_FRESH_CLONE">Clone the selected Virtual Machine or Template</label>
+                        <div class="grayNote">The clone is deleted after stopping</div>
                     </div>
                     <div>
                         <input type="radio" id="cloneBehaviour_START_STOP" name="cloneBehaviour" value="START_STOP" class="behaviour__switch behaviour__switch_radio"/>
-                        <label for="cloneBehaviour_START_STOP">Use the selected virtual machine</label>
+                        <label for="cloneBehaviour_START_STOP">Use the selected Virtual Machine</label>
                     </div>
                     <span class="error option-error option-error_behaviour"></span>
                 </td>
             </tr>
+        <c:if test="${intprop:getBoolean('teamcity.clouds.vmware.show.preserve.clone')}">
+            <tr>
+                <th>Experimental behaviour:</th>
+                <td>
+                    <div>
+                        <input type="checkbox" id="cloneBehaviour_ON_DEMAND_CLONE" name="cloneBehaviour" value="ON_DEMAND_CLONE" class="behaviour__switch behaviour__switch_checkbox"/>
+                        <label for="cloneBehaviour_ON_DEMAND_CLONE">Preserve the clone after stopping</label>
+                        <div class="smallNoteAttention">This is experimental feature, use it on your own risk</div>
+                    </div>
 
+                </td>
+            </tr>
+        </c:if>
             <tr class="hidden cloneOptionsRow"  id="tr_snapshot_name">
                 <th>Snapshot name:&nbsp;<l:star/></th>
                 <td>
                     <select id="snapshot" class="longField" data-id="snapshot" data-err-id="snapshot"></select>
+                    <div class="smallNoteAttention">&laquo;Current state&raquo; requires full clone, it is time and disk space consuming operation</div>
                     <span class="error option-error option-error_snapshot"></span>
                 </td>
             </tr>
