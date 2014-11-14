@@ -103,6 +103,8 @@ BS.Clouds.VMWareVSphere = BS.Clouds.VMWareVSphere || (function () {
                 }.bind(this))
                 .fail(function (errorText) {
                     this.addError('Unable to fetch options: ' + errorText);
+                    this.fillOptions([], [], []);
+                    this._displaySnapshotSelect([]);
                     BS.VMWareImageDialog.close();
                     return errorText;
                 }.bind(this))
