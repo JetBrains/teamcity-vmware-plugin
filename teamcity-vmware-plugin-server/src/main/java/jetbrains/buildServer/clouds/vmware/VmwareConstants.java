@@ -18,12 +18,15 @@
 
 package jetbrains.buildServer.clouds.vmware;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * @author Sergey.Pak
- *         Date: 7/4/2014
- *         Time: 7:06 PM
+ *         Date: 4/16/2014
+ *         Time: 6:33 PM
  */
-public interface VmInfo {
-  String getName();
-  String getSnapshotName();
+public interface VmwareConstants {
+  @NotNull String TYPE = "vmw";
+  @NotNull String SHOW_ON_DEMAND_CLONE = "teamcity.clouds.vmware.show.current.version";
+  @NotNull String CURRENT_VERSION = "__CURRENT_VERSION__";
 }

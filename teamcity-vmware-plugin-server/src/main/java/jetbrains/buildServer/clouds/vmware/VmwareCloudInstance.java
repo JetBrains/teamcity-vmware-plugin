@@ -34,7 +34,7 @@ import static jetbrains.buildServer.clouds.vmware.VMWarePropertiesNames.INSTANCE
  *         Date: 4/15/2014
  *         Time: 3:57 PM
  */
-public class VmwareCloudInstance extends AbstractCloudInstance<VmwareCloudImage> implements VmInfo {
+public class VmwareCloudInstance extends AbstractCloudInstance<VmwareCloudImage> {
 
   private static final Logger LOG = Logger.getInstance(VmwareCloudInstance.class.getName());
 
@@ -44,7 +44,7 @@ public class VmwareCloudInstance extends AbstractCloudInstance<VmwareCloudImage>
   private String myIpAddress;
   private String mySnapshotName;
 
-  public VmwareCloudInstance(@NotNull final VmwareCloudImage image, @NotNull final String instanceName, @Nullable final String snapshotName) {
+  public VmwareCloudInstance(@NotNull final VmwareCloudImage image, @NotNull final String instanceName, @NotNull final String snapshotName) {
     super(image, instanceName, instanceName);
     myImage = image;
     myInstanceName = instanceName;
@@ -82,7 +82,7 @@ public class VmwareCloudInstance extends AbstractCloudInstance<VmwareCloudImage>
     return myStatus;
   }
 
-  @Nullable
+  @NotNull
   public String getSnapshotName() {
     return mySnapshotName;
   }

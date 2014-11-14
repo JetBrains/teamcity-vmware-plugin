@@ -41,7 +41,7 @@ import org.jetbrains.annotations.Nullable;
  *         Date: 4/15/2014
  *         Time: 3:58 PM
  */
-public class VmwareCloudImage extends AbstractCloudImage<VmwareCloudInstance, VmwareCloudImageDetails> implements VmInfo {
+public class VmwareCloudImage extends AbstractCloudImage<VmwareCloudInstance, VmwareCloudImageDetails>{
 
   private static final Logger LOG = Logger.getInstance(VmwareCloudImage.class.getName());
 
@@ -65,7 +65,7 @@ public class VmwareCloudImage extends AbstractCloudImage<VmwareCloudInstance, Vm
       return;
     }
     if (imageDetails.getBehaviour().isUseOriginal()) {
-      final VmwareCloudInstance imageInstance = new VmwareCloudInstance(this, imageDetails.getSourceName(), null);
+      final VmwareCloudInstance imageInstance = new VmwareCloudInstance(this, imageDetails.getSourceName(), VmwareConstants.CURRENT_VERSION);
       myInstances.put(myImageDetails.getSourceName(), imageInstance);
 
       final VmwareInstance vmwareInstance = realInstances.get(imageDetails.getSourceName());
@@ -86,7 +86,7 @@ public class VmwareCloudImage extends AbstractCloudImage<VmwareCloudInstance, Vm
     }
   }
 
-  @Nullable
+  @NotNull
   public String getSnapshotName() {
     return myImageDetails.getSnapshotName();
   }
@@ -101,13 +101,10 @@ public class VmwareCloudImage extends AbstractCloudImage<VmwareCloudInstance, Vm
       return myInstances.get(myImageDetails.getSourceName());
     }
 
-    String latestSnapshotName = null;
-    if (myImageDetails.getSnapshotName() != null) { ////means latest clone of snapshot that fits a mask
-      latestSnapshotName = myApiConnector.getLatestSnapshot(myImageDetails.getSourceName(), myImageDetails.getSnapshotName());
-      if (latestSnapshotName == null) {
-        updateErrors(new TypedCloudErrorInfo("No such snapshot: " + getSnapshotName()));
-        throw new IllegalArgumentException("Unable to find snapshot: " + myImageDetails.getSnapshotName());
-      }
+    final String latestSnapshotName = myApiConnector.getLatestSnapshot(myImageDetails.getSourceName(), myImageDetails.getSnapshotName());
+    if (!myImageDetails.useCurrentVersion() && latestSnapshotName == null) {
+      updateErrors(new TypedCloudErrorInfo("No such snapshot: " + getSnapshotName()));
+      throw new VmwareCheckedCloudException("Unable to find snapshot: " + myImageDetails.getSnapshotName());
     }
 
     if (!myImageDetails.getBehaviour().isDeleteAfterStop()) {
@@ -122,11 +119,16 @@ public class VmwareCloudImage extends AbstractCloudImage<VmwareCloudInstance, Vm
           final String vmName = vmInstance.getName();
           final VmwareCloudInstance instance = myInstances.get(vmName);
 
-          // checking if this instance is already starting.
-          if (instance != null && instance.getStatus() != InstanceStatus.STOPPED)
+          if (instance == null) {
+            LOG.warn("Unable to find instance " + vmName + " in myInstances.");
+            continue;
+          }
+
+            // checking if this instance is already starting.
+          if (instance.getStatus() != InstanceStatus.STOPPED)
             continue;
 
-          if (latestSnapshotName == null) {
+          if (myImageDetails.useCurrentVersion()) {
             if (imageVm.getChangeVersion() == null || !imageVm.getChangeVersion().equals(vmInstance.getChangeVersion())) {
               LOG.info(String.format("Change version for %s is outdated: '%s' vs '%s'", vmName, vmInstance.getChangeVersion(), imageVm.getChangeVersion()));
               deleteInstance(instance);
@@ -141,7 +143,7 @@ public class VmwareCloudImage extends AbstractCloudImage<VmwareCloudInstance, Vm
             }
           }
           LOG.info("Will use existing VM with name " + vmName);
-          return instance == null ? new VmwareCloudInstance(this, vmName, latestSnapshotName) : instance;
+          return instance;
         }
       }
     }
