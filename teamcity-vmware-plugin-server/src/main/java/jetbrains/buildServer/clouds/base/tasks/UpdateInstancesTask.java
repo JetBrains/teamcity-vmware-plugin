@@ -26,6 +26,7 @@ import jetbrains.buildServer.clouds.base.AbstractCloudImage;
 import jetbrains.buildServer.clouds.base.AbstractCloudInstance;
 import jetbrains.buildServer.clouds.base.connector.AbstractInstance;
 import jetbrains.buildServer.clouds.base.connector.CloudApiConnector;
+import jetbrains.buildServer.clouds.base.errors.TypedCloudErrorInfo;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -101,6 +102,7 @@ public class UpdateInstancesTask<G extends AbstractCloudInstance<T>, T extends A
       }
     } catch (Exception ex){
       LOG.warn(ex.toString(), ex);
+      myClient.updateErrors(TypedCloudErrorInfo.fromException(ex));
     } finally {
       //logging here:
       for (InstanceStatus instanceStatus : instancesByStatus.keySet()) {

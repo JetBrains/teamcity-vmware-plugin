@@ -20,23 +20,18 @@ package jetbrains.buildServer.clouds.vmware.web;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.vmware.vim25.VirtualMachineSnapshotTree;
-import com.vmware.vim25.mo.VirtualMachine;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.rmi.RemoteException;
 import java.util.Map;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import jetbrains.buildServer.clouds.vmware.errors.VmwareCheckedCloudException;
-import jetbrains.buildServer.clouds.vmware.VMWareCloudConstants;
+import jetbrains.buildServer.clouds.vmware.VmwareConstants;
 import jetbrains.buildServer.clouds.vmware.connector.VMWareApiConnector;
 import jetbrains.buildServer.clouds.vmware.connector.VMWareApiConnectorImpl;
 import jetbrains.buildServer.controllers.BaseFormXmlController;
 import jetbrains.buildServer.controllers.BasePropertiesBean;
 import jetbrains.buildServer.controllers.admin.projects.PluginPropertiesUtil;
-import jetbrains.buildServer.serverSide.TeamCityProperties;
-import jetbrains.buildServer.web.openapi.PluginDescriptor;
-import jetbrains.buildServer.web.openapi.WebControllerManager;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.web.servlet.ModelAndView;
@@ -76,7 +71,7 @@ public class GetSnapshotsListController extends BaseFormXmlController {
       snapshots.setAttribute("vmName", imageName);
       Element currentVersion = new Element("Snapshot");
       currentVersion.setAttribute("name", "<Current Version>");
-      currentVersion.setAttribute("value", "");
+      currentVersion.setAttribute("value", VmwareConstants.CURRENT_VERSION);
       snapshots.addContent(currentVersion);
       for (String snapshotName : snapshotList.keySet()) {
         Element snap = new Element("Snapshot");

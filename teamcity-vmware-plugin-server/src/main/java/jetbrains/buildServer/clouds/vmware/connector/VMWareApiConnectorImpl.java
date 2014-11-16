@@ -215,7 +215,16 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
 
   @Nullable
   public String getLatestSnapshot(@NotNull final String vmName, @NotNull final String snapshotNameMask) throws VmwareCheckedCloudException {
+    if (VmwareConstants.CURRENT_VERSION.equals(snapshotNameMask)){
+      return VmwareConstants.CURRENT_VERSION;
+    }
     final Map<String, VirtualMachineSnapshotTree> snapshotList = getSnapshotList(vmName);
+    return getLatestSnapshot(snapshotNameMask, snapshotList);
+  }
+
+  private String getLatestSnapshot(final String snapshotNameMask, final Map<String, VirtualMachineSnapshotTree> snapshotList) {
+    if (snapshotNameMask == null)
+      return null;
     if (!snapshotNameMask.contains("*") && !snapshotNameMask.contains("?")) {
       return snapshotList.containsKey(snapshotNameMask) ? snapshotNameMask : null;
     }
@@ -272,9 +281,9 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
 
   @Nullable
   public Task cloneVm(@NotNull final VmwareCloudInstance instance, @NotNull String resourcePool,@NotNull String folder) throws VmwareCheckedCloudException {
-    final String imageName = instance.getImage().getName();
-    LOG.info(String.format("Attempting to clone VM %s into %s", imageName, instance.getName()));
-    VirtualMachine vm = findEntityByName(imageName, VirtualMachine.class);
+    final VmwareCloudImageDetails imageDetails = instance.getImage().getImageDetails();
+    LOG.info(String.format("Attempting to clone VM %s into %s", imageDetails.getSourceName(), instance.getName()));
+    VirtualMachine vm = findEntityByName(imageDetails.getSourceName(), VirtualMachine.class);
     if (vm == null) {
       final String errorText = "Unable to find vm " + instance.getName();
       throw new VmwareCheckedCloudException(errorText);
@@ -287,8 +296,9 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
     cloneSpec.setConfig(config);
     location.setPool(findEntityByName(resourcePool, ResourcePool.class).getMOR());
     final Map<String, VirtualMachineSnapshotTree> snapshotList = getSnapshotList(vm.getName());
-    if (StringUtil.isNotEmpty(instance.getSnapshotName())) {
-
+    if (imageDetails.useCurrentVersion()) {
+      LOG.info("Snapshot name is not specified. Will clone latest VM state");
+    } else {
       final VirtualMachineSnapshotTree obj = snapshotList.get(instance.getSnapshotName());
       final ManagedObjectReference snapshot = obj == null ? null : obj.getSnapshot();
       cloneSpec.setSnapshot(snapshot);
@@ -299,14 +309,12 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
         final String errorText = "Unable to find snapshot " + instance.getSnapshotName();
         throw new VmwareCheckedCloudException(errorText);
       }
-    } else {
-      LOG.info("Snapshot name is not specified. Will clone latest VM state");
     }
 
 
     config.setExtraConfig(new OptionValue[]{
       createOptionValue(TEAMCITY_VMWARE_CLONED_INSTANCE, "true"),
-      createOptionValue(TEAMCITY_VMWARE_IMAGE_NAME, imageName),
+      createOptionValue(TEAMCITY_VMWARE_IMAGE_NAME, imageDetails.getSourceName()),
       createOptionValue(TEAMCITY_VMWARE_IMAGE_SNAPSHOT, instance.getSnapshotName()),
       createOptionValue(TEAMCITY_VMWARE_IMAGE_CHANGE_VERSION, vm.getConfig().getChangeVersion())
     });
@@ -579,16 +587,20 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
 
   @NotNull
   public TypedCloudErrorInfo[] checkImage(@NotNull final VmwareCloudImage image) {
-    final String vmName = image.getImageDetails().getSourceName();
-    final String snapshotName = image.getImageDetails().getSnapshotName();
+    final VmwareCloudImageDetails imageDetails = image.getImageDetails();
+    final String vmName = imageDetails.getSourceName();
     try {
       final VirtualMachine vm = findEntityByNameNullable(vmName, VirtualMachine.class);
       if (vm == null){
         return new TypedCloudErrorInfo[]{new TypedCloudErrorInfo("NoVM", "No such VM: " + vmName)};
       }
-      final Map<String, VirtualMachineSnapshotTree> snapshotList = getSnapshotList(vm);
-      if (StringUtil.isNotEmpty(snapshotName) && snapshotList.get(snapshotName) == null){
-        return new TypedCloudErrorInfo[]{new TypedCloudErrorInfo("NoSnapshot", "No such snapshot: " + snapshotName)};
+      if (!imageDetails.getBehaviour().isUseOriginal() && !imageDetails.useCurrentVersion()) {
+        final String snapshotName = imageDetails.getSnapshotName();
+        final Map<String, VirtualMachineSnapshotTree> snapshotList = getSnapshotList(vm);
+        final String latestSnapshot = getLatestSnapshot(snapshotName, snapshotList);
+        if (StringUtil.isNotEmpty(snapshotName) && latestSnapshot == null) {
+          return new TypedCloudErrorInfo[]{new TypedCloudErrorInfo("NoSnapshot", "No such snapshot: " + snapshotName)};
+        }
       }
     } catch (VmwareCheckedCloudException e) {
       return new TypedCloudErrorInfo[]{TypedCloudErrorInfo.fromException(e)};

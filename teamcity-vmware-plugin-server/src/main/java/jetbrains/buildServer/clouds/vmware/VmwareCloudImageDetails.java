@@ -37,6 +37,7 @@ public class VmwareCloudImageDetails implements CloudImageDetails {
   @SerializedName("pool")
   private final String myResourcePoolName;
   @SerializedName("snapshot")
+  @NotNull
   private final String mySnapshotName;
   @SerializedName("behaviour")
   private final CloneBehaviour myCloneBehaviour;
@@ -44,7 +45,7 @@ public class VmwareCloudImageDetails implements CloudImageDetails {
   private final int myMaxInstances;
 
   public VmwareCloudImageDetails(@NotNull final String sourceName,
-                                 final String snapshotName,
+                                 @NotNull final String snapshotName,
                                  @NotNull final String folderName,
                                  @NotNull final String resourcePoolName,
                                  @NotNull final CloneBehaviour cloneBehaviour,
@@ -69,6 +70,7 @@ public class VmwareCloudImageDetails implements CloudImageDetails {
     return myResourcePoolName;
   }
 
+  @NotNull
   public String getSnapshotName() {
     return mySnapshotName;
   }
@@ -79,5 +81,9 @@ public class VmwareCloudImageDetails implements CloudImageDetails {
 
   public int getMaxInstances() {
     return myMaxInstances;
+  }
+
+  public boolean useCurrentVersion(){
+    return VmwareConstants.CURRENT_VERSION.equals(mySnapshotName);
   }
 }

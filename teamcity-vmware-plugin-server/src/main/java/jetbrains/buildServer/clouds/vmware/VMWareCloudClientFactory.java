@@ -22,7 +22,6 @@ import com.google.gson.Gson;
 import com.intellij.openapi.diagnostic.Logger;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.rmi.RemoteException;
 import java.util.*;
 import jetbrains.buildServer.clouds.*;
 import jetbrains.buildServer.clouds.base.AbstractCloudClientFactory;
@@ -30,7 +29,6 @@ import jetbrains.buildServer.clouds.base.errors.CheckedCloudException;
 import jetbrains.buildServer.clouds.base.errors.TypedCloudErrorInfo;
 import jetbrains.buildServer.clouds.vmware.connector.VMWareApiConnector;
 import jetbrains.buildServer.clouds.vmware.connector.VMWareApiConnectorImpl;
-import jetbrains.buildServer.clouds.vmware.errors.VmwareCheckedCloudException;
 import jetbrains.buildServer.clouds.vmware.web.VMWareWebConstants;
 import jetbrains.buildServer.serverSide.AgentDescription;
 import jetbrains.buildServer.serverSide.InvalidProperty;
@@ -97,7 +95,7 @@ public class VMWareCloudClientFactory extends AbstractCloudClientFactory<VmwareC
 
   @NotNull
   public String getCloudCode() {
-    return VMWareCloudConstants.TYPE;
+    return VmwareConstants.TYPE;
   }
 
   @NotNull
