@@ -100,7 +100,7 @@ public class VMWareCloudClientFactory extends AbstractCloudClientFactory<VmwareC
 
   @NotNull
   public String getDisplayName() {
-    return "VMWare VSphere";
+    return "VMware vSphere";
   }
 
   @Nullable
