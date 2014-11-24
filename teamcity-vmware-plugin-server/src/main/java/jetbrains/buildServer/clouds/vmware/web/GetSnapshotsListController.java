@@ -70,8 +70,8 @@ public class GetSnapshotsListController extends BaseFormXmlController {
       Element snapshots = new Element("Snapshots");
       snapshots.setAttribute("vmName", imageName);
       Element currentVersion = new Element("Snapshot");
-      currentVersion.setAttribute("name", "<Current Version>");
-      currentVersion.setAttribute("value", VmwareConstants.CURRENT_VERSION);
+      currentVersion.setAttribute("name", "<Current State>");
+      currentVersion.setAttribute("value", VmwareConstants.CURRENT_STATE);
       snapshots.addContent(currentVersion);
       for (String snapshotName : snapshotList.keySet()) {
         Element snap = new Element("Snapshot");

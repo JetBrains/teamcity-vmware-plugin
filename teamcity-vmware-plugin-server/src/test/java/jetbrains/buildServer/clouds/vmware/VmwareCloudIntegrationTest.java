@@ -1,6 +1,5 @@
 package jetbrains.buildServer.clouds.vmware;
 
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.WaitFor;
 import com.vmware.vim25.OptionValue;
 import com.vmware.vim25.VirtualMachinePowerState;
@@ -54,7 +53,7 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
     myClientParameters.setParameter("password", "pw");
     myClientParameters.setParameter("vmware_images_data", "[{sourceName:'image1', behaviour:'START_STOP'}," +
                                                           "{sourceName:'image2',snapshot:'snap*',folder:'cf',pool:'rp',maxInstances:3,behaviour:'ON_DEMAND_CLONE'}," +
-                                                          "{sourceName:'image_template', snapshot:'"+VmwareConstants.CURRENT_VERSION+"',folder:'cf',pool:'rp',maxInstances:3,behaviour:'FRESH_CLONE'}]");
+                                                          "{sourceName:'image_template', snapshot:'"+VmwareConstants.CURRENT_STATE +"',folder:'cf',pool:'rp',maxInstances:3,behaviour:'FRESH_CLONE'}]");
 
     myFakeApi = new FakeApiConnector();
     FakeModel.instance().addFolder("cf");
@@ -144,7 +143,7 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
         final Map<String, String> vmParams = myFakeApi.getVMParams(data.getInstanceId());
         assertEquals("true", vmParams.get(VMWareApiConnector.TEAMCITY_VMWARE_CLONED_INSTANCE));
         assertEquals("image_template", vmParams.get(VMWareApiConnector.TEAMCITY_VMWARE_IMAGE_NAME));
-        assertEquals(VmwareConstants.CURRENT_VERSION, vmParams.get(VMWareApiConnector.TEAMCITY_VMWARE_IMAGE_SNAPSHOT));
+        assertEquals(VmwareConstants.CURRENT_STATE, vmParams.get(VMWareApiConnector.TEAMCITY_VMWARE_IMAGE_SNAPSHOT));
       }
     }, true);
     assertEquals(3, FakeModel.instance().getVms().size());
@@ -250,9 +249,9 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
   }
 
   public void on_demand_clone_should_create_new_when_version_changes() throws Exception {
-    myClientParameters.setParameter("vmware_images_data","[{sourceName:'image1', snapshot:'"+VmwareConstants.CURRENT_VERSION+"',folder:'cf',pool:'rp',maxInstances:3, behaviour:'ON_DEMAND_CLONE'}," +
+    myClientParameters.setParameter("vmware_images_data","[{sourceName:'image1', snapshot:'"+VmwareConstants.CURRENT_STATE +"',folder:'cf',pool:'rp',maxInstances:3, behaviour:'ON_DEMAND_CLONE'}," +
                                                          "{sourceName:'image2',snapshot:'snap*',folder:'cf',pool:'rp',maxInstances:3,behaviour:'ON_DEMAND_CLONE'}," +
-                                                         "{sourceName:'image_template', snapshot:'"+VmwareConstants.CURRENT_VERSION+"', folder:'cf',pool:'rp',maxInstances:3,behaviour:'FRESH_CLONE'}]");
+                                                         "{sourceName:'image_template', snapshot:'"+VmwareConstants.CURRENT_STATE +"', folder:'cf',pool:'rp',maxInstances:3,behaviour:'FRESH_CLONE'}]");
     recreateClient();
 
 
@@ -261,7 +260,7 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
     startAndCheckCloneDeletedAfterTermination("image1", new Checker<VmwareCloudInstance>() {
       public void check(final VmwareCloudInstance data) throws CheckedCloudException {
         final Map<String, String> vmParams = myFakeApi.getVMParams(data.getInstanceId());
-        assertEquals(VmwareConstants.CURRENT_VERSION, vmParams.get(VMWareApiConnector.TEAMCITY_VMWARE_IMAGE_SNAPSHOT));
+        assertEquals(VmwareConstants.CURRENT_STATE, vmParams.get(VMWareApiConnector.TEAMCITY_VMWARE_IMAGE_SNAPSHOT));
         assertEquals(originalChangeVersion, vmParams.get(VMWareApiConnector.TEAMCITY_VMWARE_IMAGE_CHANGE_VERSION));
         instanceId.set(data.getInstanceId());
       }
@@ -373,7 +372,7 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
     final VmwareCloudInstance cloneInstance = startNewInstanceAndWait("image2");
     myClientParameters.setParameter("vmware_images_data", "[{sourceName:'image1', behaviour:'START_STOP'}," +
                                                           "{sourceName:'image2', behaviour:'START_STOP'}," +
-                                                          "{sourceName:'image_template', snapshot:'"+VmwareConstants.CURRENT_VERSION+"', folder:'cf',pool:'rp',maxInstances:3,behaviour:'FRESH_CLONE'}]");
+                                                          "{sourceName:'image_template', snapshot:'"+VmwareConstants.CURRENT_STATE +"', folder:'cf',pool:'rp',maxInstances:3,behaviour:'FRESH_CLONE'}]");
 
     recreateClient();
     boolean checked = false;

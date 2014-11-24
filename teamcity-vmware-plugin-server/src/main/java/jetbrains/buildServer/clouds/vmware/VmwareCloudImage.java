@@ -65,7 +65,7 @@ public class VmwareCloudImage extends AbstractCloudImage<VmwareCloudInstance, Vm
       return;
     }
     if (imageDetails.getBehaviour().isUseOriginal()) {
-      final VmwareCloudInstance imageInstance = new VmwareCloudInstance(this, imageDetails.getSourceName(), VmwareConstants.CURRENT_VERSION);
+      final VmwareCloudInstance imageInstance = new VmwareCloudInstance(this, imageDetails.getSourceName(), VmwareConstants.CURRENT_STATE);
       myInstances.put(myImageDetails.getSourceName(), imageInstance);
 
       final VmwareInstance vmwareInstance = realInstances.get(imageDetails.getSourceName());

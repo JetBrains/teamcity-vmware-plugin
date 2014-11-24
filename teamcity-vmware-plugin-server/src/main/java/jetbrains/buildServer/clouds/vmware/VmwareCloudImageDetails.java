@@ -84,6 +84,6 @@ public class VmwareCloudImageDetails implements CloudImageDetails {
   }
 
   public boolean useCurrentVersion(){
-    return VmwareConstants.CURRENT_VERSION.equals(mySnapshotName);
+    return VmwareConstants.CURRENT_STATE.equals(mySnapshotName);
   }
 }

@@ -215,8 +215,8 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
 
   @Nullable
   public String getLatestSnapshot(@NotNull final String vmName, @NotNull final String snapshotNameMask) throws VmwareCheckedCloudException {
-    if (VmwareConstants.CURRENT_VERSION.equals(snapshotNameMask)){
-      return VmwareConstants.CURRENT_VERSION;
+    if (VmwareConstants.CURRENT_STATE.equals(snapshotNameMask)){
+      return VmwareConstants.CURRENT_STATE;
     }
     final Map<String, VirtualMachineSnapshotTree> snapshotList = getSnapshotList(vmName);
     return getLatestSnapshot(snapshotNameMask, snapshotList);
