@@ -34,7 +34,6 @@ import jetbrains.buildServer.clouds.vmware.connector.VMWareApiConnector;
 import jetbrains.buildServer.clouds.vmware.connector.VmwareInstance;
 import jetbrains.buildServer.clouds.vmware.connector.VmwareTaskWrapper;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Sergey.Pak
@@ -272,19 +271,19 @@ public class VmwareCloudImage extends AbstractCloudImage<VmwareCloudInstance, Vm
   }
 
   public boolean canStartNewInstance() {
-    if (myImageDetails.getBehaviour().isUseOriginal()) {
-      try {
-        return myApiConnector.isInstanceStopped(getId());
-      } catch (VmwareCheckedCloudException e) {
-        LOG.debug("Can't start new instance, the single instance is missing");
-        return false;
-      }
-    }
-
     if (getErrorInfo() != null){
       LOG.debug("Can't start new instance, if image is erroneous");
+        return false;
+    }
+
+    if (myImageDetails.getBehaviour().isUseOriginal()) {
+      final VmwareCloudInstance myInstance = myInstances.get(myImageDetails.getSourceName());
+      if (myInstance == null){
       return false;
     }
+      return myInstance.getStatus() == InstanceStatus.STOPPED;
+    }
+
     final List<String> runningInstancesNames = new ArrayList<String>();
     for (Map.Entry<String, VmwareCloudInstance> entry : myInstances.entrySet()) {
       if (entry.getValue().getStatus() != InstanceStatus.STOPPED)
