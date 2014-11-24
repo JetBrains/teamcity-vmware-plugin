@@ -38,7 +38,10 @@ BS.Clouds.VMWareVSphere = BS.Clouds.VMWareVSphere || (function () {
             this.refreshOptionsUrl = refreshOptionsUrl;
             this.refreshSnapshotsUrl = refreshSnapshotsUrl;
             this.$imagesDataElem = $j('#' + imagesDataElemId);
-            this.selectors.serverUrl = '#' + serverUrlElemId;
+
+            this.$serverUrl = $j(BS.Util.escapeId(serverUrlElemId));
+            this.$serverUsername = $j(BS.Util.escapeId('vmware_username'));
+            this.$serverPassword = $j(BS.Util.escapeId('secure:vmware_password'));
 
             this.$fetchOptionsButton = $j('#vmwareFetchOptionsButton');
             this.$emptyImagesListMessage = $j('.emptyImagesListMessage');
@@ -65,7 +68,7 @@ BS.Clouds.VMWareVSphere = BS.Clouds.VMWareVSphere || (function () {
             this._lastImageId = this._imagesDataLength = 0;
             this._initImage();
             this._toggleDialogShowButton();
-            this.fetchOptions();
+            this.validateServerSettings() && this.fetchOptions();
             this._initImagesData();
             this._bindHandlers();
             this.renderImagesTable();
@@ -76,7 +79,7 @@ BS.Clouds.VMWareVSphere = BS.Clouds.VMWareVSphere || (function () {
                 false;
         },
         fetchOptions: function () {
-            var $loader = $j('<div style="padding: 4px 0 5px;">&nbsp;Fetching options...</div>').prepend($j(BS.loadingIcon).clone());
+            var $loader = $j('.options-loader');
 
             if ( this._fetchOptionsInProgress() || !this.validateServerSettings()) {
                 return false;
@@ -109,7 +112,7 @@ BS.Clouds.VMWareVSphere = BS.Clouds.VMWareVSphere || (function () {
                     return errorText;
                 }.bind(this))
                 .always(function () {
-                    $loader.remove();
+                    $loader.addClass('hidden');
                     this._toggleFetchOptionsButton(true);
                     this._toggleLoadingMessage('fetchOptions');
                 }.bind(this));
@@ -117,7 +120,7 @@ BS.Clouds.VMWareVSphere = BS.Clouds.VMWareVSphere || (function () {
             this._toggleFetchOptionsButton();
             this._toggleDialogSubmitButton();
             this._toggleLoadingMessage('fetchOptions', true);
-            $loader.insertAfter(this.$fetchOptionsButton);
+            $loader.removeClass('hidden');
 
             BS.ajaxRequest(this.refreshOptionsUrl, {
                 parameters: BS.Clouds.Admin.CreateProfileForm.serializeParameters(),
@@ -154,17 +157,21 @@ BS.Clouds.VMWareVSphere = BS.Clouds.VMWareVSphere || (function () {
         },
         /**
          * Validates server URL and displays error if URL seems to be incorrect
+         * @param {boolean} displayErrors
          */
-        validateServerSettings: function () {
-            var url = $j(this.selectors.serverUrl).val(),
-                isValid = (/^https:\/\/.*\/sdk$/).test(url);
+        validateServerSettings: function (highlightErrors) {
+            var isValid = true,
+                checkRequired = function ($elem) {
+                    if (! $elem.val().length) {
+                        isValid = false;
+                        highlightErrors && $elem.addClass('settings_error');
+                    }
+                };
 
+            $j('.settings').removeClass('settings_error');
             this.clearErrors();
 
-            if (url.length && !isValid) {
-                this.addError('Server URL doesn\'t seem to be correct. <br/>' +
-                'Correct URL should look like this: <strong>https://vcenter/sdk</strong>');
-            }
+            [ this.$serverUrl, this.$serverUsername, this.$serverPassword ].forEach(checkRequired);
 
             return isValid;
         },
@@ -376,7 +383,9 @@ BS.Clouds.VMWareVSphere = BS.Clouds.VMWareVSphere || (function () {
                     this.fetchSnapshots();
                 }
 
-                $j('#cloneBehaviour_' + START_STOP).prop('disabled', this._isTemplate());
+                $j('#cloneBehaviour_' + START_STOP)
+                    .prop('disabled', this._isTemplate())
+                    .siblings('label').toggleClass('disabled', this._isTemplate());
                 this.validateOptions(e.target.getAttribute('data-id'));
             }.bind(this));
             // - clone behaviour
@@ -387,7 +396,7 @@ BS.Clouds.VMWareVSphere = BS.Clouds.VMWareVSphere || (function () {
                     onDemandClone = $j('#cloneBehaviour_' + ON_DEMAND_CLONE);
 
                 if (arguments.length === 1) { // triggered by UI
-                    freshClone.prop('disabled', startStop.is(':checked'));
+                    //freshClone.prop('disabled', startStop.is(':checked'));
 
                     if (startStop.is(':checked')) {
                         this._image.behaviour = startStop.val();
@@ -400,12 +409,12 @@ BS.Clouds.VMWareVSphere = BS.Clouds.VMWareVSphere || (function () {
                 } else {
                     $j(this.selectors.behaviourSwitch).prop('checked', false);
                     $j('#cloneBehaviour_' + value).prop('checked', true);
-                    freshClone.prop('disabled', value === START_STOP);
+                    //freshClone.prop('disabled', value === START_STOP);
                 }
 
-                if ((value || this._image.behaviour) === FRESH_CLONE) {
-                    onDemandClone.prop('checked', true);
-                }
+                //if ((value || this._image.behaviour) === FRESH_CLONE) {
+                //    onDemandClone.prop('checked', true);
+                //}
 
                 this.clearErrors(e.target.getAttribute('data-err-id'));
                 $elementsToToggle.toggle(this._isClone());
@@ -413,7 +422,7 @@ BS.Clouds.VMWareVSphere = BS.Clouds.VMWareVSphere || (function () {
                 if (this._isClone()) {
                     this.fetchSnapshots();
                 } else {
-                    $elementsToToggle.each(function () {
+                    $elementsToToggle.find('select, input').each(function () {
                         delete self._image[this.getAttribute('data-id')];
                     })
                 }
@@ -475,7 +484,7 @@ BS.Clouds.VMWareVSphere = BS.Clouds.VMWareVSphere || (function () {
         },
         _fetchOptionsClickHandler: function () {
             if (this.$fetchOptionsButton.attr('disabled') !== 'true') { // it may be undefined
-                this.fetchOptions();
+                this.validateServerSettings(true) && this.fetchOptions();
             }
 
             return false; // to prevent link with href='#' to scroll to the top of the page
@@ -567,7 +576,7 @@ BS.Clouds.VMWareVSphere = BS.Clouds.VMWareVSphere || (function () {
         },
         _displaySnapshotSelect: function ($snapshots) {
             var self = this,
-                isAvailable = $snapshots.length && !($snapshots.length === 1 && ! $snapshots[0].getAttribute('value'));
+                isAvailable = $snapshots.length;
 
             this.$snapshot.children().remove();
 
@@ -590,9 +599,11 @@ BS.Clouds.VMWareVSphere = BS.Clouds.VMWareVSphere || (function () {
             this.$dialogSubmitButton.prop('disabled', !enable);
         },
         _toggleFetchOptionsButton: function (enable) {
-            this.$fetchOptionsButton.toggle(enable).prop('disabled', !enable);
+            // $fetchOptionsButton is basically an anchor, also attribute allows to add styling
+            this.$fetchOptionsButton.attr('disabled', !enable);
         },
         _toggleDialogShowButton: function (enable) {
+            // $showDialogButton is basically an anchor, also attribute allows to add styling
             this.$showDialogButton.attr('disabled', !enable);
         },
         _toggleLoadingMessage: function (loaderName, show) {
@@ -745,7 +756,7 @@ BS.Clouds.VMWareVSphere = BS.Clouds.VMWareVSphere || (function () {
             this.$behaviour.trigger('change', image.behaviour || '');
             this.fetchSnapshotsDeferred && this.fetchSnapshotsDeferred
                 .then(function () {
-                    this.$snapshot.trigger('change', image.snapshot === '[Latest Version]' ? '' : image.snapshot || '');
+                    this.$snapshot.trigger('change', image.snapshot || '');
                 }.bind(this));
             this.$resourcePool.trigger('change', image.pool || '');
             this.$cloneFolder.trigger('change', image.folder || '');
@@ -753,7 +764,7 @@ BS.Clouds.VMWareVSphere = BS.Clouds.VMWareVSphere || (function () {
         },
         _initImage: function () {
             this._image = {
-                behaviour: ON_DEMAND_CLONE,
+                behaviour: FRESH_CLONE,
                 maxInstances: 1
             };
         },

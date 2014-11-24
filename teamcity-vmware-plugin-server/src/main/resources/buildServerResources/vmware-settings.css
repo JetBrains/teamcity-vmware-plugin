@@ -15,9 +15,25 @@
  *  * limitations under the License.
  *
  */
+.hidden {
+    display: none!important;
+}
 
 .section-header {
     margin: 13px 0 13px 8px;
+}
+
+.settings {
+    outline: none;
+}
+
+.settings.settings_error {
+    border-color: #aa1111;
+}
+
+.options-loader {
+    display: inline-block;
+    padding-left: 4px;
 }
 
 /* Add/edit dialog */
@@ -55,6 +71,13 @@
     margin-left: 26px;
 }
 
+#VMWareImageDialog .grayNote {
+    margin-left: 20px;
+}
+
+#VMWareImageDialog .disabled {
+    color: #888;
+}
 /* Images Table */
 
 .imagesOuterWrapper {

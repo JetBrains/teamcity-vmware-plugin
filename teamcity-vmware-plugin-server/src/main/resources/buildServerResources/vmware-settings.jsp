@@ -39,24 +39,25 @@
 <table class="runnerFormTable">
   <tr>
     <th><label for="${cons.serverUrl}">Server URL: <l:star/></label></th>
-    <td><props:textProperty name="${cons.serverUrl}" className="longField"/></td>
+    <td><props:textProperty name="${cons.serverUrl}" className="settings longField"/></td>
   </tr>
 
   <tr>
     <th><label for="${cons.username}">Username: <l:star/></label></th>
-    <td><props:textProperty name="${cons.username}" className="longField"/></td>
+    <td><props:textProperty name="${cons.username}" className="settings longField"/></td>
   </tr>
 
   <tr>
     <th><label for="secure:${cons.password}">Password: <l:star/></label></th>
-    <td><props:passwordProperty name="secure:${cons.password}" className="longField"/></td>
+    <td><props:passwordProperty name="secure:${cons.password}" className="settings longField"/></td>
   </tr>
   <tr>
     <td colspan="2">
-      <span id="error_fetch_options" class="error"></span>
-      <div>
-        <forms:button id="vmwareFetchOptionsButton">Fetch options</forms:button>
-      </div>
+        <span id="error_fetch_options" class="error"></span>
+        <div>
+            <forms:button id="vmwareFetchOptionsButton">Fetch options</forms:button>
+            <div class="hidden options-loader"><i class="icon-refresh icon-spin"></i>&nbsp;Fetching options...</div>
+        </div>
     </td>
   </tr>
 </table>
@@ -99,7 +100,6 @@
                 <div>
                     <select name="_image" id="image" class="longField" data-id="sourceName" data-err-id="sourceName"></select>
                 </div>
-                <div class="grayNote">Templates unlike Virtual Machines cannot be started without cloning</div>
                 <span class="error option-error option-error_sourceName"></span>
             </td>
         </tr>
@@ -116,6 +116,7 @@
                     <div>
                         <input type="radio" id="cloneBehaviour_START_STOP" name="cloneBehaviour" value="START_STOP" class="behaviour__switch behaviour__switch_radio"/>
                         <label for="cloneBehaviour_START_STOP">Use the selected Virtual Machine</label>
+                        <div class="grayNote">Templates unlike Virtual Machines cannot be started without cloning</div>
                     </div>
                     <span class="error option-error option-error_behaviour"></span>
                 </td>
