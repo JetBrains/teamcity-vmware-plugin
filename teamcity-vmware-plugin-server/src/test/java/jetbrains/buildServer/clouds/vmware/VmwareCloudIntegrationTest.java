@@ -11,9 +11,15 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.Semaphore;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 import jetbrains.buildServer.BaseTestCase;
 import jetbrains.buildServer.clouds.*;
 import jetbrains.buildServer.clouds.base.errors.CheckedCloudException;
@@ -368,7 +374,7 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
     assertNotContains(image_template.getInstances(), instance);
   }
 
-  public void existing_clones_with_start_stop() throws MalformedURLException, RemoteException {
+  public void existing_clones_with_start_stop() {
     final VmwareCloudInstance cloneInstance = startNewInstanceAndWait("image2");
     myClientParameters.setParameter("vmware_images_data", "[{sourceName:'image1', behaviour:'START_STOP'}," +
                                                           "{sourceName:'image2', behaviour:'START_STOP'}," +
@@ -389,7 +395,7 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
     assertTrue(checked);
   }
 
-  public void dont_exceed_max_instances_limit_fresh_clones() throws RemoteException, MalformedURLException {
+  public void dont_exceed_max_instances_limit_fresh_clones() throws RemoteException {
     final VmwareCloudInstance[] instances = new VmwareCloudInstance[]{startNewInstanceAndWait("image_template"),
       startNewInstanceAndWait("image_template")};
     // shutdown all instances
@@ -407,7 +413,7 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
   }
 
   @Test(expectedExceptions = QuotaException.class, expectedExceptionsMessageRegExp = "Unable to start more instances of image image2")
-  public void check_max_instances_count_on_profile_start() throws MalformedURLException, RemoteException {
+  public void check_max_instances_count_on_profile_start() {
     startNewInstanceAndWait("image2");
     startNewInstanceAndWait("image2");
     startNewInstanceAndWait("image2");
@@ -416,7 +422,7 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
     startNewInstanceAndWait("image2");
   }
 
-  public void do_not_clear_image_instances_list_on_error() throws MalformedURLException, RemoteException {
+  public void do_not_clear_image_instances_list_on_error() {
     final AtomicBoolean failure = new AtomicBoolean(false);
     final AtomicLong lastApiCallTime = new AtomicLong(0);
     final AtomicLong lastUpdateTime = new AtomicLong(0);
@@ -465,7 +471,33 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
     assertEquals(3, getImageByName("image2").getInstances().size());
   }
 
+  public void canstart_check_shouldnt_block_thread() throws InterruptedException {
+    final Lock lock = new ReentrantLock();
+    final AtomicBoolean shouldLock = new AtomicBoolean(false);
+    myFakeApi = new FakeApiConnector(){
+      @Override
+      public void test() throws VmwareCheckedCloudException {
+        if (shouldLock.get()){
+          lock.lock(); // will stuck here
+        }
+        super.test();
+      }
+    };
 
+    recreateClient();
+    shouldLock.set(true);
+    lock.lock();
+    final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
+    executor.execute(new Runnable() {
+      public void run() {
+        getImageByName("image1").canStartNewInstance();
+        getImageByName("image2").canStartNewInstance();
+        getImageByName("image_template").canStartNewInstance();
+      }
+    });
+    executor.shutdown();
+    assertTrue("canStart method blocks the thread!", executor.awaitTermination(10, TimeUnit.MILLISECONDS));
+  }
 
 
 
@@ -567,7 +599,7 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
     throw new RuntimeException("unable to find image by name: " + name);
   }
 
-  private void recreateClient() throws MalformedURLException, RemoteException {
+  private void recreateClient()  {
     if (myClient != null) {
       myClient.dispose();
     }
@@ -577,7 +609,7 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
     assertNull(myClient.getErrorInfo());
   }
 
-  private void recreateClient(final long updateDelay, final AtomicLong lastUpdateTime) throws MalformedURLException, RemoteException {
+  private void recreateClient(final long updateDelay, final AtomicLong lastUpdateTime) {
     if (myClient != null) {
       myClient.dispose();
     }

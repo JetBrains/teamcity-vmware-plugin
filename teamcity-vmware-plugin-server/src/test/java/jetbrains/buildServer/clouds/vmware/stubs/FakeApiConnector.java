@@ -20,7 +20,13 @@ public class FakeApiConnector extends VMWareApiConnectorImpl {
   }
 
   @Override
+  public void test() throws VmwareCheckedCloudException {
+
+  }
+
+  @Override
   protected <T extends ManagedEntity> T findEntityByNameNullable(final String name, final Class<T> instanceType) throws VmwareCheckedCloudException {
+    test();
     if (instanceType == Folder.class){
       return (T)FakeModel.instance().getFolder(name);
     } else if (instanceType == ResourcePool.class){
@@ -33,6 +39,7 @@ public class FakeApiConnector extends VMWareApiConnectorImpl {
 
   @Override
   protected <T extends ManagedEntity> Collection<T> findAllEntities(final Class<T> instanceType) throws VmwareCheckedCloudException {
+    test();
     if (instanceType == Folder.class){
       return (Collection<T>)FakeModel.instance().getFolders().values();
     } else if (instanceType == ResourcePool.class){
@@ -45,6 +52,7 @@ public class FakeApiConnector extends VMWareApiConnectorImpl {
 
   @Override
   protected <T extends ManagedEntity> Map<String, T> findAllEntitiesAsMap(final Class<T> instanceType) throws VmwareCheckedCloudException {
+    test();
     if (instanceType == Folder.class){
       return (Map<String, T>)FakeModel.instance().getFolders();
     } else if (instanceType == ResourcePool.class){
