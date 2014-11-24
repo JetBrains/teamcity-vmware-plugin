@@ -109,7 +109,7 @@
                 <td>
                     <input type="hidden" class="behaviour__value" data-id="behaviour" data-err-id="behaviour"/>
                     <div>
-                        <input type="radio" id="cloneBehaviour_FRESH_CLONE" name="cloneBehaviour" value="FRESH_CLONE" class="behaviour__switch behaviour__switch_radio"/>
+                        <input type="radio" checked id="cloneBehaviour_FRESH_CLONE" name="cloneBehaviour" value="FRESH_CLONE" class="behaviour__switch behaviour__switch_radio"/>
                         <label for="cloneBehaviour_FRESH_CLONE">Clone the selected Virtual Machine or Template</label>
                         <div class="grayNote">The clone is deleted after stopping</div>
                     </div>

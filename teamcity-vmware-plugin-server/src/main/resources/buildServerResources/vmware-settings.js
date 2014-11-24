@@ -400,7 +400,7 @@ BS.Clouds.VMWareVSphere = BS.Clouds.VMWareVSphere || (function () {
 
                     if (startStop.is(':checked')) {
                         this._image.behaviour = startStop.val();
-                    } else if (freshClone.is(':checked')) { // onDemandClone is checked as startStop is not
+                    } else if (freshClone.is(':checked')) { // FRESH_CLONE is checked if START_STOP is not
                         this._image.behaviour = freshClone.val();
                         //onDemandClone.prop('checked', true); // just in case
                     } else if (onDemandClone.is(':checked')){
@@ -417,7 +417,7 @@ BS.Clouds.VMWareVSphere = BS.Clouds.VMWareVSphere || (function () {
                 //}
 
                 this.clearErrors(e.target.getAttribute('data-err-id'));
-                $elementsToToggle.toggle(this._isClone());
+                $elementsToToggle.toggleClass('hidden', !this._isClone());
 
                 if (this._isClone()) {
                     this.fetchSnapshots();
