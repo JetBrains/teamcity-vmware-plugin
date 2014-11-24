@@ -100,6 +100,7 @@ public class UpdateInstancesTask<G extends AbstractCloudInstance<T>, T extends A
         }
         image.detectNewInstances(realInstances);
       }
+      myClient.updateErrors();
     } catch (Exception ex){
       LOG.warn(ex.toString(), ex);
       myClient.updateErrors(TypedCloudErrorInfo.fromException(ex));
