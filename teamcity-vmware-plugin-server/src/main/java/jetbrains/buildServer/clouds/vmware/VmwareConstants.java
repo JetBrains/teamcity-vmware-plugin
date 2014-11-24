@@ -28,5 +28,6 @@ import org.jetbrains.annotations.NotNull;
 public interface VmwareConstants {
   @NotNull String TYPE = "vmw";
   @NotNull String SHOW_ON_DEMAND_CLONE = "teamcity.clouds.vmware.show.ondemand.clone"; // false by default
+  @NotNull String USE_LINKED_CLONE = "teamcity.clouds.vmware.use.linked.clone"; // true by default
   @NotNull String CURRENT_STATE = "__CURRENT_STATE__";
 }

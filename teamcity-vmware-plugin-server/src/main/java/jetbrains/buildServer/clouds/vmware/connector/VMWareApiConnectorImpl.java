@@ -32,7 +32,7 @@ import jetbrains.buildServer.clouds.InstanceStatus;
 import jetbrains.buildServer.clouds.vmware.errors.VmwareCheckedCloudException;
 import jetbrains.buildServer.clouds.base.errors.TypedCloudErrorInfo;
 import jetbrains.buildServer.clouds.vmware.*;
-import jetbrains.buildServer.clouds.vmware.errors.VmwareErrorMessages;
+import jetbrains.buildServer.serverSide.TeamCityProperties;
 import jetbrains.buildServer.util.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -303,8 +303,12 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
       final ManagedObjectReference snapshot = obj == null ? null : obj.getSnapshot();
       cloneSpec.setSnapshot(snapshot);
       if (snapshot != null) {
+        if (TeamCityProperties.getBooleanOrTrue(VmwareConstants.USE_LINKED_CLONE)) {
         LOG.info("Using linked clone. Snapshot name: " + instance.getSnapshotName());
         location.setDiskMoveType(VirtualMachineRelocateDiskMoveOptions.createNewChildDiskBacking.name());
+        } else {
+          LOG.info("Using full clone. Snapshot name: " + instance.getSnapshotName());
+        }
       } else {
         final String errorText = "Unable to find snapshot " + instance.getSnapshotName();
         throw new VmwareCheckedCloudException(errorText);
