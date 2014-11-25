@@ -126,8 +126,8 @@
                 <th>Experimental behaviour:</th>
                 <td>
                     <div>
-                        <input type="checkbox" id="cloneBehaviour_ON_DEMAND_CLONE" name="cloneBehaviour" value="ON_DEMAND_CLONE" class="behaviour__switch behaviour__switch_checkbox"/>
-                        <label for="cloneBehaviour_ON_DEMAND_CLONE">Preserve the clone after stopping</label>
+                        <input type="radio" id="cloneBehaviour_ON_DEMAND_CLONE" name="cloneBehaviour" value="ON_DEMAND_CLONE" class="behaviour__switch"/>
+                        <label for="cloneBehaviour_ON_DEMAND_CLONE">Clone the selected Virtual Machine or Template, preserve the clone after stopping</label>
                         <div class="smallNoteAttention">This is experimental feature, use it on your own risk</div>
                     </div>
 
