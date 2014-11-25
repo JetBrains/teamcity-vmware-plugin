@@ -594,10 +594,6 @@ BS.Clouds.VMWareVSphere = BS.Clouds.VMWareVSphere || (function () {
             this.$snapshot.children().remove();
             this._appendOption(this.$snapshot, '', '--Please select snapshot--');
 
-            if ($snapshots && $snapshots.length === 1) {
-                this._image.snapshot = $snapshots.attr('value');
-            }
-
             $snapshots && $snapshots.each(function () {
                 self._appendOption(self.$snapshot, $j(this).attr('value'), $j(this).attr('name'));
             });
