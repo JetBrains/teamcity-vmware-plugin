@@ -108,7 +108,7 @@ public class VMWareEditProfileController extends BaseFormXmlController {
     final List<VmwareInstance> values = new ArrayList<VmwareInstance>(vmMap.values());
     Collections.sort(values, new Comparator<VmwareInstance>() {
       public int compare(@NotNull final VmwareInstance o1, @NotNull final VmwareInstance o2) {
-        return StringUtil.compare(o1.getName(), o2.getName());
+        return o1.getName().compareToIgnoreCase(o2.getName());
       }
     });
     for (VmwareInstance vm : values) {
@@ -122,7 +122,9 @@ public class VMWareEditProfileController extends BaseFormXmlController {
 
   private Element getFoldersAsElement(Map<String, Folder> folders){
     Element element = new Element("Folders");
-    for (String folderName : folders.keySet()) {
+    final Set<String> folderNames = folders.keySet();
+    final List<String> sortedList = getIgnoreCaseSortedList(folderNames);
+    for (String folderName : sortedList) {
       Element folderElement = new Element("Folder");
       folderElement.setAttribute("name", folderName);
       element.addContent(folderElement);
@@ -132,7 +134,8 @@ public class VMWareEditProfileController extends BaseFormXmlController {
 
   private Element getResourcePoolsAsElement(Map<String, ResourcePool> resourcePools){
     Element element = new Element("ResourcePools");
-    for (String poolName : resourcePools.keySet()) {
+    final List<String> sortedList = getIgnoreCaseSortedList(resourcePools.keySet());
+    for (String poolName : sortedList) {
       Element poolElement = new Element("ResourcePool");
       poolElement.setAttribute("name", poolName);
       element.addContent(poolElement);
@@ -140,4 +143,13 @@ public class VMWareEditProfileController extends BaseFormXmlController {
     return element;
   }
 
+  private List<String> getIgnoreCaseSortedList(Collection<String> src){
+    List<String> sortedList = new ArrayList<String>(src);
+    Collections.sort(sortedList, new Comparator<String>() {
+      public int compare(final String o1, final String o2) {
+        return o1.compareToIgnoreCase(o2);
+      }
+    });
+    return sortedList;
+  }
 }

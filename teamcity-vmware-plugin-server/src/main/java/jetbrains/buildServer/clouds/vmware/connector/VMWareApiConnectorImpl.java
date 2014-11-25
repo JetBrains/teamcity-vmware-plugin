@@ -33,7 +33,9 @@ import jetbrains.buildServer.clouds.vmware.errors.VmwareCheckedCloudException;
 import jetbrains.buildServer.clouds.base.errors.TypedCloudErrorInfo;
 import jetbrains.buildServer.clouds.vmware.*;
 import jetbrains.buildServer.serverSide.TeamCityProperties;
+import jetbrains.buildServer.util.CollectionsUtil;
 import jetbrains.buildServer.util.StringUtil;
+import jetbrains.buildServer.util.filters.Filter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -192,7 +194,24 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
 
   @NotNull
   public Map<String, Folder> getFolders() throws VmwareCheckedCloudException {
-    return findAllEntitiesAsMap(Folder.class);
+    final Map<String, Folder> folderMap = findAllEntitiesAsMap(Folder.class);
+
+    final Map<String, Folder> filteredMap = CollectionsUtil.filterMap(folderMap, new Filter<String>() {
+      public boolean accept(@NotNull final String s) {
+        return true;
+      }
+    }, new Filter<Folder>() {
+      public boolean accept(@NotNull final Folder folder) {
+        final String[] childTypes = folder.getChildType();
+        for (String childType : childTypes) {
+          if (VirtualMachine.class.getSimpleName().equals(childType)) {
+            return true;
+          }
+        }
+        return false;
+      }
+    });
+    return filteredMap;
   }
 
   @NotNull
