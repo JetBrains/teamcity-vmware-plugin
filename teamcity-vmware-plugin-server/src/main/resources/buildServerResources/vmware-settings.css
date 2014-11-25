@@ -93,6 +93,10 @@
     cursor: pointer;
 }
 
+.imageName {
+    white-space: nowrap;
+}
+
 .settings .remove,
 .edit {
     width: 5%;

@@ -55,6 +55,7 @@ BS.Clouds.VMWareVSphere = BS.Clouds.VMWareVSphere || (function () {
             this.$cloneFolder = $j('#cloneFolder');
             this.$resourcePool = $j('#resourcePool');
             this.$maxInstances = $j('#maxInstances');
+            this.$cloneOptions = $j(this.selectors.cloneOptionsRow);
 
             this.$dialogSubmitButton = $j('#vmwareAddImageButton');
             this.$fetchOptionsError = $j('#error_fetch_options');
@@ -67,6 +68,10 @@ BS.Clouds.VMWareVSphere = BS.Clouds.VMWareVSphere || (function () {
 
             this._lastImageId = this._imagesDataLength = 0;
             this._initImage();
+
+            this.$cloneOptions.toggleClass('hidden', !this._isClone());
+            this._displaySnapshotSelect();
+
             this._toggleDialogShowButton();
             this.validateServerSettings() && this.fetchOptions();
             this._initImagesData();
@@ -162,7 +167,8 @@ BS.Clouds.VMWareVSphere = BS.Clouds.VMWareVSphere || (function () {
         validateServerSettings: function (highlightErrors) {
             var isValid = true,
                 checkRequired = function ($elem) {
-                    if (! $elem.val().length) {
+                    var val = $elem.val();
+                    if (val != null && ! $elem.val().length) {
                         isValid = false;
                         highlightErrors && $elem.addClass('settings_error');
                     }
@@ -184,8 +190,6 @@ BS.Clouds.VMWareVSphere = BS.Clouds.VMWareVSphere || (function () {
             this._imagesDataLength += 1;
             this.saveImagesData();
             this._toggleImagesTable();
-
-            return false; // to prevent link with href='#' to scroll to the top of the page
         },
         editImage: function (id) {
             this.imagesData[id] = this._image;
@@ -281,7 +285,7 @@ BS.Clouds.VMWareVSphere = BS.Clouds.VMWareVSphere || (function () {
             var target = errorId ? $j('.option-error_' + errorId) : this.$fetchOptionsError;
 
             if (errorId) {
-                this._displayedErrors[errorId] = [];
+                delete this._displayedErrors[errorId];
             }
 
             target.empty();
@@ -292,21 +296,24 @@ BS.Clouds.VMWareVSphere = BS.Clouds.VMWareVSphere || (function () {
         },
         addOptionError: function (errorKey, optionName) {
             var html;
-            this._displayedErrors[optionName] = this._displayedErrors[optionName] || [];
 
-            if (typeof errorKey !== 'string') {
-                html = this._errors[errorKey.key];
-                Object.keys(errorKey.props).forEach(function(key) {
-                    html = html.replace('%%'+key+'%%', errorKey.props[key]);
-                });
-                errorKey = errorKey.key;
-            } else {
-                html = this._errors[errorKey];
-            }
+            if (errorKey && optionName) {
+                this._displayedErrors[optionName] = this._displayedErrors[optionName] || [];
 
-            if (this._displayedErrors[optionName].indexOf(errorKey) === -1) {
-                this._displayedErrors[optionName].push(errorKey)
-                this.addError(html, $j('.option-error_' + optionName));
+                if (typeof errorKey !== 'string') {
+                    html = this._errors[errorKey.key];
+                    Object.keys(errorKey.props).forEach(function(key) {
+                        html = html.replace('%%'+key+'%%', errorKey.props[key]);
+                    });
+                    errorKey = errorKey.key;
+                } else {
+                    html = this._errors[errorKey];
+                }
+
+                if (this._displayedErrors[optionName].indexOf(errorKey) === -1) {
+                    this._displayedErrors[optionName].push(errorKey)
+                    this.addError(html, $j('.option-error_' + optionName));
+                }
             }
         },
         /**
@@ -389,49 +396,43 @@ BS.Clouds.VMWareVSphere = BS.Clouds.VMWareVSphere || (function () {
                 this.validateOptions(e.target.getAttribute('data-id'));
             }.bind(this));
             // - clone behaviour
+            // hidden input, triggered from JS only
             this.$behaviour.on('change', function (e, value) {
-                var $elementsToToggle = $j(this.selectors.cloneOptionsRow),
-                    startStop = $j('#cloneBehaviour_' + START_STOP),
+                var startStop = $j('#cloneBehaviour_' + START_STOP),
                     freshClone = $j('#cloneBehaviour_' + FRESH_CLONE),
                     onDemandClone = $j('#cloneBehaviour_' + ON_DEMAND_CLONE);
 
-                if (arguments.length === 1) { // triggered by UI
-                    //freshClone.prop('disabled', startStop.is(':checked'));
-
+                if (arguments.length === 1) {
                     if (startStop.is(':checked')) {
                         this._image.behaviour = startStop.val();
                     } else if (freshClone.is(':checked')) { // FRESH_CLONE is checked if START_STOP is not
                         this._image.behaviour = freshClone.val();
-                        //onDemandClone.prop('checked', true); // just in case
                     } else if (onDemandClone.is(':checked')){
                         this._image.behaviour = onDemandClone.val();
                     }
                 } else {
                     $j(this.selectors.behaviourSwitch).prop('checked', false);
                     $j('#cloneBehaviour_' + value).prop('checked', true);
-                    //freshClone.prop('disabled', value === START_STOP);
+                    this._image.behaviour = value;
                 }
 
-                //if ((value || this._image.behaviour) === FRESH_CLONE) {
-                //    onDemandClone.prop('checked', true);
-                //}
-
-                this.clearErrors(e.target.getAttribute('data-err-id'));
-                $elementsToToggle.toggleClass('hidden', !this._isClone());
-
+                this.$cloneOptions.toggleClass('hidden', !this._isClone());
                 if (this._isClone()) {
                     this.fetchSnapshots();
-                } else {
-                    $elementsToToggle.find('select, input').each(function () {
-                        delete self._image[this.getAttribute('data-id')];
-                    })
+                    this._image.snapshot && this.fetchSnapshotsDeferred
+                        .then(function () {
+                            this.$snapshot.trigger('change', this._image.snapshot);
+                        }.bind(this));
+                    !this._image.maxInstances && this.$maxInstances.trigger('change', this._image.maxInstances = 1);
                 }
+
+                this.clearErrors(e.target.getAttribute('data-err-id'));
 
                 this.validateOptions(e.target.getAttribute('data-id'));
                 BS.VMWareImageDialog.recenterDialog();
             }.bind(this));
-            $j(this.selectors.behaviourSwitch).on('change', function () {
-                this.$behaviour.trigger('change');
+            $j(this.selectors.behaviourSwitch).on('change', function (e) {
+                this.$behaviour.trigger('change', e.target.value);
             }.bind(this));
             // - snapshot
             this.$snapshot.on('change', function(e, value) {
@@ -502,6 +503,14 @@ BS.Clouds.VMWareVSphere = BS.Clouds.VMWareVSphere || (function () {
         },
         _submitDialogClickHandler: function() {
             if (this.validateOptions()) {
+
+                if (this._image.behaviour === START_STOP) {
+                    delete this._image.snapshot;
+                    delete this._image.pool;
+                    delete this._image.folder;
+                    delete this._image.maxInstances;
+                }
+
                 if (this.$dialogSubmitButton.val().toLowerCase() === 'save') {
                     this.editImage(this.$dialogSubmitButton.data('image-id'));
                 } else {
@@ -526,6 +535,10 @@ BS.Clouds.VMWareVSphere = BS.Clouds.VMWareVSphere || (function () {
             behaviourTexts[ON_DEMAND_CLONE] = 'Clone';
             behaviourTexts[FRESH_CLONE] = 'Clone; Delete';
 
+            if (props.snapshot === '__CURRENT_VERSION__') {
+                $row.find('.snapshot').text('"Current version"');
+            }
+
             $row.find('.behaviour').text(behaviourTexts[props.behaviour]);
             $row.find(this.selectors.rmImageLink).data('image-id', id);
             $row.find(this.selectors.editImageLink).data('image-id', id);
@@ -533,9 +546,9 @@ BS.Clouds.VMWareVSphere = BS.Clouds.VMWareVSphere || (function () {
         },
         _toggleImagesTable: function () {
             var toggle = !!this._imagesDataLength;
-            this.$imagesTableWrapper.show();
-            this.$emptyImagesListMessage.toggle(!toggle);
-            this.$imagesTable.toggle(toggle);
+            this.$imagesTableWrapper.removeClass('hidden');
+            this.$emptyImagesListMessage.toggleClass('hidden', toggle);
+            this.$imagesTable.toggleClass('hidden', !toggle);
         },
         _displayImagesSelect: function ($vms) {
             var self = this,
@@ -575,22 +588,18 @@ BS.Clouds.VMWareVSphere = BS.Clouds.VMWareVSphere || (function () {
             return this;
         },
         _displaySnapshotSelect: function ($snapshots) {
-            var self = this,
-                isAvailable = $snapshots.length;
+            var self = this;
 
             this.$snapshot.children().remove();
+            this._appendOption(this.$snapshot, '', '--Please select snapshot--');
 
-            if (isAvailable) {
-                if ($snapshots.length === 1) {
-                    this._image.snapshot = $snapshots.attr('value');
-                }
-
-                $snapshots.each(function () {
-                    self._appendOption(self.$snapshot, $j(this).attr('value'), $j(this).attr('name'));
-                });
-            } else {
-                this._image.snapshot = '';
+            if ($snapshots && $snapshots.length === 1) {
+                this._image.snapshot = $snapshots.attr('value');
             }
+
+            $snapshots && $snapshots.each(function () {
+                self._appendOption(self.$snapshot, $j(this).attr('value'), $j(this).attr('name'));
+            });
         },
         _isClone: function () {
             return !!(this._image.behaviour && this._image.behaviour !== START_STOP);
@@ -660,7 +669,12 @@ BS.Clouds.VMWareVSphere = BS.Clouds.VMWareVSphere || (function () {
                             }
                         }
                     }.bind(this),
-                    snapshot: function () {},
+                    snapshot: function () {
+                        if (this._isClone() && !this._image.snapshot) {
+                            this.addOptionError('required', 'snapshot');
+                            isValid = false;
+                        }
+                    }.bind(this),
                     pool: function () {
                         if (this._isClone() && !this._image.pool) {
                             this.addOptionError('required', 'pool');
@@ -674,7 +688,7 @@ BS.Clouds.VMWareVSphere = BS.Clouds.VMWareVSphere || (function () {
                         }
                     }.bind(this),
                     maxInstances: function () {
-                        if ( ! maxInstances || ! $j.isNumeric(maxInstances) || maxInstances < 1) {
+                        if (this._isClone() && (! maxInstances || ! $j.isNumeric(maxInstances) || maxInstances < 1 )) {
                             this.addOptionError('positiveNumber', 'maxInstances');
                             isValid = false;
                         }
@@ -733,7 +747,7 @@ BS.Clouds.VMWareVSphere = BS.Clouds.VMWareVSphere || (function () {
                     return updateIcon(imageId, 'error', this._errors.templateStart);
                 }
 
-                if (! machine.behaviour || ! machine.maxInstances) {
+                if (! machine.behaviour || (machine.behaviour !== START_STOP && ! machine.maxInstances)) {
                     return updateIcon(imageId, 'error', this._errors.badParam);
                 }
                 updateIcon(imageId, 'info', this._isTemplate($machine) ? 'Template' : 'Machine', this._isTemplate($machine) ? 'T' : 'M');
