@@ -16,13 +16,14 @@
  *
  */
 
-BS = BS || {};
+var BS = BS || {};
 BS.Clouds = BS.Clouds || {};
 BS.Clouds.VMWareVSphere = BS.Clouds.VMWareVSphere || (function () {
     var START_STOP = 'START_STOP',
         FRESH_CLONE = 'FRESH_CLONE',
-        ON_DEMAND_CLONE = 'ON_DEMAND_CLONE';
-    
+        ON_DEMAND_CLONE = 'ON_DEMAND_CLONE',
+        CURRENT_STATE = '__CURRENT_STATE__';
+
     return {
         _dataKeys: [ 'sourceName', 'snapshot', 'folder', 'pool', 'maxInstances'],
         selectors: {
@@ -535,8 +536,8 @@ BS.Clouds.VMWareVSphere = BS.Clouds.VMWareVSphere || (function () {
             behaviourTexts[ON_DEMAND_CLONE] = 'Clone';
             behaviourTexts[FRESH_CLONE] = 'Clone; Delete';
 
-            if (props.snapshot === '__CURRENT_VERSION__') {
-                $row.find('.snapshot').text('"Current version"');
+            if (props.snapshot === CURRENT_STATE) {
+                $row.find('.snapshot').text('"Current state"');
             }
 
             $row.find('.behaviour').text(behaviourTexts[props.behaviour]);
