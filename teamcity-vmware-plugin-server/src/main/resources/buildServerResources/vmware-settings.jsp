@@ -1,3 +1,4 @@
+<%@ page import="jetbrains.buildServer.clouds.vmware.VmwareConstants" %>
 <%--
   ~ /*
   ~  * Copyright 2000-2014 JetBrains s.r.o.
@@ -25,7 +26,8 @@
 <%@ taglib prefix="bs" tagdir="/WEB-INF/tags" %>
 <%@ taglib prefix="intprop" uri="/WEB-INF/functions/intprop" %>
 <%--@elvariable id="resPath" type="java.lang.String"--%>
-<jsp:useBean id="cons" class="jetbrains.buildServer.clouds.vmware.web.VMWareWebConstants"/>
+<jsp:useBean id="webCons" class="jetbrains.buildServer.clouds.vmware.web.VMWareWebConstants"/>
+<jsp:useBean id="cons" class="jetbrains.buildServer.clouds.vmware.VmwareConstants"/>
 
 <jsp:useBean id="refreshablePath" class="java.lang.String" scope="request"/>
 <jsp:useBean id="refreshSnapshotsPath" class="java.lang.String" scope="request"/>
@@ -38,18 +40,18 @@
 
 <table class="runnerFormTable">
   <tr>
-    <th><label for="${cons.serverUrl}">Server URL: <l:star/></label></th>
-    <td><props:textProperty name="${cons.serverUrl}" className="settings longField"/></td>
+    <th><label for="${webCons.serverUrl}">Server URL: <l:star/></label></th>
+    <td><props:textProperty name="${webCons.serverUrl}" className="settings longField"/></td>
   </tr>
 
   <tr>
-    <th><label for="${cons.username}">Username: <l:star/></label></th>
-    <td><props:textProperty name="${cons.username}" className="settings longField"/></td>
+    <th><label for="${webCons.username}">Username: <l:star/></label></th>
+    <td><props:textProperty name="${webCons.username}" className="settings longField"/></td>
   </tr>
 
   <tr>
-    <th><label for="secure:${cons.password}">Password: <l:star/></label></th>
-    <td><props:passwordProperty name="secure:${cons.password}" className="settings longField"/></td>
+    <th><label for="secure:${webCons.password}">Password: <l:star/></label></th>
+    <td><props:passwordProperty name="secure:${webCons.password}" className="settings longField"/></td>
   </tr>
   <tr>
     <td colspan="2">
@@ -80,8 +82,8 @@
           </tbody>
         </table>
         <jsp:useBean id="propertiesBean" scope="request" type="jetbrains.buildServer.controllers.BasePropertiesBean"/>
-        <c:set var="imagesData" value="${propertiesBean.properties[cons.imagesData]}"/>
-        <input type="hidden" name="prop:${cons.imagesData}" id="${cons.imagesData}" value="<c:out value="${imagesData}"/>"/>
+        <c:set var="imagesData" value="${propertiesBean.properties[webCons.imagesData]}"/>
+        <input type="hidden" name="prop:${webCons.imagesData}" id="${webCons.imagesData}" value="<c:out value="${imagesData}"/>"/>
     </div>
     <forms:addButton title="Add image" id="vmwareShowDialogButton">Add image</forms:addButton>
 </div>
@@ -121,7 +123,7 @@
                     <span class="error option-error option-error_behaviour"></span>
                 </td>
             </tr>
-        <c:if test="${intprop:getBoolean('teamcity.clouds.vmware.show.preserve.clone')}">
+        <c:if test="${intprop:getBoolean(cons.showPreserveClone)}">
             <tr>
                 <th>Experimental behaviour:</th>
                 <td>
@@ -182,8 +184,8 @@
         success: function () {
             BS.Clouds.VMWareVSphere.init('<c:url value="${refreshablePath}"/>',
                     '<c:url value="${refreshSnapshotsPath}"/>',
-                    '${cons.imagesData}',
-                    '${cons.serverUrl}');
+                    '${webCons.imagesData}',
+                    '${webCons.serverUrl}');
         },
         cache: true
     });

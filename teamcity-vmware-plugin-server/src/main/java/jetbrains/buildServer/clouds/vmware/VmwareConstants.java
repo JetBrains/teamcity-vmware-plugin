@@ -25,9 +25,14 @@ import org.jetbrains.annotations.NotNull;
  *         Date: 4/16/2014
  *         Time: 6:33 PM
  */
-public interface VmwareConstants {
-  @NotNull String TYPE = "vmw";
-  @NotNull String SHOW_ON_DEMAND_CLONE = "teamcity.clouds.vmware.show.ondemand.clone"; // false by default
-  @NotNull String USE_LINKED_CLONE = "teamcity.clouds.vmware.use.linked.clone"; // true by default
-  @NotNull String CURRENT_STATE = "__CURRENT_STATE__";
+public class VmwareConstants {
+  @NotNull public static final String TYPE = "vmw";
+  @NotNull public static final String SHOW_PRESERVE_CLONE = "teamcity.clouds.vmware.show.preserve.clone"; // false by default
+  @NotNull public static final String USE_LINKED_CLONE = "teamcity.clouds.vmware.use.linked.clone"; // true by default
+  @NotNull public static final String CURRENT_STATE = "__CURRENT_STATE__";
+
+  @NotNull
+  public String getShowPreserveClone() {
+    return SHOW_PRESERVE_CLONE;
+  }
 }
