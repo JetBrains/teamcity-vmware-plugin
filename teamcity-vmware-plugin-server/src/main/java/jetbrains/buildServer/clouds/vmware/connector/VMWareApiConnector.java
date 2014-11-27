@@ -57,10 +57,10 @@ public interface VMWareApiConnector extends CloudApiConnector<VmwareCloudImage, 
   Map<String, String> getVMParams(@NotNull final String vmName) throws VmwareCheckedCloudException;
 
   @NotNull
-  Map<String, Folder> getFolders() throws VmwareCheckedCloudException;
+  Map<String, String> getFolders() throws VmwareCheckedCloudException;
 
   @NotNull
-  Map<String, ResourcePool> getResourcePools() throws VmwareCheckedCloudException;
+  Map<String, String> getResourcePools() throws VmwareCheckedCloudException;
 
   @NotNull
   Map<String, VirtualMachineSnapshotTree> getSnapshotList(String vmName) throws VmwareCheckedCloudException;

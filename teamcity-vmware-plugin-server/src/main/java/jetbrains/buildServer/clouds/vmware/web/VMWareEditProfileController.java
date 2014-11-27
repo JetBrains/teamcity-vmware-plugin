@@ -19,8 +19,6 @@
 package jetbrains.buildServer.clouds.vmware.web;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.vmware.vim25.mo.Folder;
-import com.vmware.vim25.mo.ResourcePool;
 import java.net.URL;
 import java.util.*;
 import javax.servlet.http.HttpServletRequest;
@@ -34,7 +32,6 @@ import jetbrains.buildServer.controllers.BaseFormXmlController;
 import jetbrains.buildServer.controllers.BasePropertiesBean;
 import jetbrains.buildServer.controllers.admin.projects.PluginPropertiesUtil;
 import jetbrains.buildServer.serverSide.SBuildServer;
-import jetbrains.buildServer.util.StringUtil;
 import jetbrains.buildServer.web.openapi.*;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -52,7 +49,7 @@ public class VMWareEditProfileController extends BaseFormXmlController {
   @NotNull private final String myJspPath;
   @NotNull private final String myHtmlPath;
   @NotNull private final String mySnapshotsPath;
-    private final PluginDescriptor myPluginDescriptor;
+  @NotNull private final PluginDescriptor myPluginDescriptor;
 
   public VMWareEditProfileController(@NotNull final SBuildServer server,
                                       @NotNull final PluginDescriptor pluginDescriptor,
@@ -68,7 +65,7 @@ public class VMWareEditProfileController extends BaseFormXmlController {
 
   @Override
   protected ModelAndView doGet(@NotNull final HttpServletRequest request, @NotNull final HttpServletResponse response) {
-    ModelAndView mv = new ModelAndView(myJspPath);
+    final ModelAndView mv = new ModelAndView(myJspPath);
     mv.getModel().put("refreshablePath", myHtmlPath);
     mv.getModel().put("refreshSnapshotsPath", mySnapshotsPath);
     mv.getModel().put("resPath", myPluginDescriptor.getPluginResourcesPath());
@@ -77,7 +74,7 @@ public class VMWareEditProfileController extends BaseFormXmlController {
 
   @Override
   protected void doPost(@NotNull final HttpServletRequest request, @NotNull final HttpServletResponse response, @NotNull final Element xmlResponse) {
-    ActionErrors errors = new ActionErrors();
+    final ActionErrors errors = new ActionErrors();
 
     final BasePropertiesBean propsBean = new BasePropertiesBean(null);
     PluginPropertiesUtil.bindPropertiesFromRequest(request, propsBean, true);
@@ -104,7 +101,7 @@ public class VMWareEditProfileController extends BaseFormXmlController {
   }
 
   private Element getVirtualMachinesAsElement(@NotNull final Map<String, VmwareInstance> vmMap){
-    Element element = new Element("VirtualMachines");
+    final Element element = new Element("VirtualMachines");
     final List<VmwareInstance> values = new ArrayList<VmwareInstance>(vmMap.values());
     Collections.sort(values, new Comparator<VmwareInstance>() {
       public int compare(@NotNull final VmwareInstance o1, @NotNull final VmwareInstance o2) {
@@ -120,31 +117,33 @@ public class VMWareEditProfileController extends BaseFormXmlController {
     return element;
   }
 
-  private Element getFoldersAsElement(Map<String, Folder> folders){
-    Element element = new Element("Folders");
+  private Element getFoldersAsElement(Map<String, String> folders){
+    final Element element = new Element("Folders");
     final Set<String> folderNames = folders.keySet();
     final List<String> sortedList = getIgnoreCaseSortedList(folderNames);
     for (String folderName : sortedList) {
       Element folderElement = new Element("Folder");
       folderElement.setAttribute("name", folderName);
+      folderElement.setAttribute("value", folders.get(folderName));
       element.addContent(folderElement);
     }
     return element;
   }
 
-  private Element getResourcePoolsAsElement(Map<String, ResourcePool> resourcePools){
-    Element element = new Element("ResourcePools");
+  private Element getResourcePoolsAsElement(Map<String, String> resourcePools){
+    final Element element = new Element("ResourcePools");
     final List<String> sortedList = getIgnoreCaseSortedList(resourcePools.keySet());
     for (String poolName : sortedList) {
       Element poolElement = new Element("ResourcePool");
       poolElement.setAttribute("name", poolName);
+      poolElement.setAttribute("value", resourcePools.get(poolName));
       element.addContent(poolElement);
     }
     return element;
   }
 
   private List<String> getIgnoreCaseSortedList(Collection<String> src){
-    List<String> sortedList = new ArrayList<String>(src);
+    final List<String> sortedList = new ArrayList<String>(src);
     Collections.sort(sortedList, new Comparator<String>() {
       public int compare(final String o1, final String o2) {
         return o1.compareToIgnoreCase(o2);

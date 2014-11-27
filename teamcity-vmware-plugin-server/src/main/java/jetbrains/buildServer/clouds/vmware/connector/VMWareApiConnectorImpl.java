@@ -21,6 +21,7 @@ package jetbrains.buildServer.clouds.vmware.connector;
 import com.intellij.openapi.diagnostic.Logger;
 import com.vmware.vim25.*;
 import com.vmware.vim25.mo.*;
+import com.vmware.vim25.mo.util.MorUtil;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.rmi.RemoteException;
@@ -49,6 +50,13 @@ import static jetbrains.buildServer.clouds.vmware.VMWarePropertiesNames.*;
 public class VMWareApiConnectorImpl implements VMWareApiConnector {
 
   private static final Logger LOG = Logger.getInstance(VMWareApiConnectorImpl.class.getName());
+  private static final String VM_TYPE = VirtualMachine.class.getSimpleName();
+  private static final String FOLDER_TYPE = Folder.class.getSimpleName();
+  private static final String RESPOOL_TYPE = ResourcePool.class.getSimpleName();
+  private static final String SPEC_FOLDER = "vm";
+  private static final String SPEC_RESPOOL = "Resources";
+  private static final Pattern RESPOOL_PATTERN = Pattern.compile("resgroup-\\d+");
+  private static final Pattern FOLDER_PATTERN = Pattern.compile("group-v\\d+");
 
   private static final long SHUTDOWN_TIMEOUT = 60 * 1000;
 
@@ -90,10 +98,27 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
     return myServiceInstance.getRootFolder();
   }
 
+  private boolean isId(String idName, Class instanceType){
+    if (instanceType == ResourcePool.class) {
+      return RESPOOL_PATTERN.matcher(idName).matches();
+    } else if (instanceType == Folder.class) {
+      return FOLDER_PATTERN.matcher(idName).matches();
+    } else {
+      return false;
+    }
+  }
+
   @Nullable
   protected <T extends ManagedEntity> T findEntityByNameNullable(String name, Class<T> instanceType) throws VmwareCheckedCloudException {
     try {
-      return (T)new InventoryNavigator(getRootFolder()).searchManagedEntity(instanceType.getSimpleName(), name);
+      if (isId(name, instanceType)) {
+        ManagedObjectReference mor = new ManagedObjectReference();
+        mor.setType(instanceType.getSimpleName());
+        mor.setVal(name);
+        return (T)MorUtil.createExactManagedEntity(myServiceInstance.getServerConnection(), mor);
+      } else {
+        return (T)new InventoryNavigator(getRootFolder()).searchManagedEntity(instanceType.getSimpleName(), name);
+      }
     } catch (RemoteException e) {
       throw new VmwareCheckedCloudException(e);
     }
@@ -193,31 +218,116 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
   }
 
   @NotNull
-  public Map<String, Folder> getFolders() throws VmwareCheckedCloudException {
-    final Map<String, Folder> folderMap = findAllEntitiesAsMap(Folder.class);
-
-    final Map<String, Folder> filteredMap = CollectionsUtil.filterMap(folderMap, new Filter<String>() {
-      public boolean accept(@NotNull final String s) {
-        return true;
-      }
-    }, new Filter<Folder>() {
+  public Map<String, String> getFolders() throws VmwareCheckedCloudException {
+    final Collection<Folder> allFolders = CollectionsUtil.filterCollection(findAllEntities(Folder.class), new Filter<Folder>() {
       public boolean accept(@NotNull final Folder folder) {
-        final String[] childTypes = folder.getChildType();
-        for (String childType : childTypes) {
-          if (VirtualMachine.class.getSimpleName().equals(childType)) {
-            return true;
-          }
-        }
-        return false;
+        if ("vm".equals(folder.getName())
+            && folder.getParent() != null
+            && !FOLDER_TYPE.equals(folder.getParent().getMOR().getType()))
+          return false;
+        return canContainVMs(folder);
       }
     });
+
+    final boolean containsDuplicates = containsDuplicates(allFolders);
+    final Map<String, String> filteredMap = new HashMap<String, String>();
+
+    for (Folder folder : allFolders) {
+      String folderName = folder.getName();
+      if (containsDuplicates) {
+        folderName = getFullFolderPath(folder);
+      }
+      filteredMap.put(folderName, folder.getMOR().getVal());
+    }
     return filteredMap;
   }
 
   @NotNull
-  public Map<String, ResourcePool> getResourcePools() throws VmwareCheckedCloudException {
-    return findAllEntitiesAsMap(ResourcePool.class);
+  public Map<String, String> getResourcePools() throws VmwareCheckedCloudException {
+    final Collection<ResourcePool> allPools = CollectionsUtil.filterCollection(findAllEntities(ResourcePool.class), new Filter<ResourcePool>() {
+      public boolean accept(@NotNull final ResourcePool resourcePool) {
+        return !isSpecial(resourcePool);
+      }
+    });
+    boolean containsDuplicates = containsDuplicates(allPools);
+    Map<String, String> retval = new HashMap<String, String>();
+    for (ResourcePool pool : allPools) {
+
+      String poolName = pool.getName();
+
+      if (containsDuplicates) {
+        poolName = getFullResourcePoolPath(pool);
+      }
+      retval.put(poolName, pool.getMOR().getVal());
+    }
+    return retval;
   }
+
+  private boolean isSpecial(@NotNull final ResourcePool pool){
+    return SPEC_RESPOOL.equals(pool.getName()) && pool.getParent() != null && !RESPOOL_TYPE.equals(pool.getParent().getMOR().getType());
+  }
+
+  private boolean isSpecial(@NotNull final Folder folder){
+    return SPEC_FOLDER.equals(folder.getName()) && folder.getParent() != null && !FOLDER_TYPE.equals(folder.getParent().getMOR().getType());
+  }
+
+  private boolean canContainVMs(final Folder folder) {
+    final String[] childTypes = folder.getChildType();
+    for (String childType : childTypes) {
+      if (VM_TYPE.equals(childType)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private String getFullFolderPath(final Folder folder){
+    final String folderMORType = folder.getMOR().getType();
+    StringBuilder pathBuilder = new StringBuilder(folder.getName());
+    ManagedEntity entity = folder.getParent();
+    while (entity != null){
+      boolean skip = false;
+      if (entity.getMOR().getType().equals(folderMORType)){
+        skip = true;
+        if (entity.getParent() != null && !entity.getName().equals("vm") && folderMORType.equals(entity.getParent().getMOR().getType())) {
+          final String[] childTypes = ((Folder)entity).getChildType();
+          for (String childType : childTypes) {
+            if (VirtualMachine.class.getSimpleName().equals(childType)) {
+              skip = false;
+              break;
+            }
+          }
+        }
+      }
+      if (!skip)
+        pathBuilder.insert(0, String.format("%s/", entity.getName()));
+      entity = entity.getParent();
+    }
+    return pathBuilder.toString();
+  }
+
+  private String getFullResourcePoolPath(final ResourcePool pool){
+    final String resPool = pool.getMOR().getType();
+    StringBuilder pathBuilder = new StringBuilder(pool.getName());
+    ManagedEntity entity = pool.getParent();
+    while (entity != null){
+      boolean skip = false;
+      if ("Resources".equals(entity.getName()) && entity.getParent() != null && !resPool.equals(entity.getParent().getMOR())) {
+        skip = true;
+      }
+      if (entity.getMOR().getType().equals(Folder.class.getSimpleName())){
+        skip = true;
+      }
+
+      if (!skip) {
+        pathBuilder.insert(0, String.format("%s/", entity.getName()));
+      }
+
+      entity = entity.getParent();
+    }
+    return pathBuilder.toString();
+  }
+
 
   @NotNull
   private Map<String, VirtualMachineSnapshotTree> getSnapshotList(final VirtualMachine vm) throws VmwareCheckedCloudException {
@@ -240,6 +350,17 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
     final Map<String, VirtualMachineSnapshotTree> snapshotList = getSnapshotList(vmName);
     return getLatestSnapshot(snapshotNameMask, snapshotList);
   }
+
+  private boolean containsDuplicates(Collection<? extends ManagedEntity> entities){
+    final Set<String> names = new HashSet<String>();
+    for (ManagedEntity entity : entities) {
+      if (!names.add(entity.getName())){
+        return true;
+      }
+    }
+    return false;
+  }
+
 
   private String getLatestSnapshot(final String snapshotNameMask, final Map<String, VirtualMachineSnapshotTree> snapshotList) {
     if (snapshotNameMask == null)

@@ -572,7 +572,7 @@ BS.Clouds.VMWareVSphere = BS.Clouds.VMWareVSphere || (function () {
             this.$resourcePool.children().remove();
             this._appendOption(this.$resourcePool, '', '--Please select pool--');
             $pools.each(function () {
-                self._appendOption(self.$resourcePool, $j(this).attr('name'));
+                self._appendOption(self.$resourcePool, $j(this).attr('value'), $j(this).attr('name'));
             });
 
             return this;
@@ -583,7 +583,7 @@ BS.Clouds.VMWareVSphere = BS.Clouds.VMWareVSphere || (function () {
             this.$cloneFolder.children().remove();
             this._appendOption(this.$cloneFolder, '', '--Please select folder--');
             $folders.each(function () {
-                self._appendOption(self.$cloneFolder, $j(this).attr('name'));
+                self._appendOption(self.$cloneFolder, $j(this).attr('value'), $j(this).attr('name'));
             });
 
             return this;
