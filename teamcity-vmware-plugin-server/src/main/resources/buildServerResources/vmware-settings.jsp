@@ -40,7 +40,8 @@
 
 <table class="runnerFormTable">
   <tr>
-    <th><label for="${webCons.serverUrl}">Server URL: <l:star/></label></th>
+    <th><label for="${webCons.serverUrl}">vCenter SDK URL: <l:star/></label>
+      <bs:help urlPrefix="https://pubs.vmware.com/vsphere-4-esx-vcenter" file="index.jsp?topic=/com.vmware.vsphere.installclassic.doc_41/install/lm_groups/t_urls_stand.html"/></th>
     <td><props:textProperty name="${webCons.serverUrl}" className="settings longField"/></td>
   </tr>
 
