@@ -57,7 +57,7 @@
     <td colspan="2">
         <span id="error_fetch_options" class="error"></span>
         <div>
-            <forms:button id="vmwareFetchOptionsButton">Fetch options</forms:button>
+            <forms:button id="vmwareFetchOptionsButton" className="btn_mini">Test connection / Fetch options</forms:button>
             <div class="hidden options-loader"><i class="icon-refresh icon-spin"></i>&nbsp;Fetching options...</div>
         </div>
     </td>
@@ -113,12 +113,12 @@
                     <div>
                         <input type="radio" checked id="cloneBehaviour_FRESH_CLONE" name="cloneBehaviour" value="FRESH_CLONE" class="behaviour__switch behaviour__switch_radio"/>
                         <label for="cloneBehaviour_FRESH_CLONE">Clone the selected Virtual Machine or Template before starting</label>
-                        <div class="grayNote">The clone is deleted after stopping</div>
+                        <div class="grayNote">The clone will be deleted after stopping</div>
                     </div>
                     <div>
                         <input type="radio" id="cloneBehaviour_START_STOP" name="cloneBehaviour" value="START_STOP" class="behaviour__switch behaviour__switch_radio"/>
-                        <label for="cloneBehaviour_START_STOP">Use the selected Virtual Machine (not Template)</label>
-                        <div class="grayNote">TeamCity will start and stop the existing Virtual Machine</div>
+                        <label for="cloneBehaviour_START_STOP">Start the selected Virtual Machine</label>
+                        <div class="grayNote">When idle, the Virtual Machine will be stopped as per profile settings</div>
                     </div>
                     <span class="error option-error option-error_behaviour"></span>
                 </td>
