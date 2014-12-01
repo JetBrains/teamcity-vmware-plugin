@@ -53,6 +53,7 @@ BS.Clouds.VMWareVSphere = BS.Clouds.VMWareVSphere || (function () {
             this.$image = $j(this.selectors.imagesSelect);
             this.$behaviour = $j('.behaviour__value');
             this.$snapshot = $j('#snapshot');
+            this.$currentStateWarning = $j('.currentStateWarning');
             this.$cloneFolder = $j('#cloneFolder');
             this.$resourcePool = $j('#resourcePool');
             this.$maxInstances = $j('#maxInstances');
@@ -442,6 +443,7 @@ BS.Clouds.VMWareVSphere = BS.Clouds.VMWareVSphere || (function () {
                 } else {
                     this._tryToUpdateSelect(this.$snapshot, value);
                 }
+                this.$currentStateWarning.toggleClass('invisible', this._image.snapshot !== CURRENT_STATE);
                 this.validateOptions(e.target.getAttribute('data-id'));
             }.bind(this));
             // - folder

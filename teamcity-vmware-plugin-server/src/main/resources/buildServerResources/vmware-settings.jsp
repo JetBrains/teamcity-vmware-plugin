@@ -107,7 +107,7 @@
         </tr>
 
             <tr>
-                <th>Behaviour:&nbsp;<l:star/></th>
+                <th>Behaviour:&nbsp;<l:star/><bs:help urlPrefix="http://confluence.jetbrains.com/display/TW" file="VMware+vSphere+Cloud"/></th>
                 <td>
                     <input type="hidden" class="behaviour__value" data-id="behaviour" data-err-id="behaviour"/>
                     <div>
@@ -140,7 +140,7 @@
                 <th>Snapshot name:&nbsp;<l:star/></th>
                 <td>
                     <select id="snapshot" class="longField" data-id="snapshot" data-err-id="snapshot"></select>
-                    <div class="smallNoteAttention">&laquo;Current state&raquo; requires a full clone, it is a time- and disk-space-consuming operation</div>
+                    <div class="smallNoteAttention currentStateWarning invisible">&laquo;Current state&raquo; requires a full clone, it is a time- and disk-space-consuming operation</div>
                     <span class="error option-error option-error_snapshot"></span>
                 </td>
             </tr>
