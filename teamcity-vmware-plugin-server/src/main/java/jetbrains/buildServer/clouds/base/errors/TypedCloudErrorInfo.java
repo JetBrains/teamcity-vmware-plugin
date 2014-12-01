@@ -28,13 +28,13 @@ import org.jetbrains.annotations.Nullable;
  *         Time: 2:40 PM
  */
 public class TypedCloudErrorInfo{
-  private final String myType;
-  private final String myMessage;
-  private final String myDetails;
-  private final Throwable myThrowable;
+  @NotNull private final String myType;
+  @NotNull private final String myMessage;
+  @NotNull private final String myDetails;
+  @Nullable private final Throwable myThrowable;
 
   public static TypedCloudErrorInfo fromException(@NotNull Throwable th){
-    return new TypedCloudErrorInfo(String.valueOf(th.getMessage()), String.valueOf(th.getMessage()), th.toString(), th);
+    return new TypedCloudErrorInfo(th.getMessage(), th.getMessage(), th.toString(), th);
   }
 
   public TypedCloudErrorInfo(@NotNull final String message) {
@@ -49,28 +49,32 @@ public class TypedCloudErrorInfo{
     this(type, message, details, null);
   }
 
-  public TypedCloudErrorInfo(@NotNull final String type,
-                             @NotNull final String message,
+  public TypedCloudErrorInfo(@Nullable final String type,
+                             @Nullable final String message,
                              @Nullable final String details,
                              @Nullable final Throwable throwable) {
-    myType = type;
-    myMessage = message;
-    myDetails = details;
+    myType = String.valueOf(type);
+    myMessage = String.valueOf(message);
+    myDetails = String.valueOf(details);
     myThrowable = throwable;
   }
 
+  @NotNull
   public String getType() {
     return myType;
   }
 
+  @NotNull
   public String getMessage() {
     return myMessage;
   }
 
+  @NotNull
   public String getDetails() {
     return myDetails;
   }
 
+  @Nullable
   public Throwable getThrowable() {
     return myThrowable;
   }
