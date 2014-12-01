@@ -112,13 +112,13 @@
                     <input type="hidden" class="behaviour__value" data-id="behaviour" data-err-id="behaviour"/>
                     <div>
                         <input type="radio" checked id="cloneBehaviour_FRESH_CLONE" name="cloneBehaviour" value="FRESH_CLONE" class="behaviour__switch behaviour__switch_radio"/>
-                        <label for="cloneBehaviour_FRESH_CLONE">Clone the selected Virtual Machine or Template</label>
+                        <label for="cloneBehaviour_FRESH_CLONE">Clone the selected Virtual Machine or Template before starting</label>
                         <div class="grayNote">The clone is deleted after stopping</div>
                     </div>
                     <div>
                         <input type="radio" id="cloneBehaviour_START_STOP" name="cloneBehaviour" value="START_STOP" class="behaviour__switch behaviour__switch_radio"/>
-                        <label for="cloneBehaviour_START_STOP">Use the selected Virtual Machine</label>
-                        <div class="grayNote">Templates unlike Virtual Machines cannot be started without cloning</div>
+                        <label for="cloneBehaviour_START_STOP">Use the selected Virtual Machine (not Template)</label>
+                        <div class="grayNote">TeamCity will start and stop the existing Virtual Machine</div>
                     </div>
                     <span class="error option-error option-error_behaviour"></span>
                 </td>
@@ -130,7 +130,7 @@
                     <div>
                         <input type="radio" id="cloneBehaviour_ON_DEMAND_CLONE" name="cloneBehaviour" value="ON_DEMAND_CLONE" class="behaviour__switch"/>
                         <label for="cloneBehaviour_ON_DEMAND_CLONE">Clone the selected Virtual Machine or Template, preserve the clone after stopping</label>
-                        <div class="smallNoteAttention">This is experimental feature, use it on your own risk</div>
+                        <div class="smallNoteAttention">This is an experimental feature, use it at your own risk</div>
                     </div>
 
                 </td>
@@ -140,7 +140,7 @@
                 <th>Snapshot name:&nbsp;<l:star/></th>
                 <td>
                     <select id="snapshot" class="longField" data-id="snapshot" data-err-id="snapshot"></select>
-                    <div class="smallNoteAttention">&laquo;Current state&raquo; requires full clone, it is time and disk space consuming operation</div>
+                    <div class="smallNoteAttention">&laquo;Current state&raquo; requires a full clone, it is a time- and disk-space-consuming operation</div>
                     <span class="error option-error option-error_snapshot"></span>
                 </td>
             </tr>

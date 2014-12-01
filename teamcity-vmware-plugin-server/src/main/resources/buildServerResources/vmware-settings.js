@@ -640,8 +640,8 @@ BS.Clouds.VMWareVSphere = BS.Clouds.VMWareVSphere || (function () {
         },
         _errors: {
             badParam: 'Bad parameter',
-            required: 'Required field cannot be left blank',
-            templateStart: 'Start/Stop behaviour cannot be selected for the templates',
+            required: 'This field cannot be blank',
+            templateStart: 'The Start/Stop behaviour cannot be selected for templates',
             positiveNumber: 'Must be positive number',
             nonexistent: 'The %%elem%% &laquo;%%val%%&raquo; does not exist'
         },
