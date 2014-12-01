@@ -107,7 +107,7 @@
         </tr>
 
             <tr>
-                <th>Behaviour:&nbsp;<l:star/><bs:help urlPrefix="http://confluence.jetbrains.com/display/TW" file="VMware+vSphere+Cloud"/></th>
+                <th>Behaviour:&nbsp;<l:star/><bs:help urlPrefix="http://confluence.jetbrains.com/display/TW" file="VMware+vSphere+Cloud#VMwarevSphereCloud-Features"/></th>
                 <td>
                     <input type="hidden" class="behaviour__value" data-id="behaviour" data-err-id="behaviour"/>
                     <div>
