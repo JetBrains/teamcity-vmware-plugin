@@ -84,6 +84,9 @@ public class VMWareCloudClientFactory extends AbstractCloudClientFactory<VmwareC
     final String imagesData = params.getParameter("vmware_images_data");
     Gson gson = new Gson();
     final VmwareCloudImageDetails[] details = gson.fromJson(imagesData, VmwareCloudImageDetails[].class);
+    if (details==null){
+      return Collections.emptyList();
+    }
     return Arrays.asList(details);
   }
 

@@ -33,8 +33,8 @@ public class TypedCloudErrorInfo{
   private final String myDetails;
   private final Throwable myThrowable;
 
-  public static TypedCloudErrorInfo fromException(Throwable th){
-    return new TypedCloudErrorInfo(th.getMessage(), th.getMessage(), th.toString(), th);
+  public static TypedCloudErrorInfo fromException(@NotNull Throwable th){
+    return new TypedCloudErrorInfo(String.valueOf(th.getMessage()), String.valueOf(th.getMessage()), th.toString(), th);
   }
 
   public TypedCloudErrorInfo(@NotNull final String message) {
