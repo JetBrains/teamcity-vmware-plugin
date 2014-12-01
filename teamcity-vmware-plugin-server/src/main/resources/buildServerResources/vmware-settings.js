@@ -431,7 +431,6 @@ BS.Clouds.VMWareVSphere = BS.Clouds.VMWareVSphere || (function () {
                 this.clearErrors(e.target.getAttribute('data-err-id'));
 
                 this.validateOptions(e.target.getAttribute('data-id'));
-                BS.VMWareImageDialog.recenterDialog();
             }.bind(this));
             $j(this.selectors.behaviourSwitch).on('change', function (e) {
                 this.$behaviour.trigger('change', e.target.value);
@@ -443,7 +442,7 @@ BS.Clouds.VMWareVSphere = BS.Clouds.VMWareVSphere || (function () {
                 } else {
                     this._tryToUpdateSelect(this.$snapshot, value);
                 }
-                this.$currentStateWarning.toggleClass('invisible', this._image.snapshot !== CURRENT_STATE);
+                this.$currentStateWarning.toggleClass('hidden', this._image.snapshot !== CURRENT_STATE);
                 this.validateOptions(e.target.getAttribute('data-id'));
             }.bind(this));
             // - folder

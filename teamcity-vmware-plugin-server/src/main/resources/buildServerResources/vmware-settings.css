@@ -38,7 +38,7 @@
 
 /* Add/edit dialog */
 #VMWareImageDialog {
-    width: auto;
+    width: 570px;
 }
 
 #VMWareImageDialog .message-wrapper {

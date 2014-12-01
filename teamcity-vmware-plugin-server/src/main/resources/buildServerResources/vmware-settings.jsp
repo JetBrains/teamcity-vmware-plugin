@@ -140,7 +140,7 @@
                 <th>Snapshot name:&nbsp;<l:star/></th>
                 <td>
                     <select id="snapshot" class="longField" data-id="snapshot" data-err-id="snapshot"></select>
-                    <div class="smallNoteAttention currentStateWarning invisible">&laquo;Current state&raquo; requires a full clone, it is a time- and disk-space-consuming operation</div>
+                    <div class="smallNoteAttention currentStateWarning hidden">&laquo;Current state&raquo; requires a full clone, it is a time- and disk-space-consuming operation</div>
                     <span class="error option-error option-error_snapshot"></span>
                 </td>
             </tr>
