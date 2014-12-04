@@ -101,7 +101,6 @@ public class VMWarePropertiesReader {
             for (Map.Entry<String, String> entry : customParameters.entrySet()) {
               myAgentConfiguration.addConfigurationParameter(entry.getKey(), entry.getValue());
             }
-            myAgentConfiguration.setAuthorizationToken(cloudUserData.getAuthToken());
           }
         }
       }
