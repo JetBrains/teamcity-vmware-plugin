@@ -32,6 +32,7 @@ import jetbrains.buildServer.clouds.vmware.connector.VMWareApiConnectorImpl;
 import jetbrains.buildServer.controllers.BaseFormXmlController;
 import jetbrains.buildServer.controllers.BasePropertiesBean;
 import jetbrains.buildServer.controllers.admin.projects.PluginPropertiesUtil;
+import jetbrains.buildServer.serverSide.TeamCityProperties;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.web.servlet.ModelAndView;
@@ -69,10 +70,16 @@ public class GetSnapshotsListController extends BaseFormXmlController {
       final Map<String, VirtualMachineSnapshotTree> snapshotList = myApiConnector.getSnapshotList(imageName);
       Element snapshots = new Element("Snapshots");
       snapshots.setAttribute("vmName", imageName);
-      Element currentVersion = new Element("Snapshot");
+      final Element currentVersion = new Element("Snapshot");
       currentVersion.setAttribute("name", "<Current State>");
       currentVersion.setAttribute("value", VmwareConstants.CURRENT_STATE);
       snapshots.addContent(currentVersion);
+      if (snapshotList.size() > 0 && TeamCityProperties.getBoolean(VmwareConstants.ENABLE_LATEST_SNAPSHOT)){
+        final Element latestSnapshot = new Element("Snapshot");
+        latestSnapshot.setAttribute("name", "<Latest snapshot>");
+        latestSnapshot.setAttribute("value", VmwareConstants.LATEST_SNAPSHOT);
+        snapshots.addContent(latestSnapshot);
+      }
       for (String snapshotName : snapshotList.keySet()) {
         Element snap = new Element("Snapshot");
         snap.setAttribute("name", snapshotName);

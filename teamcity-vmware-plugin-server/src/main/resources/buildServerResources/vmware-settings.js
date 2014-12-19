@@ -22,7 +22,8 @@ BS.Clouds.VMWareVSphere = BS.Clouds.VMWareVSphere || (function () {
     var START_STOP = 'START_STOP',
         FRESH_CLONE = 'FRESH_CLONE',
         ON_DEMAND_CLONE = 'ON_DEMAND_CLONE',
-        CURRENT_STATE = '__CURRENT_STATE__';
+        CURRENT_STATE = '__CURRENT_STATE__',
+        LATEST_SNAPSHOT='*';
 
     return {
         _dataKeys: [ 'sourceName', 'snapshot', 'folder', 'pool', 'maxInstances'],
@@ -539,6 +540,8 @@ BS.Clouds.VMWareVSphere = BS.Clouds.VMWareVSphere || (function () {
 
             if (props.snapshot === CURRENT_STATE) {
                 $row.find('.snapshot').text('"Current state"');
+            } else if (props.snapshot == LATEST_SNAPSHOT){
+                $row.find('.snapshot').text('"Latest snapshot"');
             }
 
             $row.find('.behaviour').text(behaviourTexts[props.behaviour]);
