@@ -107,7 +107,7 @@ public class UpdateInstancesTask<G extends AbstractCloudInstance<T>, T extends A
     } finally {
       //logging here:
       for (InstanceStatus instanceStatus : instancesByStatus.keySet()) {
-        LOG.info(String.format("Instances in '%s' status: %s", instanceStatus.getText(), Arrays.toString(instancesByStatus.get(instanceStatus).toArray())));
+        LOG.debug(String.format("Instances in '%s' status: %s", instanceStatus.getText(), Arrays.toString(instancesByStatus.get(instanceStatus).toArray())));
       }
     }
   }
