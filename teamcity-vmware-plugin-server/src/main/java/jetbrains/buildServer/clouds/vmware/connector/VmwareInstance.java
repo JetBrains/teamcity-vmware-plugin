@@ -85,7 +85,7 @@ public class VmwareInstance extends AbstractInstance {
   @Nullable
   public Date getStartDate() {
     final VirtualMachineRuntimeInfo runtime = myVm.getRuntime();
-    if (runtime == null) {
+    if (runtime == null || runtime.getPowerState() != VirtualMachinePowerState.poweredOn) {
       return null;
     }
     final Calendar bootTime = runtime.getBootTime();
