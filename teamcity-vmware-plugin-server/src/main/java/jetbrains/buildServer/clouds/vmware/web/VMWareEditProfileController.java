@@ -23,6 +23,7 @@ import java.net.URL;
 import java.util.*;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import jetbrains.buildServer.clouds.vmware.VmwareConstants;
 import jetbrains.buildServer.clouds.vmware.connector.VMWareApiConnector;
 import jetbrains.buildServer.clouds.vmware.connector.VMWareApiConnectorImpl;
 import jetbrains.buildServer.clouds.vmware.connector.VmwareInstance;
@@ -133,6 +134,10 @@ public class VMWareEditProfileController extends BaseFormXmlController {
   private Element getResourcePoolsAsElement(Map<String, String> resourcePools){
     final Element element = new Element("ResourcePools");
     final List<String> sortedList = getIgnoreCaseSortedList(resourcePools.keySet());
+    final Element defaultPoolElem = new Element("ResourcePool");
+    defaultPoolElem.setAttribute("name", "<Default>");
+    defaultPoolElem.setAttribute("value", VmwareConstants.DEFAULT_RESOURCE_POOL);
+    element.addContent(defaultPoolElem);
     for (String poolName : sortedList) {
       Element poolElement = new Element("ResourcePool");
       poolElement.setAttribute("name", poolName);

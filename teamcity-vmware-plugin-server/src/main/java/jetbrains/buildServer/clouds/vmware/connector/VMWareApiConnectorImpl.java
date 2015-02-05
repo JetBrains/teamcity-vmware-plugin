@@ -434,7 +434,9 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
 
     cloneSpec.setLocation(location);
     cloneSpec.setConfig(config);
-    location.setPool(findEntityByName(resourcePool, ResourcePool.class).getMOR());
+    if (!VmwareConstants.DEFAULT_RESOURCE_POOL.equals(resourcePool)) {
+      location.setPool(findEntityByName(resourcePool, ResourcePool.class).getMOR());
+    }
     final Map<String, VirtualMachineSnapshotTree> snapshotList = getSnapshotList(vm.getName());
     if (imageDetails.useCurrentVersion()) {
       LOG.info("Snapshot name is not specified. Will clone latest VM state");
