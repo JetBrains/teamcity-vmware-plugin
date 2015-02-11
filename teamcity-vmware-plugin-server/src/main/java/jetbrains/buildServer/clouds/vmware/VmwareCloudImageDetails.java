@@ -53,7 +53,7 @@ public class VmwareCloudImageDetails implements CloudImageDetails {
     mySourceName = sourceName;
     myFolderId = folderId;
     myResourcePoolId = resourcePoolId;
-    mySnapshotName = StringUtil.isEmpty(snapshotName) ? null : snapshotName;
+    mySnapshotName = snapshotName;
     myCloneBehaviour = cloneBehaviour;
     myMaxInstances = maxInstances;
   }
