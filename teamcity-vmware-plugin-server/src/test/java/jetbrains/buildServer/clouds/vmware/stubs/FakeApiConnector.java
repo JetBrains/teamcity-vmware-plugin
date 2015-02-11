@@ -25,16 +25,19 @@ public class FakeApiConnector extends VMWareApiConnectorImpl {
   }
 
   @Override
-  protected <T extends ManagedEntity> T findEntityByNameNullable(final String name, final Class<T> instanceType) throws VmwareCheckedCloudException {
+  protected <T extends ManagedEntity> T findEntityByIdNameNullable(final String name, final Class<T> instanceType, Datacenter dc) throws VmwareCheckedCloudException {
     test();
+    final T t;
     if (instanceType == Folder.class){
-      return (T)FakeModel.instance().getFolder(name);
+      t = (T)FakeModel.instance().getFolder(name);
     } else if (instanceType == ResourcePool.class){
-      return (T)FakeModel.instance().getResourcePool(name);
+      t =  (T)FakeModel.instance().getResourcePool(name);
     } else if (instanceType == VirtualMachine.class){
-      return (T)FakeModel.instance().getVirtualMachine(name);
+      t =  (T)FakeModel.instance().getVirtualMachine(name);
+    } else {
+      throw new IllegalArgumentException("Unknown entity type: " + instanceType.getCanonicalName());
     }
-    throw new IllegalArgumentException("Unknown entity type: " + instanceType.getCanonicalName());
+    return  (dc == null || dc == getParentDC(t)) ? t : null;
   }
 
   @Override
@@ -61,5 +64,12 @@ public class FakeApiConnector extends VMWareApiConnectorImpl {
       return (Map<String, T>)FakeModel.instance().getVms();
     }
     throw new IllegalArgumentException("Unknown entity type: " + instanceType.getCanonicalName());
+  }
+
+  private static FakeDatacenter getParentDC(ManagedEntity me){
+    while (!(me ==null || me instanceof Datacenter)){
+      me = me.getParent();
+    }
+    return (FakeDatacenter) me;
   }
 }

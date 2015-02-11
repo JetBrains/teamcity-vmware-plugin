@@ -27,6 +27,7 @@ import jetbrains.buildServer.clouds.vmware.VmwareConstants;
 import jetbrains.buildServer.clouds.vmware.connector.VMWareApiConnector;
 import jetbrains.buildServer.clouds.vmware.connector.VMWareApiConnectorImpl;
 import jetbrains.buildServer.clouds.vmware.connector.VmwareInstance;
+import jetbrains.buildServer.clouds.vmware.connector.VmwareManagedEntity;
 import jetbrains.buildServer.clouds.vmware.errors.VmwareErrorMessages;
 import jetbrains.buildServer.controllers.ActionErrors;
 import jetbrains.buildServer.controllers.BaseFormXmlController;
@@ -113,25 +114,28 @@ public class VMWareEditProfileController extends BaseFormXmlController {
       Element vmElement = new Element("VirtualMachine");
       vmElement.setAttribute("name", vm.getName());
       vmElement.setAttribute("template", String.valueOf(vm.isReadonly()));
+      vmElement.setAttribute("datacenterId", vm.getDatacenterId());
       element.addContent(vmElement);
     }
     return element;
   }
 
-  private Element getFoldersAsElement(Map<String, String> folders){
+  private Element getFoldersAsElement(Map<String, VmwareManagedEntity> folders){
     final Element element = new Element("Folders");
     final Set<String> folderNames = folders.keySet();
     final List<String> sortedList = getIgnoreCaseSortedList(folderNames);
     for (String folderName : sortedList) {
       Element folderElement = new Element("Folder");
       folderElement.setAttribute("name", folderName);
-      folderElement.setAttribute("value", folders.get(folderName));
+      final VmwareManagedEntity entity = folders.get(folderName);
+      folderElement.setAttribute("value", entity.getId());
+      folderElement.setAttribute("datacenterId", entity.getDatacenterId());
       element.addContent(folderElement);
     }
     return element;
   }
 
-  private Element getResourcePoolsAsElement(Map<String, String> resourcePools){
+  private Element getResourcePoolsAsElement(Map<String, VmwareManagedEntity> resourcePools){
     final Element element = new Element("ResourcePools");
     final List<String> sortedList = getIgnoreCaseSortedList(resourcePools.keySet());
     final Element defaultPoolElem = new Element("ResourcePool");
@@ -141,7 +145,9 @@ public class VMWareEditProfileController extends BaseFormXmlController {
     for (String poolName : sortedList) {
       Element poolElement = new Element("ResourcePool");
       poolElement.setAttribute("name", poolName);
-      poolElement.setAttribute("value", resourcePools.get(poolName));
+      final VmwareManagedEntity entity = resourcePools.get(poolName);
+      poolElement.setAttribute("value", entity.getId());
+      poolElement.setAttribute("datacenterId", entity.getDatacenterId());
       element.addContent(poolElement);
     }
     return element;

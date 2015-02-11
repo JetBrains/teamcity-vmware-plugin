@@ -19,17 +19,12 @@
 package jetbrains.buildServer.clouds.vmware.connector;
 
 import com.vmware.vim25.VirtualMachineSnapshotTree;
-import com.vmware.vim25.mo.Folder;
-import com.vmware.vim25.mo.ResourcePool;
 import com.vmware.vim25.mo.Task;
 import com.vmware.vim25.mo.VirtualMachine;
-import java.rmi.RemoteException;
 import java.util.Map;
-import jetbrains.buildServer.clouds.CloudException;
 import jetbrains.buildServer.clouds.CloudInstanceUserData;
 import jetbrains.buildServer.clouds.InstanceStatus;
 import jetbrains.buildServer.clouds.base.connector.CloudApiConnector;
-import jetbrains.buildServer.clouds.base.errors.CheckedCloudException;
 import jetbrains.buildServer.clouds.vmware.errors.VmwareCheckedCloudException;
 import jetbrains.buildServer.clouds.vmware.VmwareCloudImage;
 import jetbrains.buildServer.clouds.vmware.VmwareCloudInstance;
@@ -57,10 +52,10 @@ public interface VMWareApiConnector extends CloudApiConnector<VmwareCloudImage, 
   Map<String, String> getVMParams(@NotNull final String vmName) throws VmwareCheckedCloudException;
 
   @NotNull
-  Map<String, String> getFolders() throws VmwareCheckedCloudException;
+  Map<String, VmwareManagedEntity> getFolders() throws VmwareCheckedCloudException;
 
   @NotNull
-  Map<String, String> getResourcePools() throws VmwareCheckedCloudException;
+  Map<String, VmwareManagedEntity> getResourcePools() throws VmwareCheckedCloudException;
 
   @NotNull
   Map<String, VirtualMachineSnapshotTree> getSnapshotList(String vmName) throws VmwareCheckedCloudException;
@@ -87,10 +82,6 @@ public interface VMWareApiConnector extends CloudApiConnector<VmwareCloudImage, 
   Task stopInstance(VmwareCloudInstance instance);
 
   void restartInstance(VmwareCloudInstance instance) throws VmwareCheckedCloudException;
-
-  boolean checkCloneFolderExists(@NotNull String cloneFolderName);
-
-  boolean checkResourcePoolExists(@NotNull String resourcePool);
 
   boolean checkVirtualMachineExists(@NotNull String vmName);
 

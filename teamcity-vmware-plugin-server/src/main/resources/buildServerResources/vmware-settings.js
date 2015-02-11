@@ -338,7 +338,7 @@ BS.Clouds.VMWareVSphere = BS.Clouds.VMWareVSphere || (function () {
                 imagesData = [];
                 BS.Log.error('Bad images data: ' + rawImagesData);
             }
-
+            debugger;
             this.imagesData = imagesData.reduce(function (accumulator, imageDataStr) {
                 // drop images without sourceName
                 if (imageDataStr.sourceName) {
@@ -388,6 +388,10 @@ BS.Clouds.VMWareVSphere = BS.Clouds.VMWareVSphere || (function () {
                 } else {
                     this._tryToUpdateSelect(this.$image, value);
                 }
+              if (this._image.$image.length == 1){
+                this._image.$datacenterId = $j(this._image.$image[0]).attr("datacenterId");
+                this._filterPoolsAndFolders(this._image.$datacenterId);
+              }
 
                 if (this._isClone()) {
                     this.fetchSnapshots();
@@ -622,6 +626,27 @@ BS.Clouds.VMWareVSphere = BS.Clouds.VMWareVSphere || (function () {
         _appendOption: function ($target, value, text, type) {
             $target.append($j('<option>').attr('value', value).text(text || value)).attr('data-type', type);
         },
+      /**
+       * Makes pools and folders that don't belong to selected datacenter disabled.
+       * @param $datacenterId
+       * @private
+       */
+        _filterPoolsAndFolders: function($datacenterId){
+          var self = this;
+              //$pools = this.$response.find('ResourcePools:eq(0) ResourcePool'),
+              //$folders = this.$response.find('Folders:eq(0) Folder');
+
+          this.$cloneFolder.children('option').each(function(){
+            var $folder = self.$response.find('Folder[value="' + this.value + '"]');
+            var attr = $j($folder).attr('datacenterId');
+            $j(this).prop('disabled', !!attr && attr != $datacenterId);
+          });
+          this.$resourcePool.children('option').each(function(){
+            var $pool = self.$response.find('ResourcePool[value="' + this.value + '"]');
+            var attr = $j($pool).attr('datacenterId');
+            $j(this).prop('disabled', !!attr && attr != $datacenterId);
+          });
+        },
         // Prototype.js ignores script type when parsing scripts (for refreshable),
         // so custom script types do not work.
         // Older IE try to interpret `template` tags, that approach fails too.
@@ -764,6 +789,10 @@ BS.Clouds.VMWareVSphere = BS.Clouds.VMWareVSphere || (function () {
 
             this.clearOptionsErrors();
         },
+      /**
+       * Updates add/edit image dialog, when user clicks add image or edit
+       * @private
+       */
         _triggerDialogChange: function () {
             var image = this._image;
 

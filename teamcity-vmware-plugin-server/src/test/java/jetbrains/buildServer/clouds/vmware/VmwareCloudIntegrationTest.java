@@ -3,6 +3,7 @@ package jetbrains.buildServer.clouds.vmware;
 import com.intellij.util.WaitFor;
 import com.vmware.vim25.OptionValue;
 import com.vmware.vim25.VirtualMachinePowerState;
+import com.vmware.vim25.mo.Datacenter;
 import com.vmware.vim25.mo.ManagedEntity;
 import com.vmware.vim25.mo.Task;
 import java.net.MalformedURLException;
@@ -13,7 +14,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
@@ -28,6 +28,7 @@ import jetbrains.buildServer.clouds.vmware.connector.VMWareApiConnector;
 import jetbrains.buildServer.clouds.vmware.connector.VmwareInstance;
 import jetbrains.buildServer.clouds.vmware.errors.VmwareCheckedCloudException;
 import jetbrains.buildServer.clouds.vmware.stubs.FakeApiConnector;
+import jetbrains.buildServer.clouds.vmware.stubs.FakeDatacenter;
 import jetbrains.buildServer.clouds.vmware.stubs.FakeModel;
 import jetbrains.buildServer.clouds.vmware.stubs.FakeVirtualMachine;
 import org.jetbrains.annotations.NotNull;
@@ -62,11 +63,12 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
                                                           "{sourceName:'image_template', snapshot:'"+VmwareConstants.CURRENT_STATE +"',folder:'cf',pool:'rp',maxInstances:3,behaviour:'FRESH_CLONE'}]");
 
     myFakeApi = new FakeApiConnector();
-    FakeModel.instance().addFolder("cf");
-    FakeModel.instance().addResourcePool("rp");
-    FakeModel.instance().addVM("image1");
-    FakeModel.instance().addVM("image2");
-    FakeModel.instance().addVM("image_template");
+    FakeModel.instance().addDatacenter("dc");
+    FakeModel.instance().addFolder("cf").setParent("dc", Datacenter.class);
+    FakeModel.instance().addResourcePool("rp").setParentFolder("cf");
+    FakeModel.instance().addVM("image1").setParentFolder("cf");
+    FakeModel.instance().addVM("image2").setParentFolder("cf");
+    FakeModel.instance().addVM("image_template").setParentFolder("cf");
     FakeModel.instance().addVMSnapshot("image2", "snap");
 
     recreateClient();
@@ -446,12 +448,12 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
       }
 
       @Override
-      protected <T extends ManagedEntity> T findEntityByName(final String name, final Class<T> instanceType) throws VmwareCheckedCloudException {
+      protected <T extends ManagedEntity> T findEntityByIdName(final String name, final Class<T> instanceType) throws VmwareCheckedCloudException {
         lastApiCallTime.set(System.currentTimeMillis());
         if (failure.get()){
           throw new VmwareCheckedCloudException("Cannot connect");
         }
-        return super.findEntityByName(name, instanceType);
+        return super.findEntityByIdName(name, instanceType);
       }
     };
     recreateClient(2, lastUpdateTime);
@@ -499,6 +501,31 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
     assertTrue("canStart method blocks the thread!", executor.awaitTermination(10, TimeUnit.MILLISECONDS));
   }
 
+  public void test_create_within_the_same_datacenter(){
+    FakeModel.instance().addDatacenter("dc2");
+    FakeModel.instance().addFolder("cf2").setParent("dc2", Datacenter.class);
+    FakeModel.instance().addResourcePool("rp2").setParentFolder("cf2");
+    FakeModel.instance().addVM("image3").setParentFolder("cf");
+    myClientParameters.setParameter("vmware_images_data"
+      , "[{sourceName:'image1', behaviour:'START_STOP'}," +
+        "{sourceName:'image2',snapshot:'snap*',folder:'cf',pool:'rp',maxInstances:3,behaviour:'ON_DEMAND_CLONE'}," +
+        "{sourceName:'image_template', snapshot:'" + VmwareConstants.CURRENT_STATE +"',folder:'cf',pool:'rp',maxInstances:3,behaviour:'FRESH_CLONE'}, " +
+        "{sourceName:'image3',snapshot:'" + VmwareConstants.CURRENT_STATE + "'," +"folder:'cf2',pool:'rp2',maxInstances:3,behaviour:'ON_DEMAND_CLONE'}]");
+    recreateClient();
+
+    final CloudInstanceUserData userData = new CloudInstanceUserData(
+        "image3_agent", "authToken", "http://localhost:8080", 3 * 60 * 1000l, "My profile", Collections.<String, String>emptyMap());
+    final VmwareCloudInstance vmwareCloudInstance = myClient.startNewInstance(getImageByName("image3"), userData);
+    new WaitFor(10 * 1000) {
+      @Override
+      protected boolean condition() {
+        return vmwareCloudInstance.getStatus() == InstanceStatus.ERROR;
+      }
+    }.assertCompleted();
+
+    final String msg = vmwareCloudInstance.getErrorInfo().getMessage();
+    assertContains(msg, "Unable to find folder cf2 in datacenter dc");
+  }
 
 
 

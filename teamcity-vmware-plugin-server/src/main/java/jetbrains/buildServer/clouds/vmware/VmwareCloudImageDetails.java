@@ -33,9 +33,9 @@ public class VmwareCloudImageDetails implements CloudImageDetails {
   @SerializedName("sourceName")
   private final String mySourceName;
   @SerializedName("folder")
-  private final String myFolderName;
+  private final String myFolderId;
   @SerializedName("pool")
-  private final String myResourcePoolName;
+  private final String myResourcePoolId;
   @SerializedName("snapshot")
   @NotNull
   private final String mySnapshotName;
@@ -46,13 +46,13 @@ public class VmwareCloudImageDetails implements CloudImageDetails {
 
   public VmwareCloudImageDetails(@NotNull final String sourceName,
                                  @NotNull final String snapshotName,
-                                 @NotNull final String folderName,
-                                 @NotNull final String resourcePoolName,
+                                 @NotNull final String folderId,
+                                 @NotNull final String resourcePoolId,
                                  @NotNull final CloneBehaviour cloneBehaviour,
                                  final int maxInstances) {
     mySourceName = sourceName;
-    myFolderName = folderName;
-    myResourcePoolName = resourcePoolName;
+    myFolderId = folderId;
+    myResourcePoolId = resourcePoolId;
     mySnapshotName = StringUtil.isEmpty(snapshotName) ? null : snapshotName;
     myCloneBehaviour = cloneBehaviour;
     myMaxInstances = maxInstances;
@@ -62,12 +62,12 @@ public class VmwareCloudImageDetails implements CloudImageDetails {
     return mySourceName;
   }
 
-  public String getFolderName() {
-    return myFolderName;
+  public String getFolderId() {
+    return myFolderId;
   }
 
-  public String getResourcePoolName() {
-    return myResourcePoolName;
+  public String getResourcePoolId() {
+    return myResourcePoolId;
   }
 
   @NotNull

@@ -169,7 +169,7 @@ public class VmwareCloudImage extends AbstractCloudImage<VmwareCloudInstance, Vm
         myAsyncTaskExecutor.executeAsync(
           new VmwareTaskWrapper(new Callable<Task>() {
           public Task call() throws Exception {
-            return myApiConnector.cloneVm(instance, myImageDetails.getResourcePoolName(), myImageDetails.getFolderName());
+            return myApiConnector.cloneVm(instance, myImageDetails.getResourcePoolId(), myImageDetails.getFolderId());
           }}
           ),
           new ImageStatusTaskWrapper(instance) {
@@ -342,6 +342,7 @@ public class VmwareCloudImage extends AbstractCloudImage<VmwareCloudInstance, Vm
 
     @Override
     public void onError(final Throwable th) {
+      myInstance.setStatus(InstanceStatus.ERROR);
       if (th != null) {
         myInstance.updateErrors(TypedCloudErrorInfo.fromException(th));
         LOG.warn("An error occured: " + th.getLocalizedMessage() + " during processing " + myInstance.getName());

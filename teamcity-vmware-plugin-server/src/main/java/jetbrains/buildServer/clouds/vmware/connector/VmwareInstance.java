@@ -22,6 +22,7 @@ import com.vmware.vim25.OptionValue;
 import com.vmware.vim25.VirtualMachineConfigInfo;
 import com.vmware.vim25.VirtualMachinePowerState;
 import com.vmware.vim25.VirtualMachineRuntimeInfo;
+import com.vmware.vim25.mo.Datacenter;
 import com.vmware.vim25.mo.Task;
 import com.vmware.vim25.mo.VirtualMachine;
 import java.util.*;
@@ -38,15 +39,27 @@ import org.jetbrains.annotations.Nullable;
  *         Date: 7/25/2014
  *         Time: 6:45 PM
  */
-public class VmwareInstance extends AbstractInstance {
+public class VmwareInstance extends AbstractInstance implements VmwareManagedEntity {
 
   @NotNull private final VirtualMachine myVm;
+  private final String myId;
+  private final String myDatacenterName;
+  private final String myDatacenterId;
   private final Map<String, String> myProperties;
 
   public VmwareInstance(@NotNull final VirtualMachine vm) {
     super(vm.getName());
     myVm = vm;
     myProperties = extractProperties(myVm);
+    myId = vm.getMOR().getVal();
+    final Datacenter datacenter = VmwareUtils.getDatacenter(vm);
+    if (datacenter != null) {
+      myDatacenterId = datacenter.getMOR().getVal();
+      myDatacenterName = datacenter.getName();
+    } else {
+      myDatacenterId = null;
+      myDatacenterName = null;
+    }
   }
 
 
@@ -132,5 +145,20 @@ public class VmwareInstance extends AbstractInstance {
 
   public String getSnapshotName(){
     return StringUtil.nullIfEmpty(getProperty(VMWareApiConnector.TEAMCITY_VMWARE_IMAGE_SNAPSHOT));
+  }
+
+  @NotNull
+  public String getId() {
+    return myId;
+  }
+
+  @Nullable
+  public String getDatacenterName() {
+    return myDatacenterName;
+  }
+
+  @Nullable
+  public String getDatacenterId() {
+    return myDatacenterId;
   }
 }

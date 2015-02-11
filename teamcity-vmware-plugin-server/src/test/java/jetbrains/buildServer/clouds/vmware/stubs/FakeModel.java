@@ -3,7 +3,6 @@ package jetbrains.buildServer.clouds.vmware.stubs;
 import com.vmware.vim25.OptionValue;
 import com.vmware.vim25.VirtualMachineCloneSpec;
 import com.vmware.vim25.VirtualMachineRelocateDiskMoveOptions;
-import com.vmware.vim25.mo.Folder;
 import com.vmware.vim25.mo.ResourcePool;
 import com.vmware.vim25.mo.VirtualMachine;
 import java.util.HashMap;
@@ -18,11 +17,12 @@ public class FakeModel {
   private static final FakeModel myInstance = new FakeModel();
   public static FakeModel instance() {return myInstance;}
 
-  private final Map<String, Folder> myFolders = new HashMap<String, Folder>();
+  private final Map<String, FakeFolder> myFolders = new HashMap<String, FakeFolder>();
   private final Map<String, ResourcePool> myResourcePools = new HashMap<String, ResourcePool>();
   private final Map<String, FakeVirtualMachine> myVms = new HashMap<String, FakeVirtualMachine>();
+  private final Map<String, FakeDatacenter> myDatacenters = new HashMap<String, FakeDatacenter>();
 
-  public Map<String, Folder> getFolders() {
+  public Map<String, FakeFolder> getFolders() {
     return myFolders;
   }
 
@@ -34,7 +34,11 @@ public class FakeModel {
     return myVms;
   }
 
-  public Folder getFolder(String name){
+  public Map<String, FakeDatacenter> getDatacenters() {
+    return myDatacenters;
+  }
+
+  public FakeFolder getFolder(String name){
     return myFolders.get(name);
   }
 
@@ -46,35 +50,35 @@ public class FakeModel {
     return myVms.get(name);
   }
 
-  public void addFolder(String name){
-    putFolder(name, new Folder(null, null));
+  public FakeDatacenter getDatacenter(String name){
+    return myDatacenters.get(name);
   }
 
-  public void putFolder(String name, Folder folder){
+  public FakeFolder addFolder(String name){
+    final FakeFolder folder = new FakeFolder(name);
     myFolders.put(name, folder);
+    return folder;
   }
 
   public void removeFolder(String name){
     myFolders.remove(name);
   }
 
-  public void addResourcePool(String name){
-    putResourcePool(name, new ResourcePool(null, null));
-  }
-
-  public void putResourcePool(String name, ResourcePool pool){
+  public FakeResourcePool addResourcePool(String name){
+    final FakeResourcePool pool = new FakeResourcePool(name);
     myResourcePools.put(name, pool);
+    return pool;
   }
 
   public void removeResourcePool(String name){
     myResourcePools.remove(name);
   }
 
-  public void addVM(String name){
-    addVM(name, false);
+  public FakeVirtualMachine addVM(String name){
+    return addVM(name, false);
   }
 
-  public VirtualMachine addVM(String name, boolean isRunning, VirtualMachineCloneSpec spec){
+  public FakeVirtualMachine addVM(String name, boolean isRunning, VirtualMachineCloneSpec spec){
     final FakeVirtualMachine vm = new FakeVirtualMachine(name, name.contains("template"), isRunning);
     putVM(name, vm);
     if (spec != null && spec.getLocation()!= null
@@ -92,11 +96,11 @@ public class FakeModel {
 
     return vm;
   }
-  public VirtualMachine addVM(String name, boolean isRunning){
+  public FakeVirtualMachine addVM(String name, boolean isRunning){
     return addVM(name, isRunning, null);
   }
 
-  public VirtualMachine putVM(String name, FakeVirtualMachine vm){
+  public FakeVirtualMachine putVM(String name, FakeVirtualMachine vm){
     System.out.println("added VM " + name);
     myVms.put(name, vm);
     return vm;
@@ -121,6 +125,16 @@ public class FakeModel {
       throw new IllegalArgumentException("Unable to find VM: " + vmName);
 
     vm.removeSnapshot(snapshotName);
+  }
+
+  public FakeDatacenter addDatacenter(String dcName){
+    final FakeDatacenter dc = new FakeDatacenter(dcName);
+    myDatacenters.put(dcName, dc);
+    return dc;
+  }
+
+  public void removeDatacenter(String dcName){
+    myDatacenters.remove(dcName);
   }
 
   public void clear(){

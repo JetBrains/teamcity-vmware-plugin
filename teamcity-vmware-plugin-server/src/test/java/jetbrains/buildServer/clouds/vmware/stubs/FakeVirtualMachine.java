@@ -27,13 +27,10 @@ public class FakeVirtualMachine extends VirtualMachine {
   private AtomicBoolean myIsStarted = new AtomicBoolean(false);
   private final List<VirtualMachineSnapshotTree> myRootSnapshotList = new ArrayList<VirtualMachineSnapshotTree>();
   private String myVersion;
-
-  private FakeVirtualMachine(){
-    super(null, null);
-  }
+  private ManagedEntity myParent;
 
   public FakeVirtualMachine(final String name, final boolean isTemplate, final boolean isRunning) {
-    this();
+    super(null, createVMMor(name));
     myName = name;
     updateVersion();
     myIsStarted.set(isRunning);
@@ -77,6 +74,7 @@ public class FakeVirtualMachine extends VirtualMachine {
 
     myCustomUserData = new HashMap<String, String>();
     enableGuestTools();
+    myParent = null;
   }
 
   @Override
@@ -169,6 +167,11 @@ public class FakeVirtualMachine extends VirtualMachine {
     }
   }
 
+  @Override
+  public ManagedEntity getParent() {
+    return myParent;
+  }
+
   public void setTasksSuccessStatus(boolean success){
     myTasksSuccessfull = success;
   }
@@ -189,6 +192,11 @@ public class FakeVirtualMachine extends VirtualMachine {
         return;
       }
     }
+  }
+
+  public void setParentFolder(String folderName){
+    final FakeFolder folder = FakeModel.instance().getFolder(folderName);
+    myParent = folder;
   }
 
   private static Task successTask(){
@@ -262,5 +270,24 @@ public class FakeVirtualMachine extends VirtualMachine {
 
   public void disableGuestTools(){
     myGuestInfo = null;
+  }
+
+  private static ManagedObjectReference createVMMor(final String name){
+    return new ManagedObjectReference(){
+      @Override
+      public String getVal() {
+        return "vm-" + name.hashCode();
+      }
+
+      @Override
+      public String get_value() {
+        return getVal();
+      }
+
+      @Override
+      public String getType() {
+        return "VirtualMachine";
+      }
+    };
   }
 }
