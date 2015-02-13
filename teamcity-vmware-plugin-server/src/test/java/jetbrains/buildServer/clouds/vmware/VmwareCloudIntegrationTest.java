@@ -498,7 +498,7 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
     assertTrue("canStart method blocks the thread!", executor.awaitTermination(10, TimeUnit.MILLISECONDS));
   }
 
-  public void create_within_the_same_datacenter(){
+  public void create_within_the_same_datacenter() throws InterruptedException {
     FakeModel.instance().addDatacenter("dc2");
     FakeModel.instance().addFolder("cf2").setParent("dc2", Datacenter.class);
     FakeModel.instance().addResourcePool("rp2").setParentFolder("cf2");
@@ -516,7 +516,7 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
     new WaitFor(10 * 1000) {
       @Override
       protected boolean condition() {
-        return vmwareCloudInstance.getStatus() == InstanceStatus.ERROR;
+        return vmwareCloudInstance.getStatus() == InstanceStatus.ERROR && vmwareCloudInstance.getErrorInfo() != null;
       }
     }.assertCompleted();
 
