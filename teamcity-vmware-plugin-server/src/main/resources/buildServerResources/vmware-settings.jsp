@@ -106,7 +106,18 @@
                 <span class="error option-error option-error_sourceName"></span>
             </td>
         </tr>
-
+          <c:if test="${intprop:getBoolean(cons.enableImageNickname)}">
+            <tr class="hidden cloneOptionsRow">
+              <th>Agent image nickname (experimental):</th>
+              <td>
+                <div>
+                  <input type="text" id="nickname" value="" class="longField" data-id="nickname" data-err-id="nickname"/>
+                  <label for="nickname">Allows using the same VM as a source in multiple cloud images</label>
+                  <div class="smallNoteAttention">This is an experimental feature, use it at your own risk</div>
+                </div>
+              </td>
+            </tr>
+          </c:if>
             <tr>
                 <th>Behaviour:&nbsp;<l:star/><bs:help urlPrefix="http://confluence.jetbrains.com/display/TW" file="VMware+vSphere+Cloud#VMwarevSphereCloud-Features"/></th>
                 <td>

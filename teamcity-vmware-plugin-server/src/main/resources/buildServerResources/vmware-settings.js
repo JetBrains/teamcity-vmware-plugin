@@ -26,7 +26,7 @@ BS.Clouds.VMWareVSphere = BS.Clouds.VMWareVSphere || (function () {
         LATEST_SNAPSHOT='*';
 
     return {
-        _dataKeys: [ 'sourceName', 'snapshot', 'folder', 'pool', 'maxInstances'],
+        _dataKeys: [ 'sourceName', 'snapshot', 'folder', 'pool', 'maxInstances', 'nickname'],
         selectors: {
             imagesSelect: '#image',
             behaviourSwitch: '.behaviour__switch',
@@ -58,6 +58,7 @@ BS.Clouds.VMWareVSphere = BS.Clouds.VMWareVSphere || (function () {
             this.$cloneFolder = $j('#cloneFolder');
             this.$resourcePool = $j('#resourcePool');
             this.$maxInstances = $j('#maxInstances');
+            this.$nickname = $j("#nickname");
             this.$cloneOptions = $j(this.selectors.cloneOptionsRow);
 
             this.$dialogSubmitButton = $j('#vmwareAddImageButton');
@@ -338,7 +339,6 @@ BS.Clouds.VMWareVSphere = BS.Clouds.VMWareVSphere || (function () {
                 imagesData = [];
                 BS.Log.error('Bad images data: ' + rawImagesData);
             }
-            debugger;
             this.imagesData = imagesData.reduce(function (accumulator, imageDataStr) {
                 // drop images without sourceName
                 if (imageDataStr.sourceName) {
@@ -388,7 +388,7 @@ BS.Clouds.VMWareVSphere = BS.Clouds.VMWareVSphere || (function () {
                 } else {
                     this._tryToUpdateSelect(this.$image, value);
                 }
-              if (this._image.$image.length == 1){
+              if (!!this._image.$image && this._image.$image.length == 1){
                 this._image.$datacenterId = $j(this._image.$image[0]).attr("datacenterId");
                 this._filterPoolsAndFolders(this._image.$datacenterId);
               }
@@ -472,6 +472,17 @@ BS.Clouds.VMWareVSphere = BS.Clouds.VMWareVSphere || (function () {
                 }
                 this.validateOptions(e.target.getAttribute('data-id'));
             }.bind(this));
+          debugger;
+          if (!!this.$nickname){
+            this.$nickname.on('change', function (e, value) {
+              if (arguments.length === 1) {
+                this._image.nickname = this.$nickname.val();
+              } else {
+                this.$nickname.val(value);
+              }
+              this.validateOptions(e.target.getAttribute('data-id'));
+            }.bind(this));
+          }
         },
         /**
          * Tries to update <select> value of given elem with given value
@@ -718,6 +729,9 @@ BS.Clouds.VMWareVSphere = BS.Clouds.VMWareVSphere || (function () {
                             this.addOptionError('positiveNumber', 'maxInstances');
                             isValid = false;
                         }
+                    }.bind(this),
+                    nickname: function() {
+
                     }.bind(this)
                 };
 
@@ -805,6 +819,9 @@ BS.Clouds.VMWareVSphere = BS.Clouds.VMWareVSphere || (function () {
             this.$resourcePool.trigger('change', image.pool || '');
             this.$cloneFolder.trigger('change', image.folder || '');
             this.$maxInstances.trigger('change', image.maxInstances || '');
+            if (!!this.$nickname) {
+              this.$nickname.trigger('change', image.nickname || '');
+            }
         },
         _initImage: function () {
             this._image = {

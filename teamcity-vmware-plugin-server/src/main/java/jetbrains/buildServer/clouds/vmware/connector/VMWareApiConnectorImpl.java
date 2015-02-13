@@ -182,8 +182,8 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
         }
         continue;
       }
-      final boolean isClone = "true".equals(vmInstance.getProperty(TEAMCITY_VMWARE_CLONED_INSTANCE));
-      if (!isClone || !filterClones) {
+
+      if (!vmInstance.isClone() || !filterClones) {
         filteredVms.put(vmName, vmInstance);
       }
     }
@@ -192,8 +192,9 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
 
   @NotNull
   public Map<String, VmwareInstance> listImageInstances(@NotNull final VmwareCloudImage image) throws VmwareCheckedCloudException {
-    if(image.getImageDetails().getBehaviour().isUseOriginal()){
-      final VirtualMachine vmEntity = findEntityByIdName(image.getName(), VirtualMachine.class);
+    final VmwareCloudImageDetails imageDetails = image.getImageDetails();
+    if(imageDetails.getBehaviour().isUseOriginal()){
+      final VirtualMachine vmEntity = findEntityByIdName(imageDetails.getSourceName(), VirtualMachine.class);
       final VmwareInstance vmInstance = new VmwareInstance(vmEntity);
       return Collections.singletonMap(image.getName(), vmInstance);
     }
@@ -204,7 +205,7 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
       final VirtualMachine vm = allVms.get(vmName);
 
       final VmwareInstance vmInstance = new VmwareInstance(vm);
-      if (image.getName().equals(vmInstance.getProperty(TEAMCITY_VMWARE_IMAGE_NAME))){
+      if (image.getName().equals(vmInstance.getImageName())){
         filteredVms.put(vmName, vmInstance);
       }
     }
@@ -468,7 +469,8 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
 
     config.setExtraConfig(new OptionValue[]{
       createOptionValue(TEAMCITY_VMWARE_CLONED_INSTANCE, "true"),
-      createOptionValue(TEAMCITY_VMWARE_IMAGE_NAME, imageDetails.getSourceName()),
+      createOptionValue(TEAMCITY_VMWARE_IMAGE_SOURCE_NAME, imageDetails.getSourceName()),
+      createOptionValue(TEAMCITY_VMWARE_IMAGE_NICKNAME, imageDetails.getNickname()),
       createOptionValue(TEAMCITY_VMWARE_IMAGE_SNAPSHOT, instance.getSnapshotName()),
       createOptionValue(TEAMCITY_VMWARE_IMAGE_CHANGE_VERSION, vm.getConfig().getChangeVersion())
     });
@@ -665,11 +667,6 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
   }
 
   @Nullable
-  public String getImageName(@NotNull final VirtualMachine vm) {
-    return getOptionValue(vm, TEAMCITY_VMWARE_IMAGE_NAME);
-  }
-
-  @Nullable
   private String getOptionValue(@NotNull final VirtualMachine vm, @NotNull final String optionName) {
     final VirtualMachineConfigInfo config = vm.getConfig();
     if (config == null)
@@ -692,18 +689,6 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
       return InstanceStatus.RUNNING;
     }
     return InstanceStatus.UNKNOWN;
-  }
-
-  @NotNull
-  public Map<String, String> getTeamcityParams(@NotNull final VirtualMachine vm) {
-    final Map<String, String> params = new HashMap<String, String>();
-    final OptionValue[] extraConfig = vm.getConfig().getExtraConfig();
-    for (OptionValue optionValue : extraConfig) {
-      if (optionValue.getKey().startsWith(TEAMCITY_VMWARE_PREFIX)) {
-        params.put(optionValue.getKey(), String.valueOf(optionValue.getValue()));
-      }
-    }
-    return params;
   }
 
   public void dispose(){

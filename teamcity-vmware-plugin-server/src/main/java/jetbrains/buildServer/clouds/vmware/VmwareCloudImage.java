@@ -51,7 +51,7 @@ public class VmwareCloudImage extends AbstractCloudImage<VmwareCloudInstance, Vm
   public VmwareCloudImage(@NotNull final VMWareApiConnector apiConnector,
                           @NotNull final VmwareCloudImageDetails imageDetails,
                           @NotNull final CloudAsyncTaskExecutor asyncTaskExecutor) {
-    super(imageDetails.getSourceName(), imageDetails.getSourceName());
+    super(imageDetails.getNickname(), imageDetails.getNickname());
     myImageDetails = imageDetails;
     myApiConnector = apiConnector;
     myAsyncTaskExecutor = asyncTaskExecutor;
@@ -77,7 +77,7 @@ public class VmwareCloudImage extends AbstractCloudImage<VmwareCloudInstance, Vm
     } else {
       for (String instanceName : realInstances.keySet()) {
         final VmwareInstance instance = realInstances.get(instanceName);
-        final String snapshotName = instance.getProperty(VMWareApiConnector.TEAMCITY_VMWARE_IMAGE_SNAPSHOT);
+        final String snapshotName = instance.getSnapshotName();
         VmwareCloudInstance cloudInstance = new VmwareCloudInstance(this, instanceName, snapshotName);
         cloudInstance.setStatus(instance.getInstanceStatus());
         myInstances.put(instanceName, cloudInstance);
@@ -134,8 +134,8 @@ public class VmwareCloudImage extends AbstractCloudImage<VmwareCloudInstance, Vm
               continue;
             }
           } else {
-            final String snapshotName = vmInstance.getProperty(VMWareApiConnector.TEAMCITY_VMWARE_IMAGE_SNAPSHOT);
-            if (!latestSnapshotName.equals(snapshotName)) {
+            final String snapshotName = vmInstance.getSnapshotName();
+            if (latestSnapshotName != null && !latestSnapshotName.equals(snapshotName)) {
               LOG.info(String.format("VM %s Snapshot is not the latest one: '%s' vs '%s'", vmName, snapshotName, latestSnapshotName));
               deleteInstance(instance);
               continue;

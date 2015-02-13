@@ -8,10 +8,7 @@ import com.vmware.vim25.mo.ManagedEntity;
 import com.vmware.vim25.mo.Task;
 import java.net.MalformedURLException;
 import java.rmi.RemoteException;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -140,7 +137,7 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
         assertEquals("image1", data.getInstanceId());
         final Map<String, String> vmParams = myFakeApi.getVMParams(data.getInstanceId());
         assertNull(vmParams.get(VMWareApiConnector.TEAMCITY_VMWARE_CLONED_INSTANCE));
-        assertNull(vmParams.get(VMWareApiConnector.TEAMCITY_VMWARE_IMAGE_NAME));
+        assertNull(vmParams.get(VMWareApiConnector.TEAMCITY_VMWARE_IMAGE_SOURCE_NAME));
       }
     }, false);
     assertEquals(3, FakeModel.instance().getVms().size());
@@ -150,7 +147,7 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
         assertTrue(data.getInstanceId().contains("clone"));
         final Map<String, String> vmParams = myFakeApi.getVMParams(data.getInstanceId());
         assertEquals("true", vmParams.get(VMWareApiConnector.TEAMCITY_VMWARE_CLONED_INSTANCE));
-        assertEquals("image_template", vmParams.get(VMWareApiConnector.TEAMCITY_VMWARE_IMAGE_NAME));
+        assertEquals("image_template", vmParams.get(VMWareApiConnector.TEAMCITY_VMWARE_IMAGE_SOURCE_NAME));
         assertEquals(VmwareConstants.CURRENT_STATE, vmParams.get(VMWareApiConnector.TEAMCITY_VMWARE_IMAGE_SNAPSHOT));
       }
     }, true);
@@ -161,7 +158,7 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
         assertTrue(data.getInstanceId().contains("clone"));
         final Map<String, String> vmParams = myFakeApi.getVMParams(data.getInstanceId());
         assertEquals("true", vmParams.get(VMWareApiConnector.TEAMCITY_VMWARE_CLONED_INSTANCE));
-        assertEquals("image2", vmParams.get(VMWareApiConnector.TEAMCITY_VMWARE_IMAGE_NAME));
+        assertEquals("image2", vmParams.get(VMWareApiConnector.TEAMCITY_VMWARE_IMAGE_SOURCE_NAME));
         assertEquals("snap", vmParams.get(VMWareApiConnector.TEAMCITY_VMWARE_IMAGE_SNAPSHOT));
       }
     }, false);
@@ -177,7 +174,7 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
         assertTrue(data.getInstanceId().contains("clone"));
         final Map<String, String> vmParams = myFakeApi.getVMParams(data.getInstanceId());
         assertEquals("true", vmParams.get(VMWareApiConnector.TEAMCITY_VMWARE_CLONED_INSTANCE));
-        assertEquals("image2", vmParams.get(VMWareApiConnector.TEAMCITY_VMWARE_IMAGE_NAME));
+        assertEquals("image2", vmParams.get(VMWareApiConnector.TEAMCITY_VMWARE_IMAGE_SOURCE_NAME));
         assertEquals("snap", vmParams.get(VMWareApiConnector.TEAMCITY_VMWARE_IMAGE_SNAPSHOT));
       }
     }, false);
@@ -189,7 +186,7 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
         assertTrue(data.getInstanceId().contains("clone"));
         final Map<String, String> vmParams = myFakeApi.getVMParams(data.getInstanceId());
         assertEquals("true", vmParams.get(VMWareApiConnector.TEAMCITY_VMWARE_CLONED_INSTANCE));
-        assertEquals("image2", vmParams.get(VMWareApiConnector.TEAMCITY_VMWARE_IMAGE_NAME));
+        assertEquals("image2", vmParams.get(VMWareApiConnector.TEAMCITY_VMWARE_IMAGE_SOURCE_NAME));
         assertEquals("snap", vmParams.get(VMWareApiConnector.TEAMCITY_VMWARE_IMAGE_SNAPSHOT));
       }
     }, false);
@@ -501,7 +498,7 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
     assertTrue("canStart method blocks the thread!", executor.awaitTermination(10, TimeUnit.MILLISECONDS));
   }
 
-  public void test_create_within_the_same_datacenter(){
+  public void create_within_the_same_datacenter(){
     FakeModel.instance().addDatacenter("dc2");
     FakeModel.instance().addFolder("cf2").setParent("dc2", Datacenter.class);
     FakeModel.instance().addResourcePool("rp2").setParentFolder("cf2");
@@ -525,6 +522,52 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
 
     final String msg = vmwareCloudInstance.getErrorInfo().getMessage();
     assertContains(msg, "Unable to find folder cf2 in datacenter dc");
+  }
+
+  public void check_nickname(){
+    myClientParameters.setParameter("vmware_images_data", "[{sourceName:'image1', behaviour:'START_STOP'}," +
+                                                          "{nickname:'image2Nick1', sourceName:'image2',snapshot:'snap*',folder:'cf',pool:'rp',maxInstances:3,behaviour:'ON_DEMAND_CLONE'}," +
+                                                          "{nickname:'image2Nick2', sourceName:'image2',snapshot:'snap*',folder:'cf',pool:'rp',maxInstances:3,behaviour:'ON_DEMAND_CLONE'}," +
+                                                          "{sourceName:'image_template', snapshot:'"+VmwareConstants.CURRENT_STATE +"',folder:'cf',pool:'rp',maxInstances:3,behaviour:'FRESH_CLONE'}]");
+    recreateClient();
+    startNewInstanceAndWait("image2Nick1");
+    boolean checked1 = false;
+    boolean checked2 = false;
+    String startedInstanceName = null;
+    for (VmwareCloudImage image : myClient.getImages()) {
+      if ("image2Nick1".equals(image.getName())){
+        final Collection<VmwareCloudInstance> instances = image.getInstances();
+        final VmwareCloudInstance singleInstance = instances.iterator().next();
+        startedInstanceName = singleInstance.getName();
+        assertEquals(1, instances.size());
+        assertTrue(singleInstance.getName().startsWith("image2Nick1"));
+        checked1 = true;
+      } else if ("image2Nick2".equals(image.getName())){
+        assertEquals(0, image.getInstances().size());
+        checked2 = true;
+      }
+    }
+    startNewInstanceAndWait("image2Nick2");
+    startNewInstanceAndWait("image2Nick2");
+    for (VmwareCloudImage image : myClient.getImages()) {
+      if ("image2Nick1".equals(image.getName())){
+        final Collection<VmwareCloudInstance> instances = image.getInstances();
+        final VmwareCloudInstance singleInstance = instances.iterator().next();
+        assertEquals(startedInstanceName, singleInstance.getName());
+        assertTrue(singleInstance.getName().startsWith("image2Nick1"));
+        assertEquals(1, instances.size());
+        checked1 = true;
+      } else if ("image2Nick2".equals(image.getName())){
+        assertEquals(2, image.getInstances().size());
+        for (VmwareCloudInstance instance : image.getInstances()) {
+          assertTrue(instance.getName().startsWith("image2Nick2"));
+        }
+        checked2 = true;
+      }
+    }
+
+    assertTrue(checked1 && checked2);
+
   }
 
 

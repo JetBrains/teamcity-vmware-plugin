@@ -23,6 +23,7 @@ import jetbrains.buildServer.clouds.base.beans.CloudImageDetails;
 import jetbrains.buildServer.clouds.base.types.CloneBehaviour;
 import jetbrains.buildServer.util.StringUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Sergey.Pak
@@ -30,32 +31,50 @@ import org.jetbrains.annotations.NotNull;
  *         Time: 5:37 PM
  */
 public class VmwareCloudImageDetails implements CloudImageDetails {
+  @SerializedName("nickname")
+  @Nullable
+  private final String myNickname;
+
   @SerializedName("sourceName")
   private final String mySourceName;
+
   @SerializedName("folder")
   private final String myFolderId;
+
   @SerializedName("pool")
   private final String myResourcePoolId;
+
   @SerializedName("snapshot")
   @NotNull
   private final String mySnapshotName;
+
   @SerializedName("behaviour")
   private final CloneBehaviour myCloneBehaviour;
+
   @SerializedName("maxInstances")
   private final int myMaxInstances;
 
-  public VmwareCloudImageDetails(@NotNull final String sourceName,
-                                 @NotNull final String snapshotName,
-                                 @NotNull final String folderId,
-                                 @NotNull final String resourcePoolId,
-                                 @NotNull final CloneBehaviour cloneBehaviour,
-                                 final int maxInstances) {
+  public VmwareCloudImageDetails(
+    @Nullable final String nickname,
+    @NotNull final String sourceName,
+    @NotNull final String snapshotName,
+    @NotNull final String folderId,
+    @NotNull final String resourcePoolId,
+    @NotNull final CloneBehaviour cloneBehaviour,
+    final int maxInstances
+  ) {
+    myNickname = nickname;
     mySourceName = sourceName;
     myFolderId = folderId;
     myResourcePoolId = resourcePoolId;
     mySnapshotName = snapshotName;
     myCloneBehaviour = cloneBehaviour;
     myMaxInstances = maxInstances;
+  }
+
+  @Nullable
+  public String getNickname() {
+    return myNickname == null ? mySourceName : myNickname;
   }
 
   public String getSourceName() {
