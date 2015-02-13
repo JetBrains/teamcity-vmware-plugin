@@ -32,6 +32,7 @@ import jetbrains.buildServer.agent.*;
 import jetbrains.buildServer.clouds.CloudInstanceUserData;
 import jetbrains.buildServer.util.EventDispatcher;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import static jetbrains.buildServer.clouds.vmware.VMWarePropertiesNames.*;
 
@@ -44,9 +45,9 @@ public class VMWarePropertiesReader {
 
   private static final Logger LOG = Logger.getInstance(VMWarePropertiesReader.class.getName());
 
-  private static final String WINDOWS_COMMAND = "C:\\Program Files\\VMware\\VMware Tools\\rpctool.exe";
-  private static final String LINUX_COMMAND="/usr/sbin/vmware-rpctool";
-  private static final String MAC_COMMAND="/usr/sbin/vmware-rpctool";
+  private static final String[] WINDOWS_COMMANDS = {"C:\\Program Files\\VMware\\VMware Tools\\rpctool.exe"};
+  private static final String[] LINUX_COMMANDS = {"/usr/sbin/vmware-rpctool", "/usr/bin/vmware-rpctool"};
+  private static final String[] MAC_COMMANDS = {"/usr/sbin/vmware-rpctool"};
 
   private static final String VMWARE_RPCTOOL_PATH;
 
@@ -57,16 +58,16 @@ public class VMWarePropertiesReader {
                                 @NotNull EventDispatcher<AgentLifeCycleListener> events) {
     LOG.info("VSphere plugin initializing...");
     myAgentConfiguration = agentConfiguration;
+    if (VMWARE_RPCTOOL_PATH == null){
+      LOG.info("Unable to locate " + VMWARE_RPCTOOL_PATH + ". Looks like not a VMWare VM or VWWare tools are not installed");
+      return;
+    } else {
+      LOG.info("Detected vmware-tools or open-vm-tools. Found required vmware-rpctool at "+VMWARE_RPCTOOL_PATH+". " +
+               "Will attempt to authorize agent as VMWare cloud agent. ");
+    }
     events.addListener(new AgentLifeCycleAdapter(){
       @Override
       public void afterAgentConfigurationLoaded(@NotNull final BuildAgent agent) {
-        if (!checkVmwareToolsInstalled()){
-          LOG.info("Unable to locate " + VMWARE_RPCTOOL_PATH + ". Looks like not a VMWare VM or VWWare tools are not installed");
-          return;
-        } else {
-          LOG.info("VMWare tools installed. Will attempt to authorize agent as VMWare cloud agent");
-        }
-
         final String serverUrl = getPropertyValue(SERVER_URL);
         if (StringUtil.isEmpty(serverUrl)){
           LOG.info("Unable to read property " + SERVER_URL + ". VMWare integration is disabled");
@@ -94,7 +95,7 @@ public class VMWarePropertiesReader {
 
         String userData = getPropertyValue(USER_DATA);
         if (!StringUtil.isEmpty(userData)){
-          LOG.info("UserData: " + userData);
+          LOG.debug("UserData: " + userData);
           final CloudInstanceUserData cloudUserData = CloudInstanceUserData.deserialize(userData);
           if (cloudUserData != null) {
             final Map<String, String> customParameters = cloudUserData.getCustomAgentConfigurationParameters();
@@ -125,17 +126,22 @@ public class VMWarePropertiesReader {
     return StringUtil.trim(execResult.getStdout());
   }
 
-  private static boolean checkVmwareToolsInstalled(){
-    return new File(VMWARE_RPCTOOL_PATH).exists();
-  }
-
   static {
     if (SystemInfo.isLinux){
-      VMWARE_RPCTOOL_PATH = LINUX_COMMAND;
+      VMWARE_RPCTOOL_PATH = getExistingCommandPath(LINUX_COMMANDS);
     } else if (SystemInfo.isWindows){
-      VMWARE_RPCTOOL_PATH = WINDOWS_COMMAND;
+      VMWARE_RPCTOOL_PATH = getExistingCommandPath(WINDOWS_COMMANDS);
     } else {
-      VMWARE_RPCTOOL_PATH = LINUX_COMMAND; //todo: update for other OS'es
+      VMWARE_RPCTOOL_PATH = getExistingCommandPath(LINUX_COMMANDS); //todo: update for other OS'es
     }
+  }
+
+  @Nullable
+  private static String getExistingCommandPath(String[] fileNames){
+    for (String fileName : fileNames) {
+      if (new File(fileName).exists())
+        return fileName;
+    }
+    return null;
   }
 }
