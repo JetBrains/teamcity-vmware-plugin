@@ -682,7 +682,7 @@ BS.Clouds.VMWareVSphere = BS.Clouds.VMWareVSphere || (function () {
             badParam: 'Bad parameter',
             required: 'This field cannot be blank',
             templateStart: 'The Start/Stop behaviour cannot be selected for templates',
-            positiveNumber: 'Must be positive number',
+            nonNegative: 'Must be non-negative number',
             nonexistent: 'The %%elem%% &laquo;%%val%%&raquo; does not exist'
         },
         validateOptions: function (options) {
@@ -725,8 +725,8 @@ BS.Clouds.VMWareVSphere = BS.Clouds.VMWareVSphere || (function () {
                         }
                     }.bind(this),
                     maxInstances: function () {
-                        if (this._isClone() && (! maxInstances || ! $j.isNumeric(maxInstances) || maxInstances < 1 )) {
-                            this.addOptionError('positiveNumber', 'maxInstances');
+                        if (this._isClone() && (! maxInstances || ! $j.isNumeric(maxInstances) || maxInstances < 0 )) {
+                            this.addOptionError('nonNegative', 'maxInstances');
                             isValid = false;
                         }
                     }.bind(this),
