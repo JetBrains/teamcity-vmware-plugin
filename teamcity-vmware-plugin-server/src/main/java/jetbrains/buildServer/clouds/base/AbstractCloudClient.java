@@ -19,8 +19,10 @@
 package jetbrains.buildServer.clouds.base;
 
 import java.util.*;
+import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import jetbrains.buildServer.clouds.*;
 import jetbrains.buildServer.clouds.base.beans.CloudImageDetails;
 import jetbrains.buildServer.clouds.base.connector.CloudApiConnector;
@@ -31,6 +33,8 @@ import jetbrains.buildServer.clouds.base.errors.UpdatableCloudErrorProvider;
 import jetbrains.buildServer.clouds.base.tasks.UpdateInstancesTask;
 import jetbrains.buildServer.clouds.vmware.errors.VmwareErrorMessages;
 import jetbrains.buildServer.serverSide.AgentDescription;
+import jetbrains.buildServer.util.NamedThreadFactory;
+import jetbrains.buildServer.util.NamedThreadUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -46,13 +50,21 @@ public abstract class AbstractCloudClient<G extends AbstractCloudInstance<T>, T 
   protected final UpdatableCloudErrorProvider myErrorProvider;
   protected final CloudAsyncTaskExecutor myAsyncTaskExecutor;
   @NotNull protected CloudApiConnector myApiConnector;
+  protected final CloudClientParameters myParameters;
+  private AtomicBoolean myIsInitialized = new AtomicBoolean(false);
 
   public AbstractCloudClient(@NotNull final CloudClientParameters params, @NotNull final CloudApiConnector apiConnector) {
+    myParameters = params;
     myAsyncTaskExecutor = new CloudAsyncTaskExecutor(params.getProfileDescription());
     myImageMap = new HashMap<String, T>();
     myErrorProvider = new CloudErrorMap(VmwareErrorMessages.getInstance(), "Unable to initialize cloud client. See details");
     myApiConnector = apiConnector;
   }
+
+  public boolean isInitialized() {
+    return myIsInitialized.get();
+  }
+
 
   public void dispose() {
     myAsyncTaskExecutor.dispose();
@@ -79,8 +91,16 @@ public abstract class AbstractCloudClient<G extends AbstractCloudInstance<T>, T 
     return image.canStartNewInstance();
   }
 
-  public void populateImagesData(@NotNull final Collection<D> imageDetails){
-    populateImagesData(imageDetails, 20, 20);
+  public Future<?> populateImagesDataAsync(@NotNull final Collection<D> imageDetails){
+    return myAsyncTaskExecutor.submit("Populate images data", new Runnable() {
+      public void run() {
+        try {
+          populateImagesData(imageDetails, 20, 20);
+        } finally {
+          myIsInitialized.set(true);
+        }
+      }
+    });
   }
 
   protected void populateImagesData(@NotNull final Collection<D> imageDetails, long initialDelaySec, long delaySec){

@@ -131,7 +131,7 @@ public class VMWareCloudClientFactory extends AbstractCloudClientFactory<VmwareC
   }
 
   @NotNull
-  private VMWareApiConnector createConnectorFromParams(CloudClientParameters params){
+  protected VMWareApiConnector createConnectorFromParams(CloudClientParameters params){
     String serverUrl = params.getParameter(VMWareWebConstants.SERVER_URL);
     String username = params.getParameter(VMWareWebConstants.USERNAME);
     String password = params.getParameter(VMWareWebConstants.SECURE_PASSWORD);

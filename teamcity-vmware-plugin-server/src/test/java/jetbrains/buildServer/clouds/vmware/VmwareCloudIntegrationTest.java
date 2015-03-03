@@ -9,9 +9,7 @@ import com.vmware.vim25.mo.Task;
 import java.net.MalformedURLException;
 import java.rmi.RemoteException;
 import java.util.*;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
@@ -19,8 +17,11 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import jetbrains.buildServer.BaseTestCase;
 import jetbrains.buildServer.clouds.*;
+import jetbrains.buildServer.clouds.base.AbstractCloudClient;
 import jetbrains.buildServer.clouds.base.errors.CheckedCloudException;
 import jetbrains.buildServer.clouds.base.tasks.UpdateInstancesTask;
+import jetbrains.buildServer.clouds.server.impl.CloudRegistryImpl;
+import jetbrains.buildServer.clouds.server.instances.CloudEventDispatcher;
 import jetbrains.buildServer.clouds.vmware.connector.VMWareApiConnector;
 import jetbrains.buildServer.clouds.vmware.connector.VmwareInstance;
 import jetbrains.buildServer.clouds.vmware.errors.VmwareCheckedCloudException;
@@ -28,7 +29,11 @@ import jetbrains.buildServer.clouds.vmware.stubs.FakeApiConnector;
 import jetbrains.buildServer.clouds.vmware.stubs.FakeDatacenter;
 import jetbrains.buildServer.clouds.vmware.stubs.FakeModel;
 import jetbrains.buildServer.clouds.vmware.stubs.FakeVirtualMachine;
+import jetbrains.buildServer.clouds.vmware.web.VMWareWebConstants;
+import jetbrains.buildServer.web.openapi.PluginDescriptor;
 import org.jetbrains.annotations.NotNull;
+import org.jmock.Expectations;
+import org.jmock.Mockery;
 import org.testng.SkipException;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
@@ -377,7 +382,8 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
     final VmwareCloudInstance cloneInstance = startNewInstanceAndWait("image2");
     myClientParameters.setParameter("vmware_images_data", "[{sourceName:'image1', behaviour:'START_STOP'}," +
                                                           "{sourceName:'image2', behaviour:'START_STOP'}," +
-                                                          "{sourceName:'image_template', snapshot:'"+VmwareConstants.CURRENT_STATE +"', folder:'cf',pool:'rp',maxInstances:3,behaviour:'FRESH_CLONE'}]");
+                                                          "{sourceName:'image_template', snapshot:'" + VmwareConstants.CURRENT_STATE +
+                                                          "', folder:'cf',pool:'rp',maxInstances:3,behaviour:'FRESH_CLONE'}]");
 
     recreateClient();
     boolean checked = false;
@@ -421,7 +427,7 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
     startNewInstanceAndWait("image2");
   }
 
-  public void do_not_clear_image_instances_list_on_error() {
+  public void do_not_clear_image_instances_list_on_error() throws ExecutionException, InterruptedException {
     final AtomicBoolean failure = new AtomicBoolean(false);
     final AtomicLong lastApiCallTime = new AtomicLong(0);
     final AtomicLong lastUpdateTime = new AtomicLong(0);
@@ -506,8 +512,8 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
     myClientParameters.setParameter("vmware_images_data"
       , "[{sourceName:'image1', behaviour:'START_STOP'}," +
         "{sourceName:'image2',snapshot:'snap*',folder:'cf',pool:'rp',maxInstances:3,behaviour:'ON_DEMAND_CLONE'}," +
-        "{sourceName:'image_template', snapshot:'" + VmwareConstants.CURRENT_STATE +"',folder:'cf',pool:'rp',maxInstances:3,behaviour:'FRESH_CLONE'}, " +
-        "{sourceName:'image3',snapshot:'" + VmwareConstants.CURRENT_STATE + "'," +"folder:'cf2',pool:'rp2',maxInstances:3,behaviour:'ON_DEMAND_CLONE'}]");
+        "{sourceName:'image_template', snapshot:'" + VmwareConstants.CURRENT_STATE + "',folder:'cf',pool:'rp',maxInstances:3,behaviour:'FRESH_CLONE'}, " +
+        "{sourceName:'image3',snapshot:'" + VmwareConstants.CURRENT_STATE + "'," + "folder:'cf2',pool:'rp2',maxInstances:3,behaviour:'ON_DEMAND_CLONE'}]");
     recreateClient();
 
     final CloudInstanceUserData userData = new CloudInstanceUserData(
@@ -528,7 +534,8 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
     myClientParameters.setParameter("vmware_images_data", "[{sourceName:'image1', behaviour:'START_STOP'}," +
                                                           "{nickname:'image2Nick1', sourceName:'image2',snapshot:'snap*',folder:'cf',pool:'rp',maxInstances:3,behaviour:'ON_DEMAND_CLONE'}," +
                                                           "{nickname:'image2Nick2', sourceName:'image2',snapshot:'snap*',folder:'cf',pool:'rp',maxInstances:3,behaviour:'ON_DEMAND_CLONE'}," +
-                                                          "{sourceName:'image_template', snapshot:'"+VmwareConstants.CURRENT_STATE +"',folder:'cf',pool:'rp',maxInstances:3,behaviour:'FRESH_CLONE'}]");
+                                                          "{sourceName:'image_template', snapshot:'" + VmwareConstants.CURRENT_STATE +
+                                                          "',folder:'cf',pool:'rp',maxInstances:3,behaviour:'FRESH_CLONE'}]");
     recreateClient();
     startNewInstanceAndWait("image2Nick1");
     boolean checked1 = false;
@@ -570,7 +577,82 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
 
   }
 
+  public void profile_creation_should_not_block_ui() throws ExecutionException, InterruptedException {
+    final int extraProfileCount = 5;
+    final List<CloudClientParameters> profileParams = new ArrayList<CloudClientParameters>();
+    for (int i=0; i< extraProfileCount; i++){
+      final CloudClientParameters parameters = new CloudClientParameters();
+      profileParams.add(parameters);
+      parameters.setParameter("vmware_images_data", "[{sourceName:'image_new"+i+"', behaviour:'START_STOP'}]");
+      parameters.setParameter(VMWareWebConstants.SERVER_URL, "http://localhost:8080");
+      parameters.setParameter(VMWareWebConstants.USERNAME, "un");
+      parameters.setParameter(VMWareWebConstants.PASSWORD, "pw");
+    }
 
+
+    myFakeApi = new FakeApiConnector(){
+
+      @Override
+      protected <T extends ManagedEntity> Collection<T> findAllEntities(final Class<T> instanceType) throws VmwareCheckedCloudException {
+        try {Thread.sleep(1000);} catch (InterruptedException e) {}
+        return super.findAllEntities(instanceType);
+      }
+
+      @Override
+      protected <T extends ManagedEntity> Map<String, T> findAllEntitiesAsMap(final Class<T> instanceType) throws VmwareCheckedCloudException {
+        try {Thread.sleep(1000);} catch (InterruptedException e) {}
+        return super.findAllEntitiesAsMap(instanceType);
+      }
+
+      @Override
+      protected <T extends ManagedEntity> T findEntityByIdNameNullable(final String name, final Class<T> instanceType, final Datacenter dc) throws VmwareCheckedCloudException {
+        try {Thread.sleep(1000);} catch (InterruptedException e) {}
+        return super.findEntityByIdNameNullable(name, instanceType, dc);
+      }
+
+      @Override
+      public void test() throws VmwareCheckedCloudException {
+        try {Thread.sleep(1000);} catch (InterruptedException e) {}
+        super.test();
+      }
+    };
+
+    final CloudEventDispatcher dispatcher = new CloudEventDispatcher();
+    final CloudRegistryImpl cloudRegistrar = new CloudRegistryImpl(dispatcher);
+    final Mockery m = new Mockery();
+    final PluginDescriptor pd = m.mock(PluginDescriptor.class);
+    m.checking(new Expectations(){{
+      allowing(pd).getPluginResourcesPath("vmware-settings.html"); will(returnValue("aaa.html"));
+    }});
+    final CloudState state = m.mock(CloudState.class);
+    final VMWareCloudClientFactory factory = new VMWareCloudClientFactory(cloudRegistrar, pd){
+
+      @NotNull
+      @Override
+      protected VMWareApiConnector createConnectorFromParams(final CloudClientParameters params) {
+        return myFakeApi;
+      }
+
+    };
+
+    Runnable r = new Runnable() {
+      public void run() {
+        for (CloudClientParameters param : profileParams) {
+          factory.createNewClient(state, param);
+        }
+      }
+    };
+
+    final Future<?> future = Executors.newSingleThreadExecutor().submit(r);
+    future.get();
+    new WaitFor(500){
+      @Override
+      protected boolean condition() {
+        return future.isDone();
+      }
+    }.assertCompleted("Recreation of cloud profiles takes too long");
+
+  }
 
   private static String wrapWithArraySymbols(String str) {
     return String.format("[%s]", str);
@@ -675,19 +757,29 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
     }
     final Collection<VmwareCloudImageDetails> images = VMWareCloudClientFactory.parseImageDataInternal(myClientParameters);
     myClient = new VMWareCloudClient(myClientParameters, myFakeApi);
-    myClient.populateImagesData(images);
+    final Future<?> future = myClient.populateImagesDataAsync(images);
+    new WaitFor(1000){
+      @Override
+      protected boolean condition() {
+        return future.isDone();
+      }
+    };
     assertNull(myClient.getErrorInfo());
   }
 
-  private void recreateClient(final long updateDelay, final AtomicLong lastUpdateTime) {
+  private void recreateClient(final long updateDelay, final AtomicLong lastUpdateTime) throws ExecutionException, InterruptedException {
     if (myClient != null) {
       myClient.dispose();
     }
     final Collection<VmwareCloudImageDetails> images = VMWareCloudClientFactory.parseImageDataInternal(myClientParameters);
     myClient = new VMWareCloudClient(myClientParameters, myFakeApi){
       @Override
-      public void populateImagesData(@NotNull final Collection<VmwareCloudImageDetails> imageDetails) {
-        super.populateImagesData(imageDetails, updateDelay, updateDelay);
+      public Future<?> populateImagesDataAsync(@NotNull final Collection<VmwareCloudImageDetails> imageDetails) {
+        return myAsyncTaskExecutor.submit("Populate", new Runnable() {
+          public void run() {
+            populateImagesData(imageDetails, updateDelay, updateDelay);
+          }
+        });
       }
 
       @Override
@@ -701,7 +793,7 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
         };
       }
     };
-    myClient.populateImagesData(images);
+    myClient.populateImagesDataAsync(images).get();
   }
 
   @AfterMethod
@@ -714,7 +806,24 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
     FakeModel.instance().clear();
   }
 
-  private static interface Checker<T> {
+  private interface Checker<T> {
     void check(T data) throws Exception;
+  }
+
+  private static class SlowClient extends VMWareCloudClient{
+
+    public SlowClient(@NotNull final CloudClientParameters cloudClientParameters, @NotNull final VMWareApiConnector apiConnector) {
+      super(cloudClientParameters, apiConnector);
+    }
+
+    @Override
+    protected void populateImagesData(@NotNull final Collection<VmwareCloudImageDetails> imageDetails, final long initialDelaySec, final long delaySec) {
+      try {
+        Thread.sleep(10000);
+      } catch (InterruptedException e) {
+        e.printStackTrace();
+      }
+      super.populateImagesData(imageDetails, initialDelaySec, delaySec);
+    }
   }
 }

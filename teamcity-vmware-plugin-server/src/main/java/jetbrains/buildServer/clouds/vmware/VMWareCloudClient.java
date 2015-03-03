@@ -38,17 +38,10 @@ public class VMWareCloudClient extends AbstractCloudClient<VmwareCloudInstance, 
 
   private static final Logger LOG = Logger.getInstance(VMWareCloudClient.class.getName());
 
-  private boolean myIsInitialized = false;
-
 
   public VMWareCloudClient(@NotNull final CloudClientParameters cloudClientParameters,
                            @NotNull final VMWareApiConnector apiConnector) {
     super(cloudClientParameters, apiConnector);
-    myIsInitialized = true;
-  }
-
-  public boolean isInitialized() {
-    return myIsInitialized;
   }
 
   @Nullable

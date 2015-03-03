@@ -19,6 +19,7 @@
 package jetbrains.buildServer.clouds.base.connector;
 
 import com.intellij.openapi.diagnostic.Logger;
+import java.util.List;
 import java.util.concurrent.*;
 import jetbrains.buildServer.util.NamedThreadFactory;
 import jetbrains.buildServer.util.executors.ExecutorsFactory;
@@ -33,7 +34,7 @@ public class CloudAsyncTaskExecutor {
 
   private static final Logger LOG = Logger.getInstance(CloudAsyncTaskExecutor.class.getName());
 
-  private ScheduledExecutorService myExecutor;
+  private final ScheduledExecutorService myExecutor;
   private final ConcurrentMap<Future<CloudTaskResult>, TaskCallbackHandler> myExecutingTasks;
 
   public CloudAsyncTaskExecutor(String prefix) {
@@ -59,8 +60,12 @@ public class CloudAsyncTaskExecutor {
     return myExecutor.scheduleWithFixedDelay(task, initialDelay, delay, unit);
   }
 
-  public Future<?> submit(Runnable r){
-    return myExecutor.submit(r);
+  public Future<?> submit(final String taskName, final Runnable r){
+    return myExecutor.submit(new Runnable() {
+      public void run() {
+        NamedThreadFactory.executeWithNewThreadName(taskName, r);
+      }
+    });
   }
 
   private void checkTasks() {
