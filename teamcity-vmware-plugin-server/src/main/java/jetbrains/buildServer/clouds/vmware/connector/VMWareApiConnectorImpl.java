@@ -445,7 +445,9 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
       if (pool != null) {
         location.setPool(pool.getMOR());
       } else {
-        LOG.warn(String.format("Unable to find resource pool %s at datacenter %s. Will clone at the image resource pool instead", resourcePoolId, datacenter.getName()));
+        LOG.warn(String.format("Unable to find resource pool %s at datacenter %s. Will clone at the image resource pool instead"
+          , resourcePoolId
+          , datacenter == null? "<not provided>":  datacenter.getName()));
       }
     }
     final Map<String, VirtualMachineSnapshotTree> snapshotList = getSnapshotList(vm.getName());
