@@ -40,7 +40,7 @@ public class CloudAsyncTaskExecutor {
   public CloudAsyncTaskExecutor(String prefix) {
     myExecutingTasks = new ConcurrentHashMap<Future<CloudTaskResult>, TaskCallbackHandler>();
     myExecutor = ExecutorsFactory.newFixedScheduledDaemonExecutor(prefix, 2);
-    myExecutor.scheduleWithFixedDelay(new Runnable() {
+    scheduleWithFixedDelay("Check for tasks", new Runnable() {
       public void run() {
         checkTasks();
       }
@@ -56,8 +56,12 @@ public class CloudAsyncTaskExecutor {
     myExecutingTasks.put(future, callbackHandler);
   }
 
-  public ScheduledFuture<?> scheduleWithFixedDelay(@NotNull final Runnable task, final long initialDelay, final long delay, final TimeUnit unit){
-    return myExecutor.scheduleWithFixedDelay(task, initialDelay, delay, unit);
+  public ScheduledFuture<?> scheduleWithFixedDelay(@NotNull final String taskName, @NotNull final Runnable task, final long initialDelay, final long delay, final TimeUnit unit){
+    return myExecutor.scheduleWithFixedDelay(new Runnable() {
+      public void run() {
+        NamedThreadFactory.executeWithNewThreadName(taskName, task);
+      }
+    }, initialDelay, delay, unit);
   }
 
   public Future<?> submit(final String taskName, final Runnable r){

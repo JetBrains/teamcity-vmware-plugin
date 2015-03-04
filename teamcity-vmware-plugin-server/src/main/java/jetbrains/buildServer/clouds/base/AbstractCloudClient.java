@@ -110,7 +110,7 @@ public abstract class AbstractCloudClient<G extends AbstractCloudInstance<T>, T 
     }
     final UpdateInstancesTask<G, T, ?> updateInstancesTask = createUpdateInstancesTask();
     updateInstancesTask.run();
-    myAsyncTaskExecutor.scheduleWithFixedDelay(updateInstancesTask, initialDelaySec, delaySec, TimeUnit.SECONDS);
+    myAsyncTaskExecutor.scheduleWithFixedDelay("Update instances", updateInstancesTask, initialDelaySec, delaySec, TimeUnit.SECONDS);
   }
 
   protected abstract T checkAndCreateImage(@NotNull final D imageDetails);
