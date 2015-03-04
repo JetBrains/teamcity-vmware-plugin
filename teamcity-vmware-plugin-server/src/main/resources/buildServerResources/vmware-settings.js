@@ -472,7 +472,6 @@ BS.Clouds.VMWareVSphere = BS.Clouds.VMWareVSphere || (function () {
                 }
                 this.validateOptions(e.target.getAttribute('data-id'));
             }.bind(this));
-          debugger;
           if (!!this.$nickname){
             this.$nickname.on('change', function (e, value) {
               if (arguments.length === 1) {
