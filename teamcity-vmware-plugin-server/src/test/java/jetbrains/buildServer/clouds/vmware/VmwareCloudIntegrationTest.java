@@ -504,7 +504,7 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
       }
     });
     executor.shutdown();
-    assertTrue("canStart method blocks the thread!", executor.awaitTermination(10, TimeUnit.MILLISECONDS));
+    assertTrue("canStart method blocks the thread!", executor.awaitTermination(100, TimeUnit.MILLISECONDS));
   }
 
   public void create_within_the_same_datacenter() throws InterruptedException {
