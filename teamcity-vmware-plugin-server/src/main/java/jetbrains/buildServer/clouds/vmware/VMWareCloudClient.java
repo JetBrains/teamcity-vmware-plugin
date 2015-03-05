@@ -19,6 +19,7 @@
 package jetbrains.buildServer.clouds.vmware;
 
 import com.intellij.openapi.diagnostic.Logger;
+import java.io.File;
 import java.util.*;
 import jetbrains.buildServer.clouds.*;
 import jetbrains.buildServer.clouds.base.AbstractCloudClient;
@@ -37,11 +38,15 @@ import org.jetbrains.annotations.Nullable;
 public class VMWareCloudClient extends AbstractCloudClient<VmwareCloudInstance, VmwareCloudImage, VmwareCloudImageDetails>{
 
   private static final Logger LOG = Logger.getInstance(VMWareCloudClient.class.getName());
+  @NotNull private final File myIdxStorage;
 
 
   public VMWareCloudClient(@NotNull final CloudClientParameters cloudClientParameters,
-                           @NotNull final VMWareApiConnector apiConnector) {
+                           @NotNull final VMWareApiConnector apiConnector,
+                           @NotNull final File idxStorage
+                    ) {
     super(cloudClientParameters, apiConnector);
+    myIdxStorage = idxStorage;
   }
 
   @Nullable
@@ -59,7 +64,7 @@ public class VMWareCloudClient extends AbstractCloudClient<VmwareCloudInstance, 
   @Override
   protected VmwareCloudImage checkAndCreateImage(@NotNull final VmwareCloudImageDetails imageDetails) {
     final VMWareApiConnector apiConnector = (VMWareApiConnector)myApiConnector;
-    return new VmwareCloudImage(apiConnector, imageDetails, myAsyncTaskExecutor);
+    return new VmwareCloudImage(apiConnector, imageDetails, myAsyncTaskExecutor, myIdxStorage);
   }
 
   @Override

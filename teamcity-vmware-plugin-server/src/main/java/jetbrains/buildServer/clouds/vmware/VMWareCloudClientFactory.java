@@ -20,6 +20,7 @@ package jetbrains.buildServer.clouds.vmware;
 
 import com.google.gson.Gson;
 import com.intellij.openapi.diagnostic.Logger;
+import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.*;
@@ -33,6 +34,7 @@ import jetbrains.buildServer.clouds.vmware.web.VMWareWebConstants;
 import jetbrains.buildServer.serverSide.AgentDescription;
 import jetbrains.buildServer.serverSide.InvalidProperty;
 import jetbrains.buildServer.serverSide.PropertiesProcessor;
+import jetbrains.buildServer.serverSide.ServerPaths;
 import jetbrains.buildServer.web.openapi.PluginDescriptor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -46,10 +48,16 @@ public class VMWareCloudClientFactory extends AbstractCloudClientFactory<VmwareC
 
   private static final Logger LOG = Logger.getInstance(VMWareCloudClientFactory.class.getName());
   @NotNull private final String myHtmlPath;
+  @NotNull private final File myIdxStorage;
 
   public VMWareCloudClientFactory(@NotNull final CloudRegistrar cloudRegistrar,
-                                  @NotNull final PluginDescriptor pluginDescriptor) {
+                                  @NotNull final PluginDescriptor pluginDescriptor,
+                                  @NotNull final ServerPaths serverPaths) {
     super(cloudRegistrar);
+    myIdxStorage = new File(serverPaths.getPluginDataDirectory(), "vmwareIdx");
+    if (!myIdxStorage.exists()){
+      myIdxStorage.mkdirs();
+    }
     myHtmlPath = pluginDescriptor.getPluginResourcesPath("vmware-settings.html");
   }
 
@@ -58,8 +66,8 @@ public class VMWareCloudClientFactory extends AbstractCloudClientFactory<VmwareC
   public VMWareCloudClient createNewClient(@NotNull final CloudState state,
                                            @NotNull final Collection<VmwareCloudImageDetails> images,
                                            @NotNull final CloudClientParameters params) {
-    final VMWareApiConnector apiConnector = createConnectorFromParams(params);;
-    final VMWareCloudClient vmWareCloudClient = new VMWareCloudClient(params, apiConnector);
+    final VMWareApiConnector apiConnector = createConnectorFromParams(params);
+    final VMWareCloudClient vmWareCloudClient = new VMWareCloudClient(params, apiConnector, myIdxStorage);
     try {
       apiConnector.test();
     } catch (CheckedCloudException e) {
@@ -70,7 +78,7 @@ public class VMWareCloudClientFactory extends AbstractCloudClientFactory<VmwareC
 
   @Override
   public VMWareCloudClient createNewClient(@NotNull final CloudState state, @NotNull final CloudClientParameters params, final TypedCloudErrorInfo[] profileErrors) {
-    final VMWareCloudClient client = new VMWareCloudClient(params, createConnectorFromParams(params));
+    final VMWareCloudClient client = new VMWareCloudClient(params, createConnectorFromParams(params), myIdxStorage);
     client.updateErrors(profileErrors);
     return client;
   }

@@ -6,6 +6,7 @@ import com.vmware.vim25.VirtualMachinePowerState;
 import com.vmware.vim25.mo.Datacenter;
 import com.vmware.vim25.mo.ManagedEntity;
 import com.vmware.vim25.mo.Task;
+import java.io.File;
 import java.net.MalformedURLException;
 import java.rmi.RemoteException;
 import java.util.*;
@@ -30,6 +31,7 @@ import jetbrains.buildServer.clouds.vmware.stubs.FakeDatacenter;
 import jetbrains.buildServer.clouds.vmware.stubs.FakeModel;
 import jetbrains.buildServer.clouds.vmware.stubs.FakeVirtualMachine;
 import jetbrains.buildServer.clouds.vmware.web.VMWareWebConstants;
+import jetbrains.buildServer.serverSide.ServerPaths;
 import jetbrains.buildServer.web.openapi.PluginDescriptor;
 import org.jetbrains.annotations.NotNull;
 import org.jmock.Expectations;
@@ -51,10 +53,14 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
   private VMWareCloudClient myClient;
   private FakeApiConnector myFakeApi;
   private CloudClientParameters myClientParameters;
+  private File myIdxStorage;
 
   @BeforeMethod
   public void setUp() throws Exception {
     super.setUp();
+
+    myIdxStorage = createTempDir();
+
     System.setProperty("teamcity.vsphere.instance.status.update.delay.ms", "250");
     myClientParameters = new CloudClientParameters();
     myClientParameters.setParameter("serverUrl", "http://localhost:8080");
@@ -625,7 +631,7 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
       allowing(pd).getPluginResourcesPath("vmware-settings.html"); will(returnValue("aaa.html"));
     }});
     final CloudState state = m.mock(CloudState.class);
-    final VMWareCloudClientFactory factory = new VMWareCloudClientFactory(cloudRegistrar, pd){
+    final VMWareCloudClientFactory factory = new VMWareCloudClientFactory(cloudRegistrar, pd, new ServerPaths(myIdxStorage.getAbsolutePath())){
 
       @NotNull
       @Override
@@ -756,7 +762,7 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
       myClient.dispose();
     }
     final Collection<VmwareCloudImageDetails> images = VMWareCloudClientFactory.parseImageDataInternal(myClientParameters);
-    myClient = new VMWareCloudClient(myClientParameters, myFakeApi);
+    myClient = new VMWareCloudClient(myClientParameters, myFakeApi, myIdxStorage);
     final Future<?> future = myClient.populateImagesDataAsync(images);
     new WaitFor(1000){
       @Override
@@ -772,7 +778,7 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
       myClient.dispose();
     }
     final Collection<VmwareCloudImageDetails> images = VMWareCloudClientFactory.parseImageDataInternal(myClientParameters);
-    myClient = new VMWareCloudClient(myClientParameters, myFakeApi){
+    myClient = new VMWareCloudClient(myClientParameters, myFakeApi, myIdxStorage){
       @Override
       public Future<?> populateImagesDataAsync(@NotNull final Collection<VmwareCloudImageDetails> imageDetails) {
         return myAsyncTaskExecutor.submit("Populate", new Runnable() {
@@ -798,32 +804,17 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
 
   @AfterMethod
   public void tearDown() throws Exception {
-    super.tearDown();
+    System.getProperties().remove("teamcity.vsphere.instance.status.update.delay.ms");
     if (myClient != null) {
       myClient.dispose();
       myClient = null;
     }
     FakeModel.instance().clear();
+    super.tearDown();
   }
 
   private interface Checker<T> {
     void check(T data) throws Exception;
   }
 
-  private static class SlowClient extends VMWareCloudClient{
-
-    public SlowClient(@NotNull final CloudClientParameters cloudClientParameters, @NotNull final VMWareApiConnector apiConnector) {
-      super(cloudClientParameters, apiConnector);
-    }
-
-    @Override
-    protected void populateImagesData(@NotNull final Collection<VmwareCloudImageDetails> imageDetails, final long initialDelaySec, final long delaySec) {
-      try {
-        Thread.sleep(10000);
-      } catch (InterruptedException e) {
-        e.printStackTrace();
-      }
-      super.populateImagesData(imageDetails, initialDelaySec, delaySec);
-    }
-  }
 }

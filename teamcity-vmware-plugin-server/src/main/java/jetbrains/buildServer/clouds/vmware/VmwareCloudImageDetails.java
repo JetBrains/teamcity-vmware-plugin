@@ -72,7 +72,7 @@ public class VmwareCloudImageDetails implements CloudImageDetails {
     myMaxInstances = maxInstances;
   }
 
-  @Nullable
+  @NotNull
   public String getNickname() {
     return myNickname == null ? mySourceName : myNickname;
   }

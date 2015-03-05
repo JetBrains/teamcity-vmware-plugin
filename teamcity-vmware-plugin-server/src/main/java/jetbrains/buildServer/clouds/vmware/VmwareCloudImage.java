@@ -20,6 +20,8 @@ package jetbrains.buildServer.clouds.vmware;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.vmware.vim25.mo.Task;
+import java.io.File;
+import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.Callable;
@@ -33,6 +35,7 @@ import jetbrains.buildServer.clouds.base.errors.TypedCloudErrorInfo;
 import jetbrains.buildServer.clouds.vmware.connector.VMWareApiConnector;
 import jetbrains.buildServer.clouds.vmware.connector.VmwareInstance;
 import jetbrains.buildServer.clouds.vmware.connector.VmwareTaskWrapper;
+import jetbrains.buildServer.util.FileUtil;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -47,15 +50,26 @@ public class VmwareCloudImage extends AbstractCloudImage<VmwareCloudInstance, Vm
   private final VMWareApiConnector myApiConnector;
   @NotNull private final CloudAsyncTaskExecutor myAsyncTaskExecutor;
   private final VmwareCloudImageDetails myImageDetails;
+  private final File myIdxFile;
 
   public VmwareCloudImage(@NotNull final VMWareApiConnector apiConnector,
                           @NotNull final VmwareCloudImageDetails imageDetails,
-                          @NotNull final CloudAsyncTaskExecutor asyncTaskExecutor) {
+                          @NotNull final CloudAsyncTaskExecutor asyncTaskExecutor,
+                          @NotNull final File idxStorage) {
     super(imageDetails.getNickname(), imageDetails.getNickname());
     myImageDetails = imageDetails;
     myApiConnector = apiConnector;
     myAsyncTaskExecutor = asyncTaskExecutor;
     myInstances.clear();
+    myIdxFile = new File(idxStorage, imageDetails.getNickname() + ".idx");
+    if (!myIdxFile.exists()){
+      try {
+        FileUtil.writeFileAndReportErrors(myIdxFile, "1");
+      } catch (IOException e) {
+        LOG.warn(String.format("Unable to write idx file '%s': %s", myIdxFile.getAbsolutePath(), e.toString()));
+      }
+    }
+
     Map<String, VmwareInstance> realInstances = null;
     try {
       realInstances = myApiConnector.listImageInstances(this);
@@ -90,7 +104,7 @@ public class VmwareCloudImage extends AbstractCloudImage<VmwareCloudInstance, Vm
     return myImageDetails.getSnapshotName();
   }
 
-  private synchronized VmwareCloudInstance getOrCreateInstance() throws VmwareCheckedCloudException {
+  protected synchronized VmwareCloudInstance getOrCreateInstance() throws VmwareCheckedCloudException {
     if (!canStartNewInstance()){
       throw new QuotaException("Unable to start more instances of image " + getName());
     }
@@ -300,10 +314,18 @@ public class VmwareCloudImage extends AbstractCloudImage<VmwareCloudInstance, Vm
     throw new UnsupportedOperationException("Restart not implemented");
   }
 
-  private String generateNewVmName() {
-    Random r = new Random();
-    SimpleDateFormat sdf = new SimpleDateFormat("MMdd-HHmmss");
-    return String.format("%s-clone-%s%s", getId(), sdf.format(new Date()), Integer.toHexString(r.nextInt(256)));
+
+  protected String generateNewVmName() {
+    int nextIdx = 0;
+      try {
+        nextIdx = Integer.parseInt(FileUtil.readText(myIdxFile));
+        FileUtil.writeFileAndReportErrors(myIdxFile, String.valueOf(nextIdx+1));
+      } catch (Exception e) {
+        LOG.warn("Will generate random clone index. Reason: unable to read idx file: " + e.toString());
+        Random r = new Random();
+        nextIdx = 100000 + r.nextInt(100000);
+      }
+    return String.format("%s.%d", getId(), nextIdx);
   }
 
   public void addInstance(@NotNull final VmwareCloudInstance instance){
