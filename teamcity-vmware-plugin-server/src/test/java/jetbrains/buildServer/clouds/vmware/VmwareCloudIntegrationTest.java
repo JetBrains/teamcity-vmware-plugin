@@ -154,8 +154,7 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
     assertEquals(3, FakeModel.instance().getVms().size());
     startAndCheckCloneDeletedAfterTermination("image_template", new Checker<VmwareCloudInstance>() {
       public void check(final VmwareCloudInstance data) throws CheckedCloudException {
-        assertTrue(data.getInstanceId().startsWith("image_template"));
-        assertTrue(data.getInstanceId().contains("clone"));
+        assertTrue("image_template.1".equals(data.getInstanceId()));
         final Map<String, String> vmParams = myFakeApi.getVMParams(data.getInstanceId());
         assertEquals("true", vmParams.get(VMWareApiConnector.TEAMCITY_VMWARE_CLONED_INSTANCE));
         assertEquals("image_template", vmParams.get(VMWareApiConnector.TEAMCITY_VMWARE_IMAGE_SOURCE_NAME));
@@ -165,8 +164,7 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
     assertEquals(3, FakeModel.instance().getVms().size());
     startAndCheckCloneDeletedAfterTermination("image2", new Checker<VmwareCloudInstance>() {
       public void check(final VmwareCloudInstance data) throws CheckedCloudException {
-        assertTrue(data.getInstanceId().startsWith("image2"));
-        assertTrue(data.getInstanceId().contains("clone"));
+        assertTrue("image2.1".equals(data.getInstanceId()));
         final Map<String, String> vmParams = myFakeApi.getVMParams(data.getInstanceId());
         assertEquals("true", vmParams.get(VMWareApiConnector.TEAMCITY_VMWARE_CLONED_INSTANCE));
         assertEquals("image2", vmParams.get(VMWareApiConnector.TEAMCITY_VMWARE_IMAGE_SOURCE_NAME));
@@ -182,7 +180,7 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
       public void check(final VmwareCloudInstance data) throws CheckedCloudException {
         instanceId.set(data.getInstanceId());
         assertTrue(data.getInstanceId().startsWith("image2"));
-        assertTrue(data.getInstanceId().contains("clone"));
+        assertTrue("image2.1".equals(data.getInstanceId()));
         final Map<String, String> vmParams = myFakeApi.getVMParams(data.getInstanceId());
         assertEquals("true", vmParams.get(VMWareApiConnector.TEAMCITY_VMWARE_CLONED_INSTANCE));
         assertEquals("image2", vmParams.get(VMWareApiConnector.TEAMCITY_VMWARE_IMAGE_SOURCE_NAME));
@@ -194,7 +192,6 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
     startAndCheckCloneDeletedAfterTermination("image2", new Checker<VmwareCloudInstance>() {
       public void check(final VmwareCloudInstance data) throws CheckedCloudException {
         assertEquals(instanceId.get(), data.getInstanceId());
-        assertTrue(data.getInstanceId().contains("clone"));
         final Map<String, String> vmParams = myFakeApi.getVMParams(data.getInstanceId());
         assertEquals("true", vmParams.get(VMWareApiConnector.TEAMCITY_VMWARE_CLONED_INSTANCE));
         assertEquals("image2", vmParams.get(VMWareApiConnector.TEAMCITY_VMWARE_IMAGE_SOURCE_NAME));
