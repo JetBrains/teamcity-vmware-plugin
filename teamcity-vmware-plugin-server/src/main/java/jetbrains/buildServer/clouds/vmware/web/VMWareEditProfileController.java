@@ -114,7 +114,9 @@ public class VMWareEditProfileController extends BaseFormXmlController {
       Element vmElement = new Element("VirtualMachine");
       vmElement.setAttribute("name", vm.getName());
       vmElement.setAttribute("template", String.valueOf(vm.isReadonly()));
-      vmElement.setAttribute("datacenterId", vm.getDatacenterId());
+      if (vm.getDatacenterId() != null) {
+        vmElement.setAttribute("datacenterId", vm.getDatacenterId());
+      }
       element.addContent(vmElement);
     }
     return element;
