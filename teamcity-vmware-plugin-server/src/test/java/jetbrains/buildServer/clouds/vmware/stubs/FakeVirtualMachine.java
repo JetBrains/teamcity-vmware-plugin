@@ -105,6 +105,11 @@ public class FakeVirtualMachine extends VirtualMachine {
         try {sleep(2000);} catch (InterruptedException e) {}
         latch.countDown();
         ((FakeVirtualMachine)vm).myConfigInfo.set(oldConfig);
+        if (spec.isPowerOn()){
+          if (!((FakeVirtualMachine)vm).myIsStarted.compareAndSet(false, true)){
+            //throw new RemoteException("Already started");
+          }
+        }
       }
     }.start();
     return longTask(latch);

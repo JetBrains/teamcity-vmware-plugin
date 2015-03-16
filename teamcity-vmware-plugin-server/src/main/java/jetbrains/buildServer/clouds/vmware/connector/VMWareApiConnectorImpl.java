@@ -22,10 +22,13 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.vmware.vim25.*;
 import com.vmware.vim25.mo.*;
 import com.vmware.vim25.mo.util.MorUtil;
+import java.net.InetAddress;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.net.UnknownHostException;
 import java.rmi.RemoteException;
 import java.util.*;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import jetbrains.buildServer.clouds.CloudException;
 import jetbrains.buildServer.clouds.CloudInstanceUserData;
@@ -55,6 +58,8 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
   private static final String RESPOOL_TYPE = ResourcePool.class.getSimpleName();
   private static final String SPEC_FOLDER = "vm";
   private static final String SPEC_RESPOOL = "Resources";
+  private static final String LINUX_GUEST_FAMILY = "linuxGuest";
+  private static final Pattern FQDN_PATTERN = Pattern.compile("[^\\.]+\\.(.+)");
   private static final Pattern RESPOOL_PATTERN = Pattern.compile("resgroup-\\d+");
   private static final Pattern FOLDER_PATTERN = Pattern.compile("group-v\\d+");
 
@@ -64,13 +69,14 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
   private final String myUsername;
   private final String myPassword;
   private ServiceInstance myServiceInstance;
+  private final String myDomain;
 
 
   public VMWareApiConnectorImpl(final URL instanceURL, final String username, final String password){
     myInstanceURL = instanceURL;
     myUsername = username;
     myPassword = password;
-
+    myDomain = getTCServerDomain();
   }
 
   private synchronized Folder getRootFolder() throws VmwareCheckedCloudException {
@@ -428,7 +434,9 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
   }
 
   @Nullable
-  public Task cloneVm(@NotNull final VmwareCloudInstance instance, @NotNull String resourcePoolId,@NotNull String folderId) throws VmwareCheckedCloudException {
+  public Task cloneAndStartVm(@NotNull final VmwareCloudInstance instance,
+                              @NotNull final String resourcePoolId,
+                              @NotNull final String folderId) throws VmwareCheckedCloudException {
     final VmwareCloudImageDetails imageDetails = instance.getImage().getImageDetails();
     LOG.info(String.format("Attempting to clone VM %s into %s", imageDetails.getSourceName(), instance.getName()));
     final VirtualMachine vm = findEntityByIdName(imageDetails.getSourceName(), VirtualMachine.class);
@@ -438,8 +446,10 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
     final VirtualMachineCloneSpec cloneSpec = new VirtualMachineCloneSpec();
     final VirtualMachineRelocateSpec location = new VirtualMachineRelocateSpec();
 
+    cloneSpec.setPowerOn(true);
     cloneSpec.setLocation(location);
     cloneSpec.setConfig(config);
+    final boolean disableOsCustomization = TeamCityProperties.getBoolean(VmwareConstants.DISABLE_OS_CUSTOMIZATION);
     if (!VmwareConstants.DEFAULT_RESOURCE_POOL.equals(resourcePoolId)) {
       final ResourcePool pool = findEntityByIdNameNullable(resourcePoolId, ResourcePool.class, datacenter);
       if (pool != null) {
@@ -478,6 +488,29 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
       createOptionValue(TEAMCITY_VMWARE_IMAGE_SNAPSHOT, instance.getSnapshotName()),
       createOptionValue(TEAMCITY_VMWARE_IMAGE_CHANGE_VERSION, vm.getConfig().getChangeVersion())
     });
+
+    final GuestInfo guest = vm.getGuest();
+    final String guestFamily = guest != null ? guest.getGuestFamily() : null;
+
+    if (!disableOsCustomization && myDomain != null && LINUX_GUEST_FAMILY.equals(guestFamily)){
+      final CustomizationSpec customization = new CustomizationSpec();
+      final CustomizationLinuxPrep linuxPrep = new CustomizationLinuxPrep();
+      final CustomizationLinuxOptions linuxOptions = new CustomizationLinuxOptions();
+
+      linuxPrep.setHostName(new CustomizationVirtualMachineName());
+      linuxPrep.setDomain(myDomain);
+      customization.setIdentity(linuxPrep);
+      customization.setOptions(linuxOptions);
+
+      customization.setGlobalIPSettings(new CustomizationGlobalIPSettings());
+      final CustomizationAdapterMapping mapping = new CustomizationAdapterMapping();
+      final CustomizationIPSettings ipSettings = new CustomizationIPSettings();
+      mapping.setAdapter(ipSettings);
+      ipSettings.setIp(new CustomizationDhcpIpGenerator());
+      customization.setNicSettingMap(new CustomizationAdapterMapping[]{mapping});
+
+      cloneSpec.setCustomization(customization);
+    }
 
     try {
       final Folder folder = findEntityByIdNameNullable(folderId, Folder.class, datacenter);
@@ -755,5 +788,22 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
       entity = entity.getParent();
     }
     return null;
+  }
+
+  @Nullable
+  private static String getTCServerDomain(){
+    try {
+      final String fqdn = InetAddress.getLocalHost().getCanonicalHostName();
+      final Matcher matcher = FQDN_PATTERN.matcher(fqdn);
+      if (matcher.matches()) {
+        return matcher.group(1);
+      } else {
+        return null;
+      }
+    } catch (UnknownHostException ex){
+      LOG.info("Unable to resolve FQDN. Linux hostname customization will be disabled: " + ex.toString());
+      return null;
+    }
+
   }
 }

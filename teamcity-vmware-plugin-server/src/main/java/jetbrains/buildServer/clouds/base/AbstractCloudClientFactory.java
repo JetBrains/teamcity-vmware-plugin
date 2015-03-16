@@ -24,6 +24,7 @@ import java.util.List;
 import jetbrains.buildServer.clouds.*;
 import jetbrains.buildServer.clouds.base.beans.CloudImageDetails;
 import jetbrains.buildServer.clouds.base.errors.TypedCloudErrorInfo;
+import jetbrains.buildServer.clouds.server.impl.CloudManagerBase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -47,7 +48,7 @@ public abstract class AbstractCloudClientFactory <D extends CloudImageDetails,C 
     if (profileErrors != null && profileErrors.length > 0){
       return createNewClient(state, params, profileErrors);
     }
-    final Collection<D> imageDetailsList = parseImageData(params);
+      final Collection<D> imageDetailsList = parseImageData(params);
       final C newClient = createNewClient(state, imageDetailsList, params);
       newClient.populateImagesDataAsync(imageDetailsList);
       return newClient;

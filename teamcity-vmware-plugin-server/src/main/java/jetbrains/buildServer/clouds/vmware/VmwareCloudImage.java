@@ -22,7 +22,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.vmware.vim25.mo.Task;
 import java.io.File;
 import java.io.IOException;
-import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.Callable;
 import jetbrains.buildServer.clouds.*;
@@ -183,13 +182,13 @@ public class VmwareCloudImage extends AbstractCloudImage<VmwareCloudInstance, Vm
         myAsyncTaskExecutor.executeAsync(
           new VmwareTaskWrapper(new Callable<Task>() {
           public Task call() throws Exception {
-            return myApiConnector.cloneVm(instance, myImageDetails.getResourcePoolId(), myImageDetails.getFolderId());
+            return myApiConnector.cloneAndStartVm(instance, myImageDetails.getResourcePoolId(), myImageDetails.getFolderId());
           }}
           ),
           new ImageStatusTaskWrapper(instance) {
           @Override
           public void onSuccess() {
-            cloneVmSuccessHandler(instance, cloudInstanceUserData);
+            reconfigureVmTask(instance, cloudInstanceUserData);
           }
 
           @Override
@@ -199,7 +198,7 @@ public class VmwareCloudImage extends AbstractCloudImage<VmwareCloudInstance, Vm
           }
         });
       } else {
-        cloneVmSuccessHandler(instance, cloudInstanceUserData);
+        startVM(instance, cloudInstanceUserData);
       }
       return instance;
     } catch (QuotaException e) {
@@ -209,7 +208,7 @@ public class VmwareCloudImage extends AbstractCloudImage<VmwareCloudInstance, Vm
     }
   }
 
-  private synchronized void cloneVmSuccessHandler(@NotNull final VmwareCloudInstance instance, @NotNull final CloudInstanceUserData cloudInstanceUserData) {
+  private synchronized void startVM(@NotNull final VmwareCloudInstance instance, @NotNull final CloudInstanceUserData cloudInstanceUserData) {
     instance.setStatus(InstanceStatus.STARTING);
     myAsyncTaskExecutor.executeAsync(new VmwareTaskWrapper(new Callable<Task>() {
       public Task call() throws Exception {
