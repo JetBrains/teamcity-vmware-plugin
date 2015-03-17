@@ -324,7 +324,7 @@ public class VmwareCloudImage extends AbstractCloudImage<VmwareCloudInstance, Vm
         Random r = new Random();
         nextIdx = 100000 + r.nextInt(100000);
       }
-    return String.format("%s.%d", getId(), nextIdx);
+    return String.format("%s-%d", getId(), nextIdx);
   }
 
   public void addInstance(@NotNull final VmwareCloudInstance instance){
