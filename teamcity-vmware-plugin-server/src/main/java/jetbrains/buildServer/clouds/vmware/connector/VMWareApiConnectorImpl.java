@@ -481,16 +481,23 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
     }
 
 
+    final VirtualMachineConfigInfo vmConfig = vm.getConfig();
     config.setExtraConfig(new OptionValue[]{
       createOptionValue(TEAMCITY_VMWARE_CLONED_INSTANCE, "true"),
       createOptionValue(TEAMCITY_VMWARE_IMAGE_SOURCE_NAME, imageDetails.getSourceName()),
       createOptionValue(TEAMCITY_VMWARE_IMAGE_NICKNAME, imageDetails.getNickname()),
       createOptionValue(TEAMCITY_VMWARE_IMAGE_SNAPSHOT, instance.getSnapshotName()),
-      createOptionValue(TEAMCITY_VMWARE_IMAGE_CHANGE_VERSION, vm.getConfig().getChangeVersion())
+      createOptionValue(TEAMCITY_VMWARE_IMAGE_CHANGE_VERSION, vmConfig.getChangeVersion())
     });
 
     final GuestInfo guest = vm.getGuest();
-    final String guestFamily = guest != null ? guest.getGuestFamily() : null;
+    String guestFamily = guest != null ? guest.getGuestFamily() : null;
+    if (guestFamily == null){
+      final String guestFullName = vmConfig.getGuestFullName();
+      if (guestFullName != null && guestFullName.contains("Linux")){
+        guestFamily = LINUX_GUEST_FAMILY;
+      }
+    }
 
     if (!disableOsCustomization && myDomain != null && LINUX_GUEST_FAMILY.equals(guestFamily)){
       final CustomizationSpec customization = new CustomizationSpec();
