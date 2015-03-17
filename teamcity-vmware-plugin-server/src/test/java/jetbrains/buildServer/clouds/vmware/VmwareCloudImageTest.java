@@ -48,7 +48,7 @@ public class VmwareCloudImageTest extends BaseTestCase {
 
   public void check_clone_name_generation(){
     for (int i=0; i<10; i++){
-      assertEquals(String.format("%s.%d", myImageDetails.getNickname(), i + 1), myImage.generateNewVmName());
+      assertEquals(String.format("%s-%d", myImageDetails.getNickname(), i + 1), myImage.generateNewVmName());
     }
     FileUtil.delete(myIdxStorage);
     final String newName = myImage.generateNewVmName();
