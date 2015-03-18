@@ -77,6 +77,11 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
     myUsername = username;
     myPassword = password;
     myDomain = getTCServerDomain();
+    if (myDomain == null){
+      LOG.info("Unable to determine server domain. Linux guest hostname customization is disabled");
+    } else {
+      LOG.info("Domain is " + myDomain + ". Will use the Linux guest hostname customization");
+    }
   }
 
   private synchronized Folder getRootFolder() throws VmwareCheckedCloudException {
