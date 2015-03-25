@@ -291,20 +291,21 @@ public class VmwareCloudImage extends AbstractCloudImage<VmwareCloudInstance, Vm
 
     if (myImageDetails.getBehaviour().isUseOriginal()) {
       final VmwareCloudInstance myInstance = myInstances.get(myImageDetails.getSourceName());
-      if (myInstance == null){
-      return false;
-    }
+      if (myInstance == null) {
+        return false;
+      }
       return myInstance.getStatus() == InstanceStatus.STOPPED;
     }
 
-    final List<String> runningInstancesNames = new ArrayList<String>();
+    final boolean deleteAfterStop = myImageDetails.getBehaviour().isDeleteAfterStop();
+    final List<String> consideredInstances = new ArrayList<String>();
     for (Map.Entry<String, VmwareCloudInstance> entry : myInstances.entrySet()) {
-      if (entry.getValue().getStatus() != InstanceStatus.STOPPED)
-        runningInstancesNames.add(entry.getKey());
+      if (entry.getValue().getStatus() != InstanceStatus.STOPPED || deleteAfterStop)
+        consideredInstances.add(entry.getKey());
     }
-    final boolean canStartMore =  runningInstancesNames.size() < myImageDetails.getMaxInstances();
-    LOG.debug(String.format("Running count: %d %s, can start more: %s",
-                           runningInstancesNames.size(), Arrays.toString(runningInstancesNames.toArray()), String.valueOf(canStartMore)));
+    final boolean canStartMore =  consideredInstances.size() < myImageDetails.getMaxInstances();
+    LOG.debug(String.format("Instances count: %d %s, can start more: %s",
+                           consideredInstances.size(), Arrays.toString(consideredInstances.toArray()), String.valueOf(canStartMore)));
     return canStartMore;
   }
 
