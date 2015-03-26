@@ -117,7 +117,7 @@ public class VMWarePropertiesReader {
     commandLine.addParameter(param);
     final CommandLineExecutor executor = new CommandLineExecutor(commandLine);
     try {
-      final ExecResult result = executor.runProcess(1);
+      final ExecResult result = executor.runProcess(5);
       return result != null ? StringUtil.trim(result.getStdout()) : null;
     } catch (ExecutionException e) {
       LOG.info("Error getting property " + propName + ": " + e.toString());
