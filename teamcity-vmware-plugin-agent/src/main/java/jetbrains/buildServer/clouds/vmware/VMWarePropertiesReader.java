@@ -61,7 +61,7 @@ public class VMWarePropertiesReader {
     LOG.info("VSphere plugin initializing...");
     myAgentConfiguration = agentConfiguration;
     if (VMWARE_RPCTOOL_PATH == null){
-      LOG.info("Unable to locate " + VMWARE_RPCTOOL_PATH + ". Looks like not a VMWare VM or VWWare tools are not installed");
+      LOG.info("Unable to locate vmware rpctool. Looks like not a VMWare VM or VWWare tools are not installed");
       return;
     } else {
       LOG.info("Detected vmware-tools or open-vm-tools. Found required vmware-rpctool at "+VMWARE_RPCTOOL_PATH+". " +
