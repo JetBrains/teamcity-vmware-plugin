@@ -18,9 +18,11 @@
 
 package jetbrains.buildServer.clouds.vmware;
 
+import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
+import jetbrains.buildServer.CommandLineExecutor;
 import jetbrains.buildServer.util.StringUtil;
 import java.io.File;
 import java.io.IOException;
@@ -113,17 +115,14 @@ public class VMWarePropertiesReader {
     commandLine.setExePath(VMWARE_RPCTOOL_PATH);
     final String param = String.format("info-get %s", propName);
     commandLine.addParameter(param);
+    final CommandLineExecutor executor = new CommandLineExecutor(commandLine);
     try {
-      LOG.info(Arrays.toString(new String[]{VMWARE_RPCTOOL_PATH, param}));
-      final Process exec = Runtime.getRuntime().exec(new String[]{VMWARE_RPCTOOL_PATH, param});
-      exec.waitFor();
-    } catch (InterruptedException e) {
-      e.printStackTrace();
-    } catch (IOException e) {
-      e.printStackTrace();
+      final ExecResult result = executor.runProcess(1);
+      return result != null ? StringUtil.trim(result.getStdout()) : null;
+    } catch (ExecutionException e) {
+      LOG.info("Error getting property " + propName + ": " + e.toString());
     }
-    final ExecResult execResult = SimpleCommandLineProcessRunner.runCommand(commandLine, new byte[0]);
-    return StringUtil.trim(execResult.getStdout());
+    return null;
   }
 
   static {
@@ -131,6 +130,8 @@ public class VMWarePropertiesReader {
       VMWARE_RPCTOOL_PATH = getExistingCommandPath(LINUX_COMMANDS);
     } else if (SystemInfo.isWindows){
       VMWARE_RPCTOOL_PATH = getExistingCommandPath(WINDOWS_COMMANDS);
+    } else if (SystemInfo.isMac) {
+      VMWARE_RPCTOOL_PATH = getExistingCommandPath(MAC_COMMANDS);
     } else {
       VMWARE_RPCTOOL_PATH = getExistingCommandPath(LINUX_COMMANDS); //todo: update for other OS'es
     }
