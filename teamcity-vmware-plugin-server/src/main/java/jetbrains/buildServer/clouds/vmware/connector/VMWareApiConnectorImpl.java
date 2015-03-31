@@ -579,6 +579,9 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
     instance.setStatus(InstanceStatus.STOPPING);
     try {
       VirtualMachine vm = findEntityByIdName(instance.getInstanceId(), VirtualMachine.class);
+      if (getInstanceStatus(vm) == InstanceStatus.STOPPED) {
+        return successTask();
+      }
       return doShutdown(instance, vm);
     } catch (Exception ex) {
       instance.updateErrors(TypedCloudErrorInfo.fromException(ex));
@@ -817,5 +820,21 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
       return null;
     }
 
+  }
+
+  private static Task successTask(){
+    return new Task(null, null) {
+      @Override
+      public TaskInfo getTaskInfo() throws RemoteException {
+        final TaskInfo taskInfo = new TaskInfo();
+        taskInfo.setState(TaskInfoState.success);
+        return taskInfo;
+      }
+
+      @Override
+      public String waitForTask() throws RemoteException, InterruptedException {
+        return Task.SUCCESS;
+      }
+    };
   }
 }

@@ -239,6 +239,7 @@ public class VmwareCloudImage extends AbstractCloudImage<VmwareCloudInstance, Vm
 
 
   public void terminateInstance(@NotNull final VmwareCloudInstance instance) {
+
     LOG.info("Stopping instance " + instance.getName());
     instance.setStatus(InstanceStatus.SCHEDULED_TO_STOP);
     myAsyncTaskExecutor.executeAsync(new VmwareTaskWrapper(new Callable<Task>() {
