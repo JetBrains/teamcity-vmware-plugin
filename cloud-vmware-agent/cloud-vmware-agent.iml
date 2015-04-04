@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<module org.jetbrains.idea.maven.project.MavenProjectsManager.isMavenModule="true" type="JAVA_MODULE" version="4">
+<module type="JAVA_MODULE" version="4">
   <component name="FacetManager">
     <facet type="Spring" name="Spring">
       <configuration>
@@ -9,7 +9,7 @@
   </component>
   <component name="NewModuleRootManager" LANGUAGE_LEVEL="JDK_1_5" inherit-compiler-output="false">
     <output url="file://$MODULE_DIR$/target/classes" />
-    <output-test url="file://$MODULE_DIR$/target/test-classes" />
+    <output-test url="file://$MODULE_DIR$/../teamcity-vmware-plugin-agent/target/test-classes" />
     <content url="file://$MODULE_DIR$">
       <sourceFolder url="file://$MODULE_DIR$/src/main/java" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/src/main/resources" type="java-resource" />
@@ -17,8 +17,8 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="teamcity-vmware-plugin-common" />
-    <orderEntry type="library" name="agent" level="project" />
+    <orderEntry type="module" module-name="cloud-vmware-common" />
+    <orderEntry type="module" module-name="agent" />
+    <orderEntry type="module" module-name="cloud-shared" />
   </component>
 </module>
-
