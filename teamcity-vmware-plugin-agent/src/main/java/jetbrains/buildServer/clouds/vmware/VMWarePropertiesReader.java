@@ -25,11 +25,8 @@ import com.intellij.openapi.util.SystemInfo;
 import jetbrains.buildServer.CommandLineExecutor;
 import jetbrains.buildServer.util.StringUtil;
 import java.io.File;
-import java.io.IOException;
-import java.util.Arrays;
 import java.util.Map;
 import jetbrains.buildServer.ExecResult;
-import jetbrains.buildServer.SimpleCommandLineProcessRunner;
 import jetbrains.buildServer.agent.*;
 import jetbrains.buildServer.clouds.CloudInstanceUserData;
 import jetbrains.buildServer.util.EventDispatcher;
@@ -51,7 +48,8 @@ public class VMWarePropertiesReader {
   private static final String[] LINUX_COMMANDS = {"/usr/sbin/vmware-rpctool", "/usr/bin/vmware-rpctool"};
   private static final String[] MAC_COMMANDS = {"/usr/sbin/vmware-rpctool"};
 
-  private static final String VMWARE_RPCTOOL_PATH;
+  private static final String VMWARE_RPCTOOL_NAME = "vmware-rpctool";
+  private final String myVMWareRPCToolPath;
 
   private final BuildAgentConfigurationEx myAgentConfiguration;
 
@@ -60,12 +58,13 @@ public class VMWarePropertiesReader {
                                 @NotNull EventDispatcher<AgentLifeCycleListener> events) {
     LOG.info("VSphere plugin initializing...");
     myAgentConfiguration = agentConfiguration;
-    if (VMWARE_RPCTOOL_PATH == null){
-      LOG.info("Unable to locate vmware rpctool. Looks like not a VMWare VM or VWWare tools are not installed");
+    myVMWareRPCToolPath = getToolPath(myAgentConfiguration);
+    if (myVMWareRPCToolPath == null) {
+      LOG.info("Unable to locate " + VMWARE_RPCTOOL_NAME + ". Looks like not a VMWare VM or VWWare tools are not installed");
       return;
     } else {
-      LOG.info("Detected vmware-tools or open-vm-tools. Found required vmware-rpctool at "+VMWARE_RPCTOOL_PATH+". " +
-               "Will attempt to authorize agent as VMWare cloud agent. ");
+      LOG.info("Detected vmware-tools or open-vm-tools. Found required vmware-rpctool at " + myVMWareRPCToolPath + ". " +
+          "Will attempt to authorize agent as VMWare cloud agent. ");
     }
     events.addListener(new AgentLifeCycleAdapter(){
       @Override
@@ -112,7 +111,7 @@ public class VMWarePropertiesReader {
 
   private String getPropertyValue(String propName){
     final GeneralCommandLine commandLine = new GeneralCommandLine();
-    commandLine.setExePath(VMWARE_RPCTOOL_PATH);
+    commandLine.setExePath(myVMWareRPCToolPath);
     final String param = String.format("info-get %s", propName);
     commandLine.addParameter(param);
     final CommandLineExecutor executor = new CommandLineExecutor(commandLine);
@@ -125,15 +124,26 @@ public class VMWarePropertiesReader {
     return null;
   }
 
-  static {
-    if (SystemInfo.isLinux){
-      VMWARE_RPCTOOL_PATH = getExistingCommandPath(LINUX_COMMANDS);
-    } else if (SystemInfo.isWindows){
-      VMWARE_RPCTOOL_PATH = getExistingCommandPath(WINDOWS_COMMANDS);
+  @Nullable
+  private static String getToolPath(@NotNull final BuildAgentConfiguration configuration) {
+    if (SystemInfo.isUnix) { // Linux, MacOSX, FreeBSD
+      final Map<String, String> envs = configuration.getBuildParameters().getEnvironmentVariables();
+      final String path = envs.get("PATH");
+      if (path != null) for (String p : StringUtil.splitHonorQuotes(path, File.pathSeparatorChar)) {
+        final File file = new File(p, VMWARE_RPCTOOL_NAME);
+        if (file.exists()) {
+          return file.getAbsolutePath();
+        }
+      }
+    }
+    if (SystemInfo.isLinux) {
+      return getExistingCommandPath(LINUX_COMMANDS);
+    } else if (SystemInfo.isWindows) {
+      return getExistingCommandPath(WINDOWS_COMMANDS);
     } else if (SystemInfo.isMac) {
-      VMWARE_RPCTOOL_PATH = getExistingCommandPath(MAC_COMMANDS);
+      return getExistingCommandPath(MAC_COMMANDS);
     } else {
-      VMWARE_RPCTOOL_PATH = getExistingCommandPath(LINUX_COMMANDS); //todo: update for other OS'es
+      return getExistingCommandPath(LINUX_COMMANDS); //todo: update for other OS'es
     }
   }
 
