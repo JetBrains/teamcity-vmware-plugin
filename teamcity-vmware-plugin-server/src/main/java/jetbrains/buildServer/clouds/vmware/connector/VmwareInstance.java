@@ -18,6 +18,7 @@
 
 package jetbrains.buildServer.clouds.vmware.connector;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.vmware.vim25.OptionValue;
 import com.vmware.vim25.VirtualMachineConfigInfo;
 import com.vmware.vim25.VirtualMachinePowerState;
@@ -40,6 +41,7 @@ import org.jetbrains.annotations.Nullable;
  *         Time: 6:45 PM
  */
 public class VmwareInstance extends AbstractInstance implements VmwareManagedEntity {
+  private static final Logger LOG = Logger.getInstance(VmwareInstance.class.getName());
 
   @NotNull private final VirtualMachine myVm;
   private final String myId;
@@ -65,16 +67,21 @@ public class VmwareInstance extends AbstractInstance implements VmwareManagedEnt
 
   @Nullable
   private static Map<String, String> extractProperties(@NotNull final VirtualMachine vm) {
-    if (vm.getConfig() == null) {
+    try {
+      if (vm.getConfig() == null) {
+        return null;
+      }
+
+      final OptionValue[] extraConfig = vm.getConfig().getExtraConfig();
+      Map<String, String> retval = new HashMap<String, String>();
+      for (OptionValue optionValue : extraConfig) {
+        retval.put(optionValue.getKey(), String.valueOf(optionValue.getValue()));
+      }
+      return retval;
+    } catch (Exception ex){
+      LOG.info("Unable to retrieve instance properties for " + vm.getName() + ": " + ex.toString());
       return null;
     }
-
-    final OptionValue[] extraConfig = vm.getConfig().getExtraConfig();
-    Map<String, String> retval = new HashMap<String, String>();
-    for (OptionValue optionValue : extraConfig) {
-      retval.put(optionValue.getKey(), String.valueOf(optionValue.getValue()));
-    }
-    return retval;
   }
 
   public boolean isPoweredOn() {
@@ -140,7 +147,7 @@ public class VmwareInstance extends AbstractInstance implements VmwareManagedEnt
       public Task call() throws Exception {
         return myVm.destroy_Task();
       }
-    });
+    }, "Delete instance " + getName());
   }
 
   public String getSnapshotName(){

@@ -19,7 +19,8 @@
 package jetbrains.buildServer.clouds.base.connector;
 
 import com.intellij.openapi.diagnostic.Logger;
-import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.*;
 import jetbrains.buildServer.util.NamedThreadFactory;
 import jetbrains.buildServer.util.executors.ExecutorsFactory;
@@ -33,12 +34,14 @@ import org.jetbrains.annotations.NotNull;
 public class CloudAsyncTaskExecutor {
 
   private static final Logger LOG = Logger.getInstance(CloudAsyncTaskExecutor.class.getName());
+  private static final long LONG_TASK_TIME = 60*1000l;
 
   private final ScheduledExecutorService myExecutor;
-  private final ConcurrentMap<Future<CloudTaskResult>, TaskCallbackHandler> myExecutingTasks;
+  private final ConcurrentMap<AsyncCloudTask, TaskCallbackHandler> myExecutingTasks;
+  private final Map<AsyncCloudTask, Long> myLongTasks = new HashMap<AsyncCloudTask, Long>();
 
   public CloudAsyncTaskExecutor(String prefix) {
-    myExecutingTasks = new ConcurrentHashMap<Future<CloudTaskResult>, TaskCallbackHandler>();
+    myExecutingTasks = new ConcurrentHashMap<AsyncCloudTask, TaskCallbackHandler>();
     myExecutor = ExecutorsFactory.newFixedScheduledDaemonExecutor(prefix, 2);
     scheduleWithFixedDelay("Check for tasks", new Runnable() {
       public void run() {
@@ -52,8 +55,8 @@ public class CloudAsyncTaskExecutor {
   }
 
   public void executeAsync(final AsyncCloudTask operation, final TaskCallbackHandler callbackHandler) {
-    final Future<CloudTaskResult> future = operation.executeAsync();
-    myExecutingTasks.put(future, callbackHandler);
+    operation.executeOrGetResultAsync();
+    myExecutingTasks.put(operation, callbackHandler);
   }
 
   public ScheduledFuture<?> scheduleWithFixedDelay(@NotNull final String taskName, @NotNull final Runnable task, final long initialDelay, final long delay, final TimeUnit unit){
@@ -73,11 +76,12 @@ public class CloudAsyncTaskExecutor {
   }
 
   private void checkTasks() {
-    for (Future<CloudTaskResult> executingTask : myExecutingTasks.keySet()) {
-      if (executingTask.isDone()) {
-        final TaskCallbackHandler handler = myExecutingTasks.get(executingTask);
+    for (AsyncCloudTask task : myExecutingTasks.keySet()) {
+      final Future<CloudTaskResult> future = task.executeOrGetResultAsync();
+      if (future.isDone()) {
+        final TaskCallbackHandler handler = myExecutingTasks.get(task);
         try {
-          final CloudTaskResult result = executingTask.get();
+          final CloudTaskResult result = future.get();
           handler.onComplete();
           if (result.isHasErrors()) {
             handler.onError(result.getThrowable());
@@ -85,10 +89,23 @@ public class CloudAsyncTaskExecutor {
             handler.onSuccess();
           }
         } catch (Exception e) {
-          LOG.info("Error: " + e.toString());
+          LOG.warn(String.format("An error occurred while executing : '%s': %s", task.toString(), e.toString()));
           handler.onError(e);
         }
-        myExecutingTasks.remove(executingTask);
+        myExecutingTasks.remove(task);
+        if (myLongTasks.remove(task) != null) {
+          final long operationTime = System.currentTimeMillis() - task.getStartTime();
+          LOG.info(String.format("Long operation finished: '%s' took %d seconds to execute", task.toString(), operationTime/1000));
+        }
+      } else {
+        final long operationTime = System.currentTimeMillis() - task.getStartTime();
+        if (operationTime > LONG_TASK_TIME){
+          final Long lastTimeReported = myLongTasks.get(task);
+          if (lastTimeReported == null || (System.currentTimeMillis() - lastTimeReported) > LONG_TASK_TIME){
+            LOG.info(String.format("Detected long running task:('%s', running for %d seconds)", task.toString(), operationTime/1000));
+            myLongTasks.put(task, System.currentTimeMillis());
+          }
+        }
       }
     }
   }

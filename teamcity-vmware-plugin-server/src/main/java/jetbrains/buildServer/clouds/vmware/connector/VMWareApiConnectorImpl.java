@@ -175,7 +175,9 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
     }
     Map<String, T> retval = new HashMap<String, T>();
     for (ManagedEntity managedEntity : managedEntities) {
-      retval.put(managedEntity.getName(), (T)managedEntity);
+      try {
+        retval.put(managedEntity.getName(), (T)managedEntity);
+      } catch (Exception ex){}
     }
     return retval;
   }
@@ -189,7 +191,7 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
       final VmwareInstance vmInstance = new VmwareInstance(vm);
       if (!vmInstance.isInitialized()) {
         if (!filterClones) {
-          filteredVms.put(vmName, vmInstance);
+          filteredVms.put(vmInstance.getName(), vmInstance);
         }
         continue;
       }
@@ -209,15 +211,12 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
       final VmwareInstance vmInstance = new VmwareInstance(vmEntity);
       return Collections.singletonMap(image.getName(), vmInstance);
     }
-    Map<String, VirtualMachine> allVms;
-    allVms = findAllEntitiesAsMap(VirtualMachine.class);
     final Map<String, VmwareInstance> filteredVms = new HashMap<String, VmwareInstance>();
-    for (String vmName : allVms.keySet()) {
-      final VirtualMachine vm = allVms.get(vmName);
-
+    final Collection<VirtualMachine> entities = findAllEntities(VirtualMachine.class);
+    for (VirtualMachine vm : entities) {
       final VmwareInstance vmInstance = new VmwareInstance(vm);
       if (image.getName().equals(vmInstance.getImageName())){
-        filteredVms.put(vmName, vmInstance);
+        filteredVms.put(vmInstance.getName(), vmInstance);
       }
     }
     return filteredVms;
@@ -692,14 +691,10 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
 
   public void restartInstance(VmwareCloudInstance instance) throws VmwareCheckedCloudException {
     final VirtualMachine vm = findEntityByIdName(instance.getInstanceId(), VirtualMachine.class);
-    if (vm != null) {
-      try {
-        vm.rebootGuest();
-      } catch (RemoteException e) {
-        throw new VmwareCheckedCloudException(e);
-      }
-    } else {
-      instance.setStatus(InstanceStatus.ERROR);
+    try {
+      vm.rebootGuest();
+    } catch (RemoteException e) {
+      throw new VmwareCheckedCloudException(e);
     }
   }
 
