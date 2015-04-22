@@ -95,7 +95,7 @@ public abstract class AbstractCloudClient<G extends AbstractCloudInstance<T>, T 
     return myAsyncTaskExecutor.submit("Populate images data", new Runnable() {
       public void run() {
         try {
-          populateImagesData(imageDetails, 20, 20);
+          populateImagesData(imageDetails, 60, 60);
         } finally {
           myIsInitialized.set(true);
         }
