@@ -20,12 +20,14 @@ package jetbrains.buildServer.clouds.vmware;
 
 import com.intellij.openapi.diagnostic.Logger;
 import java.io.File;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.*;
 import jetbrains.buildServer.clouds.*;
-import jetbrains.buildServer.clouds.base.AbstractCloudClient;
-import jetbrains.buildServer.clouds.base.errors.TypedCloudErrorInfo;
-import jetbrains.buildServer.clouds.base.tasks.UpdateInstancesTask;
+import jetbrains.buildServer.clouds.server.tasks.CloudAsyncTaskExecutor;
 import jetbrains.buildServer.clouds.vmware.connector.VMWareApiConnector;
+import jetbrains.buildServer.clouds.vmware.connector.VMWareApiConnectorImpl;
+import jetbrains.buildServer.clouds.vmware.web.VMWareWebConstants;
 import jetbrains.buildServer.serverSide.AgentDescription;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,18 +37,41 @@ import org.jetbrains.annotations.Nullable;
  *         Date: 4/15/2014
  *         Time: 3:23 PM
  */
-public class VMWareCloudClient extends AbstractCloudClient<VmwareCloudInstance, VmwareCloudImage, VmwareCloudImageDetails>{
-
+public class VMWareCloudClient implements CloudClient<VmwareCloudImage, VmwareCloudInstance>{
   private static final Logger LOG = Logger.getInstance(VMWareCloudClient.class.getName());
+
+  @NotNull private final CloudClientParameters myCloudClientParameters;
+  @NotNull private final VMWareApiConnector myApiConnector;
   @NotNull private final File myIdxStorage;
+  private CloudErrorInfo myErrorInfo;
+  private final Map<String, VmwareCloudImage> myImages = new HashMap<String, VmwareCloudImage>();
+  private boolean myInitialized = false;
+  private final CloudAsyncTaskExecutor myAsyncTaskExecutor;
 
 
   public VMWareCloudClient(@NotNull final CloudClientParameters cloudClientParameters,
-                           @NotNull final VMWareApiConnector apiConnector,
-                           @NotNull final File idxStorage
-                    ) {
-    super(cloudClientParameters, apiConnector);
+                           @NotNull final File idxStorage) {
+    myCloudClientParameters = cloudClientParameters;
+    myApiConnector = createApiConnector(cloudClientParameters);
     myIdxStorage = idxStorage;
+    myAsyncTaskExecutor = new CloudAsyncTaskExecutor(cloudClientParameters.getProfileDescription());
+  }
+
+  public void initializeImages(List<CloudImageParameters> imagesData){
+    for (CloudImageParameters imageParams : imagesData) {
+      VmwareCloudImageDetails imageDetails = new VmwareCloudImageDetails(imageParams);
+      myImages.put(imageParams.getId(), new VmwareCloudImage(myApiConnector, imageDetails, myAsyncTaskExecutor, myIdxStorage));
+    }
+    myInitialized = true;
+  }
+
+  public boolean isInitialized() {
+    return myInitialized;
+  }
+
+  @Nullable
+  public VmwareCloudImage findImageById(@NotNull final String imageId) throws CloudException {
+    return myImages.get(imageId);
   }
 
   @Nullable
@@ -61,20 +86,51 @@ public class VMWareCloudClient extends AbstractCloudClient<VmwareCloudInstance, 
     return null;
   }
 
-  @Override
-  protected VmwareCloudImage checkAndCreateImage(@NotNull final VmwareCloudImageDetails imageDetails) {
-    final VMWareApiConnector apiConnector = (VMWareApiConnector)myApiConnector;
-    return new VmwareCloudImage(apiConnector, imageDetails, myAsyncTaskExecutor, myIdxStorage);
+  @NotNull
+  public Collection<VmwareCloudImage> getImages() throws CloudException {
+    return myImages.values();
   }
 
-  @Override
-  protected UpdateInstancesTask<VmwareCloudInstance, VmwareCloudImage, VMWareCloudClient> createUpdateInstancesTask() {
-    return new UpdateInstancesTask<VmwareCloudInstance, VmwareCloudImage, VMWareCloudClient>(myApiConnector, this);
+  @Nullable
+  public CloudErrorInfo getErrorInfo() {
+    return myErrorInfo;
+  }
+
+  public void setErrorInfo(@Nullable final CloudErrorInfo errorInfo) {
+    myErrorInfo = errorInfo;
+  }
+
+  public boolean canStartNewInstance(@NotNull final VmwareCloudImage image) {
+    return false;
   }
 
   @Nullable
   public String generateAgentName(@NotNull AgentDescription agentDescription) {
     return agentDescription.getAvailableParameters().get(VMWarePropertiesNames.INSTANCE_NAME);
+  }
+
+  @NotNull
+  public VMWareApiConnector getApiConnector() {
+    return myApiConnector;
+  }
+
+  private VMWareApiConnector createApiConnector(CloudClientParameters cloudClientParameters) {
+    String serverUrl = cloudClientParameters.getParameter(VMWareWebConstants.SERVER_URL);
+    String username = cloudClientParameters.getParameter(VMWareWebConstants.USERNAME);
+    String password = cloudClientParameters.getParameter(VMWareWebConstants.SECURE_PASSWORD);
+    if (serverUrl != null && username != null) {
+      try {
+        return new VMWareApiConnectorImpl(new URL(serverUrl), username, password);
+      } catch (MalformedURLException e) {
+        LOG.warn(e.toString(), e);
+      }
+    }
+    throw new RuntimeException("Unable to create connector");
+  }
+
+  public void dispose() {
+    myAsyncTaskExecutor.dispose();
+    myApiConnector.dispose();
   }
 
 }

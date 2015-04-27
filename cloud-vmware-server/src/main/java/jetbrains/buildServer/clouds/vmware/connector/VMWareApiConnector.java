@@ -24,7 +24,8 @@ import com.vmware.vim25.mo.VirtualMachine;
 import java.util.Map;
 import jetbrains.buildServer.clouds.CloudInstanceUserData;
 import jetbrains.buildServer.clouds.InstanceStatus;
-import jetbrains.buildServer.clouds.base.connector.CloudApiConnector;
+import jetbrains.buildServer.clouds.connector.CloudApiConnector;
+import jetbrains.buildServer.clouds.vmware.VmwareCloudImageDetails;
 import jetbrains.buildServer.clouds.vmware.errors.VmwareCheckedCloudException;
 import jetbrains.buildServer.clouds.vmware.VmwareCloudImage;
 import jetbrains.buildServer.clouds.vmware.VmwareCloudInstance;
@@ -44,8 +45,6 @@ public interface VMWareApiConnector extends CloudApiConnector<VmwareCloudImage, 
   String TEAMCITY_VMWARE_IMAGE_SOURCE_NAME = TEAMCITY_VMWARE_PREFIX + "image.name";
   String TEAMCITY_VMWARE_IMAGE_NICKNAME = TEAMCITY_VMWARE_PREFIX + "image.nickname";
   String TEAMCITY_VMWARE_CLONED_INSTANCE = TEAMCITY_VMWARE_PREFIX + "cloned.instance";
-
-  void test() throws VmwareCheckedCloudException;
 
   @NotNull
   Map<String, VmwareInstance> getVirtualMachines(boolean filterClones) throws VmwareCheckedCloudException;
@@ -72,7 +71,11 @@ public interface VMWareApiConnector extends CloudApiConnector<VmwareCloudImage, 
                            @NotNull final String agentName,
                            @NotNull final CloudInstanceUserData userData) throws VmwareCheckedCloudException;
 
-  Task cloneVm(@NotNull final VmwareCloudInstance instance, @NotNull String resourcePool,@NotNull String folder) throws VmwareCheckedCloudException;
+  @Nullable
+  public Task cloneAndStartVm(@NotNull final VmwareCloudImageDetails imageDetails,
+                              @NotNull final String instanceName,
+                              @NotNull final String snapshotName) throws VmwareCheckedCloudException;
+
 
   boolean isStartedByTeamcity(String instanceName) throws VmwareCheckedCloudException;
 
@@ -81,8 +84,6 @@ public interface VMWareApiConnector extends CloudApiConnector<VmwareCloudImage, 
   boolean ensureSnapshotExists(String instanceName, String snapshotName) throws VmwareCheckedCloudException;
 
   Task stopInstance(VmwareCloudInstance instance);
-
-  void restartInstance(VmwareCloudInstance instance) throws VmwareCheckedCloudException;
 
   boolean checkVirtualMachineExists(@NotNull String vmName);
 

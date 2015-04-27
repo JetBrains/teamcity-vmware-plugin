@@ -12,28 +12,38 @@ import java.rmi.RemoteException;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import jetbrains.buildServer.BaseTestCase;
 import jetbrains.buildServer.clouds.*;
-import jetbrains.buildServer.clouds.base.AbstractCloudClient;
 import jetbrains.buildServer.clouds.base.errors.CheckedCloudException;
 import jetbrains.buildServer.clouds.base.tasks.UpdateInstancesTask;
-import jetbrains.buildServer.clouds.server.impl.CloudRegistryImpl;
+import jetbrains.buildServer.clouds.server.CloudInstancesProvider;
+import jetbrains.buildServer.clouds.server.CloudManager;
+import jetbrains.buildServer.clouds.server.agentTypes.CloudAgentTypeProvider;
+import jetbrains.buildServer.clouds.server.impl.*;
+import jetbrains.buildServer.clouds.server.impl.instances.StartInstanceAction;
+import jetbrains.buildServer.clouds.server.impl.instances.StopInstanceAction;
+import jetbrains.buildServer.clouds.server.impl.profile.CloudProfileDataImpl;
+import jetbrains.buildServer.clouds.server.impl.profile.CloudProfileImpl;
 import jetbrains.buildServer.clouds.server.instances.CloudEventDispatcher;
+import jetbrains.buildServer.clouds.server.instances.RunningAgentsTracker;
 import jetbrains.buildServer.clouds.vmware.connector.VMWareApiConnector;
 import jetbrains.buildServer.clouds.vmware.connector.VmwareInstance;
 import jetbrains.buildServer.clouds.vmware.errors.VmwareCheckedCloudException;
 import jetbrains.buildServer.clouds.vmware.stubs.FakeApiConnector;
-import jetbrains.buildServer.clouds.vmware.stubs.FakeDatacenter;
 import jetbrains.buildServer.clouds.vmware.stubs.FakeModel;
 import jetbrains.buildServer.clouds.vmware.stubs.FakeVirtualMachine;
 import jetbrains.buildServer.clouds.vmware.web.VMWareWebConstants;
 import jetbrains.buildServer.serverSide.ServerPaths;
+import jetbrains.buildServer.serverSide.agentTypes.SAgentType;
+import jetbrains.buildServer.serverSide.impl.DummyAgentType;
 import jetbrains.buildServer.web.openapi.PluginDescriptor;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jmock.Expectations;
 import org.jmock.Mockery;
 import org.testng.SkipException;
@@ -50,10 +60,13 @@ import org.testng.annotations.Test;
 @Test
 public class VmwareCloudIntegrationTest extends BaseTestCase {
 
+  private static final String PROFILE_ID = "cp1";
+
   private VMWareCloudClient myClient;
   private FakeApiConnector myFakeApi;
   private CloudClientParameters myClientParameters;
   private File myIdxStorage;
+  private AtomicInteger agentTypeIdx = new AtomicInteger(1);
 
   @BeforeMethod
   public void setUp() throws Exception {
@@ -68,7 +81,8 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
     myClientParameters.setParameter("password", "pw");
     myClientParameters.setParameter("vmware_images_data", "[{sourceName:'image1', behaviour:'START_STOP'}," +
                                                           "{sourceName:'image2',snapshot:'snap*',folder:'cf',pool:'rp',maxInstances:3,behaviour:'ON_DEMAND_CLONE'}," +
-                                                          "{sourceName:'image_template', snapshot:'"+VmwareConstants.CURRENT_STATE +"',folder:'cf',pool:'rp',maxInstances:3,behaviour:'FRESH_CLONE'}]");
+                                                          "{sourceName:'image_template', snapshot:'" + VmwareConstants.CURRENT_STATE +
+                                                          "',folder:'cf',pool:'rp',maxInstances:3,behaviour:'FRESH_CLONE'}]");
 
     myFakeApi = new FakeApiConnector();
     FakeModel.instance().addDatacenter("dc");
@@ -154,7 +168,7 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
     assertEquals(3, FakeModel.instance().getVms().size());
     startAndCheckCloneDeletedAfterTermination("image_template", new Checker<VmwareCloudInstance>() {
       public void check(final VmwareCloudInstance data) throws CheckedCloudException {
-        assertTrue("image_template.1".equals(data.getInstanceId()));
+        assertTrue("image_template-1".equals(data.getInstanceId()));
         final Map<String, String> vmParams = myFakeApi.getVMParams(data.getInstanceId());
         assertEquals("true", vmParams.get(VMWareApiConnector.TEAMCITY_VMWARE_CLONED_INSTANCE));
         assertEquals("image_template", vmParams.get(VMWareApiConnector.TEAMCITY_VMWARE_IMAGE_SOURCE_NAME));
@@ -164,7 +178,7 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
     assertEquals(3, FakeModel.instance().getVms().size());
     startAndCheckCloneDeletedAfterTermination("image2", new Checker<VmwareCloudInstance>() {
       public void check(final VmwareCloudInstance data) throws CheckedCloudException {
-        assertTrue("image2.1".equals(data.getInstanceId()));
+        assertTrue("image2-1".equals(data.getInstanceId()));
         final Map<String, String> vmParams = myFakeApi.getVMParams(data.getInstanceId());
         assertEquals("true", vmParams.get(VMWareApiConnector.TEAMCITY_VMWARE_CLONED_INSTANCE));
         assertEquals("image2", vmParams.get(VMWareApiConnector.TEAMCITY_VMWARE_IMAGE_SOURCE_NAME));
@@ -180,7 +194,7 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
       public void check(final VmwareCloudInstance data) throws CheckedCloudException {
         instanceId.set(data.getInstanceId());
         assertTrue(data.getInstanceId().startsWith("image2"));
-        assertTrue("image2.1".equals(data.getInstanceId()));
+        assertTrue("image2-1".equals(data.getInstanceId()));
         final Map<String, String> vmParams = myFakeApi.getVMParams(data.getInstanceId());
         assertEquals("true", vmParams.get(VMWareApiConnector.TEAMCITY_VMWARE_CLONED_INSTANCE));
         assertEquals("image2", vmParams.get(VMWareApiConnector.TEAMCITY_VMWARE_IMAGE_SOURCE_NAME));
@@ -350,8 +364,7 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
     int countStarted = 0;
     final VmwareCloudImage image_template = getImageByName("image_template");
     while (myClient.canStartNewInstance(image_template)){
-      final CloudInstanceUserData userData = new CloudInstanceUserData(
-        image_template + "_agent", "authToken", "http://localhost:8080", 3 * 60 * 1000l, "My profile", Collections.<String, String>emptyMap());
+      final CloudInstanceUserData userData = createUserData(image_template + "_agent");
       myClient.startNewInstance(image_template, userData);
       countStarted++;
       assertTrue(countStarted <= 3);
@@ -519,8 +532,7 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
         "{sourceName:'image3',snapshot:'" + VmwareConstants.CURRENT_STATE + "'," + "folder:'cf2',pool:'rp2',maxInstances:3,behaviour:'ON_DEMAND_CLONE'}]");
     recreateClient();
 
-    final CloudInstanceUserData userData = new CloudInstanceUserData(
-        "image3_agent", "authToken", "http://localhost:8080", 3 * 60 * 1000l, "My profile", Collections.<String, String>emptyMap());
+    final CloudInstanceUserData userData = createUserData("image3_agent");
     final VmwareCloudInstance vmwareCloudInstance = myClient.startNewInstance(getImageByName("image3"), userData);
     new WaitFor(10 * 1000) {
       @Override
@@ -657,6 +669,26 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
 
   }
 
+  /*
+  *
+  *
+  * Helper methods
+  *
+  *
+  * */
+
+  private static CloudInstanceUserData createUserData(String agentName){
+    return createUserData(agentName, Collections.<String, String>emptyMap());
+  }
+
+  private static CloudInstanceUserData createUserData(String agentName, Map<String, String> parameters){
+    Map<String, String> map = new HashMap<String, String>(parameters);
+    map.put(CloudContants.PROFILE_ID, PROFILE_ID);
+    CloudInstanceUserData userData = new CloudInstanceUserData(agentName,
+                                                               "authToken", "http://localhost:8080", 3 * 60 * 1000l, "My profile", map);
+    return userData;
+  }
+
   private static String wrapWithArraySymbols(String str) {
     return String.format("[%s]", str);
   }
@@ -723,8 +755,7 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
   }
 
   private VmwareCloudInstance startNewInstanceAndWait(String imageName, Map<String, String> parameters) {
-    final CloudInstanceUserData userData = new CloudInstanceUserData(
-      imageName + "_agent", "authToken", "http://localhost:8080", 3 * 60 * 1000l, "My profile", parameters);
+    final CloudInstanceUserData userData = createUserData(imageName + "_agent", parameters);
     final VmwareCloudInstance vmwareCloudInstance = myClient.startNewInstance(getImageByName(imageName), userData);
     final WaitFor waitFor = new WaitFor(10 * 1000) {
       @Override

@@ -22,16 +22,16 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.vmware.vim25.*;
 import com.vmware.vim25.mo.*;
 import com.vmware.vim25.mo.util.MorUtil;
+import java.net.InetAddress;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.net.UnknownHostException;
 import java.rmi.RemoteException;
 import java.util.*;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import jetbrains.buildServer.clouds.CloudException;
-import jetbrains.buildServer.clouds.CloudInstanceUserData;
-import jetbrains.buildServer.clouds.InstanceStatus;
+import jetbrains.buildServer.clouds.*;
 import jetbrains.buildServer.clouds.vmware.errors.VmwareCheckedCloudException;
-import jetbrains.buildServer.clouds.base.errors.TypedCloudErrorInfo;
 import jetbrains.buildServer.clouds.vmware.*;
 import jetbrains.buildServer.serverSide.TeamCityProperties;
 import jetbrains.buildServer.util.CollectionsUtil;
@@ -55,6 +55,8 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
   private static final String RESPOOL_TYPE = ResourcePool.class.getSimpleName();
   private static final String SPEC_FOLDER = "vm";
   private static final String SPEC_RESPOOL = "Resources";
+  private static final String LINUX_GUEST_FAMILY = "linuxGuest";
+  private static final Pattern FQDN_PATTERN = Pattern.compile("[^\\.]+\\.(.+)");
   private static final Pattern RESPOOL_PATTERN = Pattern.compile("resgroup-\\d+");
   private static final Pattern FOLDER_PATTERN = Pattern.compile("group-v\\d+");
 
@@ -64,13 +66,19 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
   private final String myUsername;
   private final String myPassword;
   private ServiceInstance myServiceInstance;
+  private final String myDomain;
 
 
   public VMWareApiConnectorImpl(final URL instanceURL, final String username, final String password){
     myInstanceURL = instanceURL;
     myUsername = username;
     myPassword = password;
-
+    myDomain = getTCServerDomain();
+    if (myDomain == null){
+      LOG.info("Unable to determine server domain. Linux guest hostname customization is disabled");
+    } else {
+      LOG.info("Domain is " + myDomain + ". Will use the Linux guest hostname customization");
+    }
   }
 
   private synchronized Folder getRootFolder() throws VmwareCheckedCloudException {
@@ -164,7 +172,9 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
     }
     Map<String, T> retval = new HashMap<String, T>();
     for (ManagedEntity managedEntity : managedEntities) {
+      try {
       retval.put(managedEntity.getName(), (T)managedEntity);
+      } catch (Exception ex){}
     }
     return retval;
   }
@@ -178,7 +188,7 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
       final VmwareInstance vmInstance = new VmwareInstance(vm);
       if (!vmInstance.isInitialized()) {
         if (!filterClones) {
-          filteredVms.put(vmName, vmInstance);
+          filteredVms.put(vmInstance.getName(), vmInstance);
         }
         continue;
       }
@@ -198,15 +208,12 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
       final VmwareInstance vmInstance = new VmwareInstance(vmEntity);
       return Collections.singletonMap(image.getName(), vmInstance);
     }
-    Map<String, VirtualMachine> allVms;
-    allVms = findAllEntitiesAsMap(VirtualMachine.class);
     final Map<String, VmwareInstance> filteredVms = new HashMap<String, VmwareInstance>();
-    for (String vmName : allVms.keySet()) {
-      final VirtualMachine vm = allVms.get(vmName);
-
+    final Collection<VirtualMachine> entities = findAllEntities(VirtualMachine.class);
+    for (VirtualMachine vm : entities) {
       final VmwareInstance vmInstance = new VmwareInstance(vm);
       if (image.getName().equals(vmInstance.getImageName())){
-        filteredVms.put(vmName, vmInstance);
+        filteredVms.put(vmInstance.getName(), vmInstance);
       }
     }
     return filteredVms;
@@ -403,7 +410,7 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
         throw new VmwareCheckedCloudException(e);
       }
     } else {
-      instance.updateErrors(new TypedCloudErrorInfo(String.format("Instance %s doesn't exist", instance.getInstanceId())));
+      instance.setErrorInfo(new CloudErrorInfo(String.format("Instance %s doesn't exist", instance.getInstanceId())));
     }
     return null;
   }
@@ -428,9 +435,12 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
   }
 
   @Nullable
-  public Task cloneVm(@NotNull final VmwareCloudInstance instance, @NotNull String resourcePoolId,@NotNull String folderId) throws VmwareCheckedCloudException {
-    final VmwareCloudImageDetails imageDetails = instance.getImage().getImageDetails();
-    LOG.info(String.format("Attempting to clone VM %s into %s", imageDetails.getSourceName(), instance.getName()));
+  public Task cloneAndStartVm(@NotNull final VmwareCloudImageDetails imageDetails,
+                              @NotNull final String instanceName,
+                              @NotNull final String snapshotName) throws VmwareCheckedCloudException {
+    final String resourcePoolId = imageDetails.getResourcePoolId();
+    final String folderId = imageDetails.getFolderId();
+    LOG.info(String.format("Attempting to clone VM %s into %s", imageDetails.getSourceName(), instanceName));
     final VirtualMachine vm = findEntityByIdName(imageDetails.getSourceName(), VirtualMachine.class);
     final Datacenter datacenter = getParentOfType(vm, Datacenter.class);
 
@@ -438,8 +448,10 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
     final VirtualMachineCloneSpec cloneSpec = new VirtualMachineCloneSpec();
     final VirtualMachineRelocateSpec location = new VirtualMachineRelocateSpec();
 
+    cloneSpec.setPowerOn(true);
     cloneSpec.setLocation(location);
     cloneSpec.setConfig(config);
+    final boolean disableOsCustomization = TeamCityProperties.getBoolean(VmwareConstants.DISABLE_OS_CUSTOMIZATION);
     if (!VmwareConstants.DEFAULT_RESOURCE_POOL.equals(resourcePoolId)) {
       final ResourcePool pool = findEntityByIdNameNullable(resourcePoolId, ResourcePool.class, datacenter);
       if (pool != null) {
@@ -454,35 +466,65 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
     if (imageDetails.useCurrentVersion()) {
       LOG.info("Snapshot name is not specified. Will clone latest VM state");
     } else {
-      final VirtualMachineSnapshotTree obj = snapshotList.get(instance.getSnapshotName());
+      final VirtualMachineSnapshotTree obj = snapshotList.get(snapshotName);
       final ManagedObjectReference snapshot = obj == null ? null : obj.getSnapshot();
       cloneSpec.setSnapshot(snapshot);
       if (snapshot != null) {
         if (TeamCityProperties.getBooleanOrTrue(VmwareConstants.USE_LINKED_CLONE)) {
-        LOG.info("Using linked clone. Snapshot name: " + instance.getSnapshotName());
+        LOG.info("Using linked clone. Snapshot name: " + snapshotName);
         location.setDiskMoveType(VirtualMachineRelocateDiskMoveOptions.createNewChildDiskBacking.name());
         } else {
-          LOG.info("Using full clone. Snapshot name: " + instance.getSnapshotName());
+          LOG.info("Using full clone. Snapshot name: " + snapshotName);
         }
       } else {
-        final String errorText = "Unable to find snapshot " + instance.getSnapshotName();
+        final String errorText = "Unable to find snapshot " + snapshotName;
         throw new VmwareCheckedCloudException(errorText);
       }
     }
 
 
+    final VirtualMachineConfigInfo vmConfig = vm.getConfig();
     config.setExtraConfig(new OptionValue[]{
       createOptionValue(TEAMCITY_VMWARE_CLONED_INSTANCE, "true"),
       createOptionValue(TEAMCITY_VMWARE_IMAGE_SOURCE_NAME, imageDetails.getSourceName()),
       createOptionValue(TEAMCITY_VMWARE_IMAGE_NICKNAME, imageDetails.getNickname()),
-      createOptionValue(TEAMCITY_VMWARE_IMAGE_SNAPSHOT, instance.getSnapshotName()),
-      createOptionValue(TEAMCITY_VMWARE_IMAGE_CHANGE_VERSION, vm.getConfig().getChangeVersion())
+      createOptionValue(TEAMCITY_VMWARE_IMAGE_SNAPSHOT, snapshotName),
+      createOptionValue(TEAMCITY_VMWARE_IMAGE_CHANGE_VERSION, vmConfig.getChangeVersion())
     });
+
+    final GuestInfo guest = vm.getGuest();
+    String guestFamily = guest != null ? guest.getGuestFamily() : null;
+    if (guestFamily == null){
+      final String guestFullName = vmConfig.getGuestFullName();
+      if (guestFullName != null && guestFullName.contains("Linux")){
+        guestFamily = LINUX_GUEST_FAMILY;
+      }
+    }
+
+    if (!disableOsCustomization && myDomain != null && LINUX_GUEST_FAMILY.equals(guestFamily)){
+      final CustomizationSpec customization = new CustomizationSpec();
+      final CustomizationLinuxPrep linuxPrep = new CustomizationLinuxPrep();
+      final CustomizationLinuxOptions linuxOptions = new CustomizationLinuxOptions();
+
+      linuxPrep.setHostName(new CustomizationVirtualMachineName());
+      linuxPrep.setDomain(myDomain);
+      customization.setIdentity(linuxPrep);
+      customization.setOptions(linuxOptions);
+
+      customization.setGlobalIPSettings(new CustomizationGlobalIPSettings());
+      final CustomizationAdapterMapping mapping = new CustomizationAdapterMapping();
+      final CustomizationIPSettings ipSettings = new CustomizationIPSettings();
+      mapping.setAdapter(ipSettings);
+      ipSettings.setIp(new CustomizationDhcpIpGenerator());
+      customization.setNicSettingMap(new CustomizationAdapterMapping[]{mapping});
+
+      cloneSpec.setCustomization(customization);
+    }
 
     try {
       final Folder folder = findEntityByIdNameNullable(folderId, Folder.class, datacenter);
       if (folder != null) {
-        return vm.cloneVM_Task(folder, instance.getName(), cloneSpec);
+        return vm.cloneVM_Task(folder, snapshotName, cloneSpec);
       } else {
         String dcName = datacenter == null ? "root" : datacenter.getName();
         throw new VmwareCheckedCloudException(
@@ -534,9 +576,12 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
     instance.setStatus(InstanceStatus.STOPPING);
     try {
       VirtualMachine vm = findEntityByIdName(instance.getInstanceId(), VirtualMachine.class);
+      if (getInstanceStatus(vm) == InstanceStatus.STOPPED) {
+        return successTask();
+      }
       return doShutdown(instance, vm);
     } catch (Exception ex) {
-      instance.updateErrors(TypedCloudErrorInfo.fromException(ex));
+      instance.setErrorInfo(CloudErrorInfo.fromException(ex));
       throw new CloudException(ex.getMessage(),ex);
     }
   }
@@ -642,19 +687,6 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
     return vm.powerOffVM_Task();
   }
 
-  public void restartInstance(VmwareCloudInstance instance) throws VmwareCheckedCloudException {
-    final VirtualMachine vm = findEntityByIdName(instance.getInstanceId(), VirtualMachine.class);
-    if (vm != null) {
-      try {
-        vm.rebootGuest();
-      } catch (RemoteException e) {
-        throw new VmwareCheckedCloudException(e);
-      }
-    } else {
-      instance.setStatus(InstanceStatus.ERROR);
-    }
-  }
-
 
   public boolean checkVirtualMachineExists(@NotNull final String vmName) {
     try {
@@ -705,46 +737,50 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
     } catch (Exception ex){}
   }
 
-  public void test() throws VmwareCheckedCloudException {
+  public void test() throws CloudException {
     getRootFolder();
   }
 
-  @NotNull
-  public InstanceStatus getInstanceStatus(@NotNull final VmwareCloudInstance instance) {
-    try {
-      return getInstanceStatus(findEntityByIdName(instance.getName(), VirtualMachine.class));
-    } catch (VmwareCheckedCloudException e) {
-      LOG.debug(e.toString());
-      return InstanceStatus.ERROR;
-    }
+  @Nullable
+  public RunningInstanceInfo getInstanceInfo(@NotNull final VmwareCloudInstance instance) {
+    final VirtualMachine virtualMachine = findEntityByIdNameNullable(instance.getName(), VirtualMachine.class, null);
+    if (virtualMachine != null)
+      return new VmwareInstance(virtualMachine);
+    else
+      return null;
   }
 
   @NotNull
-  public TypedCloudErrorInfo[] checkImage(@NotNull final VmwareCloudImage image) {
+  public Map<String, RunningInstanceInfo> getRunningInstancesInfo(@NotNull final VmwareCloudImage image) {
+    return null;
+  }
+
+  @Nullable
+  public CloudErrorInfo checkImage(@NotNull final VmwareCloudImage image) {
     final VmwareCloudImageDetails imageDetails = image.getImageDetails();
     final String vmName = imageDetails.getSourceName();
     try {
       final VirtualMachine vm = findEntityByIdNameNullable(vmName, VirtualMachine.class, null);
       if (vm == null){
-        return new TypedCloudErrorInfo[]{new TypedCloudErrorInfo("NoVM", "No such VM: " + vmName)};
+        return new CloudErrorInfo("NoVM", "No such VM: " + vmName);
       }
       if (!imageDetails.getBehaviour().isUseOriginal() && !imageDetails.useCurrentVersion()) {
         final String snapshotName = imageDetails.getSnapshotName();
         final Map<String, VirtualMachineSnapshotTree> snapshotList = getSnapshotList(vm);
         final String latestSnapshot = getLatestSnapshot(snapshotName, snapshotList);
         if (StringUtil.isNotEmpty(snapshotName) && latestSnapshot == null) {
-          return new TypedCloudErrorInfo[]{new TypedCloudErrorInfo("NoSnapshot", "No such snapshot: " + snapshotName)};
+          return new CloudErrorInfo("NoSnapshot", "No such snapshot: " + snapshotName);
         }
       }
     } catch (VmwareCheckedCloudException e) {
-      return new TypedCloudErrorInfo[]{TypedCloudErrorInfo.fromException(e)};
+      return CloudErrorInfo.fromException(e);
     }
-    return new TypedCloudErrorInfo[0];
+    return null;
   }
 
-  @NotNull
-  public TypedCloudErrorInfo[] checkInstance(@NotNull final VmwareCloudInstance instance) {
-    return new TypedCloudErrorInfo[0];
+  @Nullable
+  public CloudErrorInfo checkInstance(@NotNull final VmwareCloudInstance instance) {
+    return null;
   }
 
   private static <T extends ManagedEntity> T getParentOfType(ManagedEntity entity, Class<T> parentType){
@@ -755,5 +791,38 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
       entity = entity.getParent();
     }
     return null;
+  }
+
+  @Nullable
+  private static String getTCServerDomain(){
+    try {
+      final String fqdn = InetAddress.getLocalHost().getCanonicalHostName();
+      final Matcher matcher = FQDN_PATTERN.matcher(fqdn);
+      if (matcher.matches()) {
+        return matcher.group(1);
+      } else {
+        return null;
+      }
+    } catch (UnknownHostException ex){
+      LOG.info("Unable to resolve FQDN. Linux hostname customization will be disabled: " + ex.toString());
+      return null;
+    }
+
+  }
+
+  private static Task successTask(){
+    return new Task(null, null) {
+      @Override
+      public TaskInfo getTaskInfo() throws RemoteException {
+        final TaskInfo taskInfo = new TaskInfo();
+        taskInfo.setState(TaskInfoState.success);
+        return taskInfo;
+      }
+
+      @Override
+      public String waitForTask() throws RemoteException, InterruptedException {
+        return Task.SUCCESS;
+      }
+    };
   }
 }

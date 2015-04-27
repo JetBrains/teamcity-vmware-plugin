@@ -18,14 +18,14 @@
 
 package jetbrains.buildServer.clouds.vmware.errors;
 
-import jetbrains.buildServer.clouds.base.errors.CheckedCloudException;
+import jetbrains.buildServer.clouds.CloudException;
 
 /**
  * @author Sergey.Pak
  *         Date: 11/12/2014
  *         Time: 7:49 PM
  */
-public class VmwareCheckedCloudException extends CheckedCloudException {
+public class VmwareCheckedCloudException extends CloudException {
 
   public VmwareCheckedCloudException(final Throwable cause) {
     super(cause.getMessage(), cause);

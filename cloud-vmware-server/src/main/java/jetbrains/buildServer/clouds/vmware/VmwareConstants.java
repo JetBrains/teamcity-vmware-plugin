@@ -31,6 +31,7 @@ public class VmwareConstants {
   @NotNull public static final String USE_LINKED_CLONE = "teamcity.clouds.vmware.use.linked.clone"; // true by default
   @NotNull public static final String ENABLE_LATEST_SNAPSHOT = "teamcity.clouds.vmware.enable.latest.snapshot"; // false by default
   @NotNull public static final String ENABLE_IMAGE_NICKNAME = "teamcity.clouds.vmware.enable.image.nickname"; // false by default
+  @NotNull public static final String DISABLE_OS_CUSTOMIZATION = "teamcity.clouds.vmware.disable.os.customization"; // false by default
   @NotNull public static final String LATEST_SNAPSHOT = "*"; // true by default
   @NotNull public static final String CURRENT_STATE = "__CURRENT_STATE__";
   @NotNull public static final String DEFAULT_RESOURCE_POOL = "__DEFAULT_RESOURCE_POOL__";

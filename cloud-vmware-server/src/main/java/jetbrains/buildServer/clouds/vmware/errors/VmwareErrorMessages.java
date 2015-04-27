@@ -20,7 +20,6 @@ package jetbrains.buildServer.clouds.vmware.errors;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import jetbrains.buildServer.clouds.base.errors.ErrorMessageUpdater;
 import jetbrains.buildServer.util.StringUtil;
 
 /**
@@ -28,7 +27,7 @@ import jetbrains.buildServer.util.StringUtil;
  *         Date: 11/12/2014
  *         Time: 5:03 PM
  */
-public class VmwareErrorMessages implements ErrorMessageUpdater {
+public class VmwareErrorMessages {
 
   private static final Pattern INVALID_LOGIN_PATTERN =
     Pattern.compile("VI SDK invoke exception:com\\.vmware\\.vim25\\.InvalidLogin");

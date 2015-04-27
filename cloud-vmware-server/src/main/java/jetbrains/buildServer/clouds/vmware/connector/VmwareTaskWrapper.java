@@ -23,12 +23,20 @@ import com.vmware.vim25.TaskInfo;
 import com.vmware.vim25.TaskInfoState;
 import com.vmware.vim25.mo.Task;
 import java.rmi.RemoteException;
+import java.util.Date;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
-import jetbrains.buildServer.clouds.base.connector.AsyncCloudTask;
-import jetbrains.buildServer.clouds.base.connector.CloudTaskResult;
+import jetbrains.buildServer.clouds.server.tasks.AsyncCloudTask;
+import jetbrains.buildServer.clouds.server.tasks.CloudTaskResult;
+import jetbrains.buildServer.util.impl.Lazy;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+/**
+ * @author Sergey.Pak
+ *         Date: 7/29/2014
+ *         Time: 6:22 PM
+ */
 /**
  * @author Sergey.Pak
  *         Date: 7/29/2014
@@ -38,16 +46,41 @@ public class VmwareTaskWrapper implements AsyncCloudTask {
 
   private final Callable<Task> myVmwareTask;
   private final AtomicBoolean myTaskCancelled;
+  private final Lazy<Future<CloudTaskResult>> myFutureLazy;
+  private final String myTaskName;
+  private long myStartTime;
 
-  public VmwareTaskWrapper(@NotNull final Callable<Task> vmwareTask){
+  public VmwareTaskWrapper(@NotNull final Callable<Task> vmwareTask, String taskName){
     myVmwareTask = vmwareTask;
+    myTaskName = taskName;
     myTaskCancelled = new AtomicBoolean(false);
+    myFutureLazy = new Lazy<Future<CloudTaskResult>>() {
+      @Nullable
+      @Override
+      protected Future<CloudTaskResult> createValue() {
+        return execute();
+      }
+    };
+  }
+  public Future<CloudTaskResult> executeOrGetResultAsync() {
+    return myFutureLazy.getValue();
   }
 
-  public Future<CloudTaskResult> executeAsync() {
+  @NotNull
+  public String getName() {
+    return myTaskName;
+  }
+
+  @Nullable
+  public long getStartTime() {
+    return myStartTime;
+  }
+
+  private Future<CloudTaskResult> execute() {
     final Task task;
     try {
       task = myVmwareTask.call();
+      myStartTime = System.currentTimeMillis();
     } catch (final Exception e) {
       return createExceptionFuture(e);
     }
@@ -134,4 +167,11 @@ public class VmwareTaskWrapper implements AsyncCloudTask {
   }
 
 
+  @Override
+  public String toString() {
+    return "VmwareTaskWrapper{" +
+           "TaskName='" + myTaskName + '\'' +
+           ",StartTime=" + new Date(myStartTime) +
+           '}';
+  }
 }

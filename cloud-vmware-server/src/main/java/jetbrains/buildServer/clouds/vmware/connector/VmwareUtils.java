@@ -20,6 +20,7 @@ package jetbrains.buildServer.clouds.vmware.connector;
 
 import com.vmware.vim25.mo.Datacenter;
 import com.vmware.vim25.mo.ManagedEntity;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Sergey.Pak
@@ -28,13 +29,16 @@ import com.vmware.vim25.mo.ManagedEntity;
  */
 public class VmwareUtils {
 
+  @Nullable
   static Datacenter getDatacenter(ManagedEntity entity){
+    try {
     while(entity != null){
       entity = entity.getParent();
       if (entity != null && entity instanceof Datacenter){
         return (Datacenter)entity;
       }
     }
+    } catch (Exception ex){}
     return null;
   }
 }

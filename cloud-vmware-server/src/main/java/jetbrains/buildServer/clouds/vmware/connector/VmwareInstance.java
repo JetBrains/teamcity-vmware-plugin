@@ -18,6 +18,7 @@
 
 package jetbrains.buildServer.clouds.vmware.connector;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.vmware.vim25.OptionValue;
 import com.vmware.vim25.VirtualMachineConfigInfo;
 import com.vmware.vim25.VirtualMachinePowerState;
@@ -28,8 +29,8 @@ import com.vmware.vim25.mo.VirtualMachine;
 import java.util.*;
 import java.util.concurrent.Callable;
 import jetbrains.buildServer.clouds.InstanceStatus;
-import jetbrains.buildServer.clouds.base.connector.AbstractInstance;
-import jetbrains.buildServer.clouds.base.connector.AsyncCloudTask;
+import jetbrains.buildServer.clouds.RunningInstanceInfo;
+import jetbrains.buildServer.clouds.server.tasks.AsyncCloudTask;
 import jetbrains.buildServer.util.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -39,17 +40,20 @@ import org.jetbrains.annotations.Nullable;
  *         Date: 7/25/2014
  *         Time: 6:45 PM
  */
-public class VmwareInstance extends AbstractInstance implements VmwareManagedEntity {
+public class VmwareInstance implements VmwareManagedEntity, RunningInstanceInfo {
+
+  private static final Logger LOG = Logger.getInstance(VmwareInstance.class.getName());
 
   @NotNull private final VirtualMachine myVm;
   private final String myId;
   private final String myDatacenterName;
   private final String myDatacenterId;
   private final Map<String, String> myProperties;
+  private final String myName;
 
   public VmwareInstance(@NotNull final VirtualMachine vm) {
-    super(vm.getName());
     myVm = vm;
+    myName = vm.getName();
     myProperties = extractProperties(myVm);
     myId = vm.getMOR().getVal();
     final Datacenter datacenter = VmwareUtils.getDatacenter(vm);
@@ -65,16 +69,21 @@ public class VmwareInstance extends AbstractInstance implements VmwareManagedEnt
 
   @Nullable
   private static Map<String, String> extractProperties(@NotNull final VirtualMachine vm) {
-    if (vm.getConfig() == null) {
+    try {
+      if (vm.getConfig() == null) {
+        return null;
+      }
+
+      final OptionValue[] extraConfig = vm.getConfig().getExtraConfig();
+      Map<String, String> retval = new HashMap<String, String>();
+      for (OptionValue optionValue : extraConfig) {
+        retval.put(optionValue.getKey(), String.valueOf(optionValue.getValue()));
+      }
+      return retval;
+    } catch (Exception ex){
+      LOG.info("Unable to retrieve instance properties for " + vm.getName() + ": " + ex.toString());
       return null;
     }
-
-    final OptionValue[] extraConfig = vm.getConfig().getExtraConfig();
-    Map<String, String> retval = new HashMap<String, String>();
-    for (OptionValue optionValue : extraConfig) {
-      retval.put(optionValue.getKey(), String.valueOf(optionValue.getValue()));
-    }
-    return retval;
   }
 
   public boolean isPoweredOn() {
@@ -85,7 +94,6 @@ public class VmwareInstance extends AbstractInstance implements VmwareManagedEnt
     return runtime.getPowerState() == VirtualMachinePowerState.poweredOn;
   }
 
-  @Override
   public boolean isInitialized() {
     return myProperties != null;
   }
@@ -110,7 +118,6 @@ public class VmwareInstance extends AbstractInstance implements VmwareManagedEnt
     return myVm.getGuest() == null ? null : myVm.getGuest().getIpAddress();
   }
 
-  @Override
   public InstanceStatus getInstanceStatus() {
     if (myVm.getRuntime() == null || myVm.getRuntime().getPowerState() == VirtualMachinePowerState.poweredOff) {
       return InstanceStatus.STOPPED;
@@ -140,7 +147,7 @@ public class VmwareInstance extends AbstractInstance implements VmwareManagedEnt
       public Task call() throws Exception {
         return myVm.destroy_Task();
       }
-    });
+    }, "Delete instance " + getName());
   }
 
   public String getSnapshotName(){
@@ -150,6 +157,11 @@ public class VmwareInstance extends AbstractInstance implements VmwareManagedEnt
   @NotNull
   public String getId() {
     return myId;
+  }
+
+  @NotNull
+  public String getName() {
+    return myName;
   }
 
   @Nullable

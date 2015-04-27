@@ -19,8 +19,8 @@
 package jetbrains.buildServer.clouds.vmware;
 
 import com.google.gson.annotations.SerializedName;
-import jetbrains.buildServer.clouds.base.beans.CloudImageDetails;
-import jetbrains.buildServer.clouds.base.types.CloneBehaviour;
+import jetbrains.buildServer.clouds.CloudImageParameters;
+import jetbrains.buildServer.clouds.vmware.types.CloneBehaviour;
 import jetbrains.buildServer.util.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -30,7 +30,7 @@ import org.jetbrains.annotations.Nullable;
  *         Date: 10/16/2014
  *         Time: 5:37 PM
  */
-public class VmwareCloudImageDetails implements CloudImageDetails {
+public class VmwareCloudImageDetails {
   @SerializedName("nickname")
   @Nullable
   private final String myNickname;
@@ -54,7 +54,17 @@ public class VmwareCloudImageDetails implements CloudImageDetails {
   @SerializedName("maxInstances")
   private final int myMaxInstances;
 
-  public VmwareCloudImageDetails(
+  public VmwareCloudImageDetails(CloudImageParameters imageParameters){
+    myMaxInstances = StringUtil.parseInt(StringUtil.emptyIfNull(imageParameters.getParameter("maxInstances")), 0);
+    myCloneBehaviour = CloneBehaviour.valueOf(imageParameters.getParameter("behaviour"));
+    myResourcePoolId = imageParameters.getParameter("pool");
+    myFolderId = imageParameters.getParameter("folder");
+    mySnapshotName = StringUtil.emptyIfNull(imageParameters.getParameter("snapshotName"));
+    mySourceName = imageParameters.getParameter("sourceName");
+    myNickname = imageParameters.getParameter("nickname");
+  }
+
+  protected VmwareCloudImageDetails(
     @Nullable final String nickname,
     @NotNull final String sourceName,
     @NotNull final String snapshotName,
