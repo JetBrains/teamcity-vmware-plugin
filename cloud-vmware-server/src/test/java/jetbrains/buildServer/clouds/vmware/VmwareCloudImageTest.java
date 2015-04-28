@@ -1,20 +1,11 @@
 package jetbrains.buildServer.clouds.vmware;
 
-import com.intellij.util.containers.ConcurrentHashSet;
 import java.io.File;
-import java.net.MalformedURLException;
-import java.rmi.RemoteException;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import jetbrains.buildServer.BaseTestCase;
-import jetbrains.buildServer.clouds.CloudInstanceUserData;
-import jetbrains.buildServer.clouds.InstanceStatus;
-import jetbrains.buildServer.clouds.base.connector.CloudAsyncTaskExecutor;
-import jetbrains.buildServer.clouds.base.types.CloneBehaviour;
+import jetbrains.buildServer.clouds.server.tasks.CloudAsyncTaskExecutor;
 import jetbrains.buildServer.clouds.vmware.connector.VMWareApiConnector;
 import jetbrains.buildServer.clouds.vmware.stubs.FakeApiConnector;
+import jetbrains.buildServer.clouds.vmware.types.CloneBehaviour;
 import jetbrains.buildServer.util.FileUtil;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;

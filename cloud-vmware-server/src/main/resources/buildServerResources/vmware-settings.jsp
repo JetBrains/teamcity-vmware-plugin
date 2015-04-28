@@ -1,4 +1,3 @@
-<%@ page import="jetbrains.buildServer.clouds.vmware.VmwareConstants" %>
 <%--
   ~ /*
   ~  * Copyright 2000-2014 JetBrains s.r.o.
@@ -31,7 +30,6 @@
 
 <jsp:useBean id="refreshablePath" class="java.lang.String" scope="request"/>
 <jsp:useBean id="refreshSnapshotsPath" class="java.lang.String" scope="request"/>
-</table>
 
 <h2 class="noBorder section-header">Cloud Access Information</h2>
 <script type="text/javascript">
@@ -202,4 +200,3 @@
         cache: true
     });
 </script>
-<table class="runnerFormTable">

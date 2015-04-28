@@ -37,6 +37,7 @@ BS.Clouds.VMWareVSphere = BS.Clouds.VMWareVSphere || (function () {
         },
         _displayedErrors: {},
         init: function (refreshOptionsUrl, refreshSnapshotsUrl, imagesDataElemId, serverUrlElemId) {
+            debugger;
             this.refreshOptionsUrl = refreshOptionsUrl;
             this.refreshSnapshotsUrl = refreshSnapshotsUrl;
             this.$imagesDataElem = $j('#' + imagesDataElemId);
@@ -88,6 +89,7 @@ BS.Clouds.VMWareVSphere = BS.Clouds.VMWareVSphere || (function () {
                 false;
         },
         fetchOptions: function () {
+            debugger;
             var $loader = $j('.options-loader');
 
             if ( this._fetchOptionsInProgress() || !this.validateServerSettings()) {

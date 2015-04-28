@@ -1,10 +1,7 @@
 package jetbrains.buildServer.clouds.vmware.stubs;
 
 import com.vmware.vim25.mo.*;
-import java.net.MalformedURLException;
-import java.rmi.RemoteException;
 import java.util.*;
-import jetbrains.buildServer.clouds.base.errors.CheckedCloudException;
 import jetbrains.buildServer.clouds.vmware.connector.VMWareApiConnectorImpl;
 import jetbrains.buildServer.clouds.vmware.errors.VmwareCheckedCloudException;
 

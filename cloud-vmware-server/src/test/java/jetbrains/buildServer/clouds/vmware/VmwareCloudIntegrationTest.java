@@ -19,37 +19,24 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import jetbrains.buildServer.BaseTestCase;
 import jetbrains.buildServer.clouds.*;
-import jetbrains.buildServer.clouds.base.errors.CheckedCloudException;
-import jetbrains.buildServer.clouds.base.tasks.UpdateInstancesTask;
-import jetbrains.buildServer.clouds.server.CloudInstancesProvider;
-import jetbrains.buildServer.clouds.server.CloudManager;
-import jetbrains.buildServer.clouds.server.agentTypes.CloudAgentTypeProvider;
 import jetbrains.buildServer.clouds.server.impl.*;
-import jetbrains.buildServer.clouds.server.impl.instances.StartInstanceAction;
-import jetbrains.buildServer.clouds.server.impl.instances.StopInstanceAction;
-import jetbrains.buildServer.clouds.server.impl.profile.CloudProfileDataImpl;
-import jetbrains.buildServer.clouds.server.impl.profile.CloudProfileImpl;
 import jetbrains.buildServer.clouds.server.instances.CloudEventDispatcher;
-import jetbrains.buildServer.clouds.server.instances.RunningAgentsTracker;
 import jetbrains.buildServer.clouds.vmware.connector.VMWareApiConnector;
 import jetbrains.buildServer.clouds.vmware.connector.VmwareInstance;
-import jetbrains.buildServer.clouds.vmware.errors.VmwareCheckedCloudException;
 import jetbrains.buildServer.clouds.vmware.stubs.FakeApiConnector;
 import jetbrains.buildServer.clouds.vmware.stubs.FakeModel;
 import jetbrains.buildServer.clouds.vmware.stubs.FakeVirtualMachine;
 import jetbrains.buildServer.clouds.vmware.web.VMWareWebConstants;
 import jetbrains.buildServer.serverSide.ServerPaths;
-import jetbrains.buildServer.serverSide.agentTypes.SAgentType;
-import jetbrains.buildServer.serverSide.impl.DummyAgentType;
 import jetbrains.buildServer.web.openapi.PluginDescriptor;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jmock.Expectations;
 import org.jmock.Mockery;
 import org.testng.SkipException;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
+import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 
 /**
@@ -132,7 +119,7 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
 
     myFakeApi = new FakeApiConnector() {
       @Override
-      public Map<String, VmwareInstance> getVirtualMachines(boolean filterClones) throws VmwareCheckedCloudException {
+      public Map<String, VmwareInstance> getVirtualMachines(boolean filterClones) throws CloudException {
         final Map<String, VmwareInstance> instances = super.getVirtualMachines(filterClones);
         instances.put("image_template", new VmwareInstance(new FakeVirtualMachine("image_template", true, false)));
         instances.put("image1", new VmwareInstance(new FakeVirtualMachine("image1", false, false)));
@@ -146,7 +133,7 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
     myClientParameters.setParameter("vmware_images_data", "image1;;cf;rp;ON_DEMAND_CLONE;3;X;:");
   }
 
-  public void check_startup_parameters() throws CheckedCloudException {
+  public void check_startup_parameters() throws CloudException {
     startNewInstanceAndWait("image1", Collections.singletonMap("customParam1", "customValue1"));
     final VmwareInstance vm = myFakeApi.getVirtualMachines(true).get("image1");
 
@@ -158,7 +145,7 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
 
   public void check_vm_clone() throws Exception {
     startAndCheckCloneDeletedAfterTermination("image1", new Checker<VmwareCloudInstance>() {
-      public void check(final VmwareCloudInstance data) throws CheckedCloudException {
+      public void check(final VmwareCloudInstance data) throws CloudException {
         assertEquals("image1", data.getInstanceId());
         final Map<String, String> vmParams = myFakeApi.getVMParams(data.getInstanceId());
         assertNull(vmParams.get(VMWareApiConnector.TEAMCITY_VMWARE_CLONED_INSTANCE));
@@ -167,7 +154,7 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
     }, false);
     assertEquals(3, FakeModel.instance().getVms().size());
     startAndCheckCloneDeletedAfterTermination("image_template", new Checker<VmwareCloudInstance>() {
-      public void check(final VmwareCloudInstance data) throws CheckedCloudException {
+      public void check(final VmwareCloudInstance data) throws CloudException {
         assertTrue("image_template-1".equals(data.getInstanceId()));
         final Map<String, String> vmParams = myFakeApi.getVMParams(data.getInstanceId());
         assertEquals("true", vmParams.get(VMWareApiConnector.TEAMCITY_VMWARE_CLONED_INSTANCE));
@@ -177,7 +164,7 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
     }, true);
     assertEquals(3, FakeModel.instance().getVms().size());
     startAndCheckCloneDeletedAfterTermination("image2", new Checker<VmwareCloudInstance>() {
-      public void check(final VmwareCloudInstance data) throws CheckedCloudException {
+      public void check(final VmwareCloudInstance data) throws CloudException {
         assertTrue("image2-1".equals(data.getInstanceId()));
         final Map<String, String> vmParams = myFakeApi.getVMParams(data.getInstanceId());
         assertEquals("true", vmParams.get(VMWareApiConnector.TEAMCITY_VMWARE_CLONED_INSTANCE));
@@ -191,7 +178,7 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
   public void on_demand_clone_should_use_existing_vm_when_one_exists() throws Exception {
     final AtomicReference<String> instanceId = new AtomicReference<String>();
     startAndCheckCloneDeletedAfterTermination("image2", new Checker<VmwareCloudInstance>() {
-      public void check(final VmwareCloudInstance data) throws CheckedCloudException {
+      public void check(final VmwareCloudInstance data) throws CloudException {
         instanceId.set(data.getInstanceId());
         assertTrue(data.getInstanceId().startsWith("image2"));
         assertTrue("image2-1".equals(data.getInstanceId()));
@@ -204,7 +191,7 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
     assertEquals(4, FakeModel.instance().getVms().size());
     assertContains(FakeModel.instance().getVms().keySet(), instanceId.get());
     startAndCheckCloneDeletedAfterTermination("image2", new Checker<VmwareCloudInstance>() {
-      public void check(final VmwareCloudInstance data) throws CheckedCloudException {
+      public void check(final VmwareCloudInstance data) throws CloudException {
         assertEquals(instanceId.get(), data.getInstanceId());
         final Map<String, String> vmParams = myFakeApi.getVMParams(data.getInstanceId());
         assertEquals("true", vmParams.get(VMWareApiConnector.TEAMCITY_VMWARE_CLONED_INSTANCE));
@@ -245,7 +232,7 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
     final AtomicReference<String> instanceId = new AtomicReference<String>();
 
     startAndCheckCloneDeletedAfterTermination("image2", new Checker<VmwareCloudInstance>() {
-      public void check(final VmwareCloudInstance data) throws CheckedCloudException {
+      public void check(final VmwareCloudInstance data) throws CloudException {
         final Map<String, String> vmParams = myFakeApi.getVMParams(data.getInstanceId());
         assertEquals("snap", vmParams.get(VMWareApiConnector.TEAMCITY_VMWARE_IMAGE_SNAPSHOT));
         instanceId.set(data.getInstanceId());
@@ -254,7 +241,7 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
     assertEquals(4, FakeModel.instance().getVms().size());
     FakeModel.instance().addVMSnapshot("image2", "snap2");
     final VmwareCloudInstance instance1 = startAndCheckInstance("image2", new Checker<VmwareCloudInstance>() {
-      public void check(final VmwareCloudInstance data) throws CheckedCloudException {
+      public void check(final VmwareCloudInstance data) throws CloudException {
         assertNotSame(instanceId.get(), data.getInstanceId());
         final Map<String, String> vmParams = myFakeApi.getVMParams(data.getInstanceId());
         assertEquals("snap2", vmParams.get(VMWareApiConnector.TEAMCITY_VMWARE_IMAGE_SNAPSHOT));
@@ -263,7 +250,7 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
     assertEquals(4, FakeModel.instance().getVms().size());
     assertNotContains(FakeModel.instance().getVms().keySet(), instanceId.get());
     final VmwareCloudInstance instance2 = startAndCheckInstance("image2", new Checker<VmwareCloudInstance>() {
-      public void check(final VmwareCloudInstance data) throws CheckedCloudException {
+      public void check(final VmwareCloudInstance data) throws CloudException {
         assertNotSame(instanceId.get(), data.getInstanceId());
         final Map<String, String> vmParams = myFakeApi.getVMParams(data.getInstanceId());
         assertEquals("snap2", vmParams.get(VMWareApiConnector.TEAMCITY_VMWARE_IMAGE_SNAPSHOT));
@@ -285,7 +272,7 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
     final AtomicReference<String> instanceId = new AtomicReference<String>();
     final String originalChangeVersion = FakeModel.instance().getVirtualMachine("image1").getConfig().getChangeVersion();
     startAndCheckCloneDeletedAfterTermination("image1", new Checker<VmwareCloudInstance>() {
-      public void check(final VmwareCloudInstance data) throws CheckedCloudException {
+      public void check(final VmwareCloudInstance data) throws CloudException {
         final Map<String, String> vmParams = myFakeApi.getVMParams(data.getInstanceId());
         assertEquals(VmwareConstants.CURRENT_STATE, vmParams.get(VMWareApiConnector.TEAMCITY_VMWARE_IMAGE_SNAPSHOT));
         assertEquals(originalChangeVersion, vmParams.get(VMWareApiConnector.TEAMCITY_VMWARE_IMAGE_CHANGE_VERSION));
@@ -302,7 +289,7 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
     assertNotSame(originalChangeVersion, updatedChangeVersion);
 
     final VmwareCloudInstance instance1 = startAndCheckInstance("image1", new Checker<VmwareCloudInstance>() {
-      public void check(final VmwareCloudInstance data) throws CheckedCloudException {
+      public void check(final VmwareCloudInstance data) throws CloudException {
         assertNotSame(instanceId.get(), data.getInstanceId());
         final Map<String, String> vmParams = myFakeApi.getVMParams(data.getInstanceId());
         assertEquals(updatedChangeVersion, vmParams.get(VMWareApiConnector.TEAMCITY_VMWARE_IMAGE_CHANGE_VERSION));
@@ -311,7 +298,7 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
     assertEquals(4, FakeModel.instance().getVms().size());
     assertNotContains(FakeModel.instance().getVms().keySet(), instanceId.get());
     final VmwareCloudInstance instance2 = startAndCheckInstance("image1", new Checker<VmwareCloudInstance>() {
-      public void check(final VmwareCloudInstance data) throws CheckedCloudException {
+      public void check(final VmwareCloudInstance data) throws CloudException {
         assertNotSame(instanceId.get(), data.getInstanceId());
         final Map<String, String> vmParams = myFakeApi.getVMParams(data.getInstanceId());
         assertEquals(updatedChangeVersion, vmParams.get(VMWareApiConnector.TEAMCITY_VMWARE_IMAGE_CHANGE_VERSION));
@@ -364,8 +351,7 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
     int countStarted = 0;
     final VmwareCloudImage image_template = getImageByName("image_template");
     while (myClient.canStartNewInstance(image_template)){
-      final CloudInstanceUserData userData = createUserData(image_template + "_agent");
-      myClient.startNewInstance(image_template, userData);
+      image_template.startNewInstance(createUserData(image_template + "_agent"));
       countStarted++;
       assertTrue(countStarted <= 3);
     }
@@ -383,7 +369,7 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
     final VmwareCloudInstance instance = startNewInstanceAndWait("image_template");
     assertContains(image_template.getInstances(), instance);
     FakeModel.instance().getVirtualMachine(instance.getName()).disableGuestTools();
-    myClient.terminateInstance(instance);
+    image_template.terminateInstance(instance);
     new WaitFor(2000) {
       @Override
       protected boolean condition() {
@@ -449,28 +435,28 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
     final AtomicLong lastUpdateTime = new AtomicLong(0);
     myFakeApi = new FakeApiConnector(){
       @Override
-      protected <T extends ManagedEntity> Collection<T> findAllEntities(final Class<T> instanceType) throws VmwareCheckedCloudException {
+      protected <T extends ManagedEntity> Collection<T> findAllEntities(final Class<T> instanceType) throws CloudException {
         lastApiCallTime.set(System.currentTimeMillis());
         if (failure.get()){
-          throw new VmwareCheckedCloudException("Cannot connect");
+          throw new CloudException("Cannot connect");
         }
         return super.findAllEntities(instanceType);
       }
 
       @Override
-      protected <T extends ManagedEntity> Map<String, T> findAllEntitiesAsMap(final Class<T> instanceType) throws VmwareCheckedCloudException {
+      protected <T extends ManagedEntity> Map<String, T> findAllEntitiesAsMap(final Class<T> instanceType) throws CloudException {
         lastApiCallTime.set(System.currentTimeMillis());
         if (failure.get()){
-          throw new VmwareCheckedCloudException("Cannot connect");
+          throw new CloudException("Cannot connect");
         }
         return super.findAllEntitiesAsMap(instanceType);
       }
 
       @Override
-      protected <T extends ManagedEntity> T findEntityByIdName(final String name, final Class<T> instanceType) throws VmwareCheckedCloudException {
+      protected <T extends ManagedEntity> T findEntityByIdName(final String name, final Class<T> instanceType) throws CloudException {
         lastApiCallTime.set(System.currentTimeMillis());
         if (failure.get()){
-          throw new VmwareCheckedCloudException("Cannot connect");
+          throw new CloudException("Cannot connect");
         }
         return super.findEntityByIdName(name, instanceType);
       }
@@ -497,7 +483,7 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
     final AtomicBoolean shouldLock = new AtomicBoolean(false);
     myFakeApi = new FakeApiConnector(){
       @Override
-      public void test() throws VmwareCheckedCloudException {
+      public void test() throws CloudException {
         if (shouldLock.get()){
           lock.lock(); // will stuck here
         }
@@ -533,7 +519,7 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
     recreateClient();
 
     final CloudInstanceUserData userData = createUserData("image3_agent");
-    final VmwareCloudInstance vmwareCloudInstance = myClient.startNewInstance(getImageByName("image3"), userData);
+    final VmwareCloudInstance vmwareCloudInstance = getImageByName("image3").startNewInstance(userData);
     new WaitFor(10 * 1000) {
       @Override
       protected boolean condition() {
@@ -608,25 +594,25 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
     myFakeApi = new FakeApiConnector(){
 
       @Override
-      protected <T extends ManagedEntity> Collection<T> findAllEntities(final Class<T> instanceType) throws VmwareCheckedCloudException {
+      protected <T extends ManagedEntity> Collection<T> findAllEntities(final Class<T> instanceType) throws CloudException {
         try {Thread.sleep(1000);} catch (InterruptedException e) {}
         return super.findAllEntities(instanceType);
       }
 
       @Override
-      protected <T extends ManagedEntity> Map<String, T> findAllEntitiesAsMap(final Class<T> instanceType) throws VmwareCheckedCloudException {
+      protected <T extends ManagedEntity> Map<String, T> findAllEntitiesAsMap(final Class<T> instanceType) throws CloudException {
         try {Thread.sleep(1000);} catch (InterruptedException e) {}
         return super.findAllEntitiesAsMap(instanceType);
       }
 
       @Override
-      protected <T extends ManagedEntity> T findEntityByIdNameNullable(final String name, final Class<T> instanceType, final Datacenter dc) throws VmwareCheckedCloudException {
+      protected <T extends ManagedEntity> T findEntityByIdNameNullable(final String name, final Class<T> instanceType, final Datacenter dc) throws CloudException {
         try {Thread.sleep(1000);} catch (InterruptedException e) {}
         return super.findEntityByIdNameNullable(name, instanceType, dc);
       }
 
       @Override
-      public void test() throws VmwareCheckedCloudException {
+      public void test() throws CloudException {
         try {Thread.sleep(1000);} catch (InterruptedException e) {}
         super.test();
       }
@@ -636,14 +622,14 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
     final CloudRegistryImpl cloudRegistrar = new CloudRegistryImpl(dispatcher);
     final Mockery m = new Mockery();
     final PluginDescriptor pd = m.mock(PluginDescriptor.class);
-    m.checking(new Expectations(){{
-      allowing(pd).getPluginResourcesPath("vmware-settings.html"); will(returnValue("aaa.html"));
+    m.checking(new Expectations() {{
+      allowing(pd).getPluginResourcesPath("vmware-settings.html");
+      will(returnValue("aaa.html"));
     }});
     final CloudState state = m.mock(CloudState.class);
     final VMWareCloudClientFactory factory = new VMWareCloudClientFactory(cloudRegistrar, pd, new ServerPaths(myIdxStorage.getAbsolutePath())){
 
       @NotNull
-      @Override
       protected VMWareApiConnector createConnectorFromParams(final CloudClientParameters params) {
         return myFakeApi;
       }
@@ -701,8 +687,8 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
     return instance;
   }
 
-  private void terminateAndDeleteIfNecessary(final boolean shouldBeDeleted, final VmwareCloudInstance instance) throws CheckedCloudException {
-    myClient.terminateInstance(instance);
+  private void terminateAndDeleteIfNecessary(final boolean shouldBeDeleted, final VmwareCloudInstance instance) throws CloudException {
+    getImageByName(instance.getName()).terminateInstance(instance);
     new WaitFor(5*1000){
       protected boolean condition() {
         return instance.getStatus()==InstanceStatus.STOPPED;
@@ -718,7 +704,7 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
           } else {
             return myFakeApi.getInstanceDetails(name).getInstanceStatus() == InstanceStatus.STOPPED;
           }
-        } catch (CheckedCloudException e) {
+        } catch (CloudException e) {
           return false;
         }
       }
@@ -736,7 +722,7 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
         try {
           vm = myFakeApi.getVirtualMachines(false).get(instance.getName());
           return vm != null && vm.getInstanceStatus() == InstanceStatus.RUNNING;
-        } catch (CheckedCloudException e) {
+        } catch (CloudException e) {
           return false;
         }
       }
@@ -756,7 +742,8 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
 
   private VmwareCloudInstance startNewInstanceAndWait(String imageName, Map<String, String> parameters) {
     final CloudInstanceUserData userData = createUserData(imageName + "_agent", parameters);
-    final VmwareCloudInstance vmwareCloudInstance = myClient.startNewInstance(getImageByName(imageName), userData);
+    final VmwareCloudImage image = getImageByName(imageName);
+    final VmwareCloudInstance vmwareCloudInstance = image.startNewInstance(userData);
     final WaitFor waitFor = new WaitFor(10 * 1000) {
       @Override
       protected boolean condition() {
@@ -789,6 +776,8 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
     if (myClient != null) {
       myClient.dispose();
     }
+    throw new NotImplementedException();
+    /*
     final Collection<VmwareCloudImageDetails> images = VMWareCloudClientFactory.parseImageDataInternal(myClientParameters);
     myClient = new VMWareCloudClient(myClientParameters, myFakeApi, myIdxStorage);
     final Future<?> future = myClient.populateImagesDataAsync(images);
@@ -799,12 +788,15 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
       }
     };
     assertNull(myClient.getErrorInfo());
+    */
   }
 
   private void recreateClient(final long updateDelay, final AtomicLong lastUpdateTime) throws ExecutionException, InterruptedException {
     if (myClient != null) {
       myClient.dispose();
     }
+    throw new NotImplementedException();
+    /*
     final Collection<VmwareCloudImageDetails> images = VMWareCloudClientFactory.parseImageDataInternal(myClientParameters);
     myClient = new VMWareCloudClient(myClientParameters, myFakeApi, myIdxStorage){
       @Override
@@ -828,6 +820,7 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
       }
     };
     myClient.populateImagesDataAsync(images).get();
+    */
   }
 
   @AfterMethod
