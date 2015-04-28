@@ -214,9 +214,13 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
     final Map<String, VmwareInstance> filteredVms = new HashMap<String, VmwareInstance>();
     final Collection<VirtualMachine> entities = findAllEntities(VirtualMachine.class);
     for (VirtualMachine vm : entities) {
-      final VmwareInstance vmInstance = new VmwareInstance(vm);
-      if (image.getName().equals(vmInstance.getImageName())){
-        filteredVms.put(vmInstance.getName(), vmInstance);
+      try {
+        final VmwareInstance vmInstance = new VmwareInstance(vm);
+        if (image.getName().equals(vmInstance.getImageName())) {
+          filteredVms.put(vmInstance.getName(), vmInstance);
+        }
+      } catch (Exception ex) {
+        LOG.debug("Unable to process VM " + vm.getName());
       }
     }
     return filteredVms;

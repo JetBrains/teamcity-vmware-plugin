@@ -78,21 +78,25 @@ public class UpdateInstancesTask<G extends AbstractCloudInstance<T>, T extends A
         final Collection<G> instances = image.getInstances();
         List<String> instancesToRemove = new ArrayList<String>();
         for (final G cloudInstance : instances) {
-          final String instanceName = cloudInstance.getName();
-          final AbstractInstance instance = realInstances.get(instanceName);
-          if (instance == null) {
-            if (cloudInstance.getStatus() != InstanceStatus.SCHEDULED_TO_START && cloudInstance.getStatus() != InstanceStatus.STARTING) {
-              instancesToRemove.add(instanceName);
+          try {
+            final String instanceName = cloudInstance.getName();
+            final AbstractInstance instance = realInstances.get(instanceName);
+            if (instance == null) {
+              if (cloudInstance.getStatus() != InstanceStatus.SCHEDULED_TO_START && cloudInstance.getStatus() != InstanceStatus.STARTING) {
+                instancesToRemove.add(instanceName);
+              }
+              continue;
             }
-            continue;
-          }
 
-          cloudInstance.updateErrors(myConnector.checkInstance(cloudInstance));
-          if (instance.getStartDate() != null) {
-            cloudInstance.setStartDate(instance.getStartDate());
-          }
-          if (instance.getIpAddress() != null) {
-            cloudInstance.setNetworkIdentify(instance.getIpAddress());
+            cloudInstance.updateErrors(myConnector.checkInstance(cloudInstance));
+            if (instance.getStartDate() != null) {
+              cloudInstance.setStartDate(instance.getStartDate());
+            }
+            if (instance.getIpAddress() != null) {
+              cloudInstance.setNetworkIdentify(instance.getIpAddress());
+            }
+          } catch (Exception ex){
+            LOG.debug("Error processing VM " + cloudInstance.getName() + ": " + ex.toString());
           }
         }
         for (String instanceName : instancesToRemove) {
@@ -103,7 +107,6 @@ public class UpdateInstancesTask<G extends AbstractCloudInstance<T>, T extends A
       myClient.updateErrors();
     } catch (Exception ex){
       LOG.warn(ex.toString(), ex);
-      myClient.updateErrors(TypedCloudErrorInfo.fromException(ex));
     } finally {
       //logging here:
       for (InstanceStatus instanceStatus : instancesByStatus.keySet()) {
