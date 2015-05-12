@@ -8,6 +8,19 @@
         </fileset>
       </configuration>
     </facet>
+    <facet type="web" name="cloud-vmware-server-web">
+      <configuration>
+        <descriptors>
+          <deploymentDescriptor name="web.xml" url="file://$MODULE_DIR$/web/WEB-INF/web.xml" />
+        </descriptors>
+        <webroots>
+          <root url="file://$MODULE_DIR$/src/main/resources/buildServerResources" relative="/plugins/cloud-vmware" />
+        </webroots>
+        <sourceRoots>
+          <root url="file://$MODULE_DIR$/src/main/resources" />
+        </sourceRoots>
+      </configuration>
+    </facet>
   </component>
   <component name="NewModuleRootManager" LANGUAGE_LEVEL="JDK_1_5" inherit-compiler-output="false">
     <output url="file://$MODULE_DIR$/target/classes" />
@@ -19,7 +32,6 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="cloud-vmware-common" />
     <orderEntry type="module-library">
       <library>
         <CLASSES>
@@ -51,9 +63,10 @@
     <orderEntry type="module" module-name="common" />
     <orderEntry type="module" module-name="server-openapi" />
     <orderEntry type="module" module-name="web-openapi" />
-    <orderEntry type="module" module-name="web" />
     <orderEntry type="module" module-name="test-api" scope="TEST" />
     <orderEntry type="module" module-name="cloud-server" />
     <orderEntry type="module" module-name="common-impl" />
+    <orderEntry type="module" module-name="cloud-vmware-common" />
+    <orderEntry type="module" module-name="web" />
   </component>
 </module>

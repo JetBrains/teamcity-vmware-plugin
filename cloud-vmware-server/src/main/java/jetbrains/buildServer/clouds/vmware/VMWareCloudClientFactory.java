@@ -22,6 +22,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import java.io.File;
 import java.util.*;
 import jetbrains.buildServer.clouds.*;
+import jetbrains.buildServer.clouds.vmware.web.VMWareWebConstants;
 import jetbrains.buildServer.serverSide.AgentDescription;
 import jetbrains.buildServer.serverSide.InvalidProperty;
 import jetbrains.buildServer.serverSide.PropertiesProcessor;
@@ -53,10 +54,13 @@ public class VMWareCloudClientFactory implements CloudClientFactory<VmwareCloudI
   }
 
 
-  public CloudClient<VmwareCloudImage, VmwareCloudInstance> createNewClient(@NotNull final CloudState state, @NotNull final CloudClientParameters params) {
+  public CloudClient<VmwareCloudImage, VmwareCloudInstance> createNewClient(@NotNull final CloudState state,
+                                                                            @NotNull final CloudClientParameters params,
+                                                                            @NotNull final Collection<CloudImageParameters> cloudImageParameters) {
     final VMWareCloudClient client = new VMWareCloudClient(params, myIdxStorage);
     try {
       client.getApiConnector().test();
+      client.initializeImages(cloudImageParameters);
     } catch (CloudException e) {
       client.setErrorInfo(CloudErrorInfo.fromException(e));
     }
@@ -81,6 +85,11 @@ public class VMWareCloudClientFactory implements CloudClientFactory<VmwareCloudI
   @NotNull
   public Map<String, String> getInitialParameterValues() {
     return Collections.emptyMap();
+  }
+
+  @NotNull
+  public String getImagesParamName() {
+    return VMWareWebConstants.IMAGES_DATA;
   }
 
   @NotNull

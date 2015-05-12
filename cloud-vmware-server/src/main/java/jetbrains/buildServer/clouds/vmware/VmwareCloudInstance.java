@@ -98,7 +98,7 @@ public class VmwareCloudInstance implements CloudInstance {
     myErrorInfo = null;
   }
 
-  public void setErrorInfo(@NotNull final CloudErrorInfo errorInfo) {
+  public void setErrorInfo(@Nullable final CloudErrorInfo errorInfo) {
     myErrorInfo = errorInfo;
   }
 
@@ -127,8 +127,8 @@ public class VmwareCloudInstance implements CloudInstance {
       return;
     }
 
-    final String powerState = info.getProperty("powerState");
-    if (VirtualMachinePowerState.poweredOn.name().equals(powerState)) {
+    final InstanceStatus instanceStatus = info.getInstanceStatus();
+    if (instanceStatus == InstanceStatus.RUNNING) {
       if (myStatus == InstanceStatus.STOPPED) {
         setStatus(InstanceStatus.RUNNING);
       }

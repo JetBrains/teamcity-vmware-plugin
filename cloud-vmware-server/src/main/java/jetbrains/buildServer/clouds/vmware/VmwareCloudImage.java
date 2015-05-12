@@ -198,7 +198,7 @@ public class VmwareCloudImage implements CloudImage<VmwareCloudInstance>{
       }
       instance.setStatus(InstanceStatus.SCHEDULED_TO_START);
       if (!myInstances.containsKey(instance.getName())) {
-        addInstance(instance);
+        addInstance(instance);                                                                    ;
       }
       if (willClone) {
         myAsyncTaskExecutor.executeAsync(

@@ -57,10 +57,11 @@ public class VMWareCloudClient implements CloudClient<VmwareCloudImage, VmwareCl
     myAsyncTaskExecutor = new CloudAsyncTaskExecutor(cloudClientParameters.getProfileDescription());
   }
 
-  public void initializeImages(List<CloudImageParameters> imagesData){
+  public void initializeImages(final Collection<CloudImageParameters> imagesData){
     for (CloudImageParameters imageParams : imagesData) {
       VmwareCloudImageDetails imageDetails = new VmwareCloudImageDetails(imageParams);
-      myImages.put(imageParams.getId(), new VmwareCloudImage(myApiConnector, imageDetails, myAsyncTaskExecutor, myIdxStorage));
+      final String sourceName = imageParams.getParameter("sourceName");
+      myImages.put(sourceName, new VmwareCloudImage(myApiConnector, imageDetails, myAsyncTaskExecutor, myIdxStorage));
     }
     myInitialized = true;
   }

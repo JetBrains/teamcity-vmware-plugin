@@ -31,7 +31,7 @@ public class VMWareWebConstants {
 
   public static final String SECURE_PASSWORD = "secure:"+PASSWORD;
 
-  public static final String IMAGES_DATA="vmware_images_data";
+  public static final String IMAGES_DATA="images_data_json";
 
 
   public String getServerUrl() {

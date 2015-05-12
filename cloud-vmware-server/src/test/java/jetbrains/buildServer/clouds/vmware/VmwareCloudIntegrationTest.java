@@ -639,7 +639,8 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
     Runnable r = new Runnable() {
       public void run() {
         for (CloudClientParameters param : profileParams) {
-          factory.createNewClient(state, param);
+          //TODO update the test
+          factory.createNewClient(state, param, Collections.<CloudImageParameters>emptyList());
         }
       }
     };

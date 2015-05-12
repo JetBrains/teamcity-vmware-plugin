@@ -59,7 +59,7 @@ public class VmwareCloudImageDetails {
     myCloneBehaviour = CloneBehaviour.valueOf(imageParameters.getParameter("behaviour"));
     myResourcePoolId = imageParameters.getParameter("pool");
     myFolderId = imageParameters.getParameter("folder");
-    mySnapshotName = StringUtil.emptyIfNull(imageParameters.getParameter("snapshotName"));
+    mySnapshotName = StringUtil.emptyIfNull(imageParameters.getParameter("snapshot"));
     mySourceName = imageParameters.getParameter("sourceName");
     myNickname = imageParameters.getParameter("nickname");
   }

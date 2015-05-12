@@ -524,7 +524,7 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
     try {
       final Folder folder = findEntityByIdNameNullable(folderId, Folder.class, datacenter);
       if (folder != null) {
-        return vm.cloneVM_Task(folder, snapshotName, cloneSpec);
+        return vm.cloneVM_Task(folder, instanceName, cloneSpec);
       } else {
         String dcName = datacenter == null ? "root" : datacenter.getName();
         throw new VmwareCheckedCloudException(
@@ -751,8 +751,8 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
   }
 
   @NotNull
-  public Map<String, RunningInstanceInfo> getRunningInstancesInfo(@NotNull final VmwareCloudImage image) {
-    return null;
+  public Map<String, ? extends RunningInstanceInfo> getRunningInstancesInfo(@NotNull final VmwareCloudImage image) {
+    return listImageInstances(image);
   }
 
   @Nullable
