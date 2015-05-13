@@ -84,7 +84,9 @@
         </table>
         <jsp:useBean id="propertiesBean" scope="request" type="jetbrains.buildServer.controllers.BasePropertiesBean"/>
         <c:set var="imagesData" value="${propertiesBean.properties[webCons.imagesData]}"/>
-        <input type="hidden" name="prop:${webCons.imagesData}" id="${webCons.imagesData}" value="<c:out value="${imagesData}"/>"/>
+        <div class="hidden" id="${webCons.imagesData}">
+
+        </div>
     </div>
     <forms:addButton title="Add image" id="vmwareShowDialogButton">Add image</forms:addButton>
 </div>
