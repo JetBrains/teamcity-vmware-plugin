@@ -228,7 +228,6 @@ BS.Clouds.VMWareVSphere = BS.Clouds.VMWareVSphere || (function () {
             BS.VMWareImageDialog.showCentered();
         },
         saveImagesData: function () {
-            debugger;
             var imageData = Object.keys(this.imagesData).reduce(function (accumulator, id) {
                 var _val = $j.extend({}, this.imagesData[id]);
 
