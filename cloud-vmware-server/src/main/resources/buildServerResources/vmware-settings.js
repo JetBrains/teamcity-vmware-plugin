@@ -228,6 +228,7 @@ BS.Clouds.VMWareVSphere = BS.Clouds.VMWareVSphere || (function () {
             BS.VMWareImageDialog.showCentered();
         },
         saveImagesData: function () {
+            debugger;
             var imageData = Object.keys(this.imagesData).reduce(function (accumulator, id) {
                 var _val = $j.extend({}, this.imagesData[id]);
 
@@ -677,6 +678,16 @@ BS.Clouds.VMWareVSphere = BS.Clouds.VMWareVSphere || (function () {
 <optgroup label="Templates" class="templatesGroup"></optgroup>\
 </select>')
         },
+        dataDiv: $j('<div class="hidden imagesData"> \
+        <input type="hidden" class="imageName">\
+        <input type="hidden" class="nickname">\
+        <input type="hidden" class="snapshot">\
+        <input type="hidden" class="folder">\
+        <input type="hidden" class="pool">\
+        <input type="hidden" class="behaviour">\
+        <input type="hidden" class="maxInstances">\
+                     </div>')
+        ,
         _errors: {
             badParam: 'Bad parameter',
             required: 'This field cannot be blank',
