@@ -4,13 +4,11 @@
 Before you can start using integration, you need to create a Virtual Machine instance.
 Teamcity Build Agent must be installed and set to start automatically.
 
-#### Build instructions
-1) Open a project in Intellij Idea. Community edition should be enough unless you want to debug the plugin
-2) Set (if necessary) Path Variable TEAMCITY_DISTRIBUTION
-3) Build artifact Plugin_zip
-4) go to out/artifacts/Plugin_zip and grab it
+##### Build instructions
+Currently, plugin is not buildable standalone. If you'd like to customize your plugin, please use the 9.0.x branch.
+It's the branch builds on teamcity.jetbrains.com are run against.
 
-#####License
+##### License
 Apache 2.0
 
 ##### Compatibility
