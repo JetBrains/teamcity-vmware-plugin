@@ -4,7 +4,11 @@
 Before you can start using integration, you need to create a Virtual Machine instance.
 Teamcity Build Agent must be installed and set to start automatically.
 
-#####License
+##### Build instructions
+Currently, plugin is not buildable standalone. If you'd like to customize your plugin, please use the 9.0.x branch.
+It's the branch builds on teamcity.jetbrains.com are run against.
+
+##### License
 Apache 2.0
 
 ##### Compatibility
