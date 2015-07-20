@@ -327,7 +327,7 @@ public class VmwareCloudImage extends AbstractCloudImage<VmwareCloudInstance, Vm
       return myInstance.getStatus() == InstanceStatus.STOPPED;
     }
 
-    final boolean countStoppedVmsInLimit = TeamCityProperties.getBoolean(VmwareConstants.CONSIDER_STOPPED_VMS_LIMIT)
+    final boolean countStoppedVmsInLimit = TeamCityProperties.getBooleanOrTrue(VmwareConstants.CONSIDER_STOPPED_VMS_LIMIT)
                                            && myImageDetails.getBehaviour().isDeleteAfterStop();
 
     final List<String> consideredInstances = new ArrayList<String>();
