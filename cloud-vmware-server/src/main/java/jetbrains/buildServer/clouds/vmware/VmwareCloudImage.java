@@ -34,6 +34,7 @@ import jetbrains.buildServer.clouds.base.errors.TypedCloudErrorInfo;
 import jetbrains.buildServer.clouds.vmware.connector.VMWareApiConnector;
 import jetbrains.buildServer.clouds.vmware.connector.VmwareInstance;
 import jetbrains.buildServer.clouds.vmware.connector.VmwareTaskWrapper;
+import jetbrains.buildServer.serverSide.TeamCityProperties;
 import jetbrains.buildServer.util.FileUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -302,10 +303,12 @@ public class VmwareCloudImage extends AbstractCloudImage<VmwareCloudInstance, Vm
       return myInstance.getStatus() == InstanceStatus.STOPPED;
     }
 
-    final boolean deleteAfterStop = myImageDetails.getBehaviour().isDeleteAfterStop();
+    final boolean countStoppedVmsInLimit = TeamCityProperties.getBoolean(VmwareConstants.CONSIDER_STOPPED_VMS_LIMIT)
+                                           && myImageDetails.getBehaviour().isDeleteAfterStop();
+
     final List<String> consideredInstances = new ArrayList<String>();
     for (Map.Entry<String, VmwareCloudInstance> entry : myInstances.entrySet()) {
-      if (entry.getValue().getStatus() != InstanceStatus.STOPPED || deleteAfterStop)
+      if (entry.getValue().getStatus() != InstanceStatus.STOPPED || countStoppedVmsInLimit)
         consideredInstances.add(entry.getKey());
     }
     final boolean canStartMore =  consideredInstances.size() < myImageDetails.getMaxInstances();
