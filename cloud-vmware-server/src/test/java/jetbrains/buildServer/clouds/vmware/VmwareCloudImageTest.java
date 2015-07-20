@@ -76,6 +76,37 @@ public class VmwareCloudImageTest extends BaseTestCase {
     assertTrue(i > 100000);
   }
 
+  public void check_can_start_new_instance_limits() throws RemoteException, InterruptedException {
+    final CloudInstanceUserData data = new CloudInstanceUserData("aaa", "bbbb", "localhost", 10000l, "profileDescr", Collections.<String, String>emptyMap());
+    assertTrue(myImage.canStartNewInstance());
+    myImage.startNewInstance(data);
+    assertTrue(myImage.canStartNewInstance());
+    myImage.startNewInstance(data);
+    assertTrue(myImage.canStartNewInstance());
+    myImage.startNewInstance(data);
+    assertTrue(myImage.canStartNewInstance());
+    myImage.startNewInstance(data);
+    assertTrue(myImage.canStartNewInstance());
+    final VmwareCloudInstance instance2Stop = myImage.startNewInstance(data);
+    assertFalse(myImage.canStartNewInstance());
+    new WaitFor(5*1000){
+
+      @Override
+      protected boolean condition() {
+        return instance2Stop.getStatus() == InstanceStatus.RUNNING;
+      }
+    };
+    final FakeVirtualMachine vm2Stop = FakeModel.instance().getVirtualMachine(instance2Stop.getName());
+    final String result = vm2Stop.powerOffVM_Task().waitForTask();
+    assertEquals(Task.SUCCESS, result);
+    instance2Stop.setStatus(InstanceStatus.STOPPED);
+    assertTrue(myImage.canStartNewInstance());
+    System.setProperty(VmwareConstants.CONSIDER_STOPPED_VMS_LIMIT, "true");
+    assertFalse(myImage.canStartNewInstance());
+    System.getProperties().remove(VmwareConstants.CONSIDER_STOPPED_VMS_LIMIT);
+    assertTrue(myImage.canStartNewInstance());
+  }
+
   @AfterMethod
   public void tearDown() throws Exception {
     super.tearDown();
