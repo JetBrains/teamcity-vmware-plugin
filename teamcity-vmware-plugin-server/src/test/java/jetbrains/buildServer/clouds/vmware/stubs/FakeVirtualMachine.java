@@ -28,6 +28,7 @@ public class FakeVirtualMachine extends VirtualMachine {
   private final List<VirtualMachineSnapshotTree> myRootSnapshotList = new ArrayList<VirtualMachineSnapshotTree>();
   private String myVersion;
   private ManagedEntity myParent;
+  private Calendar myBootTime;
 
   public FakeVirtualMachine(final String name, final boolean isTemplate, final boolean isRunning) {
     super(null, createVMMor(name));
@@ -62,6 +63,13 @@ public class FakeVirtualMachine extends VirtualMachine {
       @Override
       public VirtualMachinePowerState getPowerState() {
         return myIsStarted.get() ? VirtualMachinePowerState.poweredOn : VirtualMachinePowerState.poweredOff;
+      }
+
+      @Override
+      public Calendar getBootTime() {
+        if (myBootTime != null)
+          return myBootTime;
+        return super.getBootTime();
       }
     };
 
@@ -202,6 +210,10 @@ public class FakeVirtualMachine extends VirtualMachine {
   public void setParentFolder(String folderName){
     final FakeFolder folder = FakeModel.instance().getFolder(folderName);
     myParent = folder;
+  }
+
+  public void setBootTime(final Calendar bootTime) {
+    myBootTime = bootTime;
   }
 
   private static Task successTask(){
