@@ -18,6 +18,7 @@
 
 package jetbrains.buildServer.clouds.base;
 
+import com.intellij.openapi.diagnostic.Logger;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
@@ -39,6 +40,7 @@ import org.jetbrains.annotations.Nullable;
  *         Time: 1:51 PM
  */
 public abstract class AbstractCloudInstance<T extends AbstractCloudImage> implements CloudInstance, UpdatableCloudErrorProvider {
+  private static final Logger LOG = Logger.getInstance(AbstractCloudInstance.class.getName());
 
   private UpdatableCloudErrorProvider myErrorProvider;
   protected InstanceStatus myStatus = InstanceStatus.UNKNOWN;
@@ -101,12 +103,12 @@ public abstract class AbstractCloudInstance<T extends AbstractCloudImage> implem
     return myStartDate;
   }
 
-  public void refreshStartDate(){
-    setStartDate(new Date());
-  }
-
   public void setStartDate(final Date startDate) {
-    myStartDate = startDate;
+    if (startDate.after(myStartDate)) {
+      myStartDate = startDate;
+    } else {
+      LOG.warn(String.format("Attempted to set start date to %s from %s", startDate.toString(), myStartDate.toString()));
+    }
   }
 
   public void setNetworkIdentify(final String networkIdentify) {
