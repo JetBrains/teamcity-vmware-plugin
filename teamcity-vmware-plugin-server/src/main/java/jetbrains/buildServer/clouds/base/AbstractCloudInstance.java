@@ -19,12 +19,10 @@
 package jetbrains.buildServer.clouds.base;
 
 import com.intellij.openapi.diagnostic.Logger;
-import java.util.Arrays;
-import java.util.Collection;
+
 import java.util.Date;
-import java.util.Map;
+
 import jetbrains.buildServer.clouds.CloudErrorInfo;
-import jetbrains.buildServer.clouds.CloudImage;
 import jetbrains.buildServer.clouds.CloudInstance;
 import jetbrains.buildServer.clouds.InstanceStatus;
 import jetbrains.buildServer.clouds.base.errors.CloudErrorMap;
@@ -48,6 +46,7 @@ public abstract class AbstractCloudInstance<T extends AbstractCloudImage> implem
   @NotNull
   protected final T myImage;
   private Date myStartDate = new Date();
+  private Date myStatusUpdateTime = new Date();
   private String myNetworkIdentify = null;
   private final String myName;
   private final String myInstanceId;
@@ -96,6 +95,7 @@ public abstract class AbstractCloudInstance<T extends AbstractCloudImage> implem
 
   public void setStatus(@NotNull final InstanceStatus status) {
     myStatus = status;
+    myStatusUpdateTime = new Date();
   }
 
   @NotNull
@@ -106,9 +106,13 @@ public abstract class AbstractCloudInstance<T extends AbstractCloudImage> implem
   public void setStartDate(final Date startDate) {
     if (startDate.after(myStartDate)) {
       myStartDate = startDate;
-    } else {
-      LOG.warn(String.format("Attempted to set start date to %s from %s", startDate.toString(), myStartDate.toString()));
+    } else if (startDate.before(myStartDate)) {
+      LOG.debug(String.format("Attempted to set start date to %s from %s", startDate.toString(), myStartDate.toString()));
     }
+  }
+
+  public Date getStatusUpdateTime() {
+    return myStatusUpdateTime;
   }
 
   public void setNetworkIdentify(final String networkIdentify) {

@@ -19,16 +19,15 @@
 package jetbrains.buildServer.clouds.base.tasks;
 
 import com.intellij.openapi.diagnostic.Logger;
-import java.util.*;
 import jetbrains.buildServer.clouds.InstanceStatus;
 import jetbrains.buildServer.clouds.base.AbstractCloudClient;
 import jetbrains.buildServer.clouds.base.AbstractCloudImage;
 import jetbrains.buildServer.clouds.base.AbstractCloudInstance;
 import jetbrains.buildServer.clouds.base.connector.AbstractInstance;
 import jetbrains.buildServer.clouds.base.connector.CloudApiConnector;
-import jetbrains.buildServer.clouds.base.errors.TypedCloudErrorInfo;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+
+import java.util.*;
 
 /**
  * @author Sergey.Pak
@@ -38,13 +37,20 @@ import org.jetbrains.annotations.Nullable;
 public class UpdateInstancesTask<G extends AbstractCloudInstance<T>, T extends AbstractCloudImage<G,?>, F extends AbstractCloudClient<G, T, ?>> implements Runnable {
   private static final Logger LOG = Logger.getInstance(UpdateInstancesTask.class.getName());
 
+  private static final long STUCK_STATUS_TIME = 2*60*1000l; // 2 minutes;
+
   @NotNull private final CloudApiConnector myConnector;
   protected final F myClient;
+  private final long myStuckTime;
 
 
-  public UpdateInstancesTask(@NotNull final CloudApiConnector connector, final F client) {
+  public UpdateInstancesTask(@NotNull final CloudApiConnector connector, final F client, long stuckTimeMillis) {
     myConnector = connector;
     myClient = client;
+    myStuckTime = stuckTimeMillis;
+  }
+  public UpdateInstancesTask(@NotNull final CloudApiConnector connector, final F client) {
+    this(connector, client, STUCK_STATUS_TIME);
   }
 
   public void run() {
@@ -69,7 +75,9 @@ public class UpdateInstancesTask<G extends AbstractCloudInstance<T>, T extends A
           }
           instancesByStatus.get(realInstanceStatus).add(realInstanceName);
 
-          if (realInstanceStatus != null && isStatusPermanent(instance.getStatus()) && isStatusPermanent(realInstanceStatus) && realInstanceStatus != instance.getStatus()) {
+          if ((isStatusPermanent(instance.getStatus()) || isStuck(instance))
+                  && isStatusPermanent(realInstanceStatus)
+                  && realInstanceStatus != instance.getStatus()) {
             LOG.info(String.format("Updated instance '%s' status to %s based on API information", realInstanceName, realInstanceStatus));
             instance.setStatus(realInstanceStatus);
           }
@@ -119,20 +127,12 @@ public class UpdateInstancesTask<G extends AbstractCloudInstance<T>, T extends A
     return status == InstanceStatus.STOPPED || status == InstanceStatus.RUNNING;
   }
 
-  private static InstanceStatus calculateStatus(@NotNull final InstanceStatus currentStatus, @Nullable final InstanceStatus realStatus){
-    switch (currentStatus){
-      case UNKNOWN:
-        return realStatus == null ? InstanceStatus.UNKNOWN : realStatus;
-      case SCHEDULED_TO_START:
-        if (realStatus == InstanceStatus.RUNNING){
-          return InstanceStatus.RUNNING;
-        }
-        return InstanceStatus.SCHEDULED_TO_START;
-      case STARTING:
-        if (realStatus == InstanceStatus.STOPPED){
-
-        }
-    }
-    return null;
+  private boolean isStuck(G instance){
+    return (System.currentTimeMillis() - instance.getStatusUpdateTime().getTime()) > myStuckTime &&
+            (instance.getStatus() == InstanceStatus.STOPPING
+                    || instance.getStatus() == InstanceStatus.STARTING
+                    || instance.getStatus() == InstanceStatus.SCHEDULED_TO_STOP
+                    || instance.getStatus() == InstanceStatus.SCHEDULED_TO_START
+            );
   }
 }

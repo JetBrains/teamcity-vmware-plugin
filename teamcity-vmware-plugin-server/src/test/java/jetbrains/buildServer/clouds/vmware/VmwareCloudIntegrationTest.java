@@ -39,8 +39,6 @@ import jetbrains.buildServer.clouds.vmware.stubs.FakeModel;
 import jetbrains.buildServer.clouds.vmware.stubs.FakeVirtualMachine;
 import jetbrains.buildServer.clouds.vmware.web.VMWareWebConstants;
 import jetbrains.buildServer.serverSide.ServerPaths;
-import jetbrains.buildServer.serverSide.agentTypes.SAgentType;
-import jetbrains.buildServer.serverSide.impl.DummyAgentType;
 import jetbrains.buildServer.web.openapi.PluginDescriptor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -475,7 +473,7 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
         return super.findEntityByIdName(name, instanceType);
       }
     };
-    recreateClient(2, lastUpdateTime);
+    recreateClient(2, lastUpdateTime, 2*60*1000);
     startNewInstanceAndWait("image2");
     startNewInstanceAndWait("image2");
     startNewInstanceAndWait("image2");
@@ -669,6 +667,20 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
 
   }
 
+  public void enforce_change_of_stuck_instance_status() throws RemoteException, ExecutionException, InterruptedException {
+    recreateClient(2, new AtomicLong(0), 3*1000);
+    final VmwareCloudInstance instance = startNewInstanceAndWait("image1");
+    FakeModel.instance().getVms().get(instance.getName()).shutdownGuest();
+    instance.setStatus(InstanceStatus.STOPPING);
+    new WaitFor(6*1000){
+      @Override
+      protected boolean condition() {
+        return instance.getStatus() == InstanceStatus.STOPPED;
+      }
+    }.assertCompleted("should have changed the status");
+
+  }
+
   /*
   *
   *
@@ -801,7 +813,7 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
     assertNull(myClient.getErrorInfo());
   }
 
-  private void recreateClient(final long updateDelay, final AtomicLong lastUpdateTime) throws ExecutionException, InterruptedException {
+  private void recreateClient(final long updateDelay, final AtomicLong lastUpdateTime, final long stuckTime) throws ExecutionException, InterruptedException {
     if (myClient != null) {
       myClient.dispose();
     }
@@ -818,7 +830,7 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
 
       @Override
       protected UpdateInstancesTask<VmwareCloudInstance, VmwareCloudImage, VMWareCloudClient> createUpdateInstancesTask() {
-        return new UpdateInstancesTask<VmwareCloudInstance, VmwareCloudImage, VMWareCloudClient>(myFakeApi, this){
+        return new UpdateInstancesTask<VmwareCloudInstance, VmwareCloudImage, VMWareCloudClient>(myFakeApi, this, stuckTime){
           @Override
           public void run() {
             super.run();
