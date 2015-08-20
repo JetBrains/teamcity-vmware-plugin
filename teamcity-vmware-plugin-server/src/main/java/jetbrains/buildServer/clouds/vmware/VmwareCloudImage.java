@@ -214,6 +214,7 @@ public class VmwareCloudImage extends AbstractCloudImage<VmwareCloudInstance, Vm
   }
 
   private synchronized void startVM(@NotNull final VmwareCloudInstance instance, @NotNull final CloudInstanceUserData cloudInstanceUserData) {
+    instance.setStartDate(new Date());
     instance.setStatus(InstanceStatus.STARTING);
     myAsyncTaskExecutor.executeAsync(new VmwareTaskWrapper(new Callable<Task>() {
       public Task call() throws Exception {
@@ -223,7 +224,6 @@ public class VmwareCloudImage extends AbstractCloudImage<VmwareCloudInstance, Vm
       , new ImageStatusTaskWrapper(instance) {
       @Override
       public void onSuccess() {
-        instance.setStartDate(new Date());
         reconfigureVmTask(instance, cloudInstanceUserData);
       }
     });
@@ -239,6 +239,7 @@ public class VmwareCloudImage extends AbstractCloudImage<VmwareCloudInstance, Vm
       @Override
       public void onSuccess() {
         instance.setStatus(InstanceStatus.RUNNING);
+        instance.setStartDate(new Date());
         instance.updateErrors();
         LOG.info("Instance started successfully");
       }
