@@ -40,7 +40,6 @@ public class VmwareCloudInstance extends AbstractCloudInstance<VmwareCloudImage>
 
   private final String myInstanceName;
   private final VmwareCloudImage myImage;
-  private InstanceStatus myStatus = InstanceStatus.UNKNOWN;
   private String myIpAddress;
   private String mySnapshotName;
 
@@ -77,21 +76,10 @@ public class VmwareCloudInstance extends AbstractCloudInstance<VmwareCloudImage>
     return myIpAddress;
   }
 
-  @NotNull
-  public InstanceStatus getStatus() {
-    return myStatus;
-  }
 
   @NotNull
   public String getSnapshotName() {
     return mySnapshotName;
-  }
-
-  public void setStatus(@NotNull final InstanceStatus status) {
-    if (myStatus == status)
-      return;
-    LOG.info(String.format("Changing %s(%x) status from %s to %s ", getName(), hashCode(), myStatus, status));
-    myStatus = status;
   }
 
   public void updateVMInfo(@NotNull final VmwareInstance vm) {

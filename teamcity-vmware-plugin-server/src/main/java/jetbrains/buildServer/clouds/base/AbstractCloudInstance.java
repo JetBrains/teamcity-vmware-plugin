@@ -94,6 +94,10 @@ public abstract class AbstractCloudInstance<T extends AbstractCloudImage> implem
   }
 
   public void setStatus(@NotNull final InstanceStatus status) {
+    if (myStatus == status){
+      return;
+    }
+    LOG.info(String.format("Changing %s(%x) status from %s to %s ", getName(), hashCode(), myStatus, status));
     myStatus = status;
     myStatusUpdateTime = new Date();
   }

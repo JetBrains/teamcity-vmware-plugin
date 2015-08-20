@@ -223,6 +223,7 @@ public class VmwareCloudImage extends AbstractCloudImage<VmwareCloudInstance, Vm
       , new ImageStatusTaskWrapper(instance) {
       @Override
       public void onSuccess() {
+        instance.setStartDate(new Date());
         reconfigureVmTask(instance, cloudInstanceUserData);
       }
     });
