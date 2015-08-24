@@ -46,7 +46,7 @@ public class VMWarePropertiesReader {
 
   private static final String[] WINDOWS_COMMANDS = {"C:\\Program Files\\VMware\\VMware Tools\\rpctool.exe"};
   private static final String[] LINUX_COMMANDS = {"/usr/sbin/vmware-rpctool", "/usr/bin/vmware-rpctool"};
-  private static final String[] MAC_COMMANDS = {"/usr/sbin/vmware-rpctool"};
+  private static final String[] MAC_COMMANDS = {"/usr/sbin/vmware-rpctool", "/sbin/rpctool"};
 
   private static final String VMWARE_RPCTOOL_NAME = "vmware-rpctool";
   private final String myVMWareRPCToolPath;
