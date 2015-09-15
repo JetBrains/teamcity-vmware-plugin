@@ -70,7 +70,12 @@ public class CloudAsyncTaskExecutor {
   public Future<?> submit(final String taskName, final Runnable r){
     return myExecutor.submit(new Runnable() {
       public void run() {
-        NamedThreadFactory.executeWithNewThreadName(taskName, r);
+        try {
+          LOG.debug("Starting " + taskName);
+          NamedThreadFactory.executeWithNewThreadName(taskName, r);
+        } finally {
+          LOG.debug("Finished " + taskName);
+        }
       }
     });
   }
