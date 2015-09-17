@@ -92,7 +92,7 @@ public class VMWareEditProfileController extends BaseFormXmlController {
       xmlResponse.addContent(getFoldersAsElement(myApiConnector.getFolders()));
       xmlResponse.addContent(getResourcePoolsAsElement(myApiConnector.getResourcePools()));
     } catch (Exception ex) {
-      LOG.warn("Unable to get vCenter details: " + ex.toString());
+      LOG.warnAndDebugDetails("Unable to get vCenter details: " + ex.toString(), ex);
       errors.addError(
         "errorFetchResults",
         VmwareErrorMessages.getInstance().getFriendlyErrorMessage(
