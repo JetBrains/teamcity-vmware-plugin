@@ -81,37 +81,41 @@ public class CloudAsyncTaskExecutor {
   }
 
   private void checkTasks() {
-    for (AsyncCloudTask task : myExecutingTasks.keySet()) {
-      final Future<CloudTaskResult> future = task.executeOrGetResultAsync();
-      if (future.isDone()) {
-        final TaskCallbackHandler handler = myExecutingTasks.get(task);
-        try {
-          final CloudTaskResult result = future.get();
-          handler.onComplete();
-          if (result.isHasErrors()) {
-            handler.onError(result.getThrowable());
-          } else {
-            handler.onSuccess();
+    try {
+      for (AsyncCloudTask task : myExecutingTasks.keySet()) {
+        final Future<CloudTaskResult> future = task.executeOrGetResultAsync();
+        if (future.isDone()) {
+          final TaskCallbackHandler handler = myExecutingTasks.get(task);
+          try {
+            final CloudTaskResult result = future.get();
+            handler.onComplete();
+            if (result.isHasErrors()) {
+              handler.onError(result.getThrowable());
+            } else {
+              handler.onSuccess();
+            }
+          } catch (Exception e) {
+            LOG.warn(String.format("An error occurred while executing : '%s': %s", task.toString(), e.toString()));
+            handler.onError(e);
           }
-        } catch (Exception e) {
-          LOG.warn(String.format("An error occurred while executing : '%s': %s", task.toString(), e.toString()));
-          handler.onError(e);
-        }
-        myExecutingTasks.remove(task);
-        if (myLongTasks.remove(task) != null) {
+          myExecutingTasks.remove(task);
+          if (myLongTasks.remove(task) != null) {
+            final long operationTime = System.currentTimeMillis() - task.getStartTime();
+            LOG.info(String.format("Long operation finished: '%s' took %d seconds to execute", task.toString(), operationTime / 1000));
+          }
+        } else {
           final long operationTime = System.currentTimeMillis() - task.getStartTime();
-          LOG.info(String.format("Long operation finished: '%s' took %d seconds to execute", task.toString(), operationTime/1000));
-        }
-      } else {
-        final long operationTime = System.currentTimeMillis() - task.getStartTime();
-        if (operationTime > LONG_TASK_TIME){
-          final Long lastTimeReported = myLongTasks.get(task);
-          if (lastTimeReported == null || (System.currentTimeMillis() - lastTimeReported) > LONG_TASK_TIME){
-            LOG.info(String.format("Detected long running task:('%s', running for %d seconds)", task.toString(), operationTime/1000));
-            myLongTasks.put(task, System.currentTimeMillis());
+          if (operationTime > LONG_TASK_TIME) {
+            final Long lastTimeReported = myLongTasks.get(task);
+            if (lastTimeReported == null || (System.currentTimeMillis() - lastTimeReported) > LONG_TASK_TIME) {
+              LOG.info(String.format("Detected long running task:('%s', running for %d seconds)", task.toString(), operationTime / 1000));
+              myLongTasks.put(task, System.currentTimeMillis());
+            }
           }
         }
       }
+    } catch (Throwable th){
+      LOG.warnAndDebugDetails("An error occurred during checkTasks", th);
     }
   }
 
