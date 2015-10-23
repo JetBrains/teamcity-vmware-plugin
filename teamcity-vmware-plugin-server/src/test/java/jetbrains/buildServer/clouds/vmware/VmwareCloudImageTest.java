@@ -76,44 +76,6 @@ public class VmwareCloudImageTest extends BaseTestCase {
     assertTrue(i > 100000);
   }
 
-  public void shouldDeleteOldInstancesIfLimitReached() throws VmwareCheckedCloudException {
-
-    final CloudInstanceUserData userData = new CloudInstanceUserData("aaa", "bbbb", "localhost", 10000l,"profileId1", "profileDescr", Collections.<String, String>emptyMap());
-    final HashMap<String, VmwareInstance> realInstances = new HashMap<String, VmwareInstance>();
-    final List<VmwareCloudInstance> instances2Stop = new ArrayList<VmwareCloudInstance>();
-    for (int i=0; i<5; i++){
-      final VmwareCloudInstance instance = myImage.startNewInstance(userData);
-      if (i%2 ==0){
-        instances2Stop.add(instance);
-      }
-    }
-    new WaitFor(3000){
-      @Override
-      protected boolean condition() {
-        return FakeModel.instance().getVms().size() == 6;
-      }
-    }.assertCompleted("Should have started in 3 sec");
-
-    myUpdateTask.run();
-
-
-
-    try {
-      myImage.startNewInstance(userData);
-      fail("Should have failed, due to instance limit reached");
-    } catch (Exception ex){
-      new WaitFor(3000){
-        @Override
-        protected boolean condition() {
-          return FakeModel.instance().getVms().size() == 3;
-        }
-      }.assertCompleted("Should have stopped in 3 sec");
-      myUpdateTask.run();
-      myImage.startNewInstance(userData);
-    }
-
-  }
-
   @AfterMethod
   public void tearDown() throws Exception {
     super.tearDown();
