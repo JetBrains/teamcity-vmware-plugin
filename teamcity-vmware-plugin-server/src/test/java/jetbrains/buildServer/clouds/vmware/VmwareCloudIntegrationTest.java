@@ -358,6 +358,50 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
 
   }
 
+  public void sync_start_stop_instance_status() throws RemoteException {
+    final VmwareCloudImage img1 = getImageByName("image1");
+    assertEquals(1, img1.getInstances().size());
+    final VmwareCloudInstance inst1 = img1.getInstances().iterator().next();
+    assertEquals(InstanceStatus.STOPPED, inst1.getStatus());
+    startNewInstanceAndWait("image1");
+    assertEquals(InstanceStatus.RUNNING, inst1.getStatus());
+    FakeModel.instance().getVirtualMachine("image1").shutdownGuest();
+    new WaitFor(3000){
+      protected boolean condition() {
+        return img1.getInstances().iterator().next().getStatus() == InstanceStatus.STOPPED;
+      }
+    }.assertCompleted("Should have caught the stopped status");
+
+    FakeModel.instance().getVirtualMachine("image1").powerOnVM_Task(null);
+
+    new WaitFor(3000){
+      protected boolean condition() {
+        return img1.getInstances().iterator().next().getStatus() == InstanceStatus.RUNNING;
+      }
+    }.assertCompleted("Should have caught the running status");
+  }
+
+  public void sync_clone_status() throws RemoteException {
+    final VmwareCloudImage img1 = getImageByName("image_template");
+    assertEquals(0, img1.getInstances().size());
+    final VmwareCloudInstance inst = startNewInstanceAndWait("image_template");
+    assertEquals(InstanceStatus.RUNNING, inst.getStatus());
+    FakeModel.instance().getVirtualMachine(inst.getName()).shutdownGuest();
+    new WaitFor(3000){
+      protected boolean condition() {
+        return img1.getInstances().iterator().next().getStatus() == InstanceStatus.STOPPED;
+      }
+    }.assertCompleted("Should have caught the stopped status");
+
+    FakeModel.instance().getVirtualMachine(inst.getName()).powerOnVM_Task(null);
+
+    new WaitFor(3000){
+      protected boolean condition() {
+        return img1.getInstances().iterator().next().getStatus() == InstanceStatus.RUNNING;
+      }
+    }.assertCompleted("Should have caught the running status");
+  }
+
   public void should_limit_new_instances_count(){
     int countStarted = 0;
     final VmwareCloudImage image_template = getImageByName("image_template");
@@ -681,6 +725,91 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
 
   }
 
+  public void shouldDeleteOldInstancesIfLimitReached() throws VmwareCheckedCloudException, RemoteException, InterruptedException {
+    final List<VmwareCloudInstance> instances2stop = new ArrayList<VmwareCloudInstance>();
+    for (int i=0; i<3; i++){
+      final VmwareCloudInstance instance = startNewInstanceAndWait("image_template");
+      if (i%2 == 0)
+        instances2stop.add(instance);
+    }
+    new WaitFor(3*1000){
+      @Override
+      protected boolean condition() {
+        return getImageByName("image_template").getInstances().size() == 3;
+      }
+    }.assertCompleted("should have started and catched");
+
+    for (VmwareCloudInstance inst : instances2stop) {
+      FakeModel.instance().getVirtualMachine(inst.getName()).shutdownGuest();
+    }
+
+    new WaitFor(10*1000){
+      @Override
+      protected boolean condition() {
+        boolean stoppedAll = true;
+        for (VmwareCloudInstance inst : instances2stop) {
+          stoppedAll = stoppedAll && FakeModel.instance().getVirtualMachine(inst.getName()).getRuntime().getPowerState() == VirtualMachinePowerState.poweredOff;
+        }
+        if (stoppedAll){
+          final VmwareCloudImage img = getImageByName("image_template");
+
+          if (System.currentTimeMillis() % 20 == 0){
+            System.out.printf("%s%n", img.getInstances());
+          }
+          return img.canStartNewInstance();
+        }
+        return false;
+      }
+    }.assertCompleted("Should have stopped and state updated");
+
+    new WaitFor(10*1000){
+      @Override
+      protected boolean condition() {
+        final VmwareCloudImage img = getImageByName("image_template");
+        int stoppedCount = 0;
+        for (VmwareCloudInstance instance : img.getInstances()) {
+          if (instance.getStatus() ==InstanceStatus.STOPPED)
+            stoppedCount++;
+        }
+        return stoppedCount ==2;
+      }
+    };
+    // requires time for orphaned timeout
+    Thread.sleep(500);
+
+    System.setProperty("teamcity.vmware.stopped.orphaned.timeout", "200");
+    try {
+      startNewInstanceAndWait("image_template");
+      fail("Should have failed to start");
+    } catch(Exception ex){}
+
+
+    new WaitFor(5000){
+      @Override
+      protected boolean condition() {
+        boolean instancesDeleted = true;
+        for (VmwareCloudInstance inst : instances2stop) {
+          instancesDeleted = instancesDeleted && (FakeModel.instance().getVirtualMachine(inst.getName()) == null);
+        }
+        return instancesDeleted;
+      }
+    }.assertCompleted("Should have deleted");
+
+    new WaitFor(10*1000){
+      @Override
+      protected boolean condition() {
+        final VmwareCloudImage img = getImageByName("image_template");
+        return img.getInstances().size() == 1;
+      }
+    };
+
+
+    for (int i=0; i<2; i++){
+      final VmwareCloudInstance instance = startNewInstanceAndWait("image_template");
+      assertEquals("image_template-" + (i+5), instance.getName());
+    }
+  }
+
   /*
   *
   *
@@ -802,7 +931,12 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
       myClient.dispose();
     }
     final Collection<VmwareCloudImageDetails> images = VMWareCloudClientFactory.parseImageDataInternal(myClientParameters);
-    myClient = new VMWareCloudClient(myClientParameters, myFakeApi, myIdxStorage);
+    myClient = new VMWareCloudClient(myClientParameters, myFakeApi, myIdxStorage){
+      @Override
+      public Future<?> populateImagesDataAsync(@NotNull final Collection<VmwareCloudImageDetails> imageDetails) {
+        return super.populateImagesDataAsync(imageDetails, 2);
+      }
+    };
     final Future<?> future = myClient.populateImagesDataAsync(images);
     new WaitFor(1000){
       @Override

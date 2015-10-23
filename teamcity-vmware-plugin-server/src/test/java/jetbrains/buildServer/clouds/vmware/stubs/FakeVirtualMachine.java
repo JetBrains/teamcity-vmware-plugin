@@ -16,7 +16,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public class FakeVirtualMachine extends VirtualMachine {
 
-  private static final int GUEST_SHUTDOWN_TIMEOUT = 3*1000;
+  private static final int GUEST_SHUTDOWN_TIMEOUT = 600;
   private String myName;
   private VirtualMachineRuntimeInfo myRuntimeInfo;
   private GuestInfo myGuestInfo;
@@ -110,7 +110,7 @@ public class FakeVirtualMachine extends VirtualMachine {
     new Thread(){
       @Override
       public void run() {
-        try {sleep(2000);} catch (InterruptedException e) {}
+        try {sleep(500);} catch (InterruptedException e) {}
         latch.countDown();
         ((FakeVirtualMachine)vm).myConfigInfo.set(oldConfig);
         if (spec.isPowerOn()){

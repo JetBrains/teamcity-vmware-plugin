@@ -41,9 +41,10 @@ public class VmwareCloudInstance extends AbstractCloudInstance<VmwareCloudImage>
   private final String myInstanceName;
   private final VmwareCloudImage myImage;
   private String myIpAddress;
-  private String mySnapshotName;
 
-  public VmwareCloudInstance(@NotNull final VmwareCloudImage image, @NotNull final String instanceName, @NotNull final String snapshotName) {
+  @Nullable private final String mySnapshotName;
+
+  public VmwareCloudInstance(@NotNull final VmwareCloudImage image, @NotNull final String instanceName, @Nullable final String snapshotName) {
     super(image, instanceName, instanceName);
     myImage = image;
     myInstanceName = instanceName;
@@ -77,7 +78,7 @@ public class VmwareCloudInstance extends AbstractCloudInstance<VmwareCloudImage>
   }
 
 
-  @NotNull
+  @Nullable
   public String getSnapshotName() {
     return mySnapshotName;
   }
@@ -108,5 +109,14 @@ public class VmwareCloudInstance extends AbstractCloudInstance<VmwareCloudImage>
 
   public boolean isInPermanentStatus(){
     return myStatus == InstanceStatus.STOPPED || myStatus == InstanceStatus.RUNNING;
+  }
+
+  @Override
+  public String toString() {
+    return "VmwareCloudInstance{" +
+            "myInstanceName='" + myInstanceName + '\'' +
+            "myState='" + myStatus.getName() + '\'' +
+            "myStatusUpdateTime='" + getStatusUpdateTime() + '\'' +
+            "}\n";
   }
 }

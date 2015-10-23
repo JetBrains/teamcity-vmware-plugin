@@ -469,32 +469,32 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
       }
     }
     final Map<String, VirtualMachineSnapshotTree> snapshotList = getSnapshotList(vm.getName());
-    if (imageDetails.useCurrentVersion()) {
+    final String snapshotName = instance.getSnapshotName();
+    if (imageDetails.useCurrentVersion() || StringUtil.isEmpty(snapshotName)) {
       LOG.info("Snapshot name is not specified. Will clone latest VM state");
     } else {
-      final VirtualMachineSnapshotTree obj = snapshotList.get(instance.getSnapshotName());
+      final VirtualMachineSnapshotTree obj = snapshotList.get(snapshotName);
       final ManagedObjectReference snapshot = obj == null ? null : obj.getSnapshot();
       cloneSpec.setSnapshot(snapshot);
       if (snapshot != null) {
         if (TeamCityProperties.getBooleanOrTrue(VmwareConstants.USE_LINKED_CLONE)) {
-        LOG.info("Using linked clone. Snapshot name: " + instance.getSnapshotName());
-        location.setDiskMoveType(VirtualMachineRelocateDiskMoveOptions.createNewChildDiskBacking.name());
+          LOG.info("Using linked clone. Snapshot name: " + snapshotName);
+          location.setDiskMoveType(VirtualMachineRelocateDiskMoveOptions.createNewChildDiskBacking.name());
         } else {
-          LOG.info("Using full clone. Snapshot name: " + instance.getSnapshotName());
+          LOG.info("Using full clone. Snapshot name: " + snapshotName);
         }
       } else {
-        final String errorText = "Unable to find snapshot " + instance.getSnapshotName();
+        final String errorText = "Unable to find snapshot " + snapshotName;
         throw new VmwareCheckedCloudException(errorText);
       }
     }
-
 
     final VirtualMachineConfigInfo vmConfig = vm.getConfig();
     config.setExtraConfig(new OptionValue[]{
       createOptionValue(TEAMCITY_VMWARE_CLONED_INSTANCE, "true"),
       createOptionValue(TEAMCITY_VMWARE_IMAGE_SOURCE_NAME, imageDetails.getSourceName()),
       createOptionValue(TEAMCITY_VMWARE_IMAGE_NICKNAME, imageDetails.getNickname()),
-      createOptionValue(TEAMCITY_VMWARE_IMAGE_SNAPSHOT, instance.getSnapshotName()),
+      createOptionValue(TEAMCITY_VMWARE_IMAGE_SNAPSHOT, snapshotName),
       createOptionValue(TEAMCITY_VMWARE_IMAGE_CHANGE_VERSION, vmConfig.getChangeVersion())
     });
 
@@ -708,6 +708,17 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
       return findEntityByIdNameNullable(vmName, VirtualMachine.class, null) != null;
     } catch (VmwareCheckedCloudException e) {
       return false;
+    }
+  }
+
+  public void processImageInstances(@NotNull final VmwareCloudImage image, @NotNull final VmwareInstanceProcessor processor) {
+    try {
+      final Map<String, VmwareInstance> instances = listImageInstances(image);
+      for (VmwareInstance instance : instances.values()) {
+        processor.process(instance);
+      }
+    } catch (VmwareCheckedCloudException e) {
+      LOG.warnAndDebugDetails("Unable to process image instances", e);
     }
   }
 

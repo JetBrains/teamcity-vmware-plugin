@@ -86,6 +86,8 @@ public interface VMWareApiConnector extends CloudApiConnector<VmwareCloudImage, 
 
   boolean checkVirtualMachineExists(@NotNull String vmName);
 
+  void processImageInstances(@NotNull  final VmwareCloudImage image, @NotNull final VmwareInstanceProcessor processor);
+
   @NotNull
   VmwareInstance getInstanceDetails(String instanceName) throws VmwareCheckedCloudException;
 
@@ -96,4 +98,8 @@ public interface VMWareApiConnector extends CloudApiConnector<VmwareCloudImage, 
 
   @NotNull
   Map<String, VmwareInstance> listImageInstances(@NotNull final VmwareCloudImage image) throws VmwareCheckedCloudException;
+
+  interface VmwareInstanceProcessor {
+    void process(VmwareInstance instance);
+  }
 }

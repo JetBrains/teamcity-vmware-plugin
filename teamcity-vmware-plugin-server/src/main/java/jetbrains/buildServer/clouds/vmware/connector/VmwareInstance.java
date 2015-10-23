@@ -150,6 +150,7 @@ public class VmwareInstance extends AbstractInstance implements VmwareManagedEnt
     }, "Delete instance " + getName());
   }
 
+  @Nullable
   public String getSnapshotName(){
     return StringUtil.nullIfEmpty(getProperty(VMWareApiConnector.TEAMCITY_VMWARE_IMAGE_SNAPSHOT));
   }

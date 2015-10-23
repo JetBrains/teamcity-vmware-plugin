@@ -1,20 +1,21 @@
 package jetbrains.buildServer.clouds.vmware;
 
-import com.intellij.util.containers.ConcurrentHashSet;
 import java.io.File;
-import java.net.MalformedURLException;
-import java.rmi.RemoteException;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.*;
+
+import com.intellij.util.WaitFor;
 import jetbrains.buildServer.BaseTestCase;
+import jetbrains.buildServer.clouds.CloudClientParameters;
 import jetbrains.buildServer.clouds.CloudInstanceUserData;
-import jetbrains.buildServer.clouds.InstanceStatus;
 import jetbrains.buildServer.clouds.base.connector.CloudAsyncTaskExecutor;
+import jetbrains.buildServer.clouds.base.tasks.UpdateInstancesTask;
 import jetbrains.buildServer.clouds.base.types.CloneBehaviour;
 import jetbrains.buildServer.clouds.vmware.connector.VMWareApiConnector;
+import jetbrains.buildServer.clouds.vmware.connector.VmwareInstance;
+import jetbrains.buildServer.clouds.vmware.errors.VmwareCheckedCloudException;
 import jetbrains.buildServer.clouds.vmware.stubs.FakeApiConnector;
+import jetbrains.buildServer.clouds.vmware.stubs.FakeModel;
+import jetbrains.buildServer.clouds.vmware.stubs.FakeVirtualMachine;
 import jetbrains.buildServer.util.FileUtil;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
@@ -28,22 +29,40 @@ import org.testng.annotations.Test;
 @Test
 public class VmwareCloudImageTest extends BaseTestCase {
 
-  private CloudAsyncTaskExecutor myStatusTask;
+  private CloudAsyncTaskExecutor myTaskExecutor;
   private VMWareApiConnector myApiConnector;
   private VmwareCloudImage myImage;
   private VmwareCloudImageDetails myImageDetails;
   private File myIdxStorage;
+  private UpdateInstancesTask<VmwareCloudInstance, VmwareCloudImage, VMWareCloudClient> myUpdateTask;
+  private VMWareCloudClient myCloudClient;
+
+
 
   @BeforeMethod
   public void setUp() throws Exception {
     super.setUp();
-    myStatusTask = new CloudAsyncTaskExecutor("Test-vmware");
+    FakeModel.instance().clear();
+    myTaskExecutor = new CloudAsyncTaskExecutor("Test-vmware");
     myApiConnector = new FakeApiConnector();
     myIdxStorage = createTempDir();
-    myImageDetails = new VmwareCloudImageDetails("imageNickname", "sourceName", "snapshotName"
+    myImageDetails = new VmwareCloudImageDetails("imageNickname", "srcVM", "srcVMSnap"
       , "folderId", "rpId", CloneBehaviour.FRESH_CLONE, 5);
 
-    myImage = new VmwareCloudImage(myApiConnector, myImageDetails, myStatusTask, myIdxStorage);
+    FakeModel.instance().addVM("srcVM");
+    FakeModel.instance().addFolder("folderId");
+    FakeModel.instance().addResourcePool("rpId");
+
+    FakeModel.instance().addVMSnapshot("srcVM", "srcVMSnap");
+
+    myImage = new VmwareCloudImage(myApiConnector, myImageDetails, myTaskExecutor, myIdxStorage);
+
+    myCloudClient = new VMWareCloudClient(new CloudClientParameters(), myApiConnector, createTempDir());
+    myCloudClient.populateImagesDataAsync(Collections.singletonList(myImageDetails));
+    myUpdateTask = new UpdateInstancesTask<VmwareCloudInstance, VmwareCloudImage, VMWareCloudClient>(
+            myApiConnector, myCloudClient, 10*1000);
+
+
   }
 
   public void check_clone_name_generation(){
@@ -55,6 +74,44 @@ public class VmwareCloudImageTest extends BaseTestCase {
     assertTrue(newName.startsWith(myImage.getName()));
     final int i = Integer.parseInt(newName.substring(myImage.getName().length() + 1));
     assertTrue(i > 100000);
+  }
+
+  public void shouldDeleteOldInstancesIfLimitReached() throws VmwareCheckedCloudException {
+
+    final CloudInstanceUserData userData = new CloudInstanceUserData("aaa", "bbbb", "localhost", 10000l,"profileId1", "profileDescr", Collections.<String, String>emptyMap());
+    final HashMap<String, VmwareInstance> realInstances = new HashMap<String, VmwareInstance>();
+    final List<VmwareCloudInstance> instances2Stop = new ArrayList<VmwareCloudInstance>();
+    for (int i=0; i<5; i++){
+      final VmwareCloudInstance instance = myImage.startNewInstance(userData);
+      if (i%2 ==0){
+        instances2Stop.add(instance);
+      }
+    }
+    new WaitFor(3000){
+      @Override
+      protected boolean condition() {
+        return FakeModel.instance().getVms().size() == 6;
+      }
+    }.assertCompleted("Should have started in 3 sec");
+
+    myUpdateTask.run();
+
+
+
+    try {
+      myImage.startNewInstance(userData);
+      fail("Should have failed, due to instance limit reached");
+    } catch (Exception ex){
+      new WaitFor(3000){
+        @Override
+        protected boolean condition() {
+          return FakeModel.instance().getVms().size() == 3;
+        }
+      }.assertCompleted("Should have stopped in 3 sec");
+      myUpdateTask.run();
+      myImage.startNewInstance(userData);
+    }
+
   }
 
   @AfterMethod

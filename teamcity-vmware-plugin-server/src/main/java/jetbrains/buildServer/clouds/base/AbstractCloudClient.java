@@ -92,10 +92,14 @@ public abstract class AbstractCloudClient<G extends AbstractCloudInstance<T>, T 
   }
 
   public Future<?> populateImagesDataAsync(@NotNull final Collection<D> imageDetails){
+    return populateImagesDataAsync(imageDetails, 60);
+  }
+
+  public Future<?> populateImagesDataAsync(@NotNull final Collection<D> imageDetails, final long updateDelaySec){
     return myAsyncTaskExecutor.submit("Populate images data", new Runnable() {
       public void run() {
         try {
-          populateImagesData(imageDetails, 60, 60);
+          populateImagesData(imageDetails, updateDelaySec, updateDelaySec);
         } finally {
           myIsInitialized.set(true);
         }

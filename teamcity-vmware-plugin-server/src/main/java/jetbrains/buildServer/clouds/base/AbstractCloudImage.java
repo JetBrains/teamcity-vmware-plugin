@@ -93,7 +93,7 @@ public abstract class AbstractCloudImage<T extends AbstractCloudInstance, G exte
 
   public abstract G getImageDetails();
 
-  public abstract void detectNewInstances(final Map<String, AbstractInstance> realInstances);
+  public abstract void detectNewInstances(final Map<String,? extends AbstractInstance> realInstances);
 
   public String toString() {
     return getClass().getSimpleName() +"{" +"myName='" + getId() + '\'' +'}';
