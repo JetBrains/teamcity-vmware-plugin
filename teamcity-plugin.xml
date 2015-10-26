@@ -3,14 +3,13 @@
   <info>
     <name>vsphere</name>
     <display-name>VMware vSphere</display-name>
-    <version>@Version@</version>
+    <version>@Plugin_Version@</version>
     <description>Runs cloud agents on VMware vSphere</description>
     <download-url>https://github.com/JetBrains/teamcity-vmware-plugin</download-url>
     <email>Plugin author e-mail</email>
     <vendor>
-      <name>JetBrains, s.r.o.</name>
-      <url>http://www.jetbrains.com/</url>
-      <logo>Plugin vendor logo URL</logo>
+      <name>@Plugin_Vendor@</name>
+      <url>@Plugin_Vendor_Url@</url>
     </vendor>
   </info>
   <deployment use-separate-classloader="true" />
