@@ -1,12 +1,15 @@
 package jetbrains.buildServer.clouds.vmware;
 
+import com.vmware.vim25.mo.Task;
 import java.io.File;
+import java.rmi.RemoteException;
 import java.util.*;
 
 import com.intellij.util.WaitFor;
 import jetbrains.buildServer.BaseTestCase;
 import jetbrains.buildServer.clouds.CloudClientParameters;
 import jetbrains.buildServer.clouds.CloudInstanceUserData;
+import jetbrains.buildServer.clouds.InstanceStatus;
 import jetbrains.buildServer.clouds.base.connector.CloudAsyncTaskExecutor;
 import jetbrains.buildServer.clouds.base.tasks.UpdateInstancesTask;
 import jetbrains.buildServer.clouds.base.types.CloneBehaviour;
