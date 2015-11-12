@@ -18,13 +18,10 @@
 
 package jetbrains.buildServer.clouds.base;
 
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
 import jetbrains.buildServer.clouds.*;
 import jetbrains.buildServer.clouds.base.beans.CloudImageDetails;
 import jetbrains.buildServer.clouds.base.errors.TypedCloudErrorInfo;
-import jetbrains.buildServer.clouds.server.impl.CloudManagerBase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

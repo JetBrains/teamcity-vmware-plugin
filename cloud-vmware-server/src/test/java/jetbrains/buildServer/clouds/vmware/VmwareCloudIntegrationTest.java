@@ -12,7 +12,6 @@ import java.rmi.RemoteException;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Lock;
@@ -21,16 +20,8 @@ import jetbrains.buildServer.BaseTestCase;
 import jetbrains.buildServer.clouds.*;
 import jetbrains.buildServer.clouds.base.errors.CheckedCloudException;
 import jetbrains.buildServer.clouds.base.tasks.UpdateInstancesTask;
-import jetbrains.buildServer.clouds.server.CloudInstancesProvider;
-import jetbrains.buildServer.clouds.server.CloudManager;
-import jetbrains.buildServer.clouds.server.agentTypes.CloudAgentTypeProvider;
 import jetbrains.buildServer.clouds.server.impl.*;
-import jetbrains.buildServer.clouds.server.impl.instances.StartInstanceAction;
-import jetbrains.buildServer.clouds.server.impl.instances.StopInstanceAction;
-import jetbrains.buildServer.clouds.server.impl.profile.CloudProfileDataImpl;
-import jetbrains.buildServer.clouds.server.impl.profile.CloudProfileImpl;
 import jetbrains.buildServer.clouds.server.instances.CloudEventDispatcher;
-import jetbrains.buildServer.clouds.server.instances.RunningAgentsTracker;
 import jetbrains.buildServer.clouds.vmware.connector.VMWareApiConnector;
 import jetbrains.buildServer.clouds.vmware.connector.VmwareInstance;
 import jetbrains.buildServer.clouds.vmware.errors.VmwareCheckedCloudException;
@@ -41,7 +32,6 @@ import jetbrains.buildServer.clouds.vmware.web.VMWareWebConstants;
 import jetbrains.buildServer.serverSide.ServerPaths;
 import jetbrains.buildServer.web.openapi.PluginDescriptor;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jmock.Expectations;
 import org.jmock.Mockery;
 import org.testng.SkipException;
@@ -64,7 +54,6 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
   private FakeApiConnector myFakeApi;
   private CloudClientParameters myClientParameters;
   private File myIdxStorage;
-  private AtomicInteger agentTypeIdx = new AtomicInteger(1);
 
   @BeforeMethod
   public void setUp() throws Exception {

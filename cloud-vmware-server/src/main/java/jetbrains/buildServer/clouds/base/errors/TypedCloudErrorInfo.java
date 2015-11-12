@@ -18,7 +18,6 @@
 
 package jetbrains.buildServer.clouds.base.errors;
 
-import jetbrains.buildServer.clouds.CloudErrorInfo;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
