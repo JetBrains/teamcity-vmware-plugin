@@ -8,7 +8,6 @@
   <properties>
     <teamcity-version>10.0-SNAPSHOT</teamcity-version>
     <TeamCityDist></TeamCityDist>
-    <local-repo-path>file://${basedir}/repo</local-repo-path>
   </properties>
   <repositories>
     <repository>
@@ -17,7 +16,7 @@
     </repository>
     <repository>
       <id>repo</id>
-      <url>${local-repo-path}</url>
+      <url>file://${user.dir}/repo</url>
     </repository>
   </repositories>
   <pluginRepositories>

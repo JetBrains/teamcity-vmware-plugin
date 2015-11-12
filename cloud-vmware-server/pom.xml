@@ -71,40 +71,35 @@
       <groupId>vijava</groupId>
       <artifactId>vijava</artifactId>
       <version>1.0</version>
-      <scope>system</scope>
-      <systemPath>${basedir}/../lib/vijava.jar</systemPath>
+      <scope>compile</scope>
     </dependency>
 
     <dependency>
       <groupId>org.jetbrains.teamcity</groupId>
-      <artifactId>teamcity-server</artifactId>
-      <scope>system</scope>
+      <artifactId>server</artifactId>
+      <scope>provided</scope>
       <version>${teamcity-version}</version>
-      <systemPath>${TeamCityDist}/webapps/ROOT/WEB-INF/lib/server.jar</systemPath>
     </dependency>
 
     <dependency>
       <groupId>org.jetbrains.teamcity</groupId>
-      <artifactId>teamcity-web</artifactId>
-      <scope>system</scope>
+      <artifactId>web</artifactId>
+      <scope>provided</scope>
       <version>${teamcity-version}</version>
-      <systemPath>${TeamCityDist}/webapps/ROOT/WEB-INF/lib/web.jar</systemPath>
     </dependency>
 
     <dependency>
       <groupId>org.jetbrains.teamcity</groupId>
-      <artifactId>teamcity-common-impl</artifactId>
-      <scope>system</scope>
+      <artifactId>common-impl</artifactId>
+      <scope>provided</scope>
       <version>${teamcity-version}</version>
-      <systemPath>${TeamCityDist}/webapps/ROOT/WEB-INF/lib/common-impl.jar</systemPath>
     </dependency>
 
     <dependency>
       <groupId>org.jetbrains.teamcity</groupId>
-      <artifactId>teamcity-cloud-server</artifactId>
-      <scope>system</scope>
+      <artifactId>cloud-server</artifactId>
+      <scope>provided</scope>
       <version>${teamcity-version}</version>
-      <systemPath>${TeamCityDist}/webapps/ROOT/WEB-INF/lib/cloud-server.jar</systemPath>
     </dependency>
 
   </dependencies>
