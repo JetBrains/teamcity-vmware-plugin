@@ -2,18 +2,18 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <parent>
-    <artifactId>teamcity-vmware-plugin</artifactId>
-    <groupId>teamcity-vmware-plugin</groupId>
-    <version>0.1-SNAPSHOT</version>
+    <artifactId>cloud-vmware</artifactId>
+    <groupId>org.jetbrains.teamcity</groupId>
+    <version>0.6-SNAPSHOT</version>
   </parent>
-  <artifactId>teamcity-vmware-plugin-server</artifactId>
+  <artifactId>cloud-vmware-server</artifactId>
   <packaging>jar</packaging>
   <dependencies>
 
     <dependency>
-      <groupId>teamcity-vmware-plugin</groupId>
-      <artifactId>teamcity-vmware-plugin-common</artifactId>
-      <version>0.1-SNAPSHOT</version>
+      <groupId>org.jetbrains.teamcity</groupId>
+      <version>0.6-SNAPSHOT</version>
+      <artifactId>cloud-vmware-common</artifactId>
       <scope>compile</scope>
     </dependency>
 
@@ -26,9 +26,80 @@
 
     <dependency>
       <groupId>org.jetbrains.teamcity</groupId>
+      <artifactId>server-web-api</artifactId>
+      <version>${teamcity-version}</version>
+      <type>war</type>
+      <scope>provided</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.jetbrains.teamcity</groupId>
+      <artifactId>cloud-interface</artifactId>
+      <version>${teamcity-version}</version>
+      <scope>provided</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.jetbrains.teamcity</groupId>
+      <artifactId>cloud-shared</artifactId>
+      <version>${teamcity-version}</version>
+      <scope>provided</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.jetbrains.teamcity</groupId>
       <artifactId>tests-support</artifactId>
       <version>${teamcity-version}</version>
       <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>com.google.code.gson</groupId>
+      <artifactId>gson</artifactId>
+      <version>2.4</version>
+      <scope>compile</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>dom4j</groupId>
+      <artifactId>dom4j</artifactId>
+      <version>1.6.1</version>
+      <scope>compile</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>vijava</groupId>
+      <artifactId>vijava</artifactId>
+      <version>0.1-SNAPSHOT</version>
+      <scope>compile</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.jetbrains.teamcity</groupId>
+      <artifactId>server</artifactId>
+      <scope>provided</scope>
+      <version>${teamcity-version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.jetbrains.teamcity</groupId>
+      <artifactId>web</artifactId>
+      <scope>provided</scope>
+      <version>${teamcity-version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.jetbrains.teamcity</groupId>
+      <artifactId>common-impl</artifactId>
+      <scope>provided</scope>
+      <version>${teamcity-version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.jetbrains.teamcity</groupId>
+      <artifactId>cloud-server</artifactId>
+      <scope>provided</scope>
+      <version>${teamcity-version}</version>
     </dependency>
 
   </dependencies>

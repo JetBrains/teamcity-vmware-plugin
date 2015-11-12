@@ -2,30 +2,33 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <parent>
-    <artifactId>teamcity-vmware-plugin</artifactId>
-    <groupId>teamcity-vmware-plugin</groupId>
-    <version>0.1-SNAPSHOT</version>
+    <artifactId>cloud-vmware</artifactId>
+    <groupId>org.jetbrains.teamcity</groupId>
+    <version>0.6-SNAPSHOT</version>
   </parent>
   <artifactId>build</artifactId>
   <packaging>pom</packaging>
   <properties>
-      <maven.build.timestamp.format>yyyyddMMHHmmss</maven.build.timestamp.format>
+      <maven.build.timestamp.format>yyyyMMddHHmmss</maven.build.timestamp.format>
+      <teamcity.cloud-vmware.plugin.version>snapshot-${maven.build.timestamp}</teamcity.cloud-vmware.plugin.version>
+      <teamcity.cloud-vmware.plugin.vendorName>Plugin vendor name</teamcity.cloud-vmware.plugin.vendorName>
+      <teamcity.cloud-vmware.plugin.vendorUrl>Plugin vendor URL</teamcity.cloud-vmware.plugin.vendorUrl>
   </properties>
   <dependencies>
       <dependency>
-           <groupId>teamcity-vmware-plugin</groupId>
-           <artifactId>teamcity-vmware-plugin-agent</artifactId>
-           <version>0.1-SNAPSHOT</version>
+    	<groupId>org.jetbrains.teamcity</groupId>
+    	<version>0.6-SNAPSHOT</version>
+        <artifactId>cloud-vmware-agent</artifactId>
       </dependency>
       <dependency>
-           <groupId>teamcity-vmware-plugin</groupId>
-           <artifactId>teamcity-vmware-plugin-common</artifactId>
-           <version>0.1-SNAPSHOT</version>
+    	<groupId>org.jetbrains.teamcity</groupId>
+    	<version>0.6-SNAPSHOT</version>
+        <artifactId>cloud-vmware-common</artifactId>
       </dependency>
       <dependency>
-           <groupId>teamcity-vmware-plugin</groupId>
-           <artifactId>teamcity-vmware-plugin-server</artifactId>
-           <version>0.1-SNAPSHOT</version>
+    	<groupId>org.jetbrains.teamcity</groupId>
+    	<version>0.6-SNAPSHOT</version>
+        <artifactId>cloud-vmware-server</artifactId>
       </dependency>
   </dependencies>
   <build>
@@ -48,7 +51,15 @@
                 <replacements>
                     <replacement>
                         <token>@Version@</token>
-                        <value>snapshot-${maven.build.timestamp}</value>
+                        <value>${teamcity.cloud-vmware.plugin.version}</value>
+                    </replacement>
+                    <replacement>
+                        <token>@VendorName@</token>
+                        <value>${teamcity.cloud-vmware.plugin.vendorName}</value>
+                    </replacement>
+                    <replacement>
+                        <token>@VendorURL@</token>
+                        <value>${teamcity.cloud-vmware.plugin.vendorUrl}</value>
                     </replacement>
                 </replacements>                        
             </configuration>
@@ -64,7 +75,7 @@
                   <goal>single</goal>
                 </goals>
                 <configuration>
-                  <finalName>teamcity-vmware-plugin-agent</finalName>
+                  <finalName>cloud-vmware-agent</finalName>
                   <appendAssemblyId>false</appendAssemblyId>
                   <descriptors>
                     <descriptor>plugin-agent-assembly.xml</descriptor>
@@ -78,7 +89,7 @@
                   <goal>single</goal>
                 </goals>
                 <configuration>
-                  <finalName>teamcity-vmware-plugin</finalName>
+                  <finalName>cloud-vmware</finalName>
                   <outputDirectory>${project.parent.build.directory}</outputDirectory>
                   <appendAssemblyId>false</appendAssemblyId>
                   <descriptors>

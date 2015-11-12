@@ -11,7 +11,7 @@
          <outputDirectory>/</outputDirectory>
      </file> 
      <file>
-         <source>target/teamcity-vmware-plugin-agent.zip</source>
+         <source>target/cloud-vmware-agent.zip</source>
          <outputDirectory>agent</outputDirectory>
      </file> 
   </files>
@@ -19,8 +19,8 @@
     <moduleSet>
        <useAllReactorProjects>true</useAllReactorProjects>
        <includes>
-           <include>teamcity-vmware-plugin:teamcity-vmware-plugin-server</include>
-           <include>teamcity-vmware-plugin:teamcity-vmware-plugin-common</include>
+           <include>org.jetbrains.buildserver:cloud-vmware-server</include>
+           <include>org.jetbrains.buildserver:cloud-vmware-common</include>
        </includes> 
        <binaries>
            <outputDirectory>server</outputDirectory>
