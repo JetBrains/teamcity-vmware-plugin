@@ -21,7 +21,7 @@
             <configuration>
               <artifactId>vijava</artifactId>
               <groupId>vijava</groupId>
-              <version>1.0-SNAPSHOT</version>
+              <version>0.1-SNAPSHOT</version>
               <packaging>jar</packaging>
               <createChecksum>true</createChecksum>
               <file>lib/vijava.jar</file>
