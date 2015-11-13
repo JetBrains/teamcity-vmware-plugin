@@ -15,7 +15,7 @@
         <url>http://repository.jetbrains.com/all</url>
     </repository>
     <repository>
-      <id>repo</id>
+      <id>localrepo</id>
       <url>file://${user.dir}/repo</url>
     </repository>
   </repositories>
