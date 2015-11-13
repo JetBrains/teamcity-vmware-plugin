@@ -33,6 +33,7 @@ import java.util.regex.Pattern;
 import jetbrains.buildServer.clouds.CloudException;
 import jetbrains.buildServer.clouds.CloudInstanceUserData;
 import jetbrains.buildServer.clouds.InstanceStatus;
+import jetbrains.buildServer.clouds.server.CloudInstancesProvider;
 import jetbrains.buildServer.clouds.vmware.errors.VmwareCheckedCloudException;
 import jetbrains.buildServer.clouds.base.errors.TypedCloudErrorInfo;
 import jetbrains.buildServer.clouds.vmware.*;
@@ -71,11 +72,18 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
   private ServiceInstance myServiceInstance;
   private final String myDomain;
 
+  // we also create a separate connector for controller and which doesn't need this field
+  @Nullable private final CloudInstancesProvider myInstancesProvider;
 
-  public VMWareApiConnectorImpl(final URL instanceURL, final String username, final String password){
+
+  public VMWareApiConnectorImpl(@NotNull final URL instanceURL,
+                                @NotNull final String username,
+                                @NotNull final String password,
+                                @Nullable final  CloudInstancesProvider instancesProvider){
     myInstanceURL = instanceURL;
     myUsername = username;
     myPassword = password;
+    myInstancesProvider = instancesProvider;
     myDomain = getTCServerDomain();
     if (myDomain == null){
       LOG.info("Unable to determine server domain. Linux guest hostname customization is disabled");
@@ -792,6 +800,17 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
         final String latestSnapshot = getLatestSnapshot(snapshotName, snapshotList);
         if (StringUtil.isNotEmpty(snapshotName) && latestSnapshot == null) {
           return new TypedCloudErrorInfo[]{new TypedCloudErrorInfo("NoSnapshot", "No such snapshot: " + snapshotName)};
+        }
+        image.updateActualSnapshotName(latestSnapshot);
+        if (myInstancesProvider != null) {
+          final Collection<VmwareCloudInstance> instances = image.getInstances();
+          for (VmwareCloudInstance instance : instances) {
+            if (!StringUtil.areEqual(instance.getSnapshotName(), latestSnapshot)) {
+              myInstancesProvider.markInstanceExpired(instance);
+            }
+          }
+        } else {
+          LOG.warn("CloudInstancesProvider is null");
         }
       }
     } catch (VmwareCheckedCloudException e) {

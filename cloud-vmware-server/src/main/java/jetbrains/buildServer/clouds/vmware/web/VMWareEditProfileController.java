@@ -87,7 +87,7 @@ public class VMWareEditProfileController extends BaseFormXmlController {
     final String password = props.get(VMWareWebConstants.SECURE_PASSWORD);
 
     try {
-      final VMWareApiConnector myApiConnector = new VMWareApiConnectorImpl(new URL(serverUrl), username, password);
+      final VMWareApiConnector myApiConnector = new VMWareApiConnectorImpl(new URL(serverUrl), username, password, null);
       xmlResponse.addContent(getVirtualMachinesAsElement(myApiConnector.getVirtualMachines(true)));
       xmlResponse.addContent(getFoldersAsElement(myApiConnector.getFolders()));
       xmlResponse.addContent(getResourcePoolsAsElement(myApiConnector.getResourcePools()));

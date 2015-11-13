@@ -28,6 +28,7 @@ import jetbrains.buildServer.clouds.*;
 import jetbrains.buildServer.clouds.base.AbstractCloudClientFactory;
 import jetbrains.buildServer.clouds.base.errors.CheckedCloudException;
 import jetbrains.buildServer.clouds.base.errors.TypedCloudErrorInfo;
+import jetbrains.buildServer.clouds.server.CloudInstancesProvider;
 import jetbrains.buildServer.clouds.vmware.connector.VMWareApiConnector;
 import jetbrains.buildServer.clouds.vmware.connector.VMWareApiConnectorImpl;
 import jetbrains.buildServer.clouds.vmware.web.VMWareWebConstants;
@@ -49,11 +50,15 @@ public class VMWareCloudClientFactory extends AbstractCloudClientFactory<VmwareC
   private static final Logger LOG = Logger.getInstance(VMWareCloudClientFactory.class.getName());
   @NotNull private final String myHtmlPath;
   @NotNull private final File myIdxStorage;
+  @NotNull private final CloudInstancesProvider myInstancesProvider;
 
   public VMWareCloudClientFactory(@NotNull final CloudRegistrar cloudRegistrar,
                                   @NotNull final PluginDescriptor pluginDescriptor,
-                                  @NotNull final ServerPaths serverPaths) {
+                                  @NotNull final ServerPaths serverPaths,
+                                  @NotNull final CloudInstancesProvider instancesProvider
+                                  ) {
     super(cloudRegistrar);
+    myInstancesProvider = instancesProvider;
     myIdxStorage = new File(serverPaths.getPluginDataDirectory(), "vmwareIdx");
     if (!myIdxStorage.exists()){
       myIdxStorage.mkdirs();
@@ -145,11 +150,11 @@ public class VMWareCloudClientFactory extends AbstractCloudClientFactory<VmwareC
     String password = params.getParameter(VMWareWebConstants.SECURE_PASSWORD);
     if (serverUrl != null && username != null) {
       try {
-        return new VMWareApiConnectorImpl(new URL(serverUrl), username, password);
+        return new VMWareApiConnectorImpl(new URL(serverUrl), username, password, myInstancesProvider);
       } catch (MalformedURLException e) {
         LOG.warn(e.toString(), e);
       }
     }
-    throw new RuntimeException("Unable to create connector");
+    throw new CloudException("Unable to create connector");
   }
 }

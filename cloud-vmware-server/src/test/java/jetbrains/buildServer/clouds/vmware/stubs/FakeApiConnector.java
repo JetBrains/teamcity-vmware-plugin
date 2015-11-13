@@ -2,11 +2,14 @@ package jetbrains.buildServer.clouds.vmware.stubs;
 
 import com.vmware.vim25.mo.*;
 import java.net.MalformedURLException;
+import java.net.URL;
 import java.rmi.RemoteException;
 import java.util.*;
 import jetbrains.buildServer.clouds.base.errors.CheckedCloudException;
+import jetbrains.buildServer.clouds.server.CloudInstancesProvider;
 import jetbrains.buildServer.clouds.vmware.connector.VMWareApiConnectorImpl;
 import jetbrains.buildServer.clouds.vmware.errors.VmwareCheckedCloudException;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Sergey.Pak
@@ -15,8 +18,12 @@ import jetbrains.buildServer.clouds.vmware.errors.VmwareCheckedCloudException;
  */
 public class FakeApiConnector extends VMWareApiConnectorImpl {
 
-  public FakeApiConnector() {
-    super(null, null, null);
+  public FakeApiConnector() throws MalformedURLException {
+    this(null);
+  }
+
+  public FakeApiConnector(@Nullable CloudInstancesProvider instancesProvider) throws MalformedURLException {
+    super(new URL("http://localhost:9999"), "", "", instancesProvider);
   }
 
   @Override

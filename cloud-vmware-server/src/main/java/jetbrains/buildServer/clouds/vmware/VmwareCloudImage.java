@@ -39,6 +39,7 @@ import jetbrains.buildServer.clouds.vmware.connector.VmwareInstance;
 import jetbrains.buildServer.clouds.vmware.connector.VmwareTaskWrapper;
 import jetbrains.buildServer.serverSide.TeamCityProperties;
 import jetbrains.buildServer.util.FileUtil;
+import jetbrains.buildServer.util.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -57,6 +58,7 @@ public class VmwareCloudImage extends AbstractCloudImage<VmwareCloudInstance, Vm
   private final VMWareApiConnector myApiConnector;
   @NotNull private final CloudAsyncTaskExecutor myAsyncTaskExecutor;
   private final VmwareCloudImageDetails myImageDetails;
+  private final AtomicReference<String> myActualSnapshotName;
   private final File myIdxFile;
 
   public VmwareCloudImage(@NotNull final VMWareApiConnector apiConnector,
@@ -68,6 +70,7 @@ public class VmwareCloudImage extends AbstractCloudImage<VmwareCloudInstance, Vm
     myApiConnector = apiConnector;
     myAsyncTaskExecutor = asyncTaskExecutor;
     myInstances.clear();
+    myActualSnapshotName = new AtomicReference<String>("");
     myIdxFile = new File(idxStorage, imageDetails.getNickname() + ".idx");
     if (!myIdxFile.exists()){
       try {
@@ -428,6 +431,13 @@ public class VmwareCloudImage extends AbstractCloudImage<VmwareCloudInstance, Vm
         myInstance.updateErrors(new TypedCloudErrorInfo("Unknown error during processing instance " + myInstance.getName()));
         LOG.warn("Unknown error during processing " + myInstance.getName());
       }
+    }
+  }
+
+  public void updateActualSnapshotName(@NotNull final String snapshotName){
+    if (StringUtil.isNotEmpty(snapshotName) && !snapshotName.equals(myActualSnapshotName.get())){
+        LOG.info("Updated actual snapshot name for " + myImageDetails.getNickname() + " to " + snapshotName);
+        myActualSnapshotName.set(snapshotName);
     }
   }
 }

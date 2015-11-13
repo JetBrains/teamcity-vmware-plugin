@@ -20,6 +20,11 @@ import jetbrains.buildServer.BaseTestCase;
 import jetbrains.buildServer.clouds.*;
 import jetbrains.buildServer.clouds.base.errors.CheckedCloudException;
 import jetbrains.buildServer.clouds.base.tasks.UpdateInstancesTask;
+import jetbrains.buildServer.clouds.server.CloudInstancesProvider;
+import jetbrains.buildServer.clouds.server.CloudInstancesProviderCallback;
+import jetbrains.buildServer.clouds.server.CloudInstancesProviderExtendedCallback;
+import jetbrains.buildServer.clouds.server.CloudManager;
+import jetbrains.buildServer.clouds.server.agentTypes.CloudAgentTypeProvider;
 import jetbrains.buildServer.clouds.server.impl.*;
 import jetbrains.buildServer.clouds.server.instances.CloudEventDispatcher;
 import jetbrains.buildServer.clouds.vmware.connector.VMWareApiConnector;
@@ -115,7 +120,7 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
     FakeModel.instance().addVM("image2");*/
   }
 
-  public void check_start_type() {
+  public void check_start_type() throws MalformedURLException {
 
     myFakeApi = new FakeApiConnector() {
       @Override
@@ -474,7 +479,7 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
     startNewInstanceAndWait("image2");
   }
 
-  public void do_not_clear_image_instances_list_on_error() throws ExecutionException, InterruptedException {
+  public void do_not_clear_image_instances_list_on_error() throws ExecutionException, InterruptedException, MalformedURLException {
     final AtomicBoolean failure = new AtomicBoolean(false);
     final AtomicLong lastApiCallTime = new AtomicLong(0);
     final AtomicLong lastUpdateTime = new AtomicLong(0);
@@ -523,7 +528,7 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
     assertEquals(3, getImageByName("image2").getInstances().size());
   }
 
-  public void canstart_check_shouldnt_block_thread() throws InterruptedException {
+  public void canstart_check_shouldnt_block_thread() throws InterruptedException, MalformedURLException {
     final Lock lock = new ReentrantLock();
     final AtomicBoolean shouldLock = new AtomicBoolean(false);
     myFakeApi = new FakeApiConnector(){
@@ -623,7 +628,7 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
 
   }
 
-  public void profile_creation_should_not_block_ui() throws ExecutionException, InterruptedException {
+  public void profile_creation_should_not_block_ui() throws ExecutionException, InterruptedException, MalformedURLException {
     final int extraProfileCount = 5;
     final List<CloudClientParameters> profileParams = new ArrayList<CloudClientParameters>();
     for (int i=0; i< extraProfileCount; i++){
@@ -671,7 +676,7 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
       allowing(pd).getPluginResourcesPath("vmware-settings.html"); will(returnValue("aaa.html"));
     }});
     final CloudState state = m.mock(CloudState.class);
-    final VMWareCloudClientFactory factory = new VMWareCloudClientFactory(cloudRegistrar, pd, new ServerPaths(myIdxStorage.getAbsolutePath())){
+    final VMWareCloudClientFactory factory = new VMWareCloudClientFactory(cloudRegistrar, pd, new ServerPaths(myIdxStorage.getAbsolutePath()), null){
 
       @NotNull
       @Override
@@ -799,6 +804,36 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
     }
   }
 
+  public void markInstanceExpiredWhenSnapshotNameChanges() throws MalformedURLException {
+    final Map<String, CloudInstance> instancesMarkedExpired = new HashMap<String, CloudInstance>();
+    final CloudInstancesProvider instancesProviderStub = new CloudInstancesProvider() {
+      public void iterateInstances(@NotNull final CloudInstancesProviderCallback callback) {
+        throw new UnsupportedOperationException(".iterateInstances");
+
+        //
+      }
+
+      public void iterateInstances(@NotNull final CloudInstancesProviderExtendedCallback callback) {
+        throw new UnsupportedOperationException(".iterateInstances");
+
+        //
+      }
+
+      public void markInstanceExpired(@NotNull final CloudInstance instance) {
+        instancesMarkedExpired.put(instance.getInstanceId(),instance );
+      }
+
+      public boolean isInstanceExpired(@NotNull final CloudInstance instance) {
+        return instancesMarkedExpired.containsKey(instance.getInstanceId());
+      }
+    };
+    myFakeApi = new FakeApiConnector(instancesProviderStub);
+    final VmwareCloudInstance in = startNewInstanceAndWait("image2");
+    assertEquals(VirtualMachinePowerState.poweredOn, FakeModel.instance().getVirtualMachine(in.getName()).getRuntime().getPowerState());
+    FakeModel.instance().addVMSnapshot("image2", "snap2");
+    myFakeApi.checkImage(getImageByName("image2"));
+    assertTrue(instancesProviderStub.isInstanceExpired(in));
+  }
   /*
   *
   *

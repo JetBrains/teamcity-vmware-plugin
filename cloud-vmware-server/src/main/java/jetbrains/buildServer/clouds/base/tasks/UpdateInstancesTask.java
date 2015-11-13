@@ -19,12 +19,14 @@
 package jetbrains.buildServer.clouds.base.tasks;
 
 import com.intellij.openapi.diagnostic.Logger;
+import jetbrains.buildServer.clouds.CloudInstance;
 import jetbrains.buildServer.clouds.InstanceStatus;
 import jetbrains.buildServer.clouds.base.AbstractCloudClient;
 import jetbrains.buildServer.clouds.base.AbstractCloudImage;
 import jetbrains.buildServer.clouds.base.AbstractCloudInstance;
 import jetbrains.buildServer.clouds.base.connector.AbstractInstance;
 import jetbrains.buildServer.clouds.base.connector.CloudApiConnector;
+import jetbrains.buildServer.clouds.server.CloudInstancesProvider;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -44,7 +46,9 @@ public class UpdateInstancesTask<G extends AbstractCloudInstance<T>, T extends A
   private final long myStuckTime;
 
 
-  public UpdateInstancesTask(@NotNull final CloudApiConnector connector, final F client, long stuckTimeMillis) {
+  public UpdateInstancesTask(@NotNull final CloudApiConnector connector,
+                             @NotNull final F client,
+                             long stuckTimeMillis) {
     myConnector = connector;
     myClient = client;
     myStuckTime = stuckTimeMillis;
