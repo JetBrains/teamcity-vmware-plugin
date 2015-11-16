@@ -810,7 +810,7 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
             }
           }
         } else {
-          LOG.warn("CloudInstancesProvider is null");
+          LOG.debug("CloudInstancesProvider is null");
         }
       }
     } catch (VmwareCheckedCloudException e) {
