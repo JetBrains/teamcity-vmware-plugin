@@ -5,10 +5,22 @@
   <version>${TeamCityVersion}</version>
   <properties>
     <teamcity-lib-path>${TeamCityDist}/webapps/ROOT/WEB-INF/lib/</teamcity-lib-path>
+    <open-api-path>open-api</open-api-path>
     <teamcity-agent-lib-path>${TeamCityDist}/buildAgent/lib/</teamcity-agent-lib-path>
   </properties>
   <build>
     <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-clean-plugin</artifactId>
+        <configuration>
+          <filesets>
+            <fileset>
+              <directory>repo</directory>
+            </fileset>
+          </filesets>
+        </configuration>
+      </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-install-plugin</artifactId>
@@ -97,7 +109,8 @@
               <localRepositoryPath>repo</localRepositoryPath>
             </configuration>
           </execution>
-        <execution>
+
+          <execution>
             <id>install-agent</id>
             <phase>package</phase>
             <goals>
@@ -113,6 +126,115 @@
               <localRepositoryPath>repo</localRepositoryPath>
             </configuration>
           </execution>
+<!--
+          <execution>
+            <id>install-common-api</id>
+            <phase>package</phase>
+            <goals>
+              <goal>install-file</goal>
+            </goals>
+            <configuration>
+              <artifactId>common-api</artifactId>
+              <groupId>org.jetbrains.teamcity</groupId>
+              <version>${TeamCityVersion}</version>
+              <packaging>jar</packaging>
+              <createChecksum>true</createChecksum>
+              <file>${open-api-path}/common-api/common-api.jar</file>
+              <pomFile>${open-api-path}/common-api/pom.xml</pomFile>
+              <localRepositoryPath>repo</localRepositoryPath>
+            </configuration>
+          </execution>
+
+          <execution>
+            <id>install-server-api</id>
+            <phase>package</phase>
+            <goals>
+              <goal>install-file</goal>
+            </goals>
+            <configuration>
+              <artifactId>server-api</artifactId>
+              <groupId>org.jetbrains.teamcity</groupId>
+              <version>${TeamCityVersion}</version>
+              <packaging>jar</packaging>
+              <createChecksum>true</createChecksum>
+              <file>${open-api-path}/server-api/server-api.jar</file>
+              <pomFile>${open-api-path}/server-api/pom.xml</pomFile>
+              <localRepositoryPath>repo</localRepositoryPath>
+            </configuration>
+          </execution>
+
+          <execution>
+            <id>install-server-web-api</id>
+            <phase>package</phase>
+            <goals>
+              <goal>install-file</goal>
+            </goals>
+            <configuration>
+              <artifactId>server-web-api</artifactId>
+              <groupId>org.jetbrains.teamcity</groupId>
+              <version>${TeamCityVersion}</version>
+              <packaging>war</packaging>
+              <createChecksum>true</createChecksum>
+              <file>${open-api-path}/server-web-api/server-web-api.jar</file>
+              <pomFile>${open-api-path}/server-web-api/pom.xml</pomFile>
+              <localRepositoryPath>repo</localRepositoryPath>
+            </configuration>
+          </execution>
+
+          <execution>
+            <id>install-cloud-interface</id>
+            <phase>package</phase>
+            <goals>
+              <goal>install-file</goal>
+            </goals>
+            <configuration>
+              <artifactId>cloud-interface</artifactId>
+              <groupId>org.jetbrains.teamcity</groupId>
+              <version>${TeamCityVersion}</version>
+              <packaging>jar</packaging>
+              <createChecksum>true</createChecksum>
+              <file>${open-api-path}/cloud-interface/cloud-interface.jar</file>
+              <pomFile>${open-api-path}/cloud-interface/pom.xml</pomFile>
+              <localRepositoryPath>repo</localRepositoryPath>
+            </configuration>
+          </execution>
+
+          <execution>
+            <id>install-cloud-shared</id>
+            <phase>package</phase>
+            <goals>
+              <goal>install-file</goal>
+            </goals>
+            <configuration>
+              <artifactId>cloud-shared</artifactId>
+              <groupId>org.jetbrains.teamcity</groupId>
+              <version>${TeamCityVersion}</version>
+              <packaging>jar</packaging>
+              <createChecksum>true</createChecksum>
+              <file>${open-api-path}/cloud-shared/cloud-shared.jar</file>
+              <pomFile>${open-api-path}/cloud-shared/pom.xml</pomFile>
+              <localRepositoryPath>repo</localRepositoryPath>
+            </configuration>
+          </execution>
+
+          <execution>
+            <id>install-tests-support</id>
+            <phase>package</phase>
+            <goals>
+              <goal>install-file</goal>
+            </goals>
+            <configuration>
+              <artifactId>tests-support</artifactId>
+              <groupId>org.jetbrains.teamcity</groupId>
+              <version>${TeamCityVersion}</version>
+              <packaging>jar</packaging>
+              <createChecksum>true</createChecksum>
+              <file>${open-api-path}/tests-support/tests-support.jar</file>
+              <pomFile>${open-api-path}/tests-support/pom.xml</pomFile>
+              <localRepositoryPath>repo</localRepositoryPath>
+            </configuration>
+          </execution>-->
+
         </executions>
       </plugin>
     </plugins>
