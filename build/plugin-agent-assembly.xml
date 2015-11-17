@@ -15,8 +15,8 @@
         <moduleSet>
             <useAllReactorProjects>true</useAllReactorProjects>
             <includes>
-                <include>org.jetbrains.buildserver:cloud-vmware-agent</include>
-                <include>org.jetbrains.buildserver:cloud-vmware-common</include>
+                <include>org.jetbrains.teamcity:cloud-vmware-agent</include>
+                <include>org.jetbrains.teamcity:cloud-vmware-common</include>
             </includes>
             <binaries>
                 <outputDirectory>lib</outputDirectory>

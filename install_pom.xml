@@ -5,6 +5,7 @@
   <version>${TeamCityVersion}</version>
   <properties>
     <teamcity-lib-path>${TeamCityDist}/webapps/ROOT/WEB-INF/lib/</teamcity-lib-path>
+    <teamcity-agent-lib-path>${TeamCityDist}/buildAgent/lib/</teamcity-agent-lib-path>
   </properties>
   <build>
     <plugins>
@@ -93,6 +94,22 @@
               <packaging>jar</packaging>
               <createChecksum>true</createChecksum>
               <file>${teamcity-lib-path}/common-impl.jar</file>
+              <localRepositoryPath>repo</localRepositoryPath>
+            </configuration>
+          </execution>
+        <execution>
+            <id>install-agent</id>
+            <phase>package</phase>
+            <goals>
+              <goal>install-file</goal>
+            </goals>
+            <configuration>
+              <artifactId>agent</artifactId>
+              <groupId>org.jetbrains.teamcity</groupId>
+              <version>${TeamCityVersion}</version>
+              <packaging>jar</packaging>
+              <createChecksum>true</createChecksum>
+              <file>${teamcity-agent-lib-path}/agent.jar</file>
               <localRepositoryPath>repo</localRepositoryPath>
             </configuration>
           </execution>
