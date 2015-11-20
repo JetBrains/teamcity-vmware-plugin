@@ -1,5 +1,7 @@
 package jetbrains.buildServer.clouds.vmware;
 
+import com.intellij.openapi.diagnostic.Log4jLogger;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.WaitFor;
 import com.vmware.vim25.OptionValue;
 import com.vmware.vim25.VirtualMachinePowerState;
@@ -37,6 +39,8 @@ import jetbrains.buildServer.clouds.vmware.web.VMWareWebConstants;
 import jetbrains.buildServer.serverSide.ServerPaths;
 import jetbrains.buildServer.serverSide.TeamCityProperties;
 import jetbrains.buildServer.web.openapi.PluginDescriptor;
+import org.apache.log4j.ConsoleAppender;
+import org.apache.log4j.Level;
 import org.jetbrains.annotations.NotNull;
 import org.jmock.Expectations;
 import org.jmock.Mockery;
@@ -64,6 +68,8 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
   @BeforeMethod
   public void setUp() throws Exception {
     super.setUp();
+    //org.apache.log4j.Logger.getLogger("jetbrains.buildServer").setLevel(Level.DEBUG);
+    //org.apache.log4j.Logger.getRootLogger().addAppender(new ConsoleAppender());
 
     myIdxStorage = createTempDir();
 
@@ -290,6 +296,7 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
     // start and stop Instance
     final Task powerOnTask = FakeModel.instance().getVirtualMachine("image1").powerOnVM_Task(null);
     assertEquals("success", powerOnTask.waitForTask());
+    Thread.sleep(2000); // to ensure that version will change
     FakeModel.instance().getVirtualMachine("image1").shutdownGuest();
     final String updatedChangeVersion = FakeModel.instance().getVirtualMachine("image1").getConfig().getChangeVersion();
     assertNotSame(originalChangeVersion, updatedChangeVersion);
