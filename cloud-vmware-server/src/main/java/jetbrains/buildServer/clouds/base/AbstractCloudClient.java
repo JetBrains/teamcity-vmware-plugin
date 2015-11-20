@@ -92,14 +92,14 @@ public abstract class AbstractCloudClient<G extends AbstractCloudInstance<T>, T 
   }
 
   public Future<?> populateImagesDataAsync(@NotNull final Collection<D> imageDetails){
-    return populateImagesDataAsync(imageDetails, 60);
+    return populateImagesDataAsync(imageDetails, 60*1000);
   }
 
-  public Future<?> populateImagesDataAsync(@NotNull final Collection<D> imageDetails, final long updateDelaySec){
+  public Future<?> populateImagesDataAsync(@NotNull final Collection<D> imageDetails, final long updateDelayMs){
     return myAsyncTaskExecutor.submit("Populate images data", new Runnable() {
       public void run() {
         try {
-          populateImagesData(imageDetails, updateDelaySec, updateDelaySec);
+          populateImagesData(imageDetails, updateDelayMs, updateDelayMs);
         } finally {
           myIsInitialized.set(true);
         }
@@ -107,14 +107,14 @@ public abstract class AbstractCloudClient<G extends AbstractCloudInstance<T>, T 
     });
   }
 
-  protected void populateImagesData(@NotNull final Collection<D> imageDetails, long initialDelaySec, long delaySec){
+  protected void populateImagesData(@NotNull final Collection<D> imageDetails, long initialDelaySec, long delayMs){
     for (D details : imageDetails) {
       T image = checkAndCreateImage(details);
       myImageMap.put(image.getName(), image);
     }
     final UpdateInstancesTask<G, T, ?> updateInstancesTask = createUpdateInstancesTask();
     updateInstancesTask.run();
-    myAsyncTaskExecutor.scheduleWithFixedDelay("Update instances", updateInstancesTask, initialDelaySec, delaySec, TimeUnit.SECONDS);
+    myAsyncTaskExecutor.scheduleWithFixedDelay("Update instances", updateInstancesTask, initialDelaySec, delayMs, TimeUnit.MILLISECONDS);
   }
 
   protected abstract T checkAndCreateImage(@NotNull final D imageDetails);
