@@ -1,15 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <teamcity-plugin xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:shemas-jetbrains-com:teamcity-plugin-v1-xml">
   <info>
-    <name>vsphere</name>
+    <name>cloud-vmware</name>
     <display-name>VMware vSphere</display-name>
     <version>@Plugin_Version@</version>
     <description>Runs cloud agents on VMware vSphere</description>
     <download-url>https://github.com/JetBrains/teamcity-vmware-plugin</download-url>
-    <email>Plugin author e-mail</email>
     <vendor>
-      <name>@Plugin_Vendor@</name>
-      <url>@Plugin_Vendor_Url@</url>
+      <name>JetBrains, s.r.o.</name>
+      <url>http://www.jetbrains.com</url>
     </vendor>
   </info>
   <deployment use-separate-classloader="true" />

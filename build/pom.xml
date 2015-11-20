@@ -50,16 +50,8 @@
                 <outputFile>${basedir}/target/teamcity-plugin.xml</outputFile>
                 <replacements>
                     <replacement>
-                        <token>@Version@</token>
-                        <value>${teamcity.cloud-vmware.plugin.version}</value>
-                    </replacement>
-                    <replacement>
-                        <token>@VendorName@</token>
-                        <value>${teamcity.cloud-vmware.plugin.vendorName}</value>
-                    </replacement>
-                    <replacement>
-                        <token>@VendorURL@</token>
-                        <value>${teamcity.cloud-vmware.plugin.vendorUrl}</value>
+                        <token>@Plugin_Version@</token>
+                        <value>${env.BUILD_NUMBER}</value>
                     </replacement>
                 </replacements>                        
             </configuration>
