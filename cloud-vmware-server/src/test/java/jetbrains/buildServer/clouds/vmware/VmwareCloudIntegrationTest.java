@@ -35,6 +35,7 @@ import jetbrains.buildServer.clouds.vmware.stubs.FakeModel;
 import jetbrains.buildServer.clouds.vmware.stubs.FakeVirtualMachine;
 import jetbrains.buildServer.clouds.vmware.web.VMWareWebConstants;
 import jetbrains.buildServer.serverSide.ServerPaths;
+import jetbrains.buildServer.serverSide.TeamCityProperties;
 import jetbrains.buildServer.web.openapi.PluginDescriptor;
 import org.jetbrains.annotations.NotNull;
 import org.jmock.Expectations;
@@ -511,7 +512,7 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
         return super.findEntityByIdName(name, instanceType);
       }
     };
-    recreateClient(2, lastUpdateTime, 2*60*1000);
+    recreateClient(250, lastUpdateTime, 2*60*1000);
     startNewInstanceAndWait("image2");
     startNewInstanceAndWait("image2");
     startNewInstanceAndWait("image2");
@@ -676,7 +677,13 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
       allowing(pd).getPluginResourcesPath("vmware-settings.html"); will(returnValue("aaa.html"));
     }});
     final CloudState state = m.mock(CloudState.class);
-    final VMWareCloudClientFactory factory = new VMWareCloudClientFactory(cloudRegistrar, pd, new ServerPaths(myIdxStorage.getAbsolutePath()), null){
+    final VMWareCloudClientFactory factory = new VMWareCloudClientFactory(cloudRegistrar, pd, new ServerPaths(myIdxStorage.getAbsolutePath()),
+                                                                          new CloudInstancesProvider() {
+                                                                            public void iterateInstances(@NotNull final CloudInstancesProviderCallback callback) {}
+                                                                            public void iterateInstances(@NotNull final CloudInstancesProviderExtendedCallback callback) {}
+                                                                            public void markInstanceExpired(@NotNull final CloudInstance instance) {}
+                                                                            public boolean isInstanceExpired(@NotNull final CloudInstance instance) {return false;}
+                                                                          }){
 
       @NotNull
       @Override
@@ -706,7 +713,7 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
   }
 
   public void enforce_change_of_stuck_instance_status() throws RemoteException, ExecutionException, InterruptedException {
-    recreateClient(2, new AtomicLong(0), 3*1000);
+    recreateClient(250, new AtomicLong(0), 3*1000);
     final VmwareCloudInstance instance = startNewInstanceAndWait("image1");
     FakeModel.instance().getVms().get(instance.getName()).shutdownGuest();
     instance.setStatus(InstanceStatus.STOPPING);
@@ -737,7 +744,7 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
       FakeModel.instance().getVirtualMachine(inst.getName()).shutdownGuest();
     }
 
-    new WaitFor(10*1000){
+    new WaitFor(3*1000){
       @Override
       protected boolean condition() {
         boolean stoppedAll = true;
@@ -951,24 +958,14 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
   }
 
   private void recreateClient()  {
-    if (myClient != null) {
-      myClient.dispose();
+    final long updateTime = TeamCityProperties.getLong("teamcity.vsphere.instance.status.update.delay.ms", 250);
+    try {
+      recreateClient(updateTime, new AtomicLong(System.currentTimeMillis()), 250*1000);
+    } catch (ExecutionException e) {
+      fail(e.toString());
+    } catch (InterruptedException e) {
+      fail(e.toString());
     }
-    final Collection<VmwareCloudImageDetails> images = VMWareCloudClientFactory.parseImageDataInternal(myClientParameters);
-    myClient = new VMWareCloudClient(myClientParameters, myFakeApi, myIdxStorage){
-      @Override
-      public Future<?> populateImagesDataAsync(@NotNull final Collection<VmwareCloudImageDetails> imageDetails) {
-        return super.populateImagesDataAsync(imageDetails, 2);
-      }
-    };
-    final Future<?> future = myClient.populateImagesDataAsync(images);
-    new WaitFor(1000){
-      @Override
-      protected boolean condition() {
-        return future.isDone();
-      }
-    };
-    assertNull(myClient.getErrorInfo());
   }
 
   private void recreateClient(final long updateDelay, final AtomicLong lastUpdateTime, final long stuckTime) throws ExecutionException, InterruptedException {
