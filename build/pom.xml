@@ -67,7 +67,7 @@
                   <goal>single</goal>
                 </goals>
                 <configuration>
-                  <finalName>vmware-cloud-agent</finalName>
+                  <finalName>cloud-vmware-agent</finalName>
                   <appendAssemblyId>false</appendAssemblyId>
                   <descriptors>
                     <descriptor>plugin-agent-assembly.xml</descriptor>
@@ -81,7 +81,7 @@
                   <goal>single</goal>
                 </goals>
                 <configuration>
-                  <finalName>vmware-cloud</finalName>
+                  <finalName>cloud-vmware</finalName>
                   <outputDirectory>${project.parent.build.directory}</outputDirectory>
                   <appendAssemblyId>false</appendAssemblyId>
                   <descriptors>
