@@ -104,7 +104,7 @@ public class VmwareCloudImageTest extends BaseTestCase {
     assertEquals(Task.SUCCESS, result);
     instance2Stop.setStatus(InstanceStatus.STOPPED);
     assertTrue(myImage.canStartNewInstance());
-    System.setProperty(VmwareConstants.CONSIDER_STOPPED_VMS_LIMIT, "false");
+    System.setProperty(VmwareConstants.CONSIDER_STOPPED_VMS_LIMIT, "true");
     assertFalse(myImage.canStartNewInstance());
     System.getProperties().remove(VmwareConstants.CONSIDER_STOPPED_VMS_LIMIT);
     assertTrue(myImage.canStartNewInstance());

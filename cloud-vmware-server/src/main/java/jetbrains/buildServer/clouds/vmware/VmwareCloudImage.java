@@ -330,12 +330,12 @@ public class VmwareCloudImage extends AbstractCloudImage<VmwareCloudInstance, Vm
       return myInstance.getStatus() == InstanceStatus.STOPPED;
     }
 
-    final boolean countStoppedVmsInLimit = TeamCityProperties.getBooleanOrTrue(VmwareConstants.CONSIDER_STOPPED_VMS_LIMIT)
+    final boolean countStoppedVmsInLimit = TeamCityProperties.getBoolean(VmwareConstants.CONSIDER_STOPPED_VMS_LIMIT)
                                            && myImageDetails.getBehaviour().isDeleteAfterStop();
 
     final List<String> consideredInstances = new ArrayList<String>();
     for (Map.Entry<String, VmwareCloudInstance> entry : myInstances.entrySet()) {
-      if (entry.getValue().getStatus() != InstanceStatus.STOPPED || !countStoppedVmsInLimit)
+      if (entry.getValue().getStatus() != InstanceStatus.STOPPED || countStoppedVmsInLimit)
         consideredInstances.add(entry.getKey());
     }
     final boolean canStartMore =  consideredInstances.size() < myImageDetails.getMaxInstances();
