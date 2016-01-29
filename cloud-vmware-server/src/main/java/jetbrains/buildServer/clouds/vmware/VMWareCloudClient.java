@@ -19,13 +19,17 @@
 package jetbrains.buildServer.clouds.vmware;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.text.StringUtil;
 import java.io.File;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 import jetbrains.buildServer.clouds.*;
 import jetbrains.buildServer.clouds.base.AbstractCloudClient;
 import jetbrains.buildServer.clouds.base.errors.TypedCloudErrorInfo;
 import jetbrains.buildServer.clouds.base.tasks.UpdateInstancesTask;
 import jetbrains.buildServer.clouds.vmware.connector.VMWareApiConnector;
+import jetbrains.buildServer.clouds.vmware.web.VMWareWebConstants;
 import jetbrains.buildServer.serverSide.AgentDescription;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -39,6 +43,7 @@ public class VMWareCloudClient extends AbstractCloudClient<VmwareCloudInstance, 
 
   private static final Logger LOG = Logger.getInstance(VMWareCloudClient.class.getName());
   @NotNull private final File myIdxStorage;
+  private final Integer myProfileInstancesLimit;
 
 
   public VMWareCloudClient(@NotNull final CloudClientParameters cloudClientParameters,
@@ -47,6 +52,8 @@ public class VMWareCloudClient extends AbstractCloudClient<VmwareCloudInstance, 
                     ) {
     super(cloudClientParameters, apiConnector);
     myIdxStorage = idxStorage;
+    final String limitStr = cloudClientParameters.getParameter(VMWareWebConstants.PROFILE_INSTANCE_LIMIT);
+    myProfileInstancesLimit = StringUtil.isEmpty(limitStr) ? null : Integer.valueOf(limitStr);
   }
 
   @Nullable
@@ -65,6 +72,20 @@ public class VMWareCloudClient extends AbstractCloudClient<VmwareCloudInstance, 
   protected VmwareCloudImage checkAndCreateImage(@NotNull final VmwareCloudImageDetails imageDetails) {
     final VMWareApiConnector apiConnector = (VMWareApiConnector)myApiConnector;
     return new VmwareCloudImage(apiConnector, imageDetails, myAsyncTaskExecutor, myIdxStorage);
+  }
+
+  @Override
+  public boolean canStartNewInstance(@NotNull final CloudImage baseImage) {
+    if (myProfileInstancesLimit != null) {
+      final AtomicLong count = new AtomicLong(0);
+      myImageMap.forEach((s, img) -> {
+        count.addAndGet(img.getInstances().stream().filter(i -> i.getStatus().isCanTerminate()).count());
+      });
+      if (count.get() >= myProfileInstancesLimit){
+        return false;
+      }
+    }
+    return super.canStartNewInstance(baseImage);
   }
 
   @Override

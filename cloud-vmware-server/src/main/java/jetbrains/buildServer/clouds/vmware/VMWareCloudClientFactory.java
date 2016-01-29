@@ -131,11 +131,7 @@ public class VMWareCloudClientFactory extends AbstractCloudClientFactory<VmwareC
 
   @NotNull
   public PropertiesProcessor getPropertiesProcessor() {
-    return new PropertiesProcessor() {
-      public Collection<InvalidProperty> process(Map<String, String> stringStringMap) {
-        return Collections.emptyList();
-      }
-    };
+    return new VmwarePropertiesProcessor();
   }
 
   public boolean canBeAgentOfType(@NotNull AgentDescription agentDescription) {

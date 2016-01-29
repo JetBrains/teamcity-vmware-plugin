@@ -42,17 +42,28 @@
   <tr>
     <th><label for="${webCons.serverUrl}">vCenter SDK URL: <l:star/></label>
       <bs:help urlPrefix="https://pubs.vmware.com/vsphere-4-esx-vcenter" file="index.jsp?topic=/com.vmware.vsphere.installclassic.doc_41/install/lm_groups/t_urls_stand.html"/></th>
-    <td><props:textProperty name="${webCons.serverUrl}" className="settings longField"/></td>
+    <td><props:textProperty name="${webCons.serverUrl}" className="settings longField"/>
+      <span id="error_${webCons.serverUrl}" class="error"></span>
+    </td>
   </tr>
 
   <tr>
     <th><label for="${webCons.username}">Username: <l:star/></label></th>
     <td><props:textProperty name="${webCons.username}" className="settings longField"/></td>
+    <span id="error_${webCons.username}" class="error"></span>
   </tr>
 
   <tr>
     <th><label for="secure:${webCons.password}">Password: <l:star/></label></th>
     <td><props:passwordProperty name="secure:${webCons.password}" className="settings longField"/></td>
+    <span id="error_secure:${webCons.password}" class="error"></span>
+  </tr>
+  <tr>
+    <th><label for="${webCons.profileInstanceLimit}">Maximum instances count:</label></th>
+    <td><props:textProperty name="${webCons.profileInstanceLimit}" className="settings longField"/>
+      <span id="error_${webCons.profileInstanceLimit}" class="error"></span>
+      <span class="smallNote">Maximum number of instances that can be started. Use blank to have no limit</span>
+    </td>
   </tr>
   <tr>
     <td colspan="2">

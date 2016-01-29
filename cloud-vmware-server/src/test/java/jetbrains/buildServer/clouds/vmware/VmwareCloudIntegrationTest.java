@@ -848,6 +848,18 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
     myFakeApi.checkImage(getImageByName("image2"));
     assertTrue(instancesProviderStub.isInstanceExpired(in));
   }
+
+  public void shouldConsiderProfileInstancesLimit(){
+    myClientParameters.setParameter(VMWareWebConstants.PROFILE_INSTANCE_LIMIT, "1");
+    recreateClient();
+    assertTrue(myClient.canStartNewInstance(getImageByName("image2")));
+    assertTrue(myClient.canStartNewInstance(getImageByName("image1")));
+    assertTrue(myClient.canStartNewInstance(getImageByName("image_template")));
+    startNewInstanceAndWait("image2");
+    assertFalse(myClient.canStartNewInstance(getImageByName("image2")));
+    assertFalse(myClient.canStartNewInstance(getImageByName("image1")));
+    assertFalse(myClient.canStartNewInstance(getImageByName("image_template")));
+  }
   /*
   *
   *

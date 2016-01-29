@@ -44,6 +44,7 @@ BS.Clouds.VMWareVSphere = BS.Clouds.VMWareVSphere || (function () {
             this.$serverUrl = $j(BS.Util.escapeId(serverUrlElemId));
             this.$serverUsername = $j(BS.Util.escapeId('vmware_username'));
             this.$serverPassword = $j(BS.Util.escapeId('secure:vmware_password'));
+            this.$profileInstancesLimit = $j('#vmware_profile_instance_limit');
 
             this.$fetchOptionsButton = $j('#vmwareFetchOptionsButton');
             this.$emptyImagesListMessage = $j('.emptyImagesListMessage');
@@ -181,7 +182,14 @@ BS.Clouds.VMWareVSphere = BS.Clouds.VMWareVSphere || (function () {
             $j('.settings').removeClass('settings_error');
             this.clearErrors();
 
-            [ this.$serverUrl, this.$serverUsername, this.$serverPassword ].forEach(checkRequired);
+            debugger;
+            [ this.$serverUrl, this.$serverUsername, this.$serverPassword, this.$profileInstancesLimit ].forEach(checkRequired);
+
+            var profileInstancesLimitVal = this.$profileInstancesLimit.val();
+            if (!$j.isNumeric(profileInstancesLimitVal) || profileInstancesLimitVal < 0){
+                isValid = false;
+                highlightErrors && this.$profileInstancesLimit.addClass('settings_error');
+            }
 
             return isValid;
         },
