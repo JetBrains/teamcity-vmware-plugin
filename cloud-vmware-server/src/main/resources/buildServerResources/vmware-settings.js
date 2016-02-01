@@ -182,14 +182,8 @@ BS.Clouds.VMWareVSphere = BS.Clouds.VMWareVSphere || (function () {
             $j('.settings').removeClass('settings_error');
             this.clearErrors();
 
-            debugger;
-            [ this.$serverUrl, this.$serverUsername, this.$serverPassword, this.$profileInstancesLimit ].forEach(checkRequired);
+            [ this.$serverUrl, this.$serverUsername, this.$serverPassword ].forEach(checkRequired);
 
-            var profileInstancesLimitVal = this.$profileInstancesLimit.val();
-            if (!$j.isNumeric(profileInstancesLimitVal) || profileInstancesLimitVal < 0){
-                isValid = false;
-                highlightErrors && this.$profileInstancesLimit.addClass('settings_error');
-            }
 
             return isValid;
         },
