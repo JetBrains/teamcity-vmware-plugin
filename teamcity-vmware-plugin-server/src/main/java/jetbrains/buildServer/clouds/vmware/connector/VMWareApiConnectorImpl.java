@@ -243,9 +243,16 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
   public Map<String, VmwareManagedEntity> getFolders() throws VmwareCheckedCloudException {
     final Collection<Folder> allFolders = CollectionsUtil.filterCollection(findAllEntities(Folder.class), new Filter<Folder>() {
       public boolean accept(@NotNull final Folder folder) {
+        final ManagedEntity parent = folder.getParent();
+        LOG.info(String.format(
+                "DEBUG: Got folder %s, childTypes: %s, Parent: %s",
+                folder.getName(),
+                Arrays.toString(folder.getChildType()),
+                parent == null ? "null" : String.format("%s(%s)", parent.getName(), parent.getMOR().getType())
+        ));
         if ("vm".equals(folder.getName())
-            && folder.getParent() != null
-            && !FOLDER_TYPE.equals(folder.getParent().getMOR().getType()))
+            && parent != null
+            && !FOLDER_TYPE.equals(parent.getMOR().getType()))
           return false;
         return canContainVMs(folder);
       }
