@@ -44,7 +44,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import static jetbrains.buildServer.clouds.vmware.VMWarePropertiesNames.*;
-import static org.hsqldb.lib.tar.TarHeaderField.name;
 
 /**
  * @author Sergey.Pak
