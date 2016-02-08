@@ -161,11 +161,6 @@ public class VmwareInstance extends AbstractInstance implements VmwareManagedEnt
   }
 
   @Nullable
-  public String getDatacenterName() {
-    return myDatacenterName;
-  }
-
-  @Nullable
   public String getDatacenterId() {
     return myDatacenterId;
   }

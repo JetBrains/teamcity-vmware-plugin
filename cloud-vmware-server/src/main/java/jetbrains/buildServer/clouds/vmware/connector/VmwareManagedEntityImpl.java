@@ -33,36 +33,27 @@ public class VmwareManagedEntityImpl implements VmwareManagedEntity {
   private final String myName;
   private final String myId;
   private final String myDatacenterId;
-  private final String myDatacenterName;
 
   public VmwareManagedEntityImpl(@NotNull final ManagedEntity entity) {
-    myName = entity.getName();
+    myName = VmwareUtils.getEntityDisplayName(entity);
     myId = entity.getMOR().getVal();
     final Datacenter datacenter = VmwareUtils.getDatacenter(entity);
-    if (datacenter != null) {
-      myDatacenterName = datacenter.getName();
-      myDatacenterId = datacenter.getMOR().getVal();
-    } else {
-      myDatacenterName = null;
-      myDatacenterId = null;
-    }
+    myDatacenterId = datacenter != null ? datacenter.getMOR().getVal() : null;
   }
 
+  @Override
   @NotNull
   public String getId() {
     return myId;
   }
 
+  @Override
   @NotNull
   public String getName() {
     return myName;
   }
 
-  @Nullable
-  public String getDatacenterName() {
-    return myDatacenterName;
-  }
-
+  @Override
   @Nullable
   public String getDatacenterId() {
     return myDatacenterId;

@@ -31,7 +31,5 @@ public interface VmwareManagedEntity {
 
   @NotNull String getName();
 
-  @Nullable String getDatacenterName();
-
   @Nullable String getDatacenterId();
 }

@@ -19,8 +19,13 @@
 package jetbrains.buildServer.clouds.vmware.connector;
 
 import com.vmware.vim25.mo.Datacenter;
+import com.vmware.vim25.mo.Folder;
 import com.vmware.vim25.mo.ManagedEntity;
+import com.vmware.vim25.mo.ResourcePool;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import static com.vmware.vim25.LicenseFeatureInfoUnit.vm;
 
 /**
  * @author Sergey.Pak
@@ -28,6 +33,10 @@ import org.jetbrains.annotations.Nullable;
  *         Time: 5:37 PM
  */
 public class VmwareUtils {
+  private static final String FOLDER_TYPE = Folder.class.getSimpleName();
+  private static final String RESPOOL_TYPE = ResourcePool.class.getSimpleName();
+  private static final String SPEC_FOLDER = "vm";
+  private static final String SPEC_RESPOOL = "Resources";
 
   @Nullable
   static Datacenter getDatacenter(ManagedEntity entity){
@@ -41,4 +50,23 @@ public class VmwareUtils {
     } catch (Exception ex){}
     return null;
   }
+
+  static String getEntityDisplayName(@NotNull final ManagedEntity entity){
+    if (entity instanceof Folder) {
+      final Folder folder = (Folder) entity;
+      if (isSpecial(folder)) {
+        return folder.getParent().getName();
+      }
+    }
+    return entity.getName();
+  }
+
+  static boolean isSpecial(@NotNull final ResourcePool pool){
+    return SPEC_RESPOOL.equals(pool.getName()) && pool.getParent() != null && !RESPOOL_TYPE.equals(pool.getParent().getMOR().getType());
+  }
+
+  static boolean isSpecial(@NotNull final Folder folder){
+    return SPEC_FOLDER.equals(folder.getName()) && folder.getParent() != null && !FOLDER_TYPE.equals(folder.getParent().getMOR().getType());
+  }
+
 }
