@@ -44,6 +44,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import static jetbrains.buildServer.clouds.vmware.VMWarePropertiesNames.*;
+import static org.hsqldb.lib.tar.TarHeaderField.name;
 
 /**
  * @author Sergey.Pak
@@ -243,10 +244,6 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
   public Map<String, VmwareManagedEntity> getFolders() throws VmwareCheckedCloudException {
     final Collection<Folder> allFolders = CollectionsUtil.filterCollection(findAllEntities(Folder.class), new Filter<Folder>() {
       public boolean accept(@NotNull final Folder folder) {
-        if ("vm".equals(folder.getName())
-            && folder.getParent() != null
-            && !FOLDER_TYPE.equals(folder.getParent().getMOR().getType()))
-          return false;
         return canContainVMs(folder);
       }
     });
@@ -255,9 +252,9 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
     final Map<String, VmwareManagedEntity> filteredMap = new HashMap<String, VmwareManagedEntity>();
 
     for (Folder folder : allFolders) {
-      String folderName = folder.getName();
+      String folderName = isSpecial(folder) ? folder.getParent().getName() : folder.getName();
       if (containsDuplicates) {
-        folderName = getFullFolderPath(folder);
+        folderName = getFullFolderPath(folder, folderName);
       }
       filteredMap.put(folderName, new VmwareManagedEntityImpl(folder));
     }
@@ -303,9 +300,9 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
     return false;
   }
 
-  private String getFullFolderPath(final Folder folder){
+  private String getFullFolderPath(final Folder folder, final String displayName){
     final String folderMORType = folder.getMOR().getType();
-    StringBuilder pathBuilder = new StringBuilder(folder.getName());
+    StringBuilder pathBuilder = new StringBuilder(displayName);
     ManagedEntity entity = folder.getParent();
     while (entity != null){
       boolean skip = false;
