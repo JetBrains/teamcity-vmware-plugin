@@ -303,6 +303,9 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
     final String folderMORType = folder.getMOR().getType();
     StringBuilder pathBuilder = new StringBuilder(displayName);
     ManagedEntity entity = folder.getParent();
+    if (isSpecial(folder)){
+      entity = entity.getParent();
+    }
     while (entity != null){
       boolean skip = false;
       if (entity.getMOR().getType().equals(folderMORType)){
