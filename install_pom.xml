@@ -37,7 +37,8 @@
               <version>0.1-SNAPSHOT</version>
               <packaging>jar</packaging>
               <createChecksum>true</createChecksum>
-              <file>lib/vijava.jar</file>
+              <!--TODO: pick the latest version automatically-->
+              <file>lib/yavijava-6.0.04-SNAPSHOT.jar</file>
               <localRepositoryPath>repo</localRepositoryPath>
             </configuration>
           </execution>

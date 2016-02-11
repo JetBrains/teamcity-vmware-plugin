@@ -54,7 +54,7 @@
     <orderEntry type="module-library">
       <library>
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/../lib/vijava.jar!/" />
+          <root url="jar://$MODULE_DIR$/../lib/yavijava-6.0.04-SNAPSHOT.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />

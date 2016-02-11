@@ -104,7 +104,7 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
 
     if (myServiceInstance == null){
       try {
-        myServiceInstance = new ServiceInstance(myInstanceURL, myUsername, myPassword, true);
+        myServiceInstance = new ServiceInstance(myInstanceURL, myUsername, myPassword, true, 10*1000, 30*1000);
       } catch (MalformedURLException e) {
         throw new VmwareCheckedCloudException("Invalid server URL", e);
       } catch (RemoteException e) {
