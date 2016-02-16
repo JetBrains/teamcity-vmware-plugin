@@ -25,6 +25,7 @@
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-install-plugin</artifactId>
         <executions>
+<!--
           <execution>
             <id>install-vijava</id>
             <phase>package</phase>
@@ -34,14 +35,15 @@
             <configuration>
               <artifactId>vijava</artifactId>
               <groupId>vijava</groupId>
-              <version>0.1-SNAPSHOT</version>
+              <version>6.0.04-SNAPSHOT</version>
               <packaging>jar</packaging>
               <createChecksum>true</createChecksum>
-              <!--TODO: pick the latest version automatically-->
+              &lt;!&ndash;TODO: pick the latest version automatically&ndash;&gt;
               <file>lib/yavijava-6.0.04-SNAPSHOT.jar</file>
               <localRepositoryPath>repo</localRepositoryPath>
             </configuration>
           </execution>
+-->
 
           <execution>
             <id>install-cloud-server</id>
