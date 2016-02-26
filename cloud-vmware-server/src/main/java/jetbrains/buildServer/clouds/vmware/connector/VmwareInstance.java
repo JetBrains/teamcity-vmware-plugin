@@ -32,6 +32,7 @@ import jetbrains.buildServer.clouds.InstanceStatus;
 import jetbrains.buildServer.clouds.base.connector.AbstractInstance;
 import jetbrains.buildServer.clouds.base.connector.AsyncCloudTask;
 import jetbrains.buildServer.util.StringUtil;
+import jetbrains.buildServer.util.impl.Lazy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -45,8 +46,7 @@ public class VmwareInstance extends AbstractInstance implements VmwareManagedEnt
 
   @NotNull private final VirtualMachine myVm;
   private final String myId;
-  private final String myDatacenterName;
-  private final String myDatacenterId;
+  private final Lazy<String> myDatacenterIdLazy;
   private final Map<String, String> myProperties;
 
   public VmwareInstance(@NotNull final VirtualMachine vm) {
@@ -54,14 +54,13 @@ public class VmwareInstance extends AbstractInstance implements VmwareManagedEnt
     myVm = vm;
     myProperties = extractProperties(myVm);
     myId = vm.getMOR().getVal();
-    final Datacenter datacenter = VmwareUtils.getDatacenter(vm);
-    if (datacenter != null) {
-      myDatacenterId = datacenter.getMOR().getVal();
-      myDatacenterName = datacenter.getName();
-    } else {
-      myDatacenterId = null;
-      myDatacenterName = null;
-    }
+    myDatacenterIdLazy = new Lazy<String>() {
+      @Nullable
+      @Override
+      protected String createValue() {
+        return calculateDatacenterId();
+      }
+    };
   }
 
 
@@ -162,7 +161,16 @@ public class VmwareInstance extends AbstractInstance implements VmwareManagedEnt
 
   @Nullable
   public String getDatacenterId() {
-    return myDatacenterId;
+    return myDatacenterIdLazy.getValue();
+  }
+
+  private String calculateDatacenterId() {
+    final Datacenter datacenter = VmwareUtils.getDatacenter(myVm);
+    if (datacenter != null) {
+      return datacenter.getMOR().getVal();
+    } else {
+      return null;
+    }
   }
 
   public String getImageName(){
