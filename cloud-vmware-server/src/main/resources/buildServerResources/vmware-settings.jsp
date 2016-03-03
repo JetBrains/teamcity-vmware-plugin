@@ -33,7 +33,6 @@
 <jsp:useBean id="refreshSnapshotsPath" class="java.lang.String" scope="request"/>
 </table>
 
-<h2 class="noBorder section-header">Cloud Access Information</h2>
 <script type="text/javascript">
     BS.LoadStyleSheetDynamically("<c:url value='${resPath}vmware-settings.css'/>");
 </script>
@@ -60,44 +59,41 @@
   </tr>
   <tr>
     <th><label for="${webCons.profileInstanceLimit}">Maximum instances count:</label></th>
-    <td><props:textProperty name="${webCons.profileInstanceLimit}" className="settings longField"/>
+    <td><props:textProperty name="${webCons.profileInstanceLimit}" className="settings"/>
       <span id="error_${webCons.profileInstanceLimit}" class="error"></span>
       <span class="smallNote">Maximum number of instances that can be started. Use blank to have no limit</span>
     </td>
   </tr>
-  <tr>
-    <td colspan="2">
-        <span id="error_fetch_options" class="error"></span>
-        <div>
-            <forms:button id="vmwareFetchOptionsButton" className="btn_mini">Test connection / Fetch options</forms:button>
-            <div class="hidden options-loader"><i class="icon-refresh icon-spin"></i>&nbsp;Fetching options...</div>
-        </div>
-    </td>
-  </tr>
 </table>
 
-<h2 class="noBorder section-header">Agent Images</h2>
-<div class="imagesOuterWrapper">
-    <div class="imagesTableWrapper hidden">
-        <span class="emptyImagesListMessage hidden">You haven't added any agent images yet.</span>
-        <table id="vmwareImagesTable" class="settings imagesTable hidden">
-          <tbody>
-          <tr>
-            <th class="name">Agent image</th>
-            <th class="name">Snapshot</th>
-            <th class="name hidden">Clone folder</th>
-            <th class="name hidden">Resource pool</th>
-            <th class="name">Behaviour</th>
-            <th class="name maxInstances">Max # of instances</th>
-            <th class="name" colspan="2"></th>
-          </tr>
-          </tbody>
-        </table>
-        <jsp:useBean id="propertiesBean" scope="request" type="jetbrains.buildServer.controllers.BasePropertiesBean"/>
-        <c:set var="imagesData" value="${propertiesBean.properties[webCons.imagesData]}"/>
-        <input type="hidden" name="prop:${webCons.imagesData}" id="${webCons.imagesData}" value="<c:out value="${imagesData}"/>"/>
-    </div>
-    <forms:addButton title="Add image" id="vmwareShowDialogButton">Add image</forms:addButton>
+<div class="buttonsWrapper">
+  <span id="error_fetch_options" class="error"></span>
+  <div class="hidden options-loader"><i class="icon-refresh icon-spin"></i>&nbsp;Fetching possible parameters values from Amazon AWS...</div>
+  <div>
+    <forms:button id="vmwareFetchOptionsButton">Check connection / Fetch parameter values</forms:button>
+  </div>
+</div>
+
+<div class="buttonsWrapper">
+  <div class="imagesTableWrapper hidden">
+    <table id="vmwareImagesTable" class="settings imagesTable hidden">
+      <tbody>
+      <tr>
+        <th class="name">Agent image</th>
+        <th class="name">Snapshot</th>
+        <th class="name hidden">Clone folder</th>
+        <th class="name hidden">Resource pool</th>
+        <th class="name">Behaviour</th>
+        <th class="name maxInstances">Max # of instances</th>
+        <th class="name" colspan="2"></th>
+      </tr>
+      </tbody>
+    </table>
+    <jsp:useBean id="propertiesBean" scope="request" type="jetbrains.buildServer.controllers.BasePropertiesBean"/>
+    <c:set var="imagesData" value="${propertiesBean.properties[webCons.imagesData]}"/>
+    <input type="hidden" name="prop:${webCons.imagesData}" id="${webCons.imagesData}" value="<c:out value="${imagesData}"/>"/>
+  </div>
+  <forms:addButton title="Add image" id="vmwareShowDialogButton">Add image</forms:addButton>
 </div>
 
 <input type="hidden" name="prop:image" id="realImageInput"/><!-- this one is required for getting snapshots -->
@@ -213,4 +209,4 @@
         cache: true
     });
 </script>
-<table class="runnerFormTable">
+<table class="runnerFormTable" style="margin-top: 3em;">

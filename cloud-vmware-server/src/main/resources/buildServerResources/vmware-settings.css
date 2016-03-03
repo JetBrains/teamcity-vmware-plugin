@@ -31,9 +31,17 @@
     border-color: #aa1111;
 }
 
+.buttonsWrapper {
+  margin-top: 1em;
+}
+
+.buttonsWrapper .error {
+  margin-left: 0;
+}
+
 .options-loader {
-    display: inline-block;
-    padding-left: 4px;
+  display: inline-block;
+  padding-left: 4px;
 }
 
 /* Add/edit dialog */
