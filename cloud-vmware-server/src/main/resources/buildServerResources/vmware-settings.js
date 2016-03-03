@@ -175,15 +175,19 @@ BS.Clouds.VMWareVSphere = BS.Clouds.VMWareVSphere || (function () {
                     var val = $elem.val();
                     if (val != null && ! $elem.val().length) {
                         isValid = false;
-                        highlightErrors && $elem.addClass('settings_error');
+                        var id = $elem.attr("id");
+                        if (highlightErrors) {
+                           var escapedId = BS.Util.escapeId("error_" + id);
+                           $j(escapedId).show();
+                           $j(escapedId).text('Value is required');
+                        }
                     }
                 };
 
-            $j('.settings').removeClass('settings_error');
+            $j('#newProfileForm .runnerFormTable .error').hide();
             this.clearErrors();
 
             [ this.$serverUrl, this.$serverUsername, this.$serverPassword ].forEach(checkRequired);
-
 
             return isValid;
         },
@@ -317,7 +321,7 @@ BS.Clouds.VMWareVSphere = BS.Clouds.VMWareVSphere || (function () {
                 }
 
                 if (this._displayedErrors[optionName].indexOf(errorKey) === -1) {
-                    this._displayedErrors[optionName].push(errorKey)
+                    this._displayedErrors[optionName].push(errorKey);
                     this.addError(html, $j('.option-error_' + optionName));
                 }
             }
