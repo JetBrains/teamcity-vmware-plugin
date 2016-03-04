@@ -44,6 +44,7 @@ import jetbrains.buildServer.util.filters.Filter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import static freemarker.template.EmptyMap.instance;
 import static jetbrains.buildServer.clouds.vmware.VMWarePropertiesNames.*;
 import static jetbrains.buildServer.clouds.vmware.connector.VmwareUtils.isSpecial;
 
@@ -764,10 +765,15 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
     getRootFolder();
   }
 
-  @NotNull
-  public InstanceStatus getInstanceStatus(@NotNull final VmwareCloudInstance instance) {
+  @Nullable
+  @Override
+  public InstanceStatus getInstanceStatusIfExists(@NotNull final String instanceName) {
     try {
-      return getInstanceStatus(findEntityByIdName(instance.getName(), VirtualMachine.class));
+      final VirtualMachine vm = findEntityByIdNameNullable(instanceName, VirtualMachine.class, null);
+      if (vm == null) {
+        return null;
+      }
+      return getInstanceStatus(vm);
     } catch (VmwareCheckedCloudException e) {
       LOG.debug(e.toString());
       return InstanceStatus.ERROR;

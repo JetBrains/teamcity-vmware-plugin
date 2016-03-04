@@ -28,6 +28,8 @@ import jetbrains.buildServer.clouds.base.connector.AbstractInstance;
 import jetbrains.buildServer.clouds.base.errors.CloudErrorMap;
 import jetbrains.buildServer.clouds.base.errors.TypedCloudErrorInfo;
 import jetbrains.buildServer.clouds.base.errors.UpdatableCloudErrorProvider;
+import jetbrains.buildServer.clouds.vmware.VmwareCloudInstance;
+import jetbrains.buildServer.clouds.vmware.connector.VmwareInstance;
 import jetbrains.buildServer.clouds.vmware.errors.VmwareErrorMessages;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -93,7 +95,19 @@ public abstract class AbstractCloudImage<T extends AbstractCloudInstance, G exte
 
   public abstract G getImageDetails();
 
-  public abstract void detectNewInstances(final Map<String,? extends AbstractInstance> realInstances);
+  protected abstract T createInstanceFromReal(final AbstractInstance realInstance);
+
+  public void detectNewInstances(final Map<String,? extends AbstractInstance> realInstances){
+    for (String instanceName : realInstances.keySet()) {
+      if (myInstances.get(instanceName) == null) {
+        final AbstractInstance realInstance = realInstances.get(instanceName);
+        final T newInstance = createInstanceFromReal(realInstance);
+        newInstance.setStatus(realInstance.getInstanceStatus());
+        myInstances.put(instanceName, newInstance);
+      }
+    }
+
+  }
 
   public String toString() {
     return getClass().getSimpleName() +"{" +"myName='" + getId() + '\'' +'}';

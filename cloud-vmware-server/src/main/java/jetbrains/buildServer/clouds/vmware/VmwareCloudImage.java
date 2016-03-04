@@ -101,7 +101,7 @@ public class VmwareCloudImage extends AbstractCloudImage<VmwareCloudInstance, Vm
     } else {
       for (String instanceName : realInstances.keySet()) {
         final VmwareInstance instance = realInstances.get(instanceName);
-        VmwareCloudInstance cloudInstance = new VmwareCloudInstance(this, instanceName, instance.getSnapshotName());
+        VmwareCloudInstance cloudInstance = createInstanceFromReal(instance);
         cloudInstance.setStatus(instance.getInstanceStatus());
         myInstances.put(instanceName, cloudInstance);
       }
@@ -377,16 +377,11 @@ public class VmwareCloudImage extends AbstractCloudImage<VmwareCloudInstance, Vm
     return myImageDetails;
   }
 
+  @NotNull
   @Override
-  public void detectNewInstances(final Map<String, ? extends AbstractInstance> realInstances) {
-    for (String instanceName : realInstances.keySet()) {
-      if (myInstances.get(instanceName) == null) {
-        final VmwareInstance realInstance = (VmwareInstance)realInstances.get(instanceName);
-        final VmwareCloudInstance newInstance = new VmwareCloudInstance(this, instanceName, realInstance.getSnapshotName());
-        newInstance.setStatus(realInstance.getInstanceStatus());
-        myInstances.put(instanceName, newInstance);
-      }
-    }
+  protected VmwareCloudInstance createInstanceFromReal(final AbstractInstance realInstance) {
+    final VmwareInstance vmwareInstance = (VmwareInstance) realInstance;
+    return new VmwareCloudInstance(this, realInstance.getName(), vmwareInstance.getSnapshotName());
   }
 
   private void processStoppedInstances(final Function<VmwareInstance, Boolean> function) throws VmwareCheckedCloudException {

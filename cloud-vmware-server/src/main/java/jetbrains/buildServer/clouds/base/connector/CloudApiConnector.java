@@ -27,6 +27,7 @@ import jetbrains.buildServer.clouds.base.AbstractCloudInstance;
 import jetbrains.buildServer.clouds.base.errors.CheckedCloudException;
 import jetbrains.buildServer.clouds.base.errors.TypedCloudErrorInfo;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Sergey.Pak
@@ -37,8 +38,8 @@ public interface CloudApiConnector<T extends AbstractCloudImage, G extends Abstr
 
   void test() throws CheckedCloudException;
 
-  @NotNull
-  InstanceStatus getInstanceStatus(@NotNull final G instance);
+  @Nullable
+  InstanceStatus getInstanceStatusIfExists(@NotNull String instanceName);
 
   @NotNull
   Map<String, ? extends AbstractInstance> listImageInstances(@NotNull final T image) throws CheckedCloudException;

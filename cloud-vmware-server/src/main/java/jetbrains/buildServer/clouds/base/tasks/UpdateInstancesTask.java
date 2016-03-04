@@ -19,14 +19,12 @@
 package jetbrains.buildServer.clouds.base.tasks;
 
 import com.intellij.openapi.diagnostic.Logger;
-import jetbrains.buildServer.clouds.CloudInstance;
 import jetbrains.buildServer.clouds.InstanceStatus;
 import jetbrains.buildServer.clouds.base.AbstractCloudClient;
 import jetbrains.buildServer.clouds.base.AbstractCloudImage;
 import jetbrains.buildServer.clouds.base.AbstractCloudInstance;
 import jetbrains.buildServer.clouds.base.connector.AbstractInstance;
 import jetbrains.buildServer.clouds.base.connector.CloudApiConnector;
-import jetbrains.buildServer.clouds.server.CloudInstancesProvider;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -41,39 +39,42 @@ public class UpdateInstancesTask<G extends AbstractCloudInstance<T>, T extends A
 
   private static final long STUCK_STATUS_TIME = 2*60*1000l; // 2 minutes;
 
-  @NotNull private final CloudApiConnector myConnector;
+  @NotNull private final CloudApiConnector<T, G> myConnector;
   protected final F myClient;
   private final long myStuckTime;
+  private final boolean myRethrowException;
 
 
-  public UpdateInstancesTask(@NotNull final CloudApiConnector connector,
+  public UpdateInstancesTask(@NotNull final CloudApiConnector<T, G> connector,
                              @NotNull final F client,
-                             long stuckTimeMillis) {
+                             long stuckTimeMillis,
+                             final boolean rethrowException) {
     myConnector = connector;
     myClient = client;
     myStuckTime = stuckTimeMillis;
+    myRethrowException = rethrowException;
   }
-  public UpdateInstancesTask(@NotNull final CloudApiConnector connector, final F client) {
-    this(connector, client, STUCK_STATUS_TIME);
+  public UpdateInstancesTask(@NotNull final CloudApiConnector<T, G> connector, final F client) {
+    this(connector, client, STUCK_STATUS_TIME, false);
   }
 
   public void run() {
     final Map<InstanceStatus, List<String>> instancesByStatus = new HashMap<InstanceStatus, List<String>>();
     try {
-      final Collection<T> images = myClient.getImages();
+      final Collection<T> images =  myClient.getImages();
       for (final T image : images) {
         image.updateErrors(myConnector.checkImage(image));
         if (image.getErrorInfo() != null) {
           continue;
         }
-        final Map<String, AbstractInstance> realInstances = myConnector.listImageInstances(image);
+        final Map<String, ? extends AbstractInstance> realInstances = myConnector.listImageInstances(image);
         for (String realInstanceName : realInstances.keySet()) {
           final G instance = image.findInstanceById(realInstanceName);
+          final AbstractInstance realInstance = realInstances.get(realInstanceName);
           if (instance == null) {
-            //LOG.warn("Unable to find just created instance " + realInstanceName);
             continue;
           }
-          final InstanceStatus realInstanceStatus = myConnector.getInstanceStatus(instance);
+          final InstanceStatus realInstanceStatus = realInstance.getInstanceStatus();
           if (!instancesByStatus.containsKey(realInstanceStatus)){
             instancesByStatus.put(realInstanceStatus, new ArrayList<String>());
           }
@@ -112,12 +113,19 @@ public class UpdateInstancesTask<G extends AbstractCloudInstance<T>, T extends A
           }
         }
         for (String instanceName : instancesToRemove) {
-          image.removeInstance(instanceName);
+          final InstanceStatus currentStatus = myConnector.getInstanceStatusIfExists(instanceName);
+          if (currentStatus == null) {
+            image.removeInstance(instanceName);
+          }
         }
         image.detectNewInstances(realInstances);
       }
       myClient.updateErrors();
     } catch (Exception ex){
+      if (myRethrowException){
+        // for tests
+        throw new RuntimeException(ex);
+      }
       LOG.warn(ex.toString(), ex);
     } finally {
       //logging here:

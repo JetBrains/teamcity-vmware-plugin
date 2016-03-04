@@ -1,7 +1,5 @@
 package jetbrains.buildServer.clouds.vmware;
 
-import com.intellij.openapi.diagnostic.Log4jLogger;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.WaitFor;
 import com.vmware.vim25.OptionValue;
 import com.vmware.vim25.VirtualMachinePowerState;
@@ -25,8 +23,6 @@ import jetbrains.buildServer.clouds.base.tasks.UpdateInstancesTask;
 import jetbrains.buildServer.clouds.server.CloudInstancesProvider;
 import jetbrains.buildServer.clouds.server.CloudInstancesProviderCallback;
 import jetbrains.buildServer.clouds.server.CloudInstancesProviderExtendedCallback;
-import jetbrains.buildServer.clouds.server.CloudManager;
-import jetbrains.buildServer.clouds.server.agentTypes.CloudAgentTypeProvider;
 import jetbrains.buildServer.clouds.server.impl.*;
 import jetbrains.buildServer.clouds.server.instances.CloudEventDispatcher;
 import jetbrains.buildServer.clouds.vmware.connector.VMWareApiConnector;
@@ -39,8 +35,6 @@ import jetbrains.buildServer.clouds.vmware.web.VMWareWebConstants;
 import jetbrains.buildServer.serverSide.ServerPaths;
 import jetbrains.buildServer.serverSide.TeamCityProperties;
 import jetbrains.buildServer.web.openapi.PluginDescriptor;
-import org.apache.log4j.ConsoleAppender;
-import org.apache.log4j.Level;
 import org.jetbrains.annotations.NotNull;
 import org.jmock.Expectations;
 import org.jmock.Mockery;
@@ -1004,7 +998,7 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
 
       @Override
       protected UpdateInstancesTask<VmwareCloudInstance, VmwareCloudImage, VMWareCloudClient> createUpdateInstancesTask() {
-        return new UpdateInstancesTask<VmwareCloudInstance, VmwareCloudImage, VMWareCloudClient>(myFakeApi, this, stuckTime){
+        return new UpdateInstancesTask<VmwareCloudInstance, VmwareCloudImage, VMWareCloudClient>(myFakeApi, this, stuckTime, false){
           @Override
           public void run() {
             super.run();
