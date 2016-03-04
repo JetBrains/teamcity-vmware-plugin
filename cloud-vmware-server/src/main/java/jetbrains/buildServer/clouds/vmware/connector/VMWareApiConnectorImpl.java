@@ -33,10 +33,13 @@ import java.util.regex.Pattern;
 import jetbrains.buildServer.clouds.CloudException;
 import jetbrains.buildServer.clouds.CloudInstanceUserData;
 import jetbrains.buildServer.clouds.InstanceStatus;
-import jetbrains.buildServer.clouds.server.CloudInstancesProvider;
-import jetbrains.buildServer.clouds.vmware.errors.VmwareCheckedCloudException;
 import jetbrains.buildServer.clouds.base.errors.TypedCloudErrorInfo;
-import jetbrains.buildServer.clouds.vmware.*;
+import jetbrains.buildServer.clouds.server.CloudInstancesProvider;
+import jetbrains.buildServer.clouds.vmware.VmwareCloudImage;
+import jetbrains.buildServer.clouds.vmware.VmwareCloudImageDetails;
+import jetbrains.buildServer.clouds.vmware.VmwareCloudInstance;
+import jetbrains.buildServer.clouds.vmware.VmwareConstants;
+import jetbrains.buildServer.clouds.vmware.errors.VmwareCheckedCloudException;
 import jetbrains.buildServer.serverSide.TeamCityProperties;
 import jetbrains.buildServer.util.CollectionsUtil;
 import jetbrains.buildServer.util.StringUtil;
@@ -44,7 +47,6 @@ import jetbrains.buildServer.util.filters.Filter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import static freemarker.template.EmptyMap.instance;
 import static jetbrains.buildServer.clouds.vmware.VMWarePropertiesNames.*;
 import static jetbrains.buildServer.clouds.vmware.connector.VmwareUtils.isSpecial;
 
