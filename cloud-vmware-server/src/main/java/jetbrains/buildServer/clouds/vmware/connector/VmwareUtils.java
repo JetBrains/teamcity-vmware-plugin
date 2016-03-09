@@ -25,8 +25,6 @@ import com.vmware.vim25.mo.ResourcePool;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import static com.vmware.vim25.LicenseFeatureInfoUnit.vm;
-
 /**
  * @author Sergey.Pak
  *         Date: 2/6/2015

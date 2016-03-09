@@ -10,8 +10,6 @@ import jetbrains.buildServer.serverSide.PropertiesProcessor;
 import jetbrains.buildServer.util.StringUtil;
 import org.jetbrains.annotations.NotNull;
 
-import static jetbrains.buildServer.clouds.CloudClientParameters.SECURE_PROPERTY_PREFIX;
-
 /**
  * Created by Sergey.Pak on 1/29/2016.
  */
