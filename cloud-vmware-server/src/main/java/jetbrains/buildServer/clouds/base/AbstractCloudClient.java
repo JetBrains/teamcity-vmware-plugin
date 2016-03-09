@@ -18,9 +18,9 @@
 
 package jetbrains.buildServer.clouds.base;
 
+import com.intellij.openapi.diagnostic.Logger;
 import java.util.*;
 import java.util.concurrent.Future;
-import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import jetbrains.buildServer.clouds.*;
@@ -33,8 +33,6 @@ import jetbrains.buildServer.clouds.base.errors.UpdatableCloudErrorProvider;
 import jetbrains.buildServer.clouds.base.tasks.UpdateInstancesTask;
 import jetbrains.buildServer.clouds.vmware.errors.VmwareErrorMessages;
 import jetbrains.buildServer.serverSide.AgentDescription;
-import jetbrains.buildServer.util.NamedThreadFactory;
-import jetbrains.buildServer.util.NamedThreadUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -46,6 +44,7 @@ import org.jetbrains.annotations.Nullable;
 public abstract class AbstractCloudClient<G extends AbstractCloudInstance<T>, T extends AbstractCloudImage<G,D>, D extends CloudImageDetails>
   implements CloudClientEx, UpdatableCloudErrorProvider {
 
+  private static final Logger LOG = Logger.getInstance(AbstractCloudClient.class.getName());
   protected final Map<String, T> myImageMap;
   protected final UpdatableCloudErrorProvider myErrorProvider;
   protected final CloudAsyncTaskExecutor myAsyncTaskExecutor;
@@ -102,6 +101,7 @@ public abstract class AbstractCloudClient<G extends AbstractCloudInstance<T>, T 
           populateImagesData(imageDetails, updateDelayMs, updateDelayMs);
         } finally {
           myIsInitialized.set(true);
+          LOG.info("Cloud profile '" + myParameters.getProfileDescription() + "' initialized");
         }
       }
     });
