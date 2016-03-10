@@ -67,7 +67,7 @@ public class DummyApiConnector implements CloudApiConnector<DummyCloudImage, Dum
     if (methodLatch != null){
       try {
         //avoid waiting for too long in tests
-        final boolean result = methodLatch.await(20000, TimeUnit.SECONDS);
+        final boolean result = methodLatch.await(2, TimeUnit.SECONDS);
         if (!result){
           throw new RuntimeException("Timeout (2 sec) on waiting for latch '" + methodName+"'");
         }
