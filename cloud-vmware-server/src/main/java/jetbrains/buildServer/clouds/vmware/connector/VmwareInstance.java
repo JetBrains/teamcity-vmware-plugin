@@ -26,7 +26,10 @@ import com.vmware.vim25.VirtualMachineRuntimeInfo;
 import com.vmware.vim25.mo.Datacenter;
 import com.vmware.vim25.mo.Task;
 import com.vmware.vim25.mo.VirtualMachine;
-import java.util.*;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.Callable;
 import jetbrains.buildServer.clouds.InstanceStatus;
 import jetbrains.buildServer.clouds.base.connector.AbstractInstance;
@@ -67,11 +70,12 @@ public class VmwareInstance extends AbstractInstance implements VmwareManagedEnt
   @Nullable
   private static Map<String, String> extractProperties(@NotNull final VirtualMachine vm) {
     try {
-      if (vm.getConfig() == null) {
+      VirtualMachineConfigInfo configInfo = vm.getConfig();
+      if (configInfo == null) {
         return null;
       }
 
-      final OptionValue[] extraConfig = vm.getConfig().getExtraConfig();
+      final OptionValue[] extraConfig = configInfo.getExtraConfig();
       Map<String, String> retval = new HashMap<String, String>();
       for (OptionValue optionValue : extraConfig) {
         retval.put(optionValue.getKey(), String.valueOf(optionValue.getValue()));
@@ -128,11 +132,12 @@ public class VmwareInstance extends AbstractInstance implements VmwareManagedEnt
   }
 
   public boolean isReadonly() {
-    if (myVm.getConfig() == null) {
+    final VirtualMachineConfigInfo config = myVm.getConfig();
+    if (config == null) {
       return true;
     }
 
-    return myVm.getConfig().isTemplate();
+    return config.isTemplate();
   }
 
   @Nullable
