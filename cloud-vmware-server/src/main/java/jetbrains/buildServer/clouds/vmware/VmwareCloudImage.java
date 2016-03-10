@@ -26,22 +26,23 @@ import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicReference;
-
-import jetbrains.buildServer.clouds.*;
+import jetbrains.buildServer.clouds.CloudException;
+import jetbrains.buildServer.clouds.CloudInstanceUserData;
+import jetbrains.buildServer.clouds.InstanceStatus;
+import jetbrains.buildServer.clouds.QuotaException;
 import jetbrains.buildServer.clouds.base.AbstractCloudImage;
 import jetbrains.buildServer.clouds.base.connector.AbstractInstance;
 import jetbrains.buildServer.clouds.base.connector.CloudAsyncTaskExecutor;
 import jetbrains.buildServer.clouds.base.connector.TaskCallbackHandler;
-import jetbrains.buildServer.clouds.vmware.errors.VmwareCheckedCloudException;
 import jetbrains.buildServer.clouds.base.errors.TypedCloudErrorInfo;
 import jetbrains.buildServer.clouds.vmware.connector.VMWareApiConnector;
 import jetbrains.buildServer.clouds.vmware.connector.VmwareInstance;
 import jetbrains.buildServer.clouds.vmware.connector.VmwareTaskWrapper;
+import jetbrains.buildServer.clouds.vmware.errors.VmwareCheckedCloudException;
 import jetbrains.buildServer.serverSide.TeamCityProperties;
 import jetbrains.buildServer.util.FileUtil;
 import jetbrains.buildServer.util.StringUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Sergey.Pak
@@ -82,7 +83,7 @@ public class VmwareCloudImage extends AbstractCloudImage<VmwareCloudInstance, Vm
 
     final Map<String, VmwareInstance> realInstances;
     try {
-      realInstances = myApiConnector.listImageInstances(this);
+      realInstances = myApiConnector.fetchInstances(this);
     } catch (VmwareCheckedCloudException e) {
       updateErrors(TypedCloudErrorInfo.fromException(e));
       return;

@@ -21,13 +21,15 @@ package jetbrains.buildServer.clouds.vmware.connector;
 import com.vmware.vim25.VirtualMachineSnapshotTree;
 import com.vmware.vim25.mo.Task;
 import com.vmware.vim25.mo.VirtualMachine;
+import java.util.Collection;
 import java.util.Map;
 import jetbrains.buildServer.clouds.CloudInstanceUserData;
 import jetbrains.buildServer.clouds.InstanceStatus;
+import jetbrains.buildServer.clouds.base.connector.AbstractInstance;
 import jetbrains.buildServer.clouds.base.connector.CloudApiConnector;
-import jetbrains.buildServer.clouds.vmware.errors.VmwareCheckedCloudException;
 import jetbrains.buildServer.clouds.vmware.VmwareCloudImage;
 import jetbrains.buildServer.clouds.vmware.VmwareCloudInstance;
+import jetbrains.buildServer.clouds.vmware.errors.VmwareCheckedCloudException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -96,8 +98,13 @@ public interface VMWareApiConnector extends CloudApiConnector<VmwareCloudImage, 
 
   void dispose();
 
+  @Override
   @NotNull
-  Map<String, VmwareInstance> listImageInstances(@NotNull final VmwareCloudImage image) throws VmwareCheckedCloudException;
+  <R extends AbstractInstance> Map<String, R> fetchInstances(@NotNull final VmwareCloudImage image) throws VmwareCheckedCloudException;
+
+  @NotNull
+  @Override
+  <R extends AbstractInstance> Map<VmwareCloudImage, Map<String, R>> fetchInstances(@NotNull final Collection<VmwareCloudImage> images) throws VmwareCheckedCloudException;
 
   interface VmwareInstanceProcessor {
     void process(VmwareInstance instance);

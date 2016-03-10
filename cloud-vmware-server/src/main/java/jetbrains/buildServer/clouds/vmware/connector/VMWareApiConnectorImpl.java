@@ -33,6 +33,7 @@ import java.util.regex.Pattern;
 import jetbrains.buildServer.clouds.CloudException;
 import jetbrains.buildServer.clouds.CloudInstanceUserData;
 import jetbrains.buildServer.clouds.InstanceStatus;
+import jetbrains.buildServer.clouds.base.connector.AbstractInstance;
 import jetbrains.buildServer.clouds.base.errors.TypedCloudErrorInfo;
 import jetbrains.buildServer.clouds.server.CloudInstancesProvider;
 import jetbrains.buildServer.clouds.vmware.VmwareCloudImage;
@@ -211,27 +212,57 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
     return filteredVms;
   }
 
+  @Override
   @NotNull
-  public Map<String, VmwareInstance> listImageInstances(@NotNull final VmwareCloudImage image) throws VmwareCheckedCloudException {
-    final VmwareCloudImageDetails imageDetails = image.getImageDetails();
-    if(imageDetails.getBehaviour().isUseOriginal()){
-      final VirtualMachine vmEntity = findEntityByIdName(imageDetails.getSourceName(), VirtualMachine.class);
-      final VmwareInstance vmInstance = new VmwareInstance(vmEntity);
-      return Collections.singletonMap(image.getName(), vmInstance);
+  public <R extends AbstractInstance> Map<String, R> fetchInstances(@NotNull final VmwareCloudImage image) throws VmwareCheckedCloudException {
+    Map<VmwareCloudImage, Map<String, R>> imageMap = fetchInstances(Collections.singleton(image));
+    Map<String, R> res = imageMap.get(image);
+    return res == null ? Collections.emptyMap() : res;
+  }
+
+  @Override
+  @NotNull
+  public <R extends AbstractInstance> Map<VmwareCloudImage, Map<String, R>> fetchInstances(@NotNull final Collection<VmwareCloudImage> images) throws VmwareCheckedCloudException {
+    Map<VmwareCloudImage, Map<String, R>> result = new HashMap<>();
+    List<VmwareCloudImage> unprocessed = new ArrayList<>();
+    for (VmwareCloudImage image: images) {
+      final VmwareCloudImageDetails imageDetails = image.getImageDetails();
+      if(imageDetails.getBehaviour().isUseOriginal()){
+        final VirtualMachine vmEntity = findEntityByIdName(imageDetails.getSourceName(), VirtualMachine.class);
+        final VmwareInstance vmInstance = new VmwareInstance(vmEntity);
+        result.put(image, Collections.singletonMap(image.getName(), (R)vmInstance));
+      } else {
+        unprocessed.add(image);
+      }
     }
-    final Map<String, VmwareInstance> filteredVms = new HashMap<String, VmwareInstance>();
-    final Collection<VirtualMachine> entities = findAllEntities(VirtualMachine.class);
-    for (VirtualMachine vm : entities) {
+
+    if (unprocessed.isEmpty()) return result;
+
+    Map<String, VmwareCloudImage> imageNameMap = new HashMap<>();
+    for (VmwareCloudImage image: unprocessed) {
+      imageNameMap.put(image.getName(), image);
+    }
+
+    final Collection<VirtualMachine> virtualMachines = findAllEntities(VirtualMachine.class);
+    for (VirtualMachine vm : virtualMachines) {
       try {
         final VmwareInstance vmInstance = new VmwareInstance(vm);
-        if (image.getName().equals(vmInstance.getImageName())) {
-          filteredVms.put(vmInstance.getName(), vmInstance);
+        final String instanceImage = vmInstance.getImageName();
+        VmwareCloudImage image = imageNameMap.get(instanceImage);
+        if (image != null) {
+          Map<String, R> imageInstancesMap = result.get(image);
+          if (imageInstancesMap == null) {
+            imageInstancesMap = new HashMap<>();
+            result.put(image, imageInstancesMap);
+          }
+          imageInstancesMap.put(vmInstance.getName(), (R)vmInstance);
         }
       } catch (Exception ex) {
         LOG.debug("Unable to process VM " + vm.getName());
       }
     }
-    return filteredVms;
+
+    return result;
   }
 
   public Map<String, String> getVMParams(@NotNull final String vmName) throws VmwareCheckedCloudException {
@@ -713,7 +744,7 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
 
   public void processImageInstances(@NotNull final VmwareCloudImage image, @NotNull final VmwareInstanceProcessor processor) {
     try {
-      final Map<String, VmwareInstance> instances = listImageInstances(image);
+      final Map<String, VmwareInstance> instances = fetchInstances(image);
       for (VmwareInstance instance : instances.values()) {
         processor.process(instance);
       }

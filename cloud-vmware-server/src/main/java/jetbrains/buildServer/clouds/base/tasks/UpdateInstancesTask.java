@@ -19,6 +19,7 @@
 package jetbrains.buildServer.clouds.base.tasks;
 
 import com.intellij.openapi.diagnostic.Logger;
+import java.util.*;
 import jetbrains.buildServer.clouds.InstanceStatus;
 import jetbrains.buildServer.clouds.base.AbstractCloudClient;
 import jetbrains.buildServer.clouds.base.AbstractCloudImage;
@@ -26,8 +27,6 @@ import jetbrains.buildServer.clouds.base.AbstractCloudInstance;
 import jetbrains.buildServer.clouds.base.connector.AbstractInstance;
 import jetbrains.buildServer.clouds.base.connector.CloudApiConnector;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.*;
 
 /**
  * @author Sergey.Pak
@@ -61,13 +60,21 @@ public class UpdateInstancesTask<G extends AbstractCloudInstance<T>, T extends A
   public void run() {
     final Map<InstanceStatus, List<String>> instancesByStatus = new HashMap<InstanceStatus, List<String>>();
     try {
+      List<T> goodImages = new ArrayList<>();
       final Collection<T> images =  myClient.getImages();
       for (final T image : images) {
         image.updateErrors(myConnector.checkImage(image));
         if (image.getErrorInfo() != null) {
           continue;
         }
-        final Map<String, ? extends AbstractInstance> realInstances = myConnector.listImageInstances(image);
+        goodImages.add(image);
+      }
+
+      final Map<T, Map<String, AbstractInstance>> groupedInstances = myConnector.fetchInstances(goodImages);
+
+      for (Map.Entry<T, Map<String, AbstractInstance>> imageEntry: groupedInstances.entrySet()) {
+        T image = imageEntry.getKey();
+        final Map<String, AbstractInstance> realInstances = imageEntry.getValue();
         for (String realInstanceName : realInstances.keySet()) {
           final G instance = image.findInstanceById(realInstanceName);
           final AbstractInstance realInstance = realInstances.get(realInstanceName);

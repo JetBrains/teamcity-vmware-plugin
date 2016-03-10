@@ -1,5 +1,6 @@
 package jetbrains.buildServer.clouds.base.stubs;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
@@ -41,11 +42,21 @@ public class DummyApiConnector implements CloudApiConnector<DummyCloudImage, Dum
 
   @NotNull
   @Override
-  public Map<String, ? extends AbstractInstance> listImageInstances(@NotNull final DummyCloudImage image) throws CheckedCloudException {
+  public <R extends AbstractInstance> Map<DummyCloudImage, Map<String, R>> fetchInstances(@NotNull final Collection<DummyCloudImage> images) throws CheckedCloudException {
+    Map<DummyCloudImage, Map<String, R>> result = new HashMap<>();
+    for (DummyCloudImage image: images) {
+      result.put(image, fetchInstances(image));
+    }
+    return result;
+  }
+
+  @NotNull
+  @Override
+  public <R extends AbstractInstance> Map<String, R> fetchInstances(@NotNull final DummyCloudImage image) throws CheckedCloudException {
     checkLatch("listImageInstances");
     return myRealInstanceMap.entrySet().stream()
                             .filter(e->e.getValue().getDummyImageName().equals(image.getId()))
-                            .collect(Collectors.toMap(e->e.getKey(), e->e.getValue()));
+                            .collect(Collectors.toMap(e->e.getKey(), e->(R)e.getValue()));
   }
 
   @NotNull

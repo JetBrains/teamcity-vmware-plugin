@@ -20,7 +20,6 @@ package jetbrains.buildServer.clouds.base.connector;
 
 import java.util.Collection;
 import java.util.Map;
-import jetbrains.buildServer.clouds.CloudException;
 import jetbrains.buildServer.clouds.InstanceStatus;
 import jetbrains.buildServer.clouds.base.AbstractCloudImage;
 import jetbrains.buildServer.clouds.base.AbstractCloudInstance;
@@ -42,7 +41,10 @@ public interface CloudApiConnector<T extends AbstractCloudImage, G extends Abstr
   InstanceStatus getInstanceStatusIfExists(@NotNull String instanceName);
 
   @NotNull
-  Map<String, ? extends AbstractInstance> listImageInstances(@NotNull final T image) throws CheckedCloudException;
+  <R extends AbstractInstance> Map<String, R> fetchInstances(@NotNull final T image) throws CheckedCloudException;
+
+  @NotNull
+  <R extends AbstractInstance> Map<T, Map<String, R>> fetchInstances(@NotNull final Collection<T> images) throws CheckedCloudException;
 
   @NotNull
   TypedCloudErrorInfo[] checkImage(@NotNull final T image);

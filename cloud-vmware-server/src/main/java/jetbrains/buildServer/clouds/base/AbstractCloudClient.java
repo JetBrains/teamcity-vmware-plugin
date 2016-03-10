@@ -19,7 +19,10 @@
 package jetbrains.buildServer.clouds.base;
 
 import com.intellij.openapi.diagnostic.Logger;
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -50,7 +53,7 @@ public abstract class AbstractCloudClient<G extends AbstractCloudInstance<T>, T 
   protected final CloudAsyncTaskExecutor myAsyncTaskExecutor;
   @NotNull protected CloudApiConnector myApiConnector;
   protected final CloudClientParameters myParameters;
-  private AtomicBoolean myIsInitialized = new AtomicBoolean(false);
+  private final AtomicBoolean myIsInitialized = new AtomicBoolean(false);
 
   public AbstractCloudClient(@NotNull final CloudClientParameters params, @NotNull final CloudApiConnector apiConnector) {
     myParameters = params;
