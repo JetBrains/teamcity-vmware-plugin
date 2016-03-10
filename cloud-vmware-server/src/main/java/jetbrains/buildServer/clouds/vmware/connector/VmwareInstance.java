@@ -51,11 +51,18 @@ public class VmwareInstance extends AbstractInstance implements VmwareManagedEnt
   private final String myId;
   private final Lazy<String> myDatacenterIdLazy;
   private final Map<String, String> myProperties;
+  private final String myName;
 
   public VmwareInstance(@NotNull final VirtualMachine vm) {
-    super(vm.getName());
     myVm = vm;
-    myProperties = extractProperties(myVm);
+    VirtualMachineConfigInfo configInfo = vm.getConfig();
+    if (configInfo == null) {
+      myName = vm.getName();
+    } else {
+      myName = configInfo.getName();
+    }
+
+    myProperties = configInfo == null ? null : extractProperties(configInfo);
     myId = vm.getMOR().getVal();
     myDatacenterIdLazy = new Lazy<String>() {
       @Nullable
@@ -68,13 +75,8 @@ public class VmwareInstance extends AbstractInstance implements VmwareManagedEnt
 
 
   @Nullable
-  private static Map<String, String> extractProperties(@NotNull final VirtualMachine vm) {
+  private static Map<String, String> extractProperties(@NotNull final VirtualMachineConfigInfo configInfo) {
     try {
-      VirtualMachineConfigInfo configInfo = vm.getConfig();
-      if (configInfo == null) {
-        return null;
-      }
-
       final OptionValue[] extraConfig = configInfo.getExtraConfig();
       Map<String, String> retval = new HashMap<String, String>();
       for (OptionValue optionValue : extraConfig) {
@@ -82,7 +84,7 @@ public class VmwareInstance extends AbstractInstance implements VmwareManagedEnt
       }
       return retval;
     } catch (Exception ex){
-      LOG.info("Unable to retrieve instance properties for " + vm.getName() + ": " + ex.toString());
+      LOG.info("Unable to retrieve instance properties for " + configInfo.getName() + ": " + ex.toString());
       return null;
     }
   }
@@ -93,6 +95,12 @@ public class VmwareInstance extends AbstractInstance implements VmwareManagedEnt
       return false;
     }
     return runtime.getPowerState() == VirtualMachinePowerState.poweredOn;
+  }
+
+  @NotNull
+  @Override
+  public String getName() {
+    return myName;
   }
 
   @Override

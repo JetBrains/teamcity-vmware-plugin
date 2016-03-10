@@ -23,7 +23,7 @@ import jetbrains.buildServer.clouds.base.tasks.UpdateInstancesTask;
 import jetbrains.buildServer.clouds.server.CloudInstancesProvider;
 import jetbrains.buildServer.clouds.server.CloudInstancesProviderCallback;
 import jetbrains.buildServer.clouds.server.CloudInstancesProviderExtendedCallback;
-import jetbrains.buildServer.clouds.server.impl.*;
+import jetbrains.buildServer.clouds.server.impl.CloudRegistryImpl;
 import jetbrains.buildServer.clouds.server.instances.CloudEventDispatcher;
 import jetbrains.buildServer.clouds.vmware.connector.VMWareApiConnector;
 import jetbrains.buildServer.clouds.vmware.connector.VmwareInstance;
@@ -67,7 +67,7 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
 
     myIdxStorage = createTempDir();
 
-    System.setProperty("teamcity.vsphere.instance.status.update.delay.ms", "250");
+    setInternalProperty("teamcity.vsphere.instance.status.update.delay.ms", "250");
     myClientParameters = new CloudClientParameters();
     myClientParameters.setParameter("serverUrl", "http://localhost:8080");
     myClientParameters.setParameter("username", "un");

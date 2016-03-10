@@ -37,6 +37,11 @@ public class FakeVirtualMachine extends VirtualMachine {
     myIsStarted.set(isRunning);
     myConfigInfo.set(new VirtualMachineConfigInfo(){
       @Override
+      public String getName() {
+        return myName;
+      }
+
+      @Override
       public boolean isTemplate() {
         return isTemplate;
       }

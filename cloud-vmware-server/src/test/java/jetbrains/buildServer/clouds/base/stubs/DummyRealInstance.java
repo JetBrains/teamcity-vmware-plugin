@@ -17,15 +17,17 @@ public class DummyRealInstance extends AbstractInstance {
   private boolean myInitialized;
   private Date myStartDate;
   private String myIpAddress;
+  private final String myName;
   private InstanceStatus myInstanceStatus;
   private final Map<String, String> myProperties = new HashMap<>();
 
   public DummyRealInstance(@NotNull final String name, @NotNull final String dummyImageName,@NotNull InstanceStatus status) {
-    super(name);
+    myName = name;
     myDummyImageName = dummyImageName;
     myInstanceStatus = status;
   }
 
+  @NotNull
   public String getDummyImageName(){
     return myDummyImageName;
   }
@@ -54,6 +56,12 @@ public class DummyRealInstance extends AbstractInstance {
   @Override
   public String getProperty(final String name) {
     return myProperties.get(name);
+  }
+
+  @NotNull
+  @Override
+  public String getName() {
+    return myName;
   }
 
   public void setInitialized(final boolean initialized) {
