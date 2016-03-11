@@ -5,6 +5,8 @@
       <class name="jetbrains.buildServer.clouds.vmware.VmwareCloudInstanceTest"/>
       <class name="jetbrains.buildServer.clouds.vmware.VmwareCloudImageTest"/>
       <class name="jetbrains.buildServer.clouds.base.UpdateInstancesTaskTest"/>
+      <class name="jetbrains.buildServer.clouds.base.connector.CloudAsyncTaskExecutorTest"/>
+      <class name="jetbrains.buildServer.clouds.vmware.connector.VmwareTaskWrapperTest"/>
     </classes>
   </test>
 </suite>

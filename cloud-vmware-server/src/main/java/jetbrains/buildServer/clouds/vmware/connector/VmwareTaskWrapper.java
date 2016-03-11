@@ -26,6 +26,8 @@ import java.rmi.RemoteException;
 import java.util.Date;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
+
 import jetbrains.buildServer.clouds.base.connector.AsyncCloudTask;
 import jetbrains.buildServer.clouds.base.connector.CloudTaskResult;
 import jetbrains.buildServer.util.impl.Lazy;
@@ -38,6 +40,8 @@ import org.jetbrains.annotations.Nullable;
  *         Time: 6:22 PM
  */
 public class VmwareTaskWrapper implements AsyncCloudTask {
+
+  private static final int FAILURE_COUNT_TRESHOLD = 3;
 
   private final Callable<Task> myVmwareTask;
   private final AtomicBoolean myTaskCancelled;
@@ -80,6 +84,9 @@ public class VmwareTaskWrapper implements AsyncCloudTask {
       return createExceptionFuture(e);
     }
     return new Future<CloudTaskResult>() {
+      private final AtomicInteger failureCount = new AtomicInteger(0);
+      private CloudTaskResult myErrorResult = null;
+
       public boolean cancel(final boolean mayInterruptIfRunning) {
         try {
           task.cancelTask();
@@ -101,10 +108,20 @@ public class VmwareTaskWrapper implements AsyncCloudTask {
           return (taskInfo.getState() == TaskInfoState.success || taskInfo.getState() == TaskInfoState.error);
         } catch (RemoteException e) {
           return false;
+        } catch (Exception e) {
+          // wait 3 times, then throw an error:
+          if (failureCount.getAndIncrement() >= FAILURE_COUNT_TRESHOLD){
+            myErrorResult = new CloudTaskResult(true, e.toString(), e);
+            return true;
+          }
+          return false;
         }
       }
 
       public CloudTaskResult get() throws InterruptedException, ExecutionException {
+        if (myErrorResult!= null){
+          return myErrorResult;
+        }
         try {
           final String result = task.waitForTask();
           TaskInfo taskInfo = task.getTaskInfo();
@@ -114,7 +131,7 @@ public class VmwareTaskWrapper implements AsyncCloudTask {
           } else {
             return new CloudTaskResult(result);
           }
-        } catch (RemoteException e) {
+        } catch (Exception e) {
           return new CloudTaskResult(true, e.toString(), e);
         }
       }
@@ -130,7 +147,7 @@ public class VmwareTaskWrapper implements AsyncCloudTask {
           } else {
             return new CloudTaskResult(result);
           }
-        } catch (RemoteException e) {
+        } catch (Exception e) {
           return new CloudTaskResult(true, e.toString(), e);
         }
       }
