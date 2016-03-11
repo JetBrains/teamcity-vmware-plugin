@@ -82,7 +82,9 @@ public class CloudAsyncTaskExecutorTest extends BaseTestCase {
           final long millis = myTaskTime - (System.currentTimeMillis() - myStartDate);
           try {
             throwMyExceptionIfNecessary();
-          } catch (ExecutionException | InterruptedException e) {
+          } catch (ExecutionException e) {
+            e.printStackTrace();
+          } catch (InterruptedException e) {
             e.printStackTrace();
           }
           return millis < 0;
