@@ -499,7 +499,7 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
           , datacenter == null? "<not provided>":  datacenter.getName()));
       }
     }
-    final Map<String, VirtualMachineSnapshotTree> snapshotList = getSnapshotList(vm.getName());
+    final Map<String, VirtualMachineSnapshotTree> snapshotList = getSnapshotList(vm);
     final String snapshotName = instance.getSnapshotName();
     if (imageDetails.useCurrentVersion() || StringUtil.isEmpty(snapshotName)) {
       LOG.info("Snapshot name is not specified. Will clone latest VM state");
