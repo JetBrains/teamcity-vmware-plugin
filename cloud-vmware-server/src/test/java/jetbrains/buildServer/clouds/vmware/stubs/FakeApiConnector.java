@@ -1,5 +1,6 @@
 package jetbrains.buildServer.clouds.vmware.stubs;
 
+import com.vmware.vim25.CustomizationSpec;
 import com.vmware.vim25.mo.*;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -71,6 +72,15 @@ public class FakeApiConnector extends VMWareApiConnectorImpl {
       return (Map<String, T>)FakeModel.instance().getVms();
     }
     throw new IllegalArgumentException("Unknown entity type: " + instanceType.getCanonicalName());
+  }
+
+  @Override
+  public CustomizationSpec getCustomizationSpec(final String name) throws VmwareCheckedCloudException {
+    final CustomizationSpec spec = FakeModel.instance().getCustomizationSpec(name);
+    if (spec == null){
+      throw new VmwareCheckedCloudException("Unable to get Customization Spec '" + name + "'");
+    }
+    return spec;
   }
 
   private static FakeDatacenter getParentDC(ManagedEntity me){

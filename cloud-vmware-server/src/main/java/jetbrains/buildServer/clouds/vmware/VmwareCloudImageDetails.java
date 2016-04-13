@@ -21,7 +21,6 @@ package jetbrains.buildServer.clouds.vmware;
 import com.google.gson.annotations.SerializedName;
 import jetbrains.buildServer.clouds.base.beans.CloudImageDetails;
 import jetbrains.buildServer.clouds.base.types.CloneBehaviour;
-import jetbrains.buildServer.util.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -54,6 +53,9 @@ public class VmwareCloudImageDetails implements CloudImageDetails {
   @SerializedName("maxInstances")
   private final int myMaxInstances;
 
+  @SerializedName("customizationSpec")
+  private final String myCustomizationSpec;
+
   public VmwareCloudImageDetails(
     @Nullable final String nickname,
     @NotNull final String sourceName,
@@ -61,8 +63,8 @@ public class VmwareCloudImageDetails implements CloudImageDetails {
     @NotNull final String folderId,
     @NotNull final String resourcePoolId,
     @NotNull final CloneBehaviour cloneBehaviour,
-    final int maxInstances
-  ) {
+    final int maxInstances,
+    @Nullable final String customizationSpec) {
     myNickname = nickname;
     mySourceName = sourceName;
     myFolderId = folderId;
@@ -70,6 +72,7 @@ public class VmwareCloudImageDetails implements CloudImageDetails {
     mySnapshotName = snapshotName;
     myCloneBehaviour = cloneBehaviour;
     myMaxInstances = maxInstances;
+    myCustomizationSpec = customizationSpec;
   }
 
   @NotNull
@@ -100,6 +103,10 @@ public class VmwareCloudImageDetails implements CloudImageDetails {
 
   public int getMaxInstances() {
     return myMaxInstances;
+  }
+
+  public String getCustomizationSpec() {
+    return myCustomizationSpec;
   }
 
   public boolean useCurrentVersion(){

@@ -180,7 +180,7 @@ public class VmwareCloudImage extends AbstractCloudImage<VmwareCloudInstance, Vm
 
       final VmwareTaskWrapper startTask = new VmwareTaskWrapper(new Callable<Task>() {
         public Task call() throws Exception {
-          return myApiConnector.cloneAndStartVm(instance, myImageDetails.getResourcePoolId(), myImageDetails.getFolderId());
+          return myApiConnector.cloneAndStartVm(instance);
         }
       }, "Clone and start instance " + instance.getName()
       );

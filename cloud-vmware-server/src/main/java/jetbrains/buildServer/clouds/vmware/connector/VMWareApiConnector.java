@@ -18,6 +18,7 @@
 
 package jetbrains.buildServer.clouds.vmware.connector;
 
+import com.vmware.vim25.CustomizationSpec;
 import com.vmware.vim25.VirtualMachineSnapshotTree;
 import com.vmware.vim25.mo.Task;
 import com.vmware.vim25.mo.VirtualMachine;
@@ -28,6 +29,7 @@ import jetbrains.buildServer.clouds.InstanceStatus;
 import jetbrains.buildServer.clouds.base.connector.AbstractInstance;
 import jetbrains.buildServer.clouds.base.connector.CloudApiConnector;
 import jetbrains.buildServer.clouds.vmware.VmwareCloudImage;
+import jetbrains.buildServer.clouds.vmware.VmwareCloudImageDetails;
 import jetbrains.buildServer.clouds.vmware.VmwareCloudInstance;
 import jetbrains.buildServer.clouds.vmware.errors.VmwareCheckedCloudException;
 import org.jetbrains.annotations.NotNull;
@@ -74,7 +76,7 @@ public interface VMWareApiConnector extends CloudApiConnector<VmwareCloudImage, 
                            @NotNull final String agentName,
                            @NotNull final CloudInstanceUserData userData) throws VmwareCheckedCloudException;
 
-  Task cloneAndStartVm(@NotNull final VmwareCloudInstance instance, @NotNull String resourcePool, @NotNull String folder) throws VmwareCheckedCloudException;
+  Task cloneAndStartVm(@NotNull final VmwareCloudInstance instance) throws VmwareCheckedCloudException;
 
   Task stopInstance(VmwareCloudInstance instance);
 
@@ -99,6 +101,11 @@ public interface VMWareApiConnector extends CloudApiConnector<VmwareCloudImage, 
   @NotNull
   @Override
   <R extends AbstractInstance> Map<VmwareCloudImage, Map<String, R>> fetchInstances(@NotNull final Collection<VmwareCloudImage> images) throws VmwareCheckedCloudException;
+
+  @NotNull
+  Map<String,String> getCustomizationSpecs();
+
+  CustomizationSpec getCustomizationSpec(String name) throws VmwareCheckedCloudException;
 
   interface VmwareInstanceProcessor {
     void process(VmwareInstance instance);

@@ -1,6 +1,8 @@
 package jetbrains.buildServer.clouds.vmware;
 
 import com.intellij.util.WaitFor;
+import com.vmware.vim25.CustomizationLinuxOptions;
+import com.vmware.vim25.CustomizationSpec;
 import com.vmware.vim25.OptionValue;
 import com.vmware.vim25.VirtualMachinePowerState;
 import com.vmware.vim25.mo.Datacenter;
@@ -73,9 +75,10 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
     myClientParameters.setParameter("username", "un");
     myClientParameters.setParameter("password", "pw");
     myClientParameters.setParameter("vmware_images_data", "[{sourceName:'image1', behaviour:'START_STOP'}," +
-                                                          "{sourceName:'image2',snapshot:'snap*',folder:'cf',pool:'rp',maxInstances:3,behaviour:'ON_DEMAND_CLONE'}," +
+                                                          "{sourceName:'image2',snapshot:'snap*',folder:'cf',pool:'rp',maxInstances:3,behaviour:'ON_DEMAND_CLONE', " +
+                                                          "customizationSpec:'someCustomization'}," +
                                                           "{sourceName:'image_template', snapshot:'" + VmwareConstants.CURRENT_STATE +
-                                                          "',folder:'cf',pool:'rp',maxInstances:3,behaviour:'FRESH_CLONE'}]");
+                                                          "',folder:'cf',pool:'rp',maxInstances:3,behaviour:'FRESH_CLONE', customizationSpec: 'linux'}]");
 
     myFakeApi = new FakeApiConnector();
     FakeModel.instance().addDatacenter("dc");
@@ -85,6 +88,8 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
     FakeModel.instance().addVM("image2").setParentFolder("cf");
     FakeModel.instance().addVM("image_template").setParentFolder("cf");
     FakeModel.instance().addVMSnapshot("image2", "snap");
+    FakeModel.instance().getCustomizationSpecs().put("someCustomization", new CustomizationSpec());
+    FakeModel.instance().getCustomizationSpecs().put("linux", new CustomizationSpec());
 
     recreateClient();
     assertNull(myClient.getErrorInfo());
@@ -853,6 +858,15 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
     assertFalse(myClient.canStartNewInstance(getImageByName("image2")));
     assertFalse(myClient.canStartNewInstance(getImageByName("image1")));
     assertFalse(myClient.canStartNewInstance(getImageByName("image_template")));
+  }
+
+  public void checkCustomization(){
+    final CustomizationSpec linuxSpec = FakeModel.instance().getCustomizationSpec("linux");
+    final CustomizationLinuxOptions linuxOptions = new CustomizationLinuxOptions();
+    linuxSpec.setOptions(linuxOptions);
+    final VmwareCloudInstance newInstance = startNewInstanceAndWait("image_template");
+    final FakeVirtualMachine virtualMachine = FakeModel.instance().getVirtualMachine(newInstance.getName());
+    assertEquals(linuxSpec, virtualMachine.getCustomizationSpec());
   }
   /*
   *

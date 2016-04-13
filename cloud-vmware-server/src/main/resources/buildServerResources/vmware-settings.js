@@ -26,7 +26,7 @@ BS.Clouds.VMWareVSphere = BS.Clouds.VMWareVSphere || (function () {
         LATEST_SNAPSHOT='*';
 
     return {
-        _dataKeys: [ 'sourceName', 'snapshot', 'folder', 'pool', 'maxInstances', 'nickname'],
+        _dataKeys: [ 'sourceName', 'snapshot', 'folder', 'pool', 'maxInstances', 'nickname', 'customizationSpec'],
         selectors: {
             imagesSelect: '#image',
             behaviourSwitch: '.behaviour__switch',
@@ -61,6 +61,7 @@ BS.Clouds.VMWareVSphere = BS.Clouds.VMWareVSphere || (function () {
             this.$maxInstances = $j('#maxInstances');
             this.$nickname = $j("#nickname");
             this.$cloneOptions = $j(this.selectors.cloneOptionsRow);
+            this.$customizationSpec = $j('#customizationSpec');
 
             this.$dialogSubmitButton = $j('#vmwareAddImageButton');
             this.$fetchOptionsError = $j('#error_fetch_options');
@@ -100,12 +101,13 @@ BS.Clouds.VMWareVSphere = BS.Clouds.VMWareVSphere || (function () {
                     var $response = $j(response.responseXML),
                         $vms = $response.find('VirtualMachines:eq(0) VirtualMachine'),
                         $pools = $response.find('ResourcePools:eq(0) ResourcePool'),
+                        $custSpecs = $response.find('CustomizationSpecs:eq(0) CustomizationSpec'),
                         $folders = $response.find('Folders:eq(0) Folder');
 
                     this.$response = $response;
 
                     if ($vms.length) {
-                        this.fillOptions($vms, $pools, $folders);
+                        this.fillOptions($vms, $pools, $folders, $custSpecs);
                         this._toggleDialogSubmitButton(true);
                         this._toggleDialogShowButton(true);
                     }
@@ -116,7 +118,7 @@ BS.Clouds.VMWareVSphere = BS.Clouds.VMWareVSphere || (function () {
                 }.bind(this))
                 .fail(function (errorText) {
                     this.addError('Unable to fetch options: ' + errorText);
-                    this.fillOptions([], [], []);
+                    this.fillOptions([], [], [], []);
                     this._displaySnapshotSelect([]);
                     BS.VMWareImageDialog.close();
                     return errorText;
@@ -159,11 +161,12 @@ BS.Clouds.VMWareVSphere = BS.Clouds.VMWareVSphere || (function () {
             }
             this._toggleImagesTable();
         },
-        fillOptions: function ($vms, $pools, $folders) {
+        fillOptions: function ($vms, $pools, $folders, $custSpecs) {
             this
                 ._displayImagesSelect($vms)
                 ._displayPoolsSelect($pools)
-                ._displayFoldersSelect($folders);
+                ._displayFoldersSelect($folders)
+                ._displayCustomizationSpecSelect($custSpecs);
         },
         /**
          * Validates server URL and displays error if URL seems to be incorrect
@@ -458,7 +461,10 @@ BS.Clouds.VMWareVSphere = BS.Clouds.VMWareVSphere || (function () {
             }.bind(this));
             // - folder
             // - pool
-            this.$cloneFolder.add(this.$resourcePool).on('change', function (e, value) {
+            this.$cloneFolder
+                .add(this.$resourcePool)
+                .add(this.$customizationSpec)
+                .on('change', function (e, value) {
                 var elem = e.target;
 
                 if (arguments.length === 1) {
@@ -601,6 +607,16 @@ BS.Clouds.VMWareVSphere = BS.Clouds.VMWareVSphere || (function () {
 
             return this;
         },
+        _displayCustomizationSpecSelect: function($specs){
+            var self = this;
+
+            this.$customizationSpec.children().remove();
+            this._appendOption(this.$customizationSpec, '', '--Please select customization spec--');
+            $specs.each(function () {
+                self._appendOption(self.$customizationSpec, $j(this).attr('name'), $j(this).attr('name'));
+            });
+            return this;
+        },
         _displayFoldersSelect: function ($folders) {
             var self = this;
 
@@ -733,6 +749,9 @@ BS.Clouds.VMWareVSphere = BS.Clouds.VMWareVSphere || (function () {
                             isValid = false;
                         }
                     }.bind(this),
+                    customizationSpec: function(){
+
+                    }.bind(this),
                     folder: function () {
                         if (this._isClone() && ! this._image.folder) {
                             this.addOptionError('required', 'folder');
@@ -745,6 +764,7 @@ BS.Clouds.VMWareVSphere = BS.Clouds.VMWareVSphere || (function () {
                             isValid = false;
                         }
                     }.bind(this),
+
                     nickname: function() {
 
                     }.bind(this)
@@ -759,6 +779,7 @@ BS.Clouds.VMWareVSphere = BS.Clouds.VMWareVSphere || (function () {
             this.clearOptionsErrors(options);
 
             (options || this._dataKeys).forEach(function(option) {
+                debugger;
                 validators[option](); // validators are already bound to parent object
             });
 
@@ -832,6 +853,8 @@ BS.Clouds.VMWareVSphere = BS.Clouds.VMWareVSphere || (function () {
                     this.$snapshot.trigger('change', image.snapshot || '');
                 }.bind(this));
             this.$resourcePool.trigger('change', image.pool || '');
+          debugger;
+            this.$customizationSpec.trigger('change', image.customizationSpec || '');
             this.$cloneFolder.trigger('change', image.folder || '');
             this.$maxInstances.trigger('change', image.maxInstances || '');
             if (!!this.$nickname) {

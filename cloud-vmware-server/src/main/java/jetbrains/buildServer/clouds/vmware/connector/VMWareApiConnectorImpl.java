@@ -265,6 +265,28 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
     return result;
   }
 
+  @NotNull
+  @Override
+  public Map<String, String> getCustomizationSpecs() {
+    final CustomizationSpecManager specManager = myServiceInstance.getCustomizationSpecManager();
+    final CustomizationSpecInfo[] specs = specManager.getInfo();
+    final Map<String,String> retval = new HashMap<>();
+    for (CustomizationSpecInfo spec : specs) {
+      retval.put(spec.getName(), spec.getType());
+    }
+    return retval;
+  }
+
+  @Override
+  public CustomizationSpec getCustomizationSpec(final String name) throws VmwareCheckedCloudException {
+    final CustomizationSpecManager specManager = myServiceInstance.getCustomizationSpecManager();
+    try {
+      return specManager.getCustomizationSpec(name).getSpec();
+    } catch (RemoteException e) {
+      throw new VmwareCheckedCloudException("Unable to get Customization Spec: '" + name + "'" , e);
+    }
+  }
+
   public Map<String, String> getVMParams(@NotNull final String vmName) throws VmwareCheckedCloudException {
     final Map<String, String> map = new HashMap<String, String>();
     VirtualMachine vm = findEntityByIdName(vmName, VirtualMachine.class);
@@ -473,9 +495,8 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
   }
 
   @Nullable
-  public Task cloneAndStartVm(@NotNull final VmwareCloudInstance instance,
-                              @NotNull final String resourcePoolId,
-                              @NotNull final String folderId) throws VmwareCheckedCloudException {
+  @Override
+  public Task cloneAndStartVm(@NotNull final VmwareCloudInstance instance) throws VmwareCheckedCloudException {
     final VmwareCloudImageDetails imageDetails = instance.getImage().getImageDetails();
     LOG.info(String.format("Attempting to clone VM %s into %s", imageDetails.getSourceName(), instance.getName()));
     final VirtualMachine vm = findEntityByIdName(imageDetails.getSourceName(), VirtualMachine.class);
@@ -489,13 +510,13 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
     cloneSpec.setLocation(location);
     cloneSpec.setConfig(config);
     final boolean disableOsCustomization = TeamCityProperties.getBoolean(VmwareConstants.DISABLE_OS_CUSTOMIZATION);
-    if (!VmwareConstants.DEFAULT_RESOURCE_POOL.equals(resourcePoolId)) {
-      final ResourcePool pool = findEntityByIdNameNullable(resourcePoolId, ResourcePool.class, datacenter);
+    if (!VmwareConstants.DEFAULT_RESOURCE_POOL.equals(imageDetails.getResourcePoolId())) {
+      final ResourcePool pool = findEntityByIdNameNullable(imageDetails.getResourcePoolId(), ResourcePool.class, datacenter);
       if (pool != null) {
         location.setPool(pool.getMOR());
       } else {
         LOG.warn(String.format("Unable to find resource pool %s at datacenter %s. Will clone at the image resource pool instead"
-          , resourcePoolId
+          , imageDetails.getResourcePoolId()
           , datacenter == null? "<not provided>":  datacenter.getName()));
       }
     }
@@ -538,7 +559,13 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
       }
     }
 
-    if (!disableOsCustomization && myDomain != null && LINUX_GUEST_FAMILY.equals(guestFamily)){
+    if (StringUtil.isNotEmpty(imageDetails.getCustomizationSpec())){
+      LOG.info(String.format("Will use Customization Spec '%s' to clone %s into %s"
+        , imageDetails.getCustomizationSpec(), imageDetails.getSourceName(), instance.getName()));
+      cloneSpec.setCustomization(getCustomizationSpec(imageDetails.getCustomizationSpec()));
+    } else if (!disableOsCustomization && myDomain != null && LINUX_GUEST_FAMILY.equals(guestFamily)){
+      LOG.info("Will use basic Linux customization (will customize hostname)");
+      // TODO: remove later, after all profiles are updated to use customization spec
       final CustomizationSpec customization = new CustomizationSpec();
       final CustomizationLinuxPrep linuxPrep = new CustomizationLinuxPrep();
       final CustomizationLinuxOptions linuxOptions = new CustomizationLinuxOptions();
@@ -559,13 +586,13 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
     }
 
     try {
-      final Folder folder = findEntityByIdNameNullable(folderId, Folder.class, datacenter);
+      final Folder folder = findEntityByIdNameNullable(imageDetails.getFolderId(), Folder.class, datacenter);
       if (folder != null) {
         return vm.cloneVM_Task(folder, instance.getName(), cloneSpec);
       } else {
         String dcName = datacenter == null ? "root" : datacenter.getName();
         throw new VmwareCheckedCloudException(
-          String.format("Unable to find folder %s in datacenter %s", folderId, dcName)
+          String.format("Unable to find folder %s in datacenter %s", imageDetails.getFolderId(), dcName)
         );
       }
     } catch (RemoteException e) {

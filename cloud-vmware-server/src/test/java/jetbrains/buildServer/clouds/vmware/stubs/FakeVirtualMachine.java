@@ -29,6 +29,7 @@ public class FakeVirtualMachine extends VirtualMachine {
   private String myVersion;
   private ManagedEntity myParent;
   private Calendar myBootTime;
+  private CustomizationSpec myCustomizationSpec;
 
   public FakeVirtualMachine(final String name, final boolean isTemplate, final boolean isRunning) {
     super(null, createVMMor(name));
@@ -108,18 +109,20 @@ public class FakeVirtualMachine extends VirtualMachine {
   @Override
   public Task cloneVM_Task(final Folder folder, final String name, final VirtualMachineCloneSpec spec)
     throws RemoteException {
-    final VirtualMachine vm = FakeModel.instance().addVM(name, false, spec);
-    final VirtualMachineConfigInfo oldConfig = ((FakeVirtualMachine)vm).myConfigInfo.get();
-    ((FakeVirtualMachine)vm).myConfigInfo.set(null);
+    final FakeVirtualMachine newVm = FakeModel.instance().addVM(name, false, spec);
+    final VirtualMachineConfigInfo oldConfig = newVm.myConfigInfo.get();
+    newVm.myConfigInfo.set(null);
+    newVm.myCustomizationSpec = spec.getCustomization();
     final CountDownLatch latch = new CountDownLatch(1);
     new Thread(){
       @Override
       public void run() {
         try {sleep(500);} catch (InterruptedException e) {}
         latch.countDown();
-        ((FakeVirtualMachine)vm).myConfigInfo.set(oldConfig);
+        newVm.myConfigInfo.set(oldConfig);
+
         if (spec.isPowerOn()){
-          if (!((FakeVirtualMachine)vm).myIsStarted.compareAndSet(false, true)){
+          if (!newVm.myIsStarted.compareAndSet(false, true)){
             //throw new RemoteException("Already started");
           }
         }
@@ -292,6 +295,10 @@ public class FakeVirtualMachine extends VirtualMachine {
 
   public void disableGuestTools(){
     myGuestInfo = null;
+  }
+
+  public CustomizationSpec getCustomizationSpec() {
+    return myCustomizationSpec;
   }
 
   private static ManagedObjectReference createVMMor(final String name){

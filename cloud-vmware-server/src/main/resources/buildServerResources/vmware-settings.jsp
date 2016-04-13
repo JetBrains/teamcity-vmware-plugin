@@ -186,6 +186,13 @@
                 </td>
             </tr>
             <tr class="hidden cloneOptionsRow">
+              <th>Customization spec:</th>
+              <td>
+                <select id="customizationSpec" class="longField" data-id="customizationSpec" data-err-id="customizationSpec"></select>
+                <span class="error option-error option-error_customizationSpec"></span>
+              </td>
+            </tr>
+            <tr class="hidden cloneOptionsRow">
                 <th>Max number of instances:&nbsp;<l:star/></th>
                 <td>
                     <div>

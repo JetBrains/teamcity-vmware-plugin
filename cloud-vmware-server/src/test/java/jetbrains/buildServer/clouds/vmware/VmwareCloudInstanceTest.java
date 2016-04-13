@@ -4,7 +4,6 @@ import com.intellij.util.WaitFor;
 import java.io.File;
 import java.util.Calendar;
 import java.util.Collections;
-import java.util.Date;
 import jetbrains.buildServer.BaseTestCase;
 import jetbrains.buildServer.clouds.CloudInstanceUserData;
 import jetbrains.buildServer.clouds.InstanceStatus;
@@ -39,7 +38,7 @@ public class VmwareCloudInstanceTest extends BaseTestCase {
     myApiConnector = new FakeApiConnector();
     myIdxStorage = createTempDir();
     myImageDetails = new VmwareCloudImageDetails("imageNickname", "mySource", "mySourceSnapshot"
-      , "myFolder", "myPool", CloneBehaviour.FRESH_CLONE, 5);
+      , "myFolder", "myPool", CloneBehaviour.FRESH_CLONE, 5, null);
     FakeModel.instance().addVM("mySource");
     FakeModel.instance().addVMSnapshot("mySource", "mySourceSnapshot");
     FakeModel.instance().addFolder("myFolder");

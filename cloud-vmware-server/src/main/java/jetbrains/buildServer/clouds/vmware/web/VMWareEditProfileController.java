@@ -91,6 +91,7 @@ public class VMWareEditProfileController extends BaseFormXmlController {
       xmlResponse.addContent(getVirtualMachinesAsElement(myApiConnector.getVirtualMachines(true)));
       xmlResponse.addContent(getFoldersAsElement(myApiConnector.getFolders()));
       xmlResponse.addContent(getResourcePoolsAsElement(myApiConnector.getResourcePools()));
+      xmlResponse.addContent(getCustomizationSpecsAsElement(myApiConnector.getCustomizationSpecs()));
     } catch (Exception ex) {
       LOG.warnAndDebugDetails("Unable to get vCenter details: " + ex.toString(), ex);
       errors.addError(
@@ -151,6 +152,18 @@ public class VMWareEditProfileController extends BaseFormXmlController {
       poolElement.setAttribute("value", entity.getId());
       poolElement.setAttribute("datacenterId", entity.getDatacenterId());
       element.addContent(poolElement);
+    }
+    return element;
+  }
+
+  private Element getCustomizationSpecsAsElement(Map<String, String> customizationSpecs){
+    final Element element = new Element("CustomizationSpecs");
+    final List<String> sortedList = getIgnoreCaseSortedList(customizationSpecs.keySet());
+    for (String specName : sortedList) {
+      Element specElement = new Element("CustomizationSpec");
+      specElement.setAttribute("name", specName);
+      specElement.setAttribute("type", customizationSpecs.get(specName));
+      element.addContent(specElement);
     }
     return element;
   }

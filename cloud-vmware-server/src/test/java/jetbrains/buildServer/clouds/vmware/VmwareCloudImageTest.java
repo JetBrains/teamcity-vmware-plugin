@@ -48,7 +48,7 @@ public class VmwareCloudImageTest extends BaseTestCase {
     myApiConnector = new FakeApiConnector();
     myIdxStorage = createTempDir();
     myImageDetails = new VmwareCloudImageDetails("imageNickname", "srcVM", "srcVMSnap"
-      , "folderId", "rpId", CloneBehaviour.FRESH_CLONE, 5);
+      , "folderId", "rpId", CloneBehaviour.FRESH_CLONE, 5, null);
 
     FakeModel.instance().addVM("srcVM");
     FakeModel.instance().addFolder("folderId");

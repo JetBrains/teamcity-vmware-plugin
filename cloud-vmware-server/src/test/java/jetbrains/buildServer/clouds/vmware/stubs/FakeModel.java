@@ -1,5 +1,6 @@
 package jetbrains.buildServer.clouds.vmware.stubs;
 
+import com.vmware.vim25.CustomizationSpec;
 import com.vmware.vim25.OptionValue;
 import com.vmware.vim25.VirtualMachineCloneSpec;
 import com.vmware.vim25.VirtualMachineRelocateDiskMoveOptions;
@@ -21,6 +22,7 @@ public class FakeModel {
   private final Map<String, ResourcePool> myResourcePools = new HashMap<String, ResourcePool>();
   private final Map<String, FakeVirtualMachine> myVms = new HashMap<String, FakeVirtualMachine>();
   private final Map<String, FakeDatacenter> myDatacenters = new HashMap<String, FakeDatacenter>();
+  private final Map<String, CustomizationSpec> myCustomizationSpecs = new HashMap<>();
 
   public Map<String, FakeFolder> getFolders() {
     return myFolders;
@@ -38,6 +40,10 @@ public class FakeModel {
     return myDatacenters;
   }
 
+  public Map<String, CustomizationSpec> getCustomizationSpecs() {
+    return myCustomizationSpecs;
+  }
+
   public FakeFolder getFolder(String name){
     return myFolders.get(name);
   }
@@ -52,6 +58,10 @@ public class FakeModel {
 
   public FakeDatacenter getDatacenter(String name){
     return myDatacenters.get(name);
+  }
+
+  public CustomizationSpec getCustomizationSpec(String name){
+    return myCustomizationSpecs.get(name);
   }
 
   public FakeFolder addFolder(String name){
