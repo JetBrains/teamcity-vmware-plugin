@@ -76,12 +76,6 @@ public interface VMWareApiConnector extends CloudApiConnector<VmwareCloudImage, 
 
   Task cloneAndStartVm(@NotNull final VmwareCloudInstance instance, @NotNull String resourcePool, @NotNull String folder) throws VmwareCheckedCloudException;
 
-  boolean isStartedByTeamcity(String instanceName) throws VmwareCheckedCloudException;
-
-  boolean isInstanceStopped(String instanceName) throws VmwareCheckedCloudException;
-
-  boolean ensureSnapshotExists(String instanceName, String snapshotName) throws VmwareCheckedCloudException;
-
   Task stopInstance(VmwareCloudInstance instance);
 
   void restartInstance(VmwareCloudInstance instance) throws VmwareCheckedCloudException;

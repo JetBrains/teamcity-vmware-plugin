@@ -383,7 +383,7 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
 
 
   @NotNull
-  private Map<String, VirtualMachineSnapshotTree> getSnapshotList(final VirtualMachine vm) throws VmwareCheckedCloudException {
+  private Map<String, VirtualMachineSnapshotTree> getSnapshotList(final VirtualMachine vm) {
     if (vm.getSnapshot() == null) {
       return Collections.emptyMap();
     }
@@ -573,19 +573,6 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
     }
   }
 
-  public boolean isStartedByTeamcity(String instanceName) throws VmwareCheckedCloudException {
-    final VirtualMachine vm = findEntityByIdName(instanceName, VirtualMachine.class);
-    return getOptionValue(vm, SERVER_URL) != null;
-  }
-
-  public boolean isInstanceStopped(String instanceName) throws VmwareCheckedCloudException {
-    final VirtualMachine vm = findEntityByIdName(instanceName, VirtualMachine.class);
-    if (vm.getRuntime() != null) {
-      return vm.getRuntime().getPowerState() == VirtualMachinePowerState.poweredOff;
-    }
-    return false;
-  }
-
 
   protected static Map<String, VirtualMachineSnapshotTree> snapshotNames(@Nullable final VirtualMachineSnapshotTree[] trees) {
     final Map<String, VirtualMachineSnapshotTree> treeNames = new HashMap<String, VirtualMachineSnapshotTree>();
@@ -596,10 +583,6 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
       }
     }
     return treeNames;
-  }
-
-  public boolean ensureSnapshotExists(String instanceName, String snapshotName) throws VmwareCheckedCloudException {
-    return getSnapshotList(instanceName).get(snapshotName) != null;
   }
 
   private OptionValue createOptionValue(@NotNull final String key, @Nullable final String value) {

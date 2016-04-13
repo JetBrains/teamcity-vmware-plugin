@@ -233,8 +233,6 @@ public class VmwareCloudImage extends AbstractCloudImage<VmwareCloudInstance, Vm
         startVM(instance, cloudInstanceUserData);
       }
       return instance;
-    } catch (QuotaException e) {
-      throw e;
     } catch (VmwareCheckedCloudException e) {
       throw new CloudException("Unable to start new instance: " + e.toString());
     }
