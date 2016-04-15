@@ -779,7 +779,6 @@ BS.Clouds.VMWareVSphere = BS.Clouds.VMWareVSphere || (function () {
             this.clearOptionsErrors(options);
 
             (options || this._dataKeys).forEach(function(option) {
-                debugger;
                 validators[option](); // validators are already bound to parent object
             });
 
@@ -853,7 +852,6 @@ BS.Clouds.VMWareVSphere = BS.Clouds.VMWareVSphere || (function () {
                     this.$snapshot.trigger('change', image.snapshot || '');
                 }.bind(this));
             this.$resourcePool.trigger('change', image.pool || '');
-          debugger;
             this.$customizationSpec.trigger('change', image.customizationSpec || '');
             this.$cloneFolder.trigger('change', image.folder || '');
             this.$maxInstances.trigger('change', image.maxInstances || '');
