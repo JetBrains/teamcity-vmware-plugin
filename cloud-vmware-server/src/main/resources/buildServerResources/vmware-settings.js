@@ -611,7 +611,7 @@ BS.Clouds.VMWareVSphere = BS.Clouds.VMWareVSphere || (function () {
             var self = this;
 
             this.$customizationSpec.children().remove();
-            this._appendOption(this.$customizationSpec, '', '--Please select customization spec--');
+            this._appendOption(this.$customizationSpec, '', '<No customization>');
             $specs.each(function () {
                 self._appendOption(self.$customizationSpec, $j(this).attr('name'), $j(this).attr('name'));
             });

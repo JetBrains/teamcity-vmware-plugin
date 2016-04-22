@@ -268,11 +268,13 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
   @NotNull
   @Override
   public Map<String, String> getCustomizationSpecs() {
+    final Map<String,String> retval = new HashMap<>();
     final CustomizationSpecManager specManager = myServiceInstance.getCustomizationSpecManager();
     final CustomizationSpecInfo[] specs = specManager.getInfo();
-    final Map<String,String> retval = new HashMap<>();
-    for (CustomizationSpecInfo spec : specs) {
-      retval.put(spec.getName(), spec.getType());
+    if (specs != null) {
+      for (CustomizationSpecInfo spec : specs) {
+        retval.put(spec.getName(), spec.getType());
+      }
     }
     return retval;
   }
