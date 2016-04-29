@@ -1,13 +1,11 @@
 package jetbrains.buildServer.clouds.vmware;
 
 import com.intellij.util.WaitFor;
-import com.vmware.vim25.CustomizationLinuxOptions;
-import com.vmware.vim25.CustomizationSpec;
-import com.vmware.vim25.OptionValue;
-import com.vmware.vim25.VirtualMachinePowerState;
+import com.vmware.vim25.*;
 import com.vmware.vim25.mo.Datacenter;
 import com.vmware.vim25.mo.ManagedEntity;
 import com.vmware.vim25.mo.Task;
+import com.vmware.vim25.mo.VirtualMachine;
 import java.io.File;
 import java.net.MalformedURLException;
 import java.rmi.RemoteException;
@@ -20,6 +18,7 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import jetbrains.buildServer.BaseTestCase;
 import jetbrains.buildServer.clouds.*;
+import jetbrains.buildServer.clouds.base.connector.AbstractInstance;
 import jetbrains.buildServer.clouds.base.errors.CheckedCloudException;
 import jetbrains.buildServer.clouds.base.tasks.UpdateInstancesTask;
 import jetbrains.buildServer.clouds.server.CloudInstancesProvider;
@@ -867,6 +866,35 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
     final VmwareCloudInstance newInstance = startNewInstanceAndWait("image_template");
     final FakeVirtualMachine virtualMachine = FakeModel.instance().getVirtualMachine(newInstance.getName());
     assertEquals(linuxSpec, virtualMachine.getCustomizationSpec());
+  }
+
+  public void handle_instances_deleted_in_the_middle_of_check() throws MalformedURLException, VmwareCheckedCloudException {
+    final Set<String> instances2RemoveAfterGet = new HashSet<>();
+
+    myFakeApi = new FakeApiConnector(){
+      @Override
+      protected <T extends ManagedEntity> Collection<T> findAllEntities(final Class<T> instanceType) throws VmwareCheckedCloudException {
+        final Collection<T> entities = super.findAllEntities(instanceType);
+        final Collection<T> result = new ArrayList<>();
+        for (T entity : entities) {
+          if (instances2RemoveAfterGet.contains(entity.getName()) && entity instanceof FakeVirtualMachine){
+            final FakeVirtualMachine fvm = (FakeVirtualMachine) entity;
+            fvm.setGone(true);
+          }
+          result.add(entity);
+        }
+        return result;
+      }
+    };
+    final VmwareCloudInstance i1 = startNewInstanceAndWait("image2");
+    final VmwareCloudInstance i2 = startNewInstanceAndWait("image2");
+    final VmwareCloudInstance i3 = startNewInstanceAndWait("image2");
+
+    instances2RemoveAfterGet.add(i1.getInstanceId());
+    instances2RemoveAfterGet.add(i2.getInstanceId());
+
+    final Map<String, AbstractInstance> image2Instances = myFakeApi.fetchInstances(getImageByName("image2"));
+    assertEquals(1, image2Instances.size());
   }
   /*
   *

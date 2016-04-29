@@ -30,6 +30,7 @@ public class FakeVirtualMachine extends VirtualMachine {
   private ManagedEntity myParent;
   private Calendar myBootTime;
   private CustomizationSpec myCustomizationSpec;
+  private AtomicBoolean myGone = new AtomicBoolean(false);
 
   public FakeVirtualMachine(final String name, final boolean isTemplate, final boolean isRunning) {
     super(null, createVMMor(name));
@@ -93,16 +94,35 @@ public class FakeVirtualMachine extends VirtualMachine {
 
   @Override
   public String getName() {
+    checkIfInstanceIsGone();
     return myName;
+  }
+
+  private void checkIfInstanceIsGone() {
+    if (myGone.get()){
+      final ManagedObjectNotFound cause = new ManagedObjectNotFound();
+      cause.setObj(getMOR());
+      throw new RuntimeException(cause);
+    }
+  }
+
+  @Override
+  protected Object getCurrentProperty(final String propertyName) {
+    checkIfInstanceIsGone();
+
+    return super.getCurrentProperty(propertyName);
   }
 
   @Override
   public VirtualMachineRuntimeInfo getRuntime() {
+    checkIfInstanceIsGone();
+
     return myRuntimeInfo;
   }
 
   @Override
   public VirtualMachineSnapshotInfo getSnapshot() {
+    checkIfInstanceIsGone();
     return mySnapshotInfo;
   }
 
@@ -156,6 +176,7 @@ public class FakeVirtualMachine extends VirtualMachine {
 
   @Override
   public VirtualMachineConfigInfo getConfig() {
+    checkIfInstanceIsGone();
     return myConfigInfo.get();
   }
 
@@ -318,5 +339,17 @@ public class FakeVirtualMachine extends VirtualMachine {
         return "VirtualMachine";
       }
     };
+  }
+
+  public boolean isRunning(){
+    return myIsStarted.get();
+  }
+
+  public void setGone(boolean gone){
+    myGone.set(gone);
+  }
+
+  public boolean isGone(){
+    return myGone.get();
   }
 }

@@ -258,7 +258,12 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
           imageInstancesMap.put(vmInstance.getName(), (R)vmInstance);
         }
       } catch (Exception ex) {
-        LOG.debug("Unable to process VM " + vm.getName());
+        final ManagedObjectReference mor = vm.getMOR();
+        if (mor != null) {
+          LOG.debug("Unable to process " + mor.getType() + " " + mor.getVal());
+        } else {
+          LOG.debug("Null MOR passed");
+        }
       }
     }
 
