@@ -45,6 +45,7 @@ public class DummyApiConnector implements CloudApiConnector<DummyCloudImage, Dum
   public <R extends AbstractInstance> Map<DummyCloudImage, Map<String, R>> fetchInstances(@NotNull final Collection<DummyCloudImage> images) throws CheckedCloudException {
     Map<DummyCloudImage, Map<String, R>> result = new HashMap<>();
     for (DummyCloudImage image: images) {
+      if (fetchInstances(image).size() > 0)
       result.put(image, fetchInstances(image));
     }
     return result;

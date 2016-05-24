@@ -72,9 +72,11 @@ public class UpdateInstancesTask<G extends AbstractCloudInstance<T>, T extends A
 
       final Map<T, Map<String, AbstractInstance>> groupedInstances = myConnector.fetchInstances(goodImages);
 
-      for (Map.Entry<T, Map<String, AbstractInstance>> imageEntry: groupedInstances.entrySet()) {
-        T image = imageEntry.getKey();
-        final Map<String, AbstractInstance> realInstances = imageEntry.getValue();
+      for (T image : goodImages) {
+        Map<String, AbstractInstance> realInstances = groupedInstances.get(image);
+        if (realInstances == null){
+          realInstances = Collections.emptyMap();
+        }
         for (String realInstanceName : realInstances.keySet()) {
           final G instance = image.findInstanceById(realInstanceName);
           final AbstractInstance realInstance = realInstances.get(realInstanceName);
