@@ -20,6 +20,7 @@ package jetbrains.buildServer.clouds.base.tasks;
 
 import com.intellij.openapi.diagnostic.Logger;
 import java.util.*;
+import jetbrains.buildServer.Used;
 import jetbrains.buildServer.clouds.InstanceStatus;
 import jetbrains.buildServer.clouds.base.AbstractCloudClient;
 import jetbrains.buildServer.clouds.base.AbstractCloudImage;
@@ -41,12 +42,14 @@ public class UpdateInstancesTask<G extends AbstractCloudInstance<T>, T extends A
   @NotNull private final CloudApiConnector<T, G> myConnector;
   protected final F myClient;
   private final long myStuckTime;
+  @Used("Tests")
   private final boolean myRethrowException;
 
 
   public UpdateInstancesTask(@NotNull final CloudApiConnector<T, G> connector,
                              @NotNull final F client,
                              long stuckTimeMillis,
+                             @Used("Tests")
                              final boolean rethrowException) {
     myConnector = connector;
     myClient = client;
