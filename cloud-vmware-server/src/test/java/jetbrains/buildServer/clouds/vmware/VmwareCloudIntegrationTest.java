@@ -911,7 +911,7 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
 
   private static CloudInstanceUserData createUserData(String agentName, Map<String, String> parameters){
     Map<String, String> map = new HashMap<String, String>(parameters);
-    map.put(CloudContants.PROFILE_ID, PROFILE_ID);
+    map.put(CloudConstants.PROFILE_ID, PROFILE_ID);
     CloudInstanceUserData userData = new CloudInstanceUserData(agentName,
                                                                "authToken", "http://localhost:8080", 3 * 60 * 1000l, "My profile", map);
     return userData;
