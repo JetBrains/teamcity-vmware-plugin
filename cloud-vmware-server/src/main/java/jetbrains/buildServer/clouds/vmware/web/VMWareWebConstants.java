@@ -32,8 +32,6 @@ public class VMWareWebConstants {
 
   public static final String SECURE_PASSWORD = "secure:"+PASSWORD;
 
-  public static final String IMAGES_DATA="vmware_images_data";
-
 
   public String getServerUrl() {
     return SERVER_URL;
@@ -45,10 +43,6 @@ public class VMWareWebConstants {
 
   public String getPassword() {
     return PASSWORD;
-  }
-
-  public String getImagesData() {
-    return IMAGES_DATA;
   }
 
   public String getProfileInstanceLimit() {

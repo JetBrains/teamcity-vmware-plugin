@@ -26,7 +26,7 @@ BS.Clouds.VMWareVSphere = BS.Clouds.VMWareVSphere || (function () {
         LATEST_SNAPSHOT='*';
 
     return {
-        _dataKeys: [ 'sourceName', 'snapshot', 'folder', 'pool', 'maxInstances', 'nickname', 'customizationSpec'],
+        _dataKeys: [ 'source-id', 'snapshot', 'folder', 'pool', 'maxInstances', 'nickname', 'customizationSpec'],
         selectors: {
             imagesSelect: '#image',
             behaviourSwitch: '.behaviour__switch',
@@ -350,7 +350,8 @@ BS.Clouds.VMWareVSphere = BS.Clouds.VMWareVSphere || (function () {
             }
             this.imagesData = imagesData.reduce(function (accumulator, imageDataStr) {
                 // drop images without sourceName
-                if (imageDataStr.sourceName) {
+                debugger;
+                if (imageDataStr['source-id']) {
                     accumulator[self._lastImageId++] = imageDataStr;
                     self._imagesDataLength++;
                 }
@@ -359,7 +360,7 @@ BS.Clouds.VMWareVSphere = BS.Clouds.VMWareVSphere || (function () {
             }, {});
             this.fetchOptionsDeferred && this.fetchOptionsDeferred.done(function () {
                 Object.keys(this.imagesData).forEach(function (i, key) {
-                    this.imagesData[key].$image = this._getSourceByName(this.imagesData[key].sourceName);
+                    this.imagesData[key].$image = this._getSourceByName(this.imagesData[key]['source-id']);
                 }.bind(this))
             }.bind(this));
         },
@@ -374,7 +375,7 @@ BS.Clouds.VMWareVSphere = BS.Clouds.VMWareVSphere || (function () {
             this.$imagesTable.on('click', this.selectors.rmImageLink, function () {
                 var $this = $j(this),
                     id = $this.data('image-id'),
-                    name = self.imagesData[id].sourceName;
+                    name = self.imagesData[id]['source-id'];
 
                 if (confirm('Are you sure you want to remove the image "' + name + '"?')) {
                     self.removeImage($this);
@@ -391,7 +392,7 @@ BS.Clouds.VMWareVSphere = BS.Clouds.VMWareVSphere || (function () {
             // - image
             this.$options.on('change', this.selectors.imagesSelect, function(e, value) {
                 if (arguments.length === 1) { // native change by user
-                    this._image.sourceName = e.target.value;
+                    this._image['source-id'] = e.target.value;
                     this._image.$image = this._getSourceByName(e.target.value);
                     delete this._image.snapshot;
                 } else {
@@ -684,7 +685,7 @@ BS.Clouds.VMWareVSphere = BS.Clouds.VMWareVSphere || (function () {
         // Older IE try to interpret `template` tags, that approach fails too.
         templates: {
             imagesTableRow: $j('<tr class="imagesTableRow">\
-<td class="imageName highlight"><div class="sourceIcon sourceIcon_unknown">?</div><span class="sourceName"></span></td>\
+<td class="imageName highlight"><div class="sourceIcon sourceIcon_unknown">?</div><span class="source-id"></span></td>\
 <td class="snapshot highlight"></td>\
 <td class="folder hidden highlight"></td>\
 <td class="pool hidden highlight"></td>\
@@ -693,7 +694,7 @@ BS.Clouds.VMWareVSphere = BS.Clouds.VMWareVSphere || (function () {
 <td class="edit highlight"><a href="#" class="editVmImageLink">edit</a></td>\
 <td class="remove"><a href="#" class="removeVmImageLink">delete</a></td>\
         </tr>'),
-                imagesSelect: $j('<select name="prop:_image" id="image" class="longField" data-id="sourceName" data-err-id="sourceName">\
+                imagesSelect: $j('<select name="prop:_image" id="image" class="longField" data-id="source-id" data-err-id="source-id">\
 <option value="">--Please select a VM--</option>\
 <optgroup label="Virtual machines" class="vmGroup"></optgroup>\
 <optgroup label="Templates" class="templatesGroup"></optgroup>\
@@ -720,14 +721,14 @@ BS.Clouds.VMWareVSphere = BS.Clouds.VMWareVSphere || (function () {
             var maxInstances = this._image.maxInstances,
                 isValid = true,
                 validators = {
-                    sourceName: function () {
-                        if ( ! this._image.sourceName) {
-                            this.addOptionError('required', 'sourceName');
+                    'source-id': function () {
+                        if ( ! this._image[['source-id']]) {
+                            this.addOptionError('required', 'source-id');
                             isValid = false;
                         } else {
-                            var $machine = this._getSourceByName(this._image.sourceName);
+                            var $machine = this._getSourceByName(this._image['source-id']);
                             if (! $machine.length) {
-                                this.addOptionError({ key: 'nonexistent', props: { elem: 'source', val: this._image.sourceName}}, 'sourceName');
+                                this.addOptionError({ key: 'nonexistent', props: { elem: 'source', val: this._image['source-id']}}, 'source-id');
                                 isValid = false;
                             } else {
                                 if (this._isTemplate($machine) && this._image.behaviour === START_STOP) {
@@ -770,7 +771,7 @@ BS.Clouds.VMWareVSphere = BS.Clouds.VMWareVSphere || (function () {
                     }.bind(this)
                 };
 
-            validators.behaviour = validators.sourceName;
+            validators.behaviour = validators['source-id'];
 
             if (options && ! $j.isArray(options)) {
                 options = [options];
@@ -811,7 +812,7 @@ BS.Clouds.VMWareVSphere = BS.Clouds.VMWareVSphere || (function () {
 
             Object.keys(this.imagesData).forEach(function (imageId) {
                 var machine = this.imagesData[imageId],
-                    name = machine.sourceName,
+                    name = machine['source-id'],
                     $machine = this._getSourceByName(name);
 
                 if (! $machine.length) {
@@ -845,7 +846,7 @@ BS.Clouds.VMWareVSphere = BS.Clouds.VMWareVSphere || (function () {
         _triggerDialogChange: function () {
             var image = this._image;
 
-            this.$image.trigger('change', image.sourceName || '');
+            this.$image.trigger('change', image['source-id'] || '');
             this.$behaviour.trigger('change', image.behaviour || '');
             this.fetchSnapshotsDeferred && this.fetchSnapshotsDeferred
                 .then(function () {

@@ -31,5 +31,5 @@ public interface CloudImageDetails {
 
   int getMaxInstances();
 
-  String getSourceName();
+  String getSourceId();
 }

@@ -87,15 +87,15 @@ public class VmwareCloudImage extends AbstractCloudImage<VmwareCloudInstance, Vm
       return;
     }
     if (imageDetails.getBehaviour().isUseOriginal()) {
-      final VmwareCloudInstance imageInstance = new VmwareCloudInstance(this, imageDetails.getSourceName(), VmwareConstants.CURRENT_STATE);
-      myInstances.put(myImageDetails.getSourceName(), imageInstance);
+      final VmwareCloudInstance imageInstance = new VmwareCloudInstance(this, imageDetails.getSourceId(), VmwareConstants.CURRENT_STATE);
+      myInstances.put(myImageDetails.getSourceId(), imageInstance);
 
-      final VmwareInstance vmwareInstance = realInstances.get(imageDetails.getSourceName());
+      final VmwareInstance vmwareInstance = realInstances.get(imageDetails.getSourceId());
       if (vmwareInstance != null) {
         imageInstance.setStatus(vmwareInstance.getInstanceStatus());
       } else {
         imageInstance.setStatus(InstanceStatus.UNKNOWN);
-        imageInstance.updateErrors(new TypedCloudErrorInfo("NoVM", "VM doesn't exist: " + imageDetails.getSourceName()));
+        imageInstance.updateErrors(new TypedCloudErrorInfo("NoVM", "VM doesn't exist: " + imageDetails.getSourceId()));
       }
     } else {
       for (String instanceName : realInstances.keySet()) {
@@ -120,10 +120,10 @@ public class VmwareCloudImage extends AbstractCloudImage<VmwareCloudInstance, Vm
 
     if (myImageDetails.getBehaviour().isUseOriginal()) {
       LOG.info("Won't create a new instance - using original");
-      return myInstances.get(myImageDetails.getSourceName());
+      return myInstances.get(myImageDetails.getSourceId());
     }
 
-    final String latestSnapshotName = myApiConnector.getLatestSnapshot(myImageDetails.getSourceName(), myImageDetails.getSnapshotName());
+    final String latestSnapshotName = myApiConnector.getLatestSnapshot(myImageDetails.getSourceId(), myImageDetails.getSnapshotName());
     if (!myImageDetails.useCurrentVersion() && latestSnapshotName == null) {
       updateErrors(new TypedCloudErrorInfo("No such snapshot: " + getSnapshotName()));
       throw new VmwareCheckedCloudException("Unable to find snapshot: " + myImageDetails.getSnapshotName());
@@ -131,7 +131,7 @@ public class VmwareCloudImage extends AbstractCloudImage<VmwareCloudInstance, Vm
 
     if (!myImageDetails.getBehaviour().isDeleteAfterStop()) {
       // on demand clone
-      final VmwareInstance imageVm = myApiConnector.getInstanceDetails(myImageDetails.getSourceName());
+      final VmwareInstance imageVm = myApiConnector.getInstanceDetails(myImageDetails.getSourceId());
       final AtomicReference<VmwareCloudInstance> candidate = new AtomicReference<VmwareCloudInstance>();
       processStoppedInstances(new Function<VmwareInstance, Boolean>() {
         public Boolean fun(final VmwareInstance vmInstance) {
@@ -216,7 +216,7 @@ public class VmwareCloudImage extends AbstractCloudImage<VmwareCloudInstance, Vm
           }
         });
 
-        throw new QuotaException(String.format("Cannot clone '%s' into '%s' - limit exceeded", myImageDetails.getSourceName(), instance.getName()));
+        throw new QuotaException(String.format("Cannot clone '%s' into '%s' - limit exceeded", myImageDetails.getSourceId(), instance.getName()));
       }
       instance.setStatus(InstanceStatus.SCHEDULED_TO_START);
       if (!myInstances.containsKey(instance.getName())) {
@@ -320,7 +320,7 @@ public class VmwareCloudImage extends AbstractCloudImage<VmwareCloudInstance, Vm
     }
 
     if (myImageDetails.getBehaviour().isUseOriginal()) {
-      final VmwareCloudInstance myInstance = myInstances.get(myImageDetails.getSourceName());
+      final VmwareCloudInstance myInstance = myInstances.get(myImageDetails.getSourceId());
       if (myInstance == null) {
         return false;
       }
@@ -361,12 +361,12 @@ public class VmwareCloudImage extends AbstractCloudImage<VmwareCloudInstance, Vm
   }
 
   public void addInstance(@NotNull final VmwareCloudInstance instance){
-    LOG.info(String.format("Image %s, put instance %s", myImageDetails.getSourceName(), instance.getName()));
+    LOG.info(String.format("Image %s, put instance %s", myImageDetails.getSourceId(), instance.getName()));
     myInstances.put(instance.getName(), instance);
   }
 
   public void removeInstance(@NotNull final String name){
-    LOG.info(String.format("Image %s, remove instance %s", myImageDetails.getSourceName(), name));
+    LOG.info(String.format("Image %s, remove instance %s", myImageDetails.getSourceId(), name));
     myInstances.remove(name);
   }
 
@@ -408,7 +408,7 @@ public class VmwareCloudImage extends AbstractCloudImage<VmwareCloudInstance, Vm
   @Nullable
   @Override
   public Integer getAgentPoolId() {
-    return null;
+    return myImageDetails.getAgentPoolId();
   }
 
   private static class ImageStatusTaskWrapper extends TaskCallbackHandler {

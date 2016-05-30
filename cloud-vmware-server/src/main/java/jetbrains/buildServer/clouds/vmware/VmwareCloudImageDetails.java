@@ -18,9 +18,10 @@
 
 package jetbrains.buildServer.clouds.vmware;
 
-import com.google.gson.annotations.SerializedName;
+import jetbrains.buildServer.clouds.CloudImageParameters;
 import jetbrains.buildServer.clouds.base.beans.CloudImageDetails;
 import jetbrains.buildServer.clouds.base.types.CloneBehaviour;
+import jetbrains.buildServer.util.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,57 +31,35 @@ import org.jetbrains.annotations.Nullable;
  *         Time: 5:37 PM
  */
 public class VmwareCloudImageDetails implements CloudImageDetails {
-  @SerializedName("nickname")
-  @Nullable
-  private final String myNickname;
-
-  @SerializedName("sourceName")
+  @Nullable private final String myNickname;
   private final String mySourceName;
-
-  @SerializedName("folder")
   private final String myFolderId;
-
-  @SerializedName("pool")
   private final String myResourcePoolId;
-
-  @SerializedName("snapshot")
-  @NotNull
-  private final String mySnapshotName;
-
-  @SerializedName("behaviour")
+  @NotNull private final String mySnapshotName;
   private final CloneBehaviour myCloneBehaviour;
-
-  @SerializedName("maxInstances")
   private final int myMaxInstances;
-
-  @SerializedName("customizationSpec")
   private final String myCustomizationSpec;
+  private final Integer myAgentPoolId;
 
-  public VmwareCloudImageDetails(
-    @Nullable final String nickname,
-    @NotNull final String sourceName,
-    @NotNull final String snapshotName,
-    @NotNull final String folderId,
-    @NotNull final String resourcePoolId,
-    @NotNull final CloneBehaviour cloneBehaviour,
-    final int maxInstances,
-    @Nullable final String customizationSpec) {
-    myNickname = nickname;
-    mySourceName = sourceName;
-    myFolderId = folderId;
-    myResourcePoolId = resourcePoolId;
-    mySnapshotName = snapshotName;
-    myCloneBehaviour = cloneBehaviour;
-    myMaxInstances = maxInstances;
-    myCustomizationSpec = customizationSpec;
+  public VmwareCloudImageDetails(@NotNull final CloudImageParameters imageParameters){
+    myCustomizationSpec = imageParameters.getParameter("customizationSpec");
+    myMaxInstances = StringUtil.parseInt(StringUtil.emptyIfNull(imageParameters.getParameter("maxInstances")), 0);
+    mySourceName = imageParameters.getId();
+    myFolderId = imageParameters.getParameter("folder");
+    myResourcePoolId = imageParameters.getParameter("pool");
+    myCloneBehaviour = CloneBehaviour.valueOf(imageParameters.getParameter("behaviour"));
+    mySnapshotName = StringUtil.emptyIfNull(imageParameters.getParameter("snapshot"));
+    myNickname = StringUtil.nullIfEmpty(imageParameters.getParameter("nickname"));
+    myAgentPoolId = imageParameters.getAgentPoolId();
   }
+
 
   @NotNull
   public String getNickname() {
     return myNickname == null ? mySourceName : myNickname;
   }
 
-  public String getSourceName() {
+  public String getSourceId() {
     return mySourceName;
   }
 
@@ -111,5 +90,9 @@ public class VmwareCloudImageDetails implements CloudImageDetails {
 
   public boolean useCurrentVersion(){
     return VmwareConstants.CURRENT_STATE.equals(mySnapshotName);
+  }
+
+  public Integer getAgentPoolId() {
+    return myAgentPoolId;
   }
 }

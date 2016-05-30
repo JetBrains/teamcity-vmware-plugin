@@ -8,7 +8,6 @@ import java.util.stream.Collectors;
 import jetbrains.buildServer.BaseTestCase;
 import jetbrains.buildServer.clouds.CloudClientParameters;
 import jetbrains.buildServer.clouds.InstanceStatus;
-import jetbrains.buildServer.clouds.base.AbstractCloudClient;
 import jetbrains.buildServer.clouds.base.connector.CloudApiConnector;
 import jetbrains.buildServer.clouds.base.stubs.*;
 import jetbrains.buildServer.clouds.base.tasks.UpdateInstancesTask;
@@ -121,7 +120,7 @@ public class UpdateInstancesTaskTest extends BaseTestCase {
 
     @Override
     protected DummyCloudImage checkAndCreateImage(@NotNull final DummyImageDetails imageDetails) {
-      return new DummyCloudImage(imageDetails.getSourceName());
+      return new DummyCloudImage(imageDetails.getSourceId());
     }
 
     @Override

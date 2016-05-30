@@ -8,6 +8,7 @@ import java.util.*;
 import com.intellij.util.WaitFor;
 import jetbrains.buildServer.BaseTestCase;
 import jetbrains.buildServer.clouds.CloudClientParameters;
+import jetbrains.buildServer.clouds.CloudImageParameters;
 import jetbrains.buildServer.clouds.CloudInstanceUserData;
 import jetbrains.buildServer.clouds.InstanceStatus;
 import jetbrains.buildServer.clouds.base.connector.CloudAsyncTaskExecutor;
@@ -47,8 +48,16 @@ public class VmwareCloudImageTest extends BaseTestCase {
     myTaskExecutor = new CloudAsyncTaskExecutor("Test-vmware");
     myApiConnector = new FakeApiConnector();
     myIdxStorage = createTempDir();
-    myImageDetails = new VmwareCloudImageDetails("imageNickname", "srcVM", "srcVMSnap"
-      , "folderId", "rpId", CloneBehaviour.FRESH_CLONE, 5, null);
+    CloudImageParameters imageParameters = new CloudImageParameters();
+    imageParameters.setParameter("nickname", "imageNickname");
+    imageParameters.setParameter("source-id", "srcVM");
+    imageParameters.setParameter("snapshot", "srcVMSnap");
+    imageParameters.setParameter("folder", "folderId");
+    imageParameters.setParameter("pool", "rpId");
+    imageParameters.setParameter("behaviour", CloneBehaviour.FRESH_CLONE.toString());
+    imageParameters.setParameter("maxInstances", "5");
+
+    myImageDetails = new VmwareCloudImageDetails(imageParameters);
 
     FakeModel.instance().addVM("srcVM");
     FakeModel.instance().addFolder("folderId");

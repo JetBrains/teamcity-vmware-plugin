@@ -25,7 +25,7 @@ public class DummyImageDetails implements CloudImageDetails {
   }
 
   @Override
-  public String getSourceName() {
+  public String getSourceId() {
     return myName;
   }
 }

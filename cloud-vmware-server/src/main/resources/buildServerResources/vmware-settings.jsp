@@ -95,8 +95,8 @@
       </tbody>
     </table>
     <jsp:useBean id="propertiesBean" scope="request" type="jetbrains.buildServer.controllers.BasePropertiesBean"/>
-    <c:set var="imagesData" value="${propertiesBean.properties[webCons.imagesData]}"/>
-    <input type="hidden" name="prop:${webCons.imagesData}" id="${webCons.imagesData}" value="<c:out value="${imagesData}"/>"/>
+    <c:set var="sourceImagesJson" value="${propertiesBean.properties['source_images_json']}"/>
+    <input type="hidden" name="prop:source_images_json" id="source_images_json" value="<c:out value='${sourceImagesJson}'/>"/>
   </div>
   <forms:addButton title="Add image" id="vmwareShowDialogButton">Add image</forms:addButton>
 </div>
@@ -215,7 +215,7 @@
         success: function () {
             BS.Clouds.VMWareVSphere.init('<c:url value="${refreshablePath}"/>',
                     '<c:url value="${refreshSnapshotsPath}"/>',
-                    '${webCons.imagesData}',
+                    'source_images_json',
                     '${webCons.serverUrl}');
         },
         cache: true
