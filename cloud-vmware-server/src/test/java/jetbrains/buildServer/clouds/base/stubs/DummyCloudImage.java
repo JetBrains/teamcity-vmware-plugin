@@ -1,9 +1,11 @@
 package jetbrains.buildServer.clouds.base.stubs;
 
+import jetbrains.buildServer.clouds.CloudImageParameters;
 import jetbrains.buildServer.clouds.CloudInstanceUserData;
 import jetbrains.buildServer.clouds.base.AbstractCloudImage;
 import jetbrains.buildServer.clouds.base.connector.AbstractInstance;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Created by Sergey.Pak on 3/4/2016.
@@ -53,4 +55,9 @@ public class DummyCloudImage extends AbstractCloudImage<DummyCloudInstance, Dumm
     return new DummyCloudInstance(this, realInstance.getName(), realInstance.getName());
   }
 
+  @Nullable
+  @Override
+  public Integer getAgentPoolId() {
+    return null;
+  }
 }
