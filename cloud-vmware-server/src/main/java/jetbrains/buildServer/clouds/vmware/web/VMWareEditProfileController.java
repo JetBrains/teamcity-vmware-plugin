@@ -34,6 +34,7 @@ import jetbrains.buildServer.controllers.BaseFormXmlController;
 import jetbrains.buildServer.controllers.BasePropertiesBean;
 import jetbrains.buildServer.controllers.admin.projects.PluginPropertiesUtil;
 import jetbrains.buildServer.serverSide.SBuildServer;
+import jetbrains.buildServer.serverSide.agentPools.AgentPoolManager;
 import jetbrains.buildServer.web.openapi.*;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -52,13 +53,16 @@ public class VMWareEditProfileController extends BaseFormXmlController {
   @NotNull private final String myHtmlPath;
   @NotNull private final String mySnapshotsPath;
   @NotNull private final PluginDescriptor myPluginDescriptor;
+  @NotNull private final AgentPoolManager myAgentPoolManager;
 
   public VMWareEditProfileController(@NotNull final SBuildServer server,
-                                      @NotNull final PluginDescriptor pluginDescriptor,
-                                     @NotNull final WebControllerManager manager) {
+                                     @NotNull final PluginDescriptor pluginDescriptor,
+                                     @NotNull final WebControllerManager manager,
+                                     @NotNull final AgentPoolManager agentPoolManager) {
     super(server);
     myHtmlPath = pluginDescriptor.getPluginResourcesPath("vmware-settings.html");
     myPluginDescriptor = pluginDescriptor;
+    myAgentPoolManager = agentPoolManager;
     myJspPath = myPluginDescriptor.getPluginResourcesPath("vmware-settings.jsp");
     mySnapshotsPath = pluginDescriptor.getPluginResourcesPath("vmware-getsnapshotlist.html");
     manager.registerController(myHtmlPath, this);
@@ -71,6 +75,8 @@ public class VMWareEditProfileController extends BaseFormXmlController {
     mv.getModel().put("refreshablePath", myHtmlPath);
     mv.getModel().put("refreshSnapshotsPath", mySnapshotsPath);
     mv.getModel().put("resPath", myPluginDescriptor.getPluginResourcesPath());
+    mv.getModel().put("agentPools", myAgentPoolManager.getAllAgentPools());
+
     return mv;
   }
 

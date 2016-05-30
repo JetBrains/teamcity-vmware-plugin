@@ -26,6 +26,8 @@
 <%@ taglib prefix="intprop" uri="/WEB-INF/functions/intprop" %>
 <%--@elvariable id="resPath" type="java.lang.String"--%>
 <jsp:useBean id="webCons" class="jetbrains.buildServer.clouds.vmware.web.VMWareWebConstants"/>
+<jsp:useBean id="cloudWebCons" class="jetbrains.buildServer.clouds.server.web.CloudWebConstants"/>
+<jsp:useBean id="agentPools" scope="request" type="java.util.Collection<jetbrains.buildServer.serverSide.agentPools.AgentPool>"/>
 <jsp:useBean id="cons" class="jetbrains.buildServer.clouds.vmware.VmwareConstants"/>
 
 <jsp:useBean id="refreshablePath" class="java.lang.String" scope="request"/>
@@ -201,6 +203,18 @@
                     <span class="error option-error option-error_maxInstances"></span>
                 </td>
             </tr>
+            <tr class="advancedSetting">
+              <th><label for="${cloudWebCons.agentPoolIdField}">Agent Pool:</label></th>
+              <td>
+                <select id="${cloudWebCons.agentPoolIdField}" data-id="${cloudWebCons.agentPoolIdField}" class="longField configParam">
+                  <c:forEach var="ap" items="${agentPools}">
+                    <props:option value="${ap.agentPoolId}"><c:out value="${ap.name}"/></props:option>
+                  </c:forEach>
+                </select>
+                <span id="error_${cloudWebCons.agentPoolIdField}" class="error"></span>
+              </td>
+            </tr>
+
         </table>
     <div class="popupSaveButtonsBlock">
         <forms:submit label="Add" type="button" id="vmwareAddImageButton"/>

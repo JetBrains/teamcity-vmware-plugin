@@ -26,7 +26,7 @@ BS.Clouds.VMWareVSphere = BS.Clouds.VMWareVSphere || (function () {
         LATEST_SNAPSHOT='*';
 
     return {
-        _dataKeys: [ 'source-id', 'snapshot', 'folder', 'pool', 'maxInstances', 'nickname', 'customizationSpec'],
+        _dataKeys: [ 'source-id', 'snapshot', 'folder', 'pool', 'maxInstances', 'nickname'],
         selectors: {
             imagesSelect: '#image',
             behaviourSwitch: '.behaviour__switch',
@@ -59,6 +59,7 @@ BS.Clouds.VMWareVSphere = BS.Clouds.VMWareVSphere || (function () {
             this.$cloneFolder = $j('#cloneFolder');
             this.$resourcePool = $j('#resourcePool');
             this.$maxInstances = $j('#maxInstances');
+            this.$agentPool = $j("#agent_pool_id");
             this.$nickname = $j("#nickname");
             this.$cloneOptions = $j(this.selectors.cloneOptionsRow);
             this.$customizationSpec = $j('#customizationSpec');
@@ -350,7 +351,6 @@ BS.Clouds.VMWareVSphere = BS.Clouds.VMWareVSphere || (function () {
             }
             this.imagesData = imagesData.reduce(function (accumulator, imageDataStr) {
                 // drop images without sourceName
-                debugger;
                 if (imageDataStr['source-id']) {
                     accumulator[self._lastImageId++] = imageDataStr;
                     self._imagesDataLength++;
@@ -465,9 +465,10 @@ BS.Clouds.VMWareVSphere = BS.Clouds.VMWareVSphere || (function () {
             this.$cloneFolder
                 .add(this.$resourcePool)
                 .add(this.$customizationSpec)
+                .add(this.$agentPool)
                 .on('change', function (e, value) {
                 var elem = e.target;
-
+                    debugger;
                 if (arguments.length === 1) {
                     this._image[elem.getAttribute('data-id')] = elem.value;
                 } else {
@@ -752,7 +753,10 @@ BS.Clouds.VMWareVSphere = BS.Clouds.VMWareVSphere || (function () {
                     }.bind(this),
                     customizationSpec: function(){
 
-                    }.bind(this),
+                    },
+                    'agent_pool_id': function(){
+
+                    },
                     folder: function () {
                         if (this._isClone() && ! this._image.folder) {
                             this.addOptionError('required', 'folder');
@@ -854,6 +858,7 @@ BS.Clouds.VMWareVSphere = BS.Clouds.VMWareVSphere || (function () {
                 }.bind(this));
             this.$resourcePool.trigger('change', image.pool || '');
             this.$customizationSpec.trigger('change', image.customizationSpec || '');
+            this.$agentPool.trigger('change', image['agent_pool_id'] || '');
             this.$cloneFolder.trigger('change', image.folder || '');
             this.$maxInstances.trigger('change', image.maxInstances || '');
             if (!!this.$nickname) {
