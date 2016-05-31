@@ -55,6 +55,13 @@ public class DummyCloudImage extends AbstractCloudImage<DummyCloudInstance, Dumm
     return new DummyCloudInstance(this, realInstance.getName(), realInstance.getName());
   }
 
+  @Override
+  public boolean isInitialized() {
+    throw new UnsupportedOperationException("DummyCloudImage.isInitialized");
+
+    //return false;
+  }
+
   @Nullable
   @Override
   public Integer getAgentPoolId() {

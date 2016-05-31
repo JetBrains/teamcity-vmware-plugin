@@ -97,6 +97,8 @@ public abstract class AbstractCloudImage<T extends AbstractCloudInstance, G exte
 
   protected abstract T createInstanceFromReal(final AbstractInstance realInstance);
 
+  public abstract boolean isInitialized();
+
   public void detectNewInstances(final Map<String,? extends AbstractInstance> realInstances){
     for (String instanceName : realInstances.keySet()) {
       if (myInstances.get(instanceName) == null) {

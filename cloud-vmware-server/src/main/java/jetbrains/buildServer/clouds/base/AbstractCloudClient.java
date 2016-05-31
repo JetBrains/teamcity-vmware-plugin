@@ -54,6 +54,7 @@ public abstract class AbstractCloudClient<G extends AbstractCloudInstance<T>, T 
   @NotNull protected CloudApiConnector myApiConnector;
   protected final CloudClientParameters myParameters;
   private final AtomicBoolean myIsInitialized = new AtomicBoolean(false);
+  private final AtomicBoolean myImagesPopulated = new AtomicBoolean(false);
 
   public AbstractCloudClient(@NotNull final CloudClientParameters params, @NotNull final CloudApiConnector apiConnector) {
     myParameters = params;
@@ -64,7 +65,18 @@ public abstract class AbstractCloudClient<G extends AbstractCloudInstance<T>, T 
   }
 
   public boolean isInitialized() {
-    return myIsInitialized.get();
+    if (myIsInitialized.get()){
+      return true;
+    }
+    if (!myImagesPopulated.get())
+      return false;
+
+    for (T image : myImageMap.values()) {
+      if (!image.isInitialized())
+        return false;
+    }
+    myIsInitialized.set(true);
+    return true;
   }
 
 
@@ -103,13 +115,16 @@ public abstract class AbstractCloudClient<G extends AbstractCloudInstance<T>, T 
         try {
           populateImagesData(imageDetails, updateDelayMs, updateDelayMs);
         } finally {
-          myIsInitialized.set(true);
+          myImagesPopulated.set(true);
           LOG.info("Cloud profile '" + myParameters.getProfileDescription() + "' initialized");
         }
       }
     });
   }
 
+  protected void populateImagesData(@NotNull final Collection<D> imageDetails){
+    populateImagesData(imageDetails, 60*1000, 60*1000);
+  }
   protected void populateImagesData(@NotNull final Collection<D> imageDetails, long initialDelaySec, long delayMs){
     for (D details : imageDetails) {
       T image = checkAndCreateImage(details);
