@@ -23,7 +23,6 @@ import com.intellij.util.Function;
 import com.vmware.vim25.mo.Task;
 import java.io.File;
 import java.io.IOException;
-import java.lang.ref.Reference;
 import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicReference;
@@ -60,7 +59,6 @@ public class VmwareCloudImage extends AbstractCloudImage<VmwareCloudInstance, Vm
   private final VmwareCloudImageDetails myImageDetails;
   private final AtomicReference<String> myActualSnapshotName;
   private final File myIdxFile;
-  private final AtomicReference<Boolean> myIsIntialized = new AtomicReference<>(false);
 
   public VmwareCloudImage(@NotNull final VMWareApiConnector apiConnector,
                           @NotNull final VmwareCloudImageDetails imageDetails,
@@ -80,38 +78,33 @@ public class VmwareCloudImage extends AbstractCloudImage<VmwareCloudInstance, Vm
         LOG.warn(String.format("Unable to write idx file '%s': %s", myIdxFile.getAbsolutePath(), e.toString()));
       }
     }
-    asyncTaskExecutor.submit("Populate instances. Initial task", () -> {
-      try {
-        final Map<String, VmwareInstance> realInstances;
-        try {
-          realInstances = myApiConnector.fetchInstances(this);
-        } catch (VmwareCheckedCloudException e) {
-          updateErrors(TypedCloudErrorInfo.fromException(e));
-          return;
-        }
-        if (imageDetails.getBehaviour().isUseOriginal()) {
-          final VmwareCloudInstance imageInstance = new VmwareCloudInstance(this, imageDetails.getSourceId(), VmwareConstants.CURRENT_STATE);
-          myInstances.put(myImageDetails.getSourceId(), imageInstance);
 
-          final VmwareInstance vmwareInstance = realInstances.get(imageDetails.getSourceId());
-          if (vmwareInstance != null) {
-            imageInstance.setStatus(vmwareInstance.getInstanceStatus());
-          } else {
-            imageInstance.setStatus(InstanceStatus.UNKNOWN);
-            imageInstance.updateErrors(new TypedCloudErrorInfo("NoVM", "VM doesn't exist: " + imageDetails.getSourceId()));
-          }
-        } else {
-          for (String instanceName : realInstances.keySet()) {
-            final VmwareInstance instance = realInstances.get(instanceName);
-            VmwareCloudInstance cloudInstance = createInstanceFromReal(instance);
-            cloudInstance.setStatus(instance.getInstanceStatus());
-            myInstances.put(instanceName, cloudInstance);
-          }
-        }
-      } finally {
-        myIsIntialized.set(true);
+    final Map<String, VmwareInstance> realInstances;
+    try {
+      realInstances = myApiConnector.fetchInstances(this);
+    } catch (VmwareCheckedCloudException e) {
+      updateErrors(TypedCloudErrorInfo.fromException(e));
+      return;
+    }
+    if (imageDetails.getBehaviour().isUseOriginal()) {
+      final VmwareCloudInstance imageInstance = new VmwareCloudInstance(this, imageDetails.getSourceId(), VmwareConstants.CURRENT_STATE);
+      myInstances.put(myImageDetails.getSourceId(), imageInstance);
+
+      final VmwareInstance vmwareInstance = realInstances.get(imageDetails.getSourceId());
+      if (vmwareInstance != null) {
+        imageInstance.setStatus(vmwareInstance.getInstanceStatus());
+      } else {
+        imageInstance.setStatus(InstanceStatus.UNKNOWN);
+        imageInstance.updateErrors(new TypedCloudErrorInfo("NoVM", "VM doesn't exist: " + imageDetails.getSourceId()));
       }
-    });
+    } else {
+      for (String instanceName : realInstances.keySet()) {
+        final VmwareInstance instance = realInstances.get(instanceName);
+        VmwareCloudInstance cloudInstance = createInstanceFromReal(instance);
+        cloudInstance.setStatus(instance.getInstanceStatus());
+        myInstances.put(instanceName, cloudInstance);
+      }
+    }
   }
 
   @NotNull
@@ -386,11 +379,6 @@ public class VmwareCloudImage extends AbstractCloudImage<VmwareCloudInstance, Vm
   protected VmwareCloudInstance createInstanceFromReal(final AbstractInstance realInstance) {
     final VmwareInstance vmwareInstance = (VmwareInstance) realInstance;
     return new VmwareCloudInstance(this, realInstance.getName(), vmwareInstance.getSnapshotName());
-  }
-
-  @Override
-  public boolean isInitialized() {
-    return myIsIntialized.get();
   }
 
   private void processStoppedInstances(final Function<VmwareInstance, Boolean> function) throws VmwareCheckedCloudException {
