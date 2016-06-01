@@ -93,31 +93,27 @@ public abstract class AbstractCloudClient<G extends AbstractCloudInstance<T>, T 
     return image.canStartNewInstance();
   }
 
-  public Future<?> populateImagesDataAsync(@NotNull final Collection<D> imageDetails){
-    return populateImagesDataAsync(imageDetails, 60*1000);
+  public void populateImagesData(@NotNull final Collection<D> imageDetails){
+    populateImagesData(imageDetails, 60*1000, 60*1000);
   }
 
-  public Future<?> populateImagesDataAsync(@NotNull final Collection<D> imageDetails, final long updateDelayMs){
-    return myAsyncTaskExecutor.submit("Populate images data", new Runnable() {
+  public void populateImagesData(@NotNull final Collection<D> imageDetails, long initialDelaySec, long delayMs){
+    for (D details : imageDetails) {
+      T image = checkAndCreateImage(details);
+      myImageMap.put(image.getName(), image);
+    }
+    final UpdateInstancesTask<G, T, ?> updateInstancesTask = createUpdateInstancesTask();
+    myAsyncTaskExecutor.submit("Populate images data", new Runnable() {
       public void run() {
         try {
-          populateImagesData(imageDetails, updateDelayMs, updateDelayMs);
+          updateInstancesTask.run();
+          myAsyncTaskExecutor.scheduleWithFixedDelay("Update instances", updateInstancesTask, initialDelaySec, delayMs, TimeUnit.MILLISECONDS);
         } finally {
           myIsInitialized.set(true);
           LOG.info("Cloud profile '" + myParameters.getProfileDescription() + "' initialized");
         }
       }
     });
-  }
-
-  protected void populateImagesData(@NotNull final Collection<D> imageDetails, long initialDelaySec, long delayMs){
-    for (D details : imageDetails) {
-      T image = checkAndCreateImage(details);
-      myImageMap.put(image.getName(), image);
-    }
-    final UpdateInstancesTask<G, T, ?> updateInstancesTask = createUpdateInstancesTask();
-    updateInstancesTask.run();
-    myAsyncTaskExecutor.scheduleWithFixedDelay("Update instances", updateInstancesTask, initialDelaySec, delayMs, TimeUnit.MILLISECONDS);
   }
 
   protected abstract T checkAndCreateImage(@NotNull final D imageDetails);

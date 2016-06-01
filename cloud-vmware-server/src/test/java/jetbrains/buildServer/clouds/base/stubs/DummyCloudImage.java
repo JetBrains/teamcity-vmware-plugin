@@ -1,6 +1,5 @@
 package jetbrains.buildServer.clouds.base.stubs;
 
-import jetbrains.buildServer.clouds.CloudImageParameters;
 import jetbrains.buildServer.clouds.CloudInstanceUserData;
 import jetbrains.buildServer.clouds.base.AbstractCloudImage;
 import jetbrains.buildServer.clouds.base.connector.AbstractInstance;

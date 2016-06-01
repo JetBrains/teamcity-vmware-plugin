@@ -68,7 +68,7 @@ public class VmwareCloudImageTest extends BaseTestCase {
     myImage = new VmwareCloudImage(myApiConnector, myImageDetails, myTaskExecutor, myIdxStorage);
 
     myCloudClient = new VMWareCloudClient(new CloudClientParameters(), myApiConnector, createTempDir());
-    myCloudClient.populateImagesDataAsync(Collections.singletonList(myImageDetails));
+    myCloudClient.populateImagesData(Collections.singletonList(myImageDetails));
     myUpdateTask = new UpdateInstancesTask<VmwareCloudInstance, VmwareCloudImage, VMWareCloudClient>(
       myApiConnector, myCloudClient, 10*1000, false);
 

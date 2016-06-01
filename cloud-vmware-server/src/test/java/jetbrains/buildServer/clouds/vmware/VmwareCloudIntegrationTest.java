@@ -329,7 +329,7 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
 
     recreateClient();
     assertNull(myClient.getErrorInfo());
-    new WaitFor(10*1000){
+    new WaitFor(5*1000){
       protected boolean condition() {
         int cnt = 0;
         for (VmwareCloudImage image : myClient.getImages()) {
@@ -1030,14 +1030,6 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
     }
     final Collection<VmwareCloudImageDetails> images = VMWareCloudClientFactory.parseImageDataInternal(myClientParameters);
     myClient = new VMWareCloudClient(myClientParameters, myFakeApi, myIdxStorage){
-      @Override
-      public Future<?> populateImagesDataAsync(@NotNull final Collection<VmwareCloudImageDetails> imageDetails) {
-        return myAsyncTaskExecutor.submit("Populate", new Runnable() {
-          public void run() {
-            populateImagesData(imageDetails, updateDelay, updateDelay);
-          }
-        });
-      }
 
       @Override
       protected UpdateInstancesTask<VmwareCloudInstance, VmwareCloudImage, VMWareCloudClient> createUpdateInstancesTask() {
@@ -1050,7 +1042,13 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
         };
       }
     };
-    myClient.populateImagesDataAsync(images).get();
+    myClient.populateImagesData(images, updateDelay, updateDelay);
+    new WaitFor(1*1000){
+      @Override
+      protected boolean condition() {
+        return myClient.isInitialized();
+      }
+    }.assertCompleted("Must be initialized");
   }
 
   @AfterMethod

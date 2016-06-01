@@ -78,33 +78,6 @@ public class VmwareCloudImage extends AbstractCloudImage<VmwareCloudInstance, Vm
         LOG.warn(String.format("Unable to write idx file '%s': %s", myIdxFile.getAbsolutePath(), e.toString()));
       }
     }
-
-    final Map<String, VmwareInstance> realInstances;
-    try {
-      realInstances = myApiConnector.fetchInstances(this);
-    } catch (VmwareCheckedCloudException e) {
-      updateErrors(TypedCloudErrorInfo.fromException(e));
-      return;
-    }
-    if (imageDetails.getBehaviour().isUseOriginal()) {
-      final VmwareCloudInstance imageInstance = new VmwareCloudInstance(this, imageDetails.getSourceId(), VmwareConstants.CURRENT_STATE);
-      myInstances.put(myImageDetails.getSourceId(), imageInstance);
-
-      final VmwareInstance vmwareInstance = realInstances.get(imageDetails.getSourceId());
-      if (vmwareInstance != null) {
-        imageInstance.setStatus(vmwareInstance.getInstanceStatus());
-      } else {
-        imageInstance.setStatus(InstanceStatus.UNKNOWN);
-        imageInstance.updateErrors(new TypedCloudErrorInfo("NoVM", "VM doesn't exist: " + imageDetails.getSourceId()));
-      }
-    } else {
-      for (String instanceName : realInstances.keySet()) {
-        final VmwareInstance instance = realInstances.get(instanceName);
-        VmwareCloudInstance cloudInstance = createInstanceFromReal(instance);
-        cloudInstance.setStatus(instance.getInstanceStatus());
-        myInstances.put(instanceName, cloudInstance);
-      }
-    }
   }
 
   @NotNull
