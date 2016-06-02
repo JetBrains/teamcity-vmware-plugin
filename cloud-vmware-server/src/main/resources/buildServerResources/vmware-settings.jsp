@@ -24,11 +24,11 @@
 <%@ taglib prefix="util" uri="/WEB-INF/functions/util" %>
 <%@ taglib prefix="bs" tagdir="/WEB-INF/tags" %>
 <%@ taglib prefix="intprop" uri="/WEB-INF/functions/intprop" %>
+<%@ taglib prefix="admin" tagdir="/WEB-INF/tags/admin" %>
 <%--@elvariable id="resPath" type="java.lang.String"--%>
 <jsp:useBean id="webCons" class="jetbrains.buildServer.clouds.vmware.web.VMWareWebConstants"/>
 <jsp:useBean id="cloudWebCons" class="jetbrains.buildServer.clouds.server.web.CloudWebConstants"/>
 <jsp:useBean id="agentPools" scope="request" type="java.util.Collection<jetbrains.buildServer.serverSide.agentPools.AgentPool>"/>
-<jsp:useBean id="cons" class="jetbrains.buildServer.clouds.vmware.VmwareConstants"/>
 
 <jsp:useBean id="refreshablePath" class="java.lang.String" scope="request"/>
 <jsp:useBean id="refreshSnapshotsPath" class="java.lang.String" scope="request"/>
@@ -120,8 +120,7 @@
                 <span class="error option-error option-error_sourceName"></span>
             </td>
         </tr>
-          <c:if test="${intprop:getBoolean(cons.enableImageNickname)}">
-            <tr class="hidden cloneOptionsRow">
+            <tr class="hidden cloneOptionsRow advancedSetting">
               <th>Agent image nickname (experimental):</th>
               <td>
                 <div>
@@ -131,7 +130,6 @@
                 </div>
               </td>
             </tr>
-          </c:if>
             <tr>
                 <th>Behaviour:&nbsp;<l:star/><bs:help urlPrefix="http://confluence.jetbrains.com/display/TW" file="VMware+vSphere+Cloud#VMwarevSphereCloud-Features"/></th>
                 <td>
@@ -149,19 +147,17 @@
                     <span class="error option-error option-error_behaviour"></span>
                 </td>
             </tr>
-        <c:if test="${intprop:getBoolean(cons.showPreserveClone)}">
-            <tr>
-                <th>Experimental behaviour:</th>
-                <td>
-                    <div>
-                        <input type="radio" id="cloneBehaviour_ON_DEMAND_CLONE" name="cloneBehaviour" value="ON_DEMAND_CLONE" class="behaviour__switch"/>
-                        <label for="cloneBehaviour_ON_DEMAND_CLONE">Clone the selected Virtual Machine or Template, preserve the clone after stopping</label>
-                        <div class="smallNoteAttention">This is an experimental feature, use it at your own risk</div>
-                    </div>
+            <tr class="advancedSetting">
+              <th>Experimental behaviour:</th>
+              <td>
+                  <div>
+                      <input type="radio" id="cloneBehaviour_ON_DEMAND_CLONE" name="cloneBehaviour" value="ON_DEMAND_CLONE" class="behaviour__switch"/>
+                      <label for="cloneBehaviour_ON_DEMAND_CLONE">Clone the selected Virtual Machine or Template, preserve the clone after stopping</label>
+                      <div class="smallNoteAttention">This is an experimental feature, use it at your own risk</div>
+                  </div>
 
-                </td>
+              </td>
             </tr>
-        </c:if>
             <tr class="hidden cloneOptionsRow"  id="tr_snapshot_name">
                 <th>Snapshot name:&nbsp;<l:star/></th>
                 <td>
@@ -187,7 +183,7 @@
                     <span class="error option-error option-error_pool"></span>
                 </td>
             </tr>
-            <tr class="hidden cloneOptionsRow">
+            <tr class="hidden cloneOptionsRow advancedSetting">
               <th>Customization spec:</th>
               <td>
                 <select id="customizationSpec" class="longField" data-id="customizationSpec" data-err-id="customizationSpec"></select>
@@ -207,6 +203,7 @@
               <th><label for="${cloudWebCons.agentPoolIdField}">Agent Pool:</label></th>
               <td>
                 <select id="${cloudWebCons.agentPoolIdField}" data-id="${cloudWebCons.agentPoolIdField}" class="longField configParam">
+                  <props:option value=""><c:out value="<Please select agent pool>"/></props:option>
                   <c:forEach var="ap" items="${agentPools}">
                     <props:option value="${ap.agentPoolId}"><c:out value="${ap.name}"/></props:option>
                   </c:forEach>
@@ -216,7 +213,11 @@
             </tr>
 
         </table>
-    <div class="popupSaveButtonsBlock">
+
+  <admin:showHideAdvancedOpts containerId="VMWareImageDialog" optsKey="vmwareCloudSettings"/>
+  <admin:highlightChangedFields containerId="VMWareImageDialog"/>
+
+  <div class="popupSaveButtonsBlock">
         <forms:submit label="Add" type="button" id="vmwareAddImageButton"/>
         <forms:button title="Cancel" id="vmwareCancelAddImageButton">Cancel</forms:button>
     </div>
