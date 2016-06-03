@@ -228,7 +228,7 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
     for (VmwareCloudImage image: images) {
       final VmwareCloudImageDetails imageDetails = image.getImageDetails();
       if(imageDetails.getBehaviour().isUseOriginal()){
-        final VirtualMachine vmEntity = findEntityByIdName(imageDetails.getSourceId(), VirtualMachine.class);
+        final VirtualMachine vmEntity = findEntityByIdName(imageDetails.getSourceVmName(), VirtualMachine.class);
         final VmwareInstance vmInstance = new VmwareInstance(vmEntity);
         result.put(image, Collections.singletonMap(image.getName(), (R)vmInstance));
       } else {
@@ -505,8 +505,8 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
   @Override
   public Task cloneAndStartVm(@NotNull final VmwareCloudInstance instance) throws VmwareCheckedCloudException {
     final VmwareCloudImageDetails imageDetails = instance.getImage().getImageDetails();
-    LOG.info(String.format("Attempting to clone VM %s into %s", imageDetails.getSourceId(), instance.getName()));
-    final VirtualMachine vm = findEntityByIdName(imageDetails.getSourceId(), VirtualMachine.class);
+    LOG.info(String.format("Attempting to clone VM %s into %s", imageDetails.getSourceVmName(), instance.getName()));
+    final VirtualMachine vm = findEntityByIdName(imageDetails.getSourceVmName(), VirtualMachine.class);
     final Datacenter datacenter = getParentOfType(vm, Datacenter.class);
 
     final VirtualMachineConfigSpec config = new VirtualMachineConfigSpec();
@@ -551,8 +551,8 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
     final VirtualMachineConfigInfo vmConfig = vm.getConfig();
     config.setExtraConfig(new OptionValue[]{
       createOptionValue(TEAMCITY_VMWARE_CLONED_INSTANCE, "true"),
-      createOptionValue(TEAMCITY_VMWARE_IMAGE_SOURCE_NAME, imageDetails.getSourceId()),
-      createOptionValue(TEAMCITY_VMWARE_IMAGE_NICKNAME, imageDetails.getNickname()),
+      createOptionValue(TEAMCITY_VMWARE_IMAGE_SOURCE_VM_NAME, imageDetails.getSourceVmName()),
+      createOptionValue(TEAMCITY_VMWARE_IMAGE_SOURCE_ID, imageDetails.getSourceId()),
       createOptionValue(TEAMCITY_VMWARE_IMAGE_SNAPSHOT, snapshotName),
       createOptionValue(TEAMCITY_VMWARE_IMAGE_CHANGE_VERSION, vmConfig.getChangeVersion())
     });
@@ -568,7 +568,7 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
 
     if (StringUtil.isNotEmpty(imageDetails.getCustomizationSpec())){
       LOG.info(String.format("Will use Customization Spec '%s' to clone %s into %s"
-        , imageDetails.getCustomizationSpec(), imageDetails.getSourceId(), instance.getName()));
+        , imageDetails.getCustomizationSpec(), imageDetails.getSourceVmName(), instance.getName()));
       cloneSpec.setCustomization(getCustomizationSpec(imageDetails.getCustomizationSpec()));
     } else if (!disableOsCustomization && myDomain != null && LINUX_GUEST_FAMILY.equals(guestFamily)){
       LOG.info("Will use basic Linux customization (will customize hostname)");
@@ -833,7 +833,7 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
   @NotNull
   public TypedCloudErrorInfo[] checkImage(@NotNull final VmwareCloudImage image) {
     final VmwareCloudImageDetails imageDetails = image.getImageDetails();
-    final String vmName = imageDetails.getSourceId();
+    final String vmName = imageDetails.getSourceVmName();
     try {
       final VirtualMachine vm = findEntityByIdNameNullable(vmName, VirtualMachine.class, null);
       if (vm == null){

@@ -45,8 +45,8 @@ public interface VMWareApiConnector extends CloudApiConnector<VmwareCloudImage, 
   String TEAMCITY_VMWARE_PREFIX = "teamcity.vmware.";
   String TEAMCITY_VMWARE_IMAGE_CHANGE_VERSION = TEAMCITY_VMWARE_PREFIX + "image.change.version";
   String TEAMCITY_VMWARE_IMAGE_SNAPSHOT = TEAMCITY_VMWARE_PREFIX + "image.snapshot";
-  String TEAMCITY_VMWARE_IMAGE_SOURCE_NAME = TEAMCITY_VMWARE_PREFIX + "image.name";
-  String TEAMCITY_VMWARE_IMAGE_NICKNAME = TEAMCITY_VMWARE_PREFIX + "image.nickname";
+  String TEAMCITY_VMWARE_IMAGE_SOURCE_VM_NAME = TEAMCITY_VMWARE_PREFIX + "image.name";
+  String TEAMCITY_VMWARE_IMAGE_SOURCE_ID = TEAMCITY_VMWARE_PREFIX + "image.nickname";
   String TEAMCITY_VMWARE_CLONED_INSTANCE = TEAMCITY_VMWARE_PREFIX + "cloned.instance";
 
   void test() throws VmwareCheckedCloudException;

@@ -64,13 +64,13 @@ public class VmwareCloudImage extends AbstractCloudImage<VmwareCloudInstance, Vm
                           @NotNull final VmwareCloudImageDetails imageDetails,
                           @NotNull final CloudAsyncTaskExecutor asyncTaskExecutor,
                           @NotNull final File idxStorage) {
-    super(imageDetails.getNickname(), imageDetails.getNickname());
+    super(imageDetails.getSourceId(), imageDetails.getSourceId());
     myImageDetails = imageDetails;
     myApiConnector = apiConnector;
     myAsyncTaskExecutor = asyncTaskExecutor;
     myInstances.clear();
     myActualSnapshotName = new AtomicReference<String>("");
-    myIdxFile = new File(idxStorage, imageDetails.getNickname() + ".idx");
+    myIdxFile = new File(idxStorage, imageDetails.getSourceId() + ".idx");
     if (!myIdxFile.exists()){
       try {
         FileUtil.writeFileAndReportErrors(myIdxFile, "1");
@@ -96,7 +96,7 @@ public class VmwareCloudImage extends AbstractCloudImage<VmwareCloudInstance, Vm
       return myInstances.get(myImageDetails.getSourceId());
     }
 
-    final String latestSnapshotName = myApiConnector.getLatestSnapshot(myImageDetails.getSourceId(), myImageDetails.getSnapshotName());
+    final String latestSnapshotName = myApiConnector.getLatestSnapshot(myImageDetails.getSourceVmName(), myImageDetails.getSnapshotName());
     if (!myImageDetails.useCurrentVersion() && latestSnapshotName == null) {
       updateErrors(new TypedCloudErrorInfo("No such snapshot: " + getSnapshotName()));
       throw new VmwareCheckedCloudException("Unable to find snapshot: " + myImageDetails.getSnapshotName());
@@ -104,7 +104,7 @@ public class VmwareCloudImage extends AbstractCloudImage<VmwareCloudInstance, Vm
 
     if (!myImageDetails.getBehaviour().isDeleteAfterStop()) {
       // on demand clone
-      final VmwareInstance imageVm = myApiConnector.getInstanceDetails(myImageDetails.getSourceId());
+      final VmwareInstance imageVm = myApiConnector.getInstanceDetails(myImageDetails.getSourceVmName());
       final AtomicReference<VmwareCloudInstance> candidate = new AtomicReference<VmwareCloudInstance>();
       processStoppedInstances(new Function<VmwareInstance, Boolean>() {
         public Boolean fun(final VmwareInstance vmInstance) {
@@ -189,7 +189,7 @@ public class VmwareCloudImage extends AbstractCloudImage<VmwareCloudInstance, Vm
           }
         });
 
-        throw new QuotaException(String.format("Cannot clone '%s' into '%s' - limit exceeded", myImageDetails.getSourceId(), instance.getName()));
+        throw new QuotaException(String.format("Cannot clone '%s' into '%s' - limit exceeded", myImageDetails.getSourceVmName(), instance.getName()));
       }
       instance.setStatus(InstanceStatus.SCHEDULED_TO_START);
       if (!myInstances.containsKey(instance.getName())) {
@@ -339,7 +339,7 @@ public class VmwareCloudImage extends AbstractCloudImage<VmwareCloudInstance, Vm
   }
 
   public void removeInstance(@NotNull final String name){
-    LOG.info(String.format("Image %s, remove instance %s", myImageDetails.getSourceId(), name));
+    LOG.info(String.format("Image %s, remove instance %s", myImageDetails.getSourceVmName(), name));
     myInstances.remove(name);
   }
 
@@ -407,7 +407,7 @@ public class VmwareCloudImage extends AbstractCloudImage<VmwareCloudInstance, Vm
 
   public void updateActualSnapshotName(@NotNull final String snapshotName){
     if (StringUtil.isNotEmpty(snapshotName) && !snapshotName.equals(myActualSnapshotName.get())){
-        LOG.info("Updated actual snapshot name for " + myImageDetails.getNickname() + " to " + snapshotName);
+        LOG.info("Updated actual snapshot name for " + myImageDetails.getSourceId() + " to " + snapshotName);
         myActualSnapshotName.set(snapshotName);
     }
   }

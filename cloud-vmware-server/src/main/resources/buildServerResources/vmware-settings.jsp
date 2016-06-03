@@ -115,9 +115,9 @@
             <th>Agent image:&nbsp;<l:star/></th>
             <td>
                 <div>
-                    <select name="_image" id="image" class="longField" data-id="sourceName" data-err-id="sourceName"></select>
+                    <select name="_image" id="image" class="longField" data-id="sourceVmName" data-err-id="sourceVmName"></select>
                 </div>
-                <span class="error option-error option-error_sourceName"></span>
+                <span class="error option-error option-error_sourceVmName"></span>
             </td>
         </tr>
             <tr class="hidden cloneOptionsRow advancedSetting">

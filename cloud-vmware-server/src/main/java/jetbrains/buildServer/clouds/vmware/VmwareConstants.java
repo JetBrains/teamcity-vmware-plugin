@@ -35,4 +35,13 @@ public class VmwareConstants {
   @NotNull public static final String CURRENT_STATE = "__CURRENT_STATE__";
   @NotNull public static final String DEFAULT_RESOURCE_POOL = "__DEFAULT_RESOURCE_POOL__";
 
+  public static final String CUSTOMIZATION_SPEC = "customizationSpec";
+  public static final String MAX_INSTANCES = "maxInstances";
+  public static final String FOLDER = "folder";
+  public static final String RESOURCE_POOL = "pool";
+  public static final String BEHAVIOUR = "behaviour";
+  public static final String SNAPSHOT = "snapshot";
+  public static final String NICKNAME = "nickname";
+  public static final String SOURCE_VM_NAME = "sourceVmName";
+
 }

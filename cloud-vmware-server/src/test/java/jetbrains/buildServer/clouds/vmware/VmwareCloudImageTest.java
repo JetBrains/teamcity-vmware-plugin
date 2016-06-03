@@ -50,7 +50,7 @@ public class VmwareCloudImageTest extends BaseTestCase {
     myIdxStorage = createTempDir();
     CloudImageParameters imageParameters = new CloudImageParameters();
     imageParameters.setParameter("nickname", "imageNickname");
-    imageParameters.setParameter("source-id", "srcVM");
+    imageParameters.setParameter("sourceVmName", "srcVM");
     imageParameters.setParameter("snapshot", "srcVMSnap");
     imageParameters.setParameter("folder", "folderId");
     imageParameters.setParameter("pool", "rpId");
@@ -77,7 +77,7 @@ public class VmwareCloudImageTest extends BaseTestCase {
 
   public void check_clone_name_generation(){
     for (int i=0; i<10; i++){
-      assertEquals(String.format("%s-%d", myImageDetails.getNickname(), i + 1), myImage.generateNewVmName());
+      assertEquals(String.format("%s-%d", myImageDetails.getSourceId(), i + 1), myImage.generateNewVmName());
     }
     FileUtil.delete(myIdxStorage);
     final String newName = myImage.generateNewVmName();

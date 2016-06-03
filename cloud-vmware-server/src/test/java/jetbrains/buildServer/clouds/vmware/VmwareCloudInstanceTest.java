@@ -40,7 +40,7 @@ public class VmwareCloudInstanceTest extends BaseTestCase {
     myIdxStorage = createTempDir();
     CloudImageParameters imageParameters = new CloudImageParameters();
     imageParameters.setParameter("nickname", "imageNickname");
-    imageParameters.setParameter("source-id", "mySource");
+    imageParameters.setParameter("sourceVmName", "mySource");
     imageParameters.setParameter("snapshot", "mySourceSnapshot");
     imageParameters.setParameter("folder", "myFolder");
     imageParameters.setParameter("pool", "myPool");

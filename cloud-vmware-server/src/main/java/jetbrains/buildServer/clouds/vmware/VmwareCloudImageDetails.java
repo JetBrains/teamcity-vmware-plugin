@@ -32,7 +32,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public class VmwareCloudImageDetails implements CloudImageDetails {
   @Nullable private final String myNickname;
-  private final String mySourceName;
+  @NotNull private final String mySourceVmName;
   private final String myFolderId;
   private final String myResourcePoolId;
   @NotNull private final String mySnapshotName;
@@ -40,27 +40,33 @@ public class VmwareCloudImageDetails implements CloudImageDetails {
   private final int myMaxInstances;
   private final String myCustomizationSpec;
   private final Integer myAgentPoolId;
+  @NotNull private final String mySourceId;
 
   public VmwareCloudImageDetails(@NotNull final CloudImageParameters imageParameters){
-    myCustomizationSpec = imageParameters.getParameter("customizationSpec");
-    myMaxInstances = StringUtil.parseInt(StringUtil.emptyIfNull(imageParameters.getParameter("maxInstances")), 0);
-    mySourceName = imageParameters.getId();
-    myFolderId = imageParameters.getParameter("folder");
-    myResourcePoolId = imageParameters.getParameter("pool");
-    myCloneBehaviour = CloneBehaviour.valueOf(imageParameters.getParameter("behaviour"));
-    mySnapshotName = StringUtil.emptyIfNull(imageParameters.getParameter("snapshot"));
-    myNickname = StringUtil.nullIfEmpty(imageParameters.getParameter("nickname"));
+    myCustomizationSpec = imageParameters.getParameter(VmwareConstants.CUSTOMIZATION_SPEC);
+    myMaxInstances = StringUtil.parseInt(StringUtil.emptyIfNull(imageParameters.getParameter(VmwareConstants.MAX_INSTANCES)), 0);
+    mySourceVmName = imageParameters.getParameter(VmwareConstants.SOURCE_VM_NAME);
+    myFolderId = imageParameters.getParameter(VmwareConstants.FOLDER);
+    myResourcePoolId = imageParameters.getParameter(VmwareConstants.RESOURCE_POOL);
+    myCloneBehaviour = CloneBehaviour.valueOf(imageParameters.getParameter(VmwareConstants.BEHAVIOUR));
+    mySnapshotName = StringUtil.emptyIfNull(imageParameters.getParameter(VmwareConstants.SNAPSHOT));
+    myNickname = StringUtil.nullIfEmpty(imageParameters.getParameter(VmwareConstants.NICKNAME));
     myAgentPoolId = imageParameters.getAgentPoolId();
+    if (myCloneBehaviour.isUseOriginal()){
+      mySourceId = mySourceVmName;
+    } else {
+      mySourceId = myNickname == null ? mySourceVmName : myNickname;
+    }
   }
-
 
   @NotNull
-  public String getNickname() {
-    return myNickname == null ? mySourceName : myNickname;
+  public String getSourceId() {
+    return mySourceId;
   }
 
-  public String getSourceId() {
-    return mySourceName;
+  @NotNull
+  public String getSourceVmName() {
+    return mySourceVmName;
   }
 
   public String getFolderId() {

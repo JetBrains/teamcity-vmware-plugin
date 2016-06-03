@@ -4,6 +4,9 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import jetbrains.buildServer.clouds.CloudImageParameters;
+import jetbrains.buildServer.clouds.CloudProfile;
+import jetbrains.buildServer.clouds.server.CloudManager;
 import jetbrains.buildServer.clouds.vmware.web.VMWareWebConstants;
 import jetbrains.buildServer.serverSide.InvalidProperty;
 import jetbrains.buildServer.serverSide.PropertiesProcessor;
@@ -31,7 +34,7 @@ public class VmwarePropertiesProcessor implements PropertiesProcessor {
     return list;
   }
 
-  protected static void notEmpty(@NotNull final Map<String, String> props,
+  private void notEmpty(@NotNull final Map<String, String> props,
                                  @NotNull final String key,
                                  @NotNull final Collection<InvalidProperty> col) {
     if (!props.containsKey(key) || StringUtil.isEmptyOrSpaces(props.get(key))) {

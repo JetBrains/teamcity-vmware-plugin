@@ -5,7 +5,6 @@ import com.vmware.vim25.*;
 import com.vmware.vim25.mo.Datacenter;
 import com.vmware.vim25.mo.ManagedEntity;
 import com.vmware.vim25.mo.Task;
-import com.vmware.vim25.mo.VirtualMachine;
 import java.io.File;
 import java.net.MalformedURLException;
 import java.rmi.RemoteException;
@@ -73,10 +72,10 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
     myClientParameters.setParameter("serverUrl", "http://localhost:8080");
     myClientParameters.setParameter("username", "un");
     myClientParameters.setParameter("password", "pw");
-    myClientParameters.setCloudImages(CloudImageParameters.collectionFromJson("[{source-id:'image1', behaviour:'START_STOP'}," +
-                                                                             "{source-id:'image2',snapshot:'snap*',folder:'cf',pool:'rp',maxInstances:3,behaviour:'ON_DEMAND_CLONE', " +
+    myClientParameters.setCloudImages(CloudImageParameters.collectionFromJson("[{sourceVmName:'image1', behaviour:'START_STOP'}," +
+                                                                             "{sourceVmName:'image2',snapshot:'snap*',folder:'cf',pool:'rp',maxInstances:3,behaviour:'ON_DEMAND_CLONE', " +
                                                                              "customizationSpec:'someCustomization'}," +
-                                                                             "{source-id:'image_template', snapshot:'" + VmwareConstants.CURRENT_STATE +
+                                                                             "{sourceVmName:'image_template', snapshot:'" + VmwareConstants.CURRENT_STATE +
                                                                              "',folder:'cf',pool:'rp',maxInstances:3,behaviour:'FRESH_CLONE', customizationSpec: 'linux'}]"));
 
     myFakeApi = new FakeApiConnector();
@@ -159,7 +158,7 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
         assertEquals("image1", data.getInstanceId());
         final Map<String, String> vmParams = myFakeApi.getVMParams(data.getInstanceId());
         assertNull(vmParams.get(VMWareApiConnector.TEAMCITY_VMWARE_CLONED_INSTANCE));
-        assertNull(vmParams.get(VMWareApiConnector.TEAMCITY_VMWARE_IMAGE_SOURCE_NAME));
+        assertNull(vmParams.get(VMWareApiConnector.TEAMCITY_VMWARE_IMAGE_SOURCE_VM_NAME));
       }
     }, false);
     assertEquals(3, FakeModel.instance().getVms().size());
@@ -168,7 +167,7 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
         assertTrue("image_template-1".equals(data.getInstanceId()));
         final Map<String, String> vmParams = myFakeApi.getVMParams(data.getInstanceId());
         assertEquals("true", vmParams.get(VMWareApiConnector.TEAMCITY_VMWARE_CLONED_INSTANCE));
-        assertEquals("image_template", vmParams.get(VMWareApiConnector.TEAMCITY_VMWARE_IMAGE_SOURCE_NAME));
+        assertEquals("image_template", vmParams.get(VMWareApiConnector.TEAMCITY_VMWARE_IMAGE_SOURCE_VM_NAME));
         assertEquals(VmwareConstants.CURRENT_STATE, vmParams.get(VMWareApiConnector.TEAMCITY_VMWARE_IMAGE_SNAPSHOT));
       }
     }, true);
@@ -178,7 +177,7 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
         assertTrue("image2-1".equals(data.getInstanceId()));
         final Map<String, String> vmParams = myFakeApi.getVMParams(data.getInstanceId());
         assertEquals("true", vmParams.get(VMWareApiConnector.TEAMCITY_VMWARE_CLONED_INSTANCE));
-        assertEquals("image2", vmParams.get(VMWareApiConnector.TEAMCITY_VMWARE_IMAGE_SOURCE_NAME));
+        assertEquals("image2", vmParams.get(VMWareApiConnector.TEAMCITY_VMWARE_IMAGE_SOURCE_VM_NAME));
         assertEquals("snap", vmParams.get(VMWareApiConnector.TEAMCITY_VMWARE_IMAGE_SNAPSHOT));
       }
     }, false);
@@ -194,7 +193,7 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
         assertTrue("image2-1".equals(data.getInstanceId()));
         final Map<String, String> vmParams = myFakeApi.getVMParams(data.getInstanceId());
         assertEquals("true", vmParams.get(VMWareApiConnector.TEAMCITY_VMWARE_CLONED_INSTANCE));
-        assertEquals("image2", vmParams.get(VMWareApiConnector.TEAMCITY_VMWARE_IMAGE_SOURCE_NAME));
+        assertEquals("image2", vmParams.get(VMWareApiConnector.TEAMCITY_VMWARE_IMAGE_SOURCE_VM_NAME));
         assertEquals("snap", vmParams.get(VMWareApiConnector.TEAMCITY_VMWARE_IMAGE_SNAPSHOT));
       }
     }, false);
@@ -205,7 +204,7 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
         assertEquals(instanceId.get(), data.getInstanceId());
         final Map<String, String> vmParams = myFakeApi.getVMParams(data.getInstanceId());
         assertEquals("true", vmParams.get(VMWareApiConnector.TEAMCITY_VMWARE_CLONED_INSTANCE));
-        assertEquals("image2", vmParams.get(VMWareApiConnector.TEAMCITY_VMWARE_IMAGE_SOURCE_NAME));
+        assertEquals("image2", vmParams.get(VMWareApiConnector.TEAMCITY_VMWARE_IMAGE_SOURCE_VM_NAME));
         assertEquals("snap", vmParams.get(VMWareApiConnector.TEAMCITY_VMWARE_IMAGE_SNAPSHOT));
       }
     }, false);
@@ -273,9 +272,9 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
   }
 
   public void on_demand_clone_should_create_new_when_version_changes() throws Exception {
-    myClientParameters.setCloudImages(CloudImageParameters.collectionFromJson("[{source-id:'image1', snapshot:'"+VmwareConstants.CURRENT_STATE +"',folder:'cf',pool:'rp',maxInstances:3, behaviour:'ON_DEMAND_CLONE'}," +
-                                                         "{source-id:'image2',snapshot:'snap*',folder:'cf',pool:'rp',maxInstances:3,behaviour:'ON_DEMAND_CLONE'}," +
-                                                         "{source-id:'image_template', snapshot:'"+VmwareConstants.CURRENT_STATE +"', folder:'cf',pool:'rp',maxInstances:3,behaviour:'FRESH_CLONE'}]"));
+    myClientParameters.setCloudImages(CloudImageParameters.collectionFromJson("[{sourceVmName:'image1', snapshot:'"+VmwareConstants.CURRENT_STATE +"',folder:'cf',pool:'rp',maxInstances:3, behaviour:'ON_DEMAND_CLONE'}," +
+                                                         "{sourceVmName:'image2',snapshot:'snap*',folder:'cf',pool:'rp',maxInstances:3,behaviour:'ON_DEMAND_CLONE'}," +
+                                                         "{sourceVmName:'image_template', snapshot:'"+VmwareConstants.CURRENT_STATE +"', folder:'cf',pool:'rp',maxInstances:3,behaviour:'FRESH_CLONE'}]"));
     recreateClient();
 
 
@@ -438,9 +437,9 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
 
   public void existing_clones_with_start_stop() {
     final VmwareCloudInstance cloneInstance = startNewInstanceAndWait("image2");
-    myClientParameters.setCloudImages(CloudImageParameters.collectionFromJson("[{source-id:'image1', behaviour:'START_STOP'}," +
-                                                          "{source-id:'image2', behaviour:'START_STOP'}," +
-                                                          "{source-id:'image_template', snapshot:'" + VmwareConstants.CURRENT_STATE +
+    myClientParameters.setCloudImages(CloudImageParameters.collectionFromJson("[{sourceVmName:'image1', behaviour:'START_STOP'}," +
+                                                          "{sourceVmName:'image2', behaviour:'START_STOP'}," +
+                                                          "{sourceVmName:'image_template', snapshot:'" + VmwareConstants.CURRENT_STATE +
                                                           "', folder:'cf',pool:'rp',maxInstances:3,behaviour:'FRESH_CLONE'}]"));
 
     recreateClient();
@@ -568,10 +567,10 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
     FakeModel.instance().addResourcePool("rp2").setParentFolder("cf2");
     FakeModel.instance().addVM("image3").setParentFolder("cf");
     myClientParameters.setCloudImages(CloudImageParameters.collectionFromJson(
-      "[{source-id:'image1', behaviour:'START_STOP'}," +
-        "{source-id:'image2',snapshot:'snap*',folder:'cf',pool:'rp',maxInstances:3,behaviour:'ON_DEMAND_CLONE'}," +
-        "{source-id:'image_template', snapshot:'" + VmwareConstants.CURRENT_STATE + "',folder:'cf',pool:'rp',maxInstances:3,behaviour:'FRESH_CLONE'}, " +
-        "{source-id:'image3',snapshot:'" + VmwareConstants.CURRENT_STATE + "'," + "folder:'cf2',pool:'rp2',maxInstances:3,behaviour:'ON_DEMAND_CLONE'}]"));
+      "[{sourceVmName:'image1', behaviour:'START_STOP'}," +
+        "{sourceVmName:'image2',snapshot:'snap*',folder:'cf',pool:'rp',maxInstances:3,behaviour:'ON_DEMAND_CLONE'}," +
+        "{sourceVmName:'image_template', snapshot:'" + VmwareConstants.CURRENT_STATE + "',folder:'cf',pool:'rp',maxInstances:3,behaviour:'FRESH_CLONE'}, " +
+        "{sourceVmName:'image3',snapshot:'" + VmwareConstants.CURRENT_STATE + "'," + "folder:'cf2',pool:'rp2',maxInstances:3,behaviour:'ON_DEMAND_CLONE'}]"));
     recreateClient();
 
     final CloudInstanceUserData userData = createUserData("image3_agent");
@@ -589,10 +588,10 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
 
   public void check_nickname(){
     myClientParameters.setCloudImages(CloudImageParameters.collectionFromJson(
-      "[{source-id:'image1', behaviour:'START_STOP'}," +
-                                                          "{nickname:'image2Nick1', source-id:'image2',snapshot:'snap*',folder:'cf',pool:'rp',maxInstances:3,behaviour:'ON_DEMAND_CLONE'}," +
-                                                          "{nickname:'image2Nick2', source-id:'image2',snapshot:'snap*',folder:'cf',pool:'rp',maxInstances:3,behaviour:'ON_DEMAND_CLONE'}," +
-                                                          "{source-id:'image_template', snapshot:'" + VmwareConstants.CURRENT_STATE +
+      "[{sourceVmName:'image1', behaviour:'START_STOP'}," +
+                                                          "{nickname:'image2Nick1', sourceVmName:'image2',snapshot:'snap*',folder:'cf',pool:'rp',maxInstances:3,behaviour:'ON_DEMAND_CLONE'}," +
+                                                          "{nickname:'image2Nick2', sourceVmName:'image2',snapshot:'snap*',folder:'cf',pool:'rp',maxInstances:3,behaviour:'ON_DEMAND_CLONE'}," +
+                                                          "{sourceVmName:'image_template', snapshot:'" + VmwareConstants.CURRENT_STATE +
                                                           "',folder:'cf',pool:'rp',maxInstances:3,behaviour:'FRESH_CLONE'}]"));
     recreateClient();
     startNewInstanceAndWait("image2Nick1");
@@ -641,7 +640,7 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
     for (int i=0; i< extraProfileCount; i++){
       final CloudClientParameters parameters = new CloudClientParameters();
       profileParams.add(parameters);
-      myClientParameters.setCloudImages(CloudImageParameters.collectionFromJson("[{source-id:'image_new"+i+"', behaviour:'START_STOP'}]"));
+      myClientParameters.setCloudImages(CloudImageParameters.collectionFromJson("[{sourceVmName:'image_new"+i+"', behaviour:'START_STOP'}]"));
       parameters.setParameter(VMWareWebConstants.SERVER_URL, "http://localhost:8080");
       parameters.setParameter(VMWareWebConstants.USERNAME, "un");
       parameters.setParameter(VMWareWebConstants.PASSWORD, "pw");

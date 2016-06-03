@@ -187,8 +187,10 @@ public class VmwareInstance extends AbstractInstance implements VmwareManagedEnt
   }
 
   public String getImageName(){
-    final String nickname = getProperty(VMWareApiConnector.TEAMCITY_VMWARE_IMAGE_NICKNAME);
-    return nickname == null ? getProperty(VMWareApiConnector.TEAMCITY_VMWARE_IMAGE_SOURCE_NAME) : nickname;
+    final String nickname = getProperty(VMWareApiConnector.TEAMCITY_VMWARE_IMAGE_SOURCE_ID);
+
+    // for backward compatibility
+    return nickname == null ? getProperty(VMWareApiConnector.TEAMCITY_VMWARE_IMAGE_SOURCE_VM_NAME) : nickname;
   }
 
   public boolean isClone(){
