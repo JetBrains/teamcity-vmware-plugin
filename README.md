@@ -1,12 +1,12 @@
 ### Teamcity vSphere cloud plugin
-#### Enables Teamcity integration with WMware vSphere cloud and allows to automatically create/start/stop/delete virtual machines.
+#### Enables Teamcity integration with WMware vSphere cloud and allows users to automatically create/start/stop/delete virtual machines.
 
 Before you can start using integration, you need to create a Virtual Machine instance.
 Teamcity Build Agent must be installed and set to start automatically.
 
 ##### Build instructions
-Currently, plugin is not buildable standalone. If you'd like to customize your plugin, please use the 9.0.x branch.
-It's the branch builds on teamcity.jetbrains.com are run against.
+Currently, the plugin is not buildable standalone. If you'd like to customize your plugin, please use the 9.0.x branch.
+It's the branch the builds on teamcity.jetbrains.com are run against.
 
 ##### License
 Apache 2.0
