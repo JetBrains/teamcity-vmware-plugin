@@ -23,8 +23,10 @@ import jetbrains.buildServer.clouds.base.tasks.UpdateInstancesTask;
 import jetbrains.buildServer.clouds.server.CloudInstancesProvider;
 import jetbrains.buildServer.clouds.server.CloudInstancesProviderCallback;
 import jetbrains.buildServer.clouds.server.CloudInstancesProviderExtendedCallback;
+import jetbrains.buildServer.clouds.server.impl.CloudManagerFacade;
 import jetbrains.buildServer.clouds.server.impl.CloudRegistryImpl;
 import jetbrains.buildServer.clouds.server.instances.CloudEventDispatcher;
+import jetbrains.buildServer.clouds.stub.CloudManagerBaseProxy;
 import jetbrains.buildServer.clouds.vmware.connector.VMWareApiConnector;
 import jetbrains.buildServer.clouds.vmware.connector.VmwareInstance;
 import jetbrains.buildServer.clouds.vmware.errors.VmwareCheckedCloudException;
@@ -688,7 +690,9 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
                                                                             public void iterateInstances(@NotNull final CloudInstancesProviderExtendedCallback callback) {}
                                                                             public void markInstanceExpired(@NotNull final CloudInstance instance) {}
                                                                             public boolean isInstanceExpired(@NotNull final CloudInstance instance) {return false;}
-                                                                          }){
+                                                                          },
+                                                                          new CloudManagerBaseProxy()
+                                                                          ){
 
       @NotNull
       @Override

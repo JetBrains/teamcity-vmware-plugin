@@ -98,7 +98,8 @@
     </table>
     <jsp:useBean id="propertiesBean" scope="request" type="jetbrains.buildServer.controllers.BasePropertiesBean"/>
     <c:set var="sourceImagesJson" value="${propertiesBean.properties['source_images_json']}"/>
-    <input type="hidden" name="prop:source_images_json" id="source_images_json" value="<c:out value='${sourceImagesJson}'/>"/>
+    <input type="hidden" name="prop:source_images_json" id="source_images_json" value="<c:out value='${sourceImagesJson}'/>" data-err-id="source_images_json"/>
+    <span class="error" id="error_source_images_json"></span>
   </div>
   <forms:addButton title="Add image" id="vmwareShowDialogButton">Add image</forms:addButton>
 </div>
@@ -125,6 +126,7 @@
               <td>
                 <div>
                   <input type="text" id="nickname" value="" class="longField" data-id="nickname" data-err-id="nickname"/>
+                  <span class="error option-error option-error_nickname"></span>
                   <label for="nickname">Allows using the same VM as a source in multiple cloud images</label>
                   <div class="smallNoteAttention">This is an experimental feature, use it at your own risk</div>
                 </div>
@@ -194,7 +196,7 @@
                 <th>Max number of instances:&nbsp;<l:star/></th>
                 <td>
                     <div>
-                        <input type="text" id="maxInstances" value="1" class="longField" data-id="maxInstances" data-err-id="maxInstances"/>
+                        <input type="text" id="maxInstances" value="" class="longField" data-id="maxInstances" data-err-id="maxInstances"/>
                     </div>
                     <span class="error option-error option-error_maxInstances"></span>
                 </td>

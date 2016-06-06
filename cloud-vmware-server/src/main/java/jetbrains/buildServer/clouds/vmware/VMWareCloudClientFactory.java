@@ -30,6 +30,7 @@ import jetbrains.buildServer.clouds.base.errors.CheckedCloudException;
 import jetbrains.buildServer.clouds.base.errors.TypedCloudErrorInfo;
 import jetbrains.buildServer.clouds.server.CloudInstancesProvider;
 import jetbrains.buildServer.clouds.server.CloudManager;
+import jetbrains.buildServer.clouds.server.impl.CloudManagerBase;
 import jetbrains.buildServer.clouds.vmware.connector.VMWareApiConnector;
 import jetbrains.buildServer.clouds.vmware.connector.VMWareApiConnectorImpl;
 import jetbrains.buildServer.clouds.vmware.web.VMWareWebConstants;
@@ -51,17 +52,20 @@ public class VMWareCloudClientFactory extends AbstractCloudClientFactory<VmwareC
   private static final Logger LOG = Logger.getInstance(VMWareCloudClientFactory.class.getName());
   @NotNull private final String myHtmlPath;
   @NotNull private final File myIdxStorage;
+  @NotNull private final CloudManagerBase myCloudManager;
   //@NotNull private final CloudManager myCloudManager;
   @NotNull private final CloudInstancesProvider myInstancesProvider;
 
   public VMWareCloudClientFactory(@NotNull final CloudRegistrar cloudRegistrar,
                                   @NotNull final PluginDescriptor pluginDescriptor,
                                   @NotNull final ServerPaths serverPaths,
-                                  @NotNull final CloudInstancesProvider instancesProvider
+                                  @NotNull final CloudInstancesProvider instancesProvider,
+                                  @NotNull final CloudManagerBase cloudManager
                                   ) {
     super(cloudRegistrar);
     myInstancesProvider = instancesProvider;
     myIdxStorage = new File(serverPaths.getPluginDataDirectory(), "vmwareIdx");
+    myCloudManager = cloudManager;
     //myCloudManager = cloudManager;
     if (!myIdxStorage.exists()){
       myIdxStorage.mkdirs();
@@ -128,7 +132,7 @@ public class VMWareCloudClientFactory extends AbstractCloudClientFactory<VmwareC
 
   @NotNull
   public PropertiesProcessor getPropertiesProcessor() {
-    return new VmwarePropertiesProcessor(/*myCloudManager*/);
+    return new VmwarePropertiesProcessor(myCloudManager);
   }
 
   public boolean canBeAgentOfType(@NotNull AgentDescription agentDescription) {
