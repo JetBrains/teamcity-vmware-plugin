@@ -23,10 +23,10 @@ import jetbrains.buildServer.clouds.base.tasks.UpdateInstancesTask;
 import jetbrains.buildServer.clouds.server.CloudInstancesProvider;
 import jetbrains.buildServer.clouds.server.CloudInstancesProviderCallback;
 import jetbrains.buildServer.clouds.server.CloudInstancesProviderExtendedCallback;
+import jetbrains.buildServer.clouds.server.impl.CloudManagerBase;
 import jetbrains.buildServer.clouds.server.impl.CloudManagerFacade;
 import jetbrains.buildServer.clouds.server.impl.CloudRegistryImpl;
 import jetbrains.buildServer.clouds.server.instances.CloudEventDispatcher;
-import jetbrains.buildServer.clouds.stub.CloudManagerBaseProxy;
 import jetbrains.buildServer.clouds.vmware.connector.VMWareApiConnector;
 import jetbrains.buildServer.clouds.vmware.connector.VmwareInstance;
 import jetbrains.buildServer.clouds.vmware.errors.VmwareCheckedCloudException;
@@ -679,6 +679,8 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
     final CloudEventDispatcher dispatcher = new CloudEventDispatcher();
     final CloudRegistryImpl cloudRegistrar = new CloudRegistryImpl(dispatcher);
     final Mockery m = new Mockery();
+    final CloudManagerBase cloudManagerBase = m.mock(CloudManagerBase.class);
+
     final PluginDescriptor pd = m.mock(PluginDescriptor.class);
     m.checking(new Expectations(){{
       allowing(pd).getPluginResourcesPath("vmware-settings.html"); will(returnValue("aaa.html"));
@@ -691,7 +693,7 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
                                                                             public void markInstanceExpired(@NotNull final CloudInstance instance) {}
                                                                             public boolean isInstanceExpired(@NotNull final CloudInstance instance) {return false;}
                                                                           },
-                                                                          new CloudManagerBaseProxy()
+                                                                          cloudManagerBase
                                                                           ){
 
       @NotNull
