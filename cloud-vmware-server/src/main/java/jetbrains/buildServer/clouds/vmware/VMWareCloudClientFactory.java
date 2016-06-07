@@ -53,7 +53,6 @@ public class VMWareCloudClientFactory extends AbstractCloudClientFactory<VmwareC
   @NotNull private final String myHtmlPath;
   @NotNull private final File myIdxStorage;
   @NotNull private final CloudManagerBase myCloudManager;
-  //@NotNull private final CloudManager myCloudManager;
   @NotNull private final CloudInstancesProvider myInstancesProvider;
 
   public VMWareCloudClientFactory(@NotNull final CloudRegistrar cloudRegistrar,
@@ -66,7 +65,6 @@ public class VMWareCloudClientFactory extends AbstractCloudClientFactory<VmwareC
     myInstancesProvider = instancesProvider;
     myIdxStorage = new File(serverPaths.getPluginDataDirectory(), "vmwareIdx");
     myCloudManager = cloudManager;
-    //myCloudManager = cloudManager;
     if (!myIdxStorage.exists()){
       myIdxStorage.mkdirs();
     }
