@@ -90,7 +90,7 @@
         <th class="name">Snapshot</th>
         <th class="name hidden">Clone folder</th>
         <th class="name hidden">Resource pool</th>
-        <th class="name">Behaviour</th>
+        <th class="name">Behavior</th>
         <th class="name maxInstances">Max # of instances</th>
         <th class="name" colspan="2"></th>
       </tr>
@@ -122,13 +122,12 @@
             </td>
         </tr>
             <tr class="hidden cloneOptionsRow advancedSetting">
-              <th>Agent image nickname:</th>
-              <td>
+              <th class="noBorder"><label for="nickname">Custom image name:</label></th>
+              <td class="noBorder">
                 <div>
                   <input type="text" id="nickname" value="" class="longField" data-id="nickname" data-err-id="nickname"/>
+                  <div class="smallNoteAttention">Allows using the same VM as a source in multiple cloud images. <br/> Cloned agents' names will be based on this naming pattern.</div>
                   <span class="error option-error option-error_nickname"></span>
-                  <label for="nickname">Allows using the same VM as a source in multiple cloud images</label>
-                  <div class="smallNoteAttention">This is an experimental feature, use it at your own risk</div>
                 </div>
               </td>
             </tr>

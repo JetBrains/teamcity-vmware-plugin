@@ -64,8 +64,6 @@ public class VmwarePropertiesProcessor implements PropertiesProcessor {
     JsonParser parser = new JsonParser();
     final JsonElement element = parser.parse(imagesData);
     if (element.isJsonArray()){
-      final Iterator<JsonElement> iterator = element.getAsJsonArray().iterator();
-
       StreamSupport.stream(element.getAsJsonArray().spliterator(), false)
         .map(JsonElement::getAsJsonObject)
         .map(obj->obj.getAsJsonPrimitive(CloudImageParameters.SOURCE_ID_FIELD))
@@ -73,25 +71,9 @@ public class VmwarePropertiesProcessor implements PropertiesProcessor {
         .map(json->json.getAsString().toUpperCase())
         .filter(existingImages::containsKey)
         .map(id->new InvalidProperty(CloudImageParameters.SOURCE_IMAGES_JSON,
-          String.format("Cloud profile '%s' already contains image with name '%s'. Please choose another VM or nickname",
+          String.format("The cloud profile '%s' already contains an image named '%s'. Select a different VM or change the custom name." +
                         existingImages.get(id), id)
         )).forEachOrdered(list::add);
-
-      while (iterator.hasNext()) {
-        final JsonObject elem = iterator.next().getAsJsonObject();
-        final JsonPrimitive srcIdJson = elem.getAsJsonPrimitive(CloudImageParameters.SOURCE_ID_FIELD);
-        if (srcIdJson != null){
-          if (existingImages.containsKey(srcIdJson.getAsString())){
-            final String anotherProfileName = existingImages.get(srcIdJson.getAsString());
-            list.add(new InvalidProperty(
-              CloudImageParameters.SOURCE_IMAGES_JSON,
-              String.format("Cloud profile '%s' already contains image with name '%s'. Please choose another VM or nickname",
-                            anotherProfileName, srcIdJson.getAsString())
-              )
-            );
-          }
-        }
-      }
     } else {
       list.add(new InvalidProperty(CloudImageParameters.SOURCE_IMAGES_JSON, "Unable to parse images data - bad format"));
     }

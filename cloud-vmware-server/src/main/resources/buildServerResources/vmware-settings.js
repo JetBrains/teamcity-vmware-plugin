@@ -243,7 +243,6 @@ BS.Clouds.VMWareVSphere = BS.Clouds.VMWareVSphere || (function () {
 
             typeof imageId !== 'undefined' && (this._image = $j.extend({}, this.imagesData[imageId]));
             this.$dialogSubmitButton.val(action ? 'Save' : 'Add').data('image-id', imageId);
-            debugger;
             if (imageId === 'undefined'){
                 this.$dialogSubmitButton.removeData('image-id');
             }
@@ -789,7 +788,6 @@ BS.Clouds.VMWareVSphere = BS.Clouds.VMWareVSphere || (function () {
                     }.bind(this),
 
                     nickname: function() {
-                        debugger;
                         Object.keys(this.imagesData).forEach(function(imageId){
                             if (imageId == this.$dialogSubmitButton.data('image-id'))
                                 return;
