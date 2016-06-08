@@ -49,7 +49,7 @@ public class VmwarePropertiesProcessor implements PropertiesProcessor {
     final Map<String, String> existingImages = new HashMap<>();
 
      myCloudManager.listProfiles().stream()
-      .filter(p->(VmwareConstants.TYPE.equals(p.getCloudCode()) && !currentProfileId.equals(p.getProfileId())))
+      .filter(p->(VmwareConstants.TYPE.equals(p.getCloudCode()) && (currentProfileId == null || !currentProfileId.equals(p.getProfileId()))))
       .forEach(p->
         myCloudManager
           .getClient(p.getProfileId())
@@ -59,6 +59,8 @@ public class VmwarePropertiesProcessor implements PropertiesProcessor {
       );
 
     final String imagesData = properties.get(CloudImageParameters.SOURCE_IMAGES_JSON);
+    if (StringUtil.isEmpty(imagesData))
+      return list; // allowing empty profiles
     JsonParser parser = new JsonParser();
     final JsonElement element = parser.parse(imagesData);
     if (element.isJsonArray()){
