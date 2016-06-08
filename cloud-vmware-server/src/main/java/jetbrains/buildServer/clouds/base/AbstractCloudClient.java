@@ -53,7 +53,7 @@ public abstract class AbstractCloudClient<G extends AbstractCloudInstance<T>, T 
   protected final CloudAsyncTaskExecutor myAsyncTaskExecutor;
   @NotNull protected CloudApiConnector myApiConnector;
   protected final CloudClientParameters myParameters;
-  private final AtomicBoolean myIsInitialized = new AtomicBoolean(false);
+  private volatile boolean myIsInitialized = false;
 
   public AbstractCloudClient(@NotNull final CloudClientParameters params, @NotNull final CloudApiConnector apiConnector) {
     myParameters = params;
@@ -64,7 +64,7 @@ public abstract class AbstractCloudClient<G extends AbstractCloudInstance<T>, T 
   }
 
   public boolean isInitialized() {
-    return myIsInitialized.get();
+    return myIsInitialized;
   }
 
 
@@ -109,7 +109,7 @@ public abstract class AbstractCloudClient<G extends AbstractCloudInstance<T>, T 
           updateInstancesTask.run();
           myAsyncTaskExecutor.scheduleWithFixedDelay("Update instances", updateInstancesTask, initialDelayMs, delayMs, TimeUnit.MILLISECONDS);
         } finally {
-          myIsInitialized.set(true);
+          myIsInitialized = true;
           LOG.info("Cloud profile '" + myParameters.getProfileDescription() + "' initialized");
         }
       }
