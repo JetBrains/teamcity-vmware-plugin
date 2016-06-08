@@ -55,7 +55,7 @@ public class VmwarePropertiesProcessor implements PropertiesProcessor {
           .getClient(p.getProfileId())
           .getImages()
           .stream()
-          .forEach(i->existingImages.put(i.getId(), p.getProfileName()))
+          .forEach(i->existingImages.put(i.getId().toUpperCase(), p.getProfileName()))
       );
 
     final String imagesData = properties.get(CloudImageParameters.SOURCE_IMAGES_JSON);
@@ -70,7 +70,7 @@ public class VmwarePropertiesProcessor implements PropertiesProcessor {
         .map(JsonElement::getAsJsonObject)
         .map(obj->obj.getAsJsonPrimitive(CloudImageParameters.SOURCE_ID_FIELD))
         .filter(Objects::nonNull)
-        .map(JsonPrimitive::getAsString)
+        .map(json->json.getAsString().toUpperCase())
         .filter(existingImages::containsKey)
         .map(id->new InvalidProperty(CloudImageParameters.SOURCE_IMAGES_JSON,
           String.format("Cloud profile '%s' already contains image with name '%s'. Please choose another VM or nickname",

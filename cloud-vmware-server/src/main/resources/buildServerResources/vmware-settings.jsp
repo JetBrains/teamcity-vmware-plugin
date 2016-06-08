@@ -122,7 +122,7 @@
             </td>
         </tr>
             <tr class="hidden cloneOptionsRow advancedSetting">
-              <th>Agent image nickname (experimental):</th>
+              <th>Agent image nickname:</th>
               <td>
                 <div>
                   <input type="text" id="nickname" value="" class="longField" data-id="nickname" data-err-id="nickname"/>
@@ -133,7 +133,7 @@
               </td>
             </tr>
             <tr>
-                <th>Behaviour:&nbsp;<l:star/><bs:help urlPrefix="http://confluence.jetbrains.com/display/TW" file="VMware+vSphere+Cloud#VMwarevSphereCloud-Features"/></th>
+                <th>Behavior:&nbsp;<l:star/><bs:help file="Setting+Up+TeamCity+for+VMWare+vSphere+and+vCenter#SettingUpTeamCityforVMWarevSphereandvCenter-Features"/></th>
                 <td>
                     <input type="hidden" class="behaviour__value" data-id="behaviour" data-err-id="behaviour"/>
                     <div>
@@ -141,23 +141,17 @@
                         <label for="cloneBehaviour_FRESH_CLONE">Clone the selected Virtual Machine or Template before starting</label>
                         <div class="grayNote">The clone will be deleted after stopping</div>
                     </div>
-                    <div>
-                        <input type="radio" id="cloneBehaviour_START_STOP" name="cloneBehaviour" value="START_STOP" class="behaviour__switch behaviour__switch_radio"/>
-                        <label for="cloneBehaviour_START_STOP">Start the selected Virtual Machine</label>
-                        <div class="grayNote">When idle, the Virtual Machine will be stopped as per profile settings</div>
-                    </div>
-                    <span class="error option-error option-error_behaviour"></span>
-                </td>
-            </tr>
-            <tr class="advancedSetting">
-              <th>Experimental behaviour:</th>
-              <td>
                   <div>
                       <input type="radio" id="cloneBehaviour_ON_DEMAND_CLONE" name="cloneBehaviour" value="ON_DEMAND_CLONE" class="behaviour__switch"/>
                       <label for="cloneBehaviour_ON_DEMAND_CLONE">Clone the selected Virtual Machine or Template, preserve the clone after stopping</label>
-                      <div class="smallNoteAttention">This is an experimental feature, use it at your own risk</div>
+                      <div class="grayNote">The clone will reused</div>
                   </div>
-
+                  <div>
+                    <input type="radio" id="cloneBehaviour_START_STOP" name="cloneBehaviour" value="START_STOP" class="behaviour__switch behaviour__switch_radio"/>
+                    <label for="cloneBehaviour_START_STOP">Start the selected Virtual Machine</label>
+                    <div class="grayNote">When idle, the Virtual Machine will be stopped as per profile settings</div>
+                  </div>
+                  <span class="error option-error option-error_behaviour"></span>
               </td>
             </tr>
             <tr class="hidden cloneOptionsRow"  id="tr_snapshot_name">
