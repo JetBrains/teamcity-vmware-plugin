@@ -97,7 +97,7 @@ public abstract class AbstractCloudClient<G extends AbstractCloudInstance<T>, T 
     populateImagesData(imageDetails, 60*1000, 60*1000);
   }
 
-  public void populateImagesData(@NotNull final Collection<D> imageDetails, long initialDelaySec, long delayMs){
+  public void populateImagesData(@NotNull final Collection<D> imageDetails, long initialDelayMs, long delayMs){
     for (D details : imageDetails) {
       T image = checkAndCreateImage(details);
       myImageMap.put(image.getName(), image);
@@ -107,7 +107,7 @@ public abstract class AbstractCloudClient<G extends AbstractCloudInstance<T>, T 
       public void run() {
         try {
           updateInstancesTask.run();
-          myAsyncTaskExecutor.scheduleWithFixedDelay("Update instances", updateInstancesTask, initialDelaySec, delayMs, TimeUnit.MILLISECONDS);
+          myAsyncTaskExecutor.scheduleWithFixedDelay("Update instances", updateInstancesTask, initialDelayMs, delayMs, TimeUnit.MILLISECONDS);
         } finally {
           myIsInitialized.set(true);
           LOG.info("Cloud profile '" + myParameters.getProfileDescription() + "' initialized");
