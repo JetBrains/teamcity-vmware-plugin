@@ -71,8 +71,7 @@ public class VmwarePropertiesProcessor implements PropertiesProcessor {
         .map(json->json.getAsString().toUpperCase())
         .filter(existingImages::containsKey)
         .map(id->new InvalidProperty(CloudImageParameters.SOURCE_IMAGES_JSON,
-          String.format("The cloud profile '%s' already contains an image named '%s'. Select a different VM or change the custom name." +
-                        existingImages.get(id), id)
+          String.format("The cloud profile '%s' already contains an image named '%s'. Select a different VM or change the custom name.", existingImages.get(id), id)
         )).forEachOrdered(list::add);
     } else {
       list.add(new InvalidProperty(CloudImageParameters.SOURCE_IMAGES_JSON, "Unable to parse images data - bad format"));
