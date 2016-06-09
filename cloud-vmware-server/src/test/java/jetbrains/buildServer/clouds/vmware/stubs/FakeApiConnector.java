@@ -19,12 +19,12 @@ import org.jetbrains.annotations.Nullable;
  */
 public class FakeApiConnector extends VMWareApiConnectorImpl {
 
-  public FakeApiConnector() throws MalformedURLException {
-    this(null);
+  public FakeApiConnector(@Nullable String serverUUID, @Nullable String profileId) throws MalformedURLException {
+    this(serverUUID, profileId, null);
   }
 
-  public FakeApiConnector(@Nullable CloudInstancesProvider instancesProvider) throws MalformedURLException {
-    super(new URL("http://localhost:9999"), "", "", instancesProvider);
+  public FakeApiConnector(@Nullable String serverUUID, @Nullable String profileId, @Nullable CloudInstancesProvider instancesProvider) throws MalformedURLException {
+    super(new URL("http://localhost:9999"), "", "", serverUUID, profileId, instancesProvider);
   }
 
   @Override

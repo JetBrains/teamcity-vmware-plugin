@@ -47,16 +47,16 @@ public class UpdateInstancesTask<G extends AbstractCloudInstance<T>, T extends A
 
 
   public UpdateInstancesTask(@NotNull final CloudApiConnector<T, G> connector,
-                             @NotNull final F client,
-                             long stuckTimeMillis,
-                             @Used("Tests")
-                             final boolean rethrowException) {
+                              @NotNull final F client,
+                              final long stuckTimeMillis,
+                              @Used("Tests")
+                              final boolean rethrowException) {
     myConnector = connector;
     myClient = client;
     myStuckTime = stuckTimeMillis;
     myRethrowException = rethrowException;
   }
-  public UpdateInstancesTask(@NotNull final CloudApiConnector<T, G> connector, final F client) {
+  public UpdateInstancesTask(@NotNull final CloudApiConnector<T, G> connector, @NotNull final F client) {
     this(connector, client, STUCK_STATUS_TIME, false);
   }
 

@@ -24,6 +24,7 @@ import com.vmware.vim25.mo.Task;
 import com.vmware.vim25.mo.VirtualMachine;
 import java.util.Collection;
 import java.util.Map;
+import jetbrains.buildServer.clouds.CloudConstants;
 import jetbrains.buildServer.clouds.CloudInstanceUserData;
 import jetbrains.buildServer.clouds.InstanceStatus;
 import jetbrains.buildServer.clouds.base.connector.AbstractInstance;
@@ -48,6 +49,8 @@ public interface VMWareApiConnector extends CloudApiConnector<VmwareCloudImage, 
   String TEAMCITY_VMWARE_IMAGE_SOURCE_VM_NAME = TEAMCITY_VMWARE_PREFIX + "image.name";
   String TEAMCITY_VMWARE_IMAGE_SOURCE_ID = TEAMCITY_VMWARE_PREFIX + "image.nickname";
   String TEAMCITY_VMWARE_CLONED_INSTANCE = TEAMCITY_VMWARE_PREFIX + "cloned.instance";
+  String TEAMCITY_VMWARE_PROFILE_ID = TEAMCITY_VMWARE_PREFIX + CloudConstants.PROFILE_ID;
+  String TEAMCITY_VMWARE_SERVER_UUID = TEAMCITY_VMWARE_PREFIX + "server.uuid";
 
   void test() throws VmwareCheckedCloudException;
 

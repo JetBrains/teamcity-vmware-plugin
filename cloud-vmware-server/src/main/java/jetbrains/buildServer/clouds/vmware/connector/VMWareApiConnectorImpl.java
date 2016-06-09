@@ -73,6 +73,9 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
   private ServiceInstance myServiceInstance;
   private final String myDomain;
 
+  @Nullable private final String myServerUUID;
+  // it can be null, when we create a temporary api connector for a short-term use (for example, when we prepopulate information on create/edit cloud profile page
+  @Nullable private final String myProfileId;
   // we also create a separate connector for controller and which doesn't need this field
   @Nullable private final CloudInstancesProvider myInstancesProvider;
 
@@ -80,10 +83,14 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
   public VMWareApiConnectorImpl(@NotNull final URL instanceURL,
                                 @NotNull final String username,
                                 @NotNull final String password,
-                                @Nullable final  CloudInstancesProvider instancesProvider){
+                                @Nullable final String serverUUID,
+                                @Nullable final String profileId,
+                                @Nullable final CloudInstancesProvider instancesProvider){
     myInstanceURL = instanceURL;
     myUsername = username;
     myPassword = password;
+    myServerUUID = serverUUID;
+    myProfileId = profileId;
     myInstancesProvider = instancesProvider;
     myDomain = getTCServerDomain();
     if (myDomain == null){
@@ -253,6 +260,16 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
           Map<String, R> imageInstancesMap = result.get(image);
           if (imageInstancesMap == null) {
             imageInstancesMap = new HashMap<>();
+            final String serverUUID = vmInstance.getServerUUID();
+            if (StringUtil.isNotEmpty(serverUUID) && !serverUUID.equals(myServerUUID)) {
+              LOG.debug(String.format("Instance '%s' belongs to server with another UUID('%s'). Our UUID is '%s'", vmInstance.getName(), serverUUID, myServerUUID));
+              continue;
+            }
+            final String profileId = vmInstance.getProfileId();
+            if (StringUtil.isNotEmpty(serverUUID) && !profileId.equals(myProfileId)) {
+              LOG.debug(String.format("Instance '%s' belongs to another cloud profile id('%s'). Our cloud profile id is '%s'", vmInstance.getName(), profileId, myProfileId));
+              continue;
+            }
             result.put(image, imageInstancesMap);
           }
           imageInstancesMap.put(vmInstance.getName(), (R)vmInstance);
@@ -554,7 +571,9 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
       createOptionValue(TEAMCITY_VMWARE_IMAGE_SOURCE_VM_NAME, imageDetails.getSourceVmName()),
       createOptionValue(TEAMCITY_VMWARE_IMAGE_SOURCE_ID, imageDetails.getSourceId()),
       createOptionValue(TEAMCITY_VMWARE_IMAGE_SNAPSHOT, snapshotName),
-      createOptionValue(TEAMCITY_VMWARE_IMAGE_CHANGE_VERSION, vmConfig.getChangeVersion())
+      createOptionValue(TEAMCITY_VMWARE_IMAGE_CHANGE_VERSION, vmConfig.getChangeVersion()),
+      createOptionValue(TEAMCITY_VMWARE_PROFILE_ID, StringUtil.emptyIfNull(myProfileId)),
+      createOptionValue(TEAMCITY_VMWARE_SERVER_UUID, StringUtil.emptyIfNull(myServerUUID))
     });
 
     final GuestInfo guest = vm.getGuest();

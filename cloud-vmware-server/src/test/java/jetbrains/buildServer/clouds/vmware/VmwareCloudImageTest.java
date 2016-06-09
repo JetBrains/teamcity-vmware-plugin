@@ -46,7 +46,7 @@ public class VmwareCloudImageTest extends BaseTestCase {
     super.setUp();
     FakeModel.instance().clear();
     myTaskExecutor = new CloudAsyncTaskExecutor("Test-vmware");
-    myApiConnector = new FakeApiConnector();
+    myApiConnector = new FakeApiConnector(VmwareCloudIntegrationTest.TEST_SERVER_UUID, VmwareCloudIntegrationTest.PROFILE_ID);
     myIdxStorage = createTempDir();
     CloudImageParameters imageParameters = new CloudImageParameters();
     imageParameters.setParameter("nickname", "imageNickname");

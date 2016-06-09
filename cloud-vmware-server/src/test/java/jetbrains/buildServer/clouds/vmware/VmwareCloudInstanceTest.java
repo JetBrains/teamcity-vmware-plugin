@@ -18,6 +18,9 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import static jetbrains.buildServer.clouds.vmware.VmwareCloudIntegrationTest.PROFILE_ID;
+import static jetbrains.buildServer.clouds.vmware.VmwareCloudIntegrationTest.TEST_SERVER_UUID;
+
 /**
  * @author Sergey.Pak
  *         Date: 5/19/2014
@@ -36,7 +39,7 @@ public class VmwareCloudInstanceTest extends BaseTestCase {
   public void setUp() throws Exception {
     super.setUp();
     myStatusTask = new CloudAsyncTaskExecutor("Test-vmware");
-    myApiConnector = new FakeApiConnector();
+    myApiConnector = new FakeApiConnector(TEST_SERVER_UUID, PROFILE_ID);
     myIdxStorage = createTempDir();
     CloudImageParameters imageParameters = new CloudImageParameters();
     imageParameters.setParameter("nickname", "imageNickname");

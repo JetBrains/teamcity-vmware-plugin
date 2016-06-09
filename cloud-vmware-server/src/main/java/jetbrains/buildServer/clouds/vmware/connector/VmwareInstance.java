@@ -193,6 +193,15 @@ public class VmwareInstance extends AbstractInstance implements VmwareManagedEnt
     return nickname == null ? getProperty(VMWareApiConnector.TEAMCITY_VMWARE_IMAGE_SOURCE_VM_NAME) : nickname;
   }
 
+  @Nullable
+  public String getServerUUID(){
+    return getProperty(VMWareApiConnector.TEAMCITY_VMWARE_SERVER_UUID);
+  }
+
+  public String getProfileId(){
+    return getProperty(VMWareApiConnector.TEAMCITY_VMWARE_PROFILE_ID);
+  }
+
   public boolean isClone(){
     return "true".equals(getProperty(VMWareApiConnector.TEAMCITY_VMWARE_CLONED_INSTANCE));
   }

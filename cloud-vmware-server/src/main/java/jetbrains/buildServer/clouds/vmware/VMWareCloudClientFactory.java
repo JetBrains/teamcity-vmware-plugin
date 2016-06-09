@@ -34,10 +34,7 @@ import jetbrains.buildServer.clouds.server.impl.CloudManagerBase;
 import jetbrains.buildServer.clouds.vmware.connector.VMWareApiConnector;
 import jetbrains.buildServer.clouds.vmware.connector.VMWareApiConnectorImpl;
 import jetbrains.buildServer.clouds.vmware.web.VMWareWebConstants;
-import jetbrains.buildServer.serverSide.AgentDescription;
-import jetbrains.buildServer.serverSide.InvalidProperty;
-import jetbrains.buildServer.serverSide.PropertiesProcessor;
-import jetbrains.buildServer.serverSide.ServerPaths;
+import jetbrains.buildServer.serverSide.*;
 import jetbrains.buildServer.web.openapi.PluginDescriptor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -54,12 +51,14 @@ public class VMWareCloudClientFactory extends AbstractCloudClientFactory<VmwareC
   @NotNull private final File myIdxStorage;
   @NotNull private final CloudManagerBase myCloudManager;
   @NotNull private final CloudInstancesProvider myInstancesProvider;
+  @NotNull private final ServerSettings myServerSettings;
 
   public VMWareCloudClientFactory(@NotNull final CloudRegistrar cloudRegistrar,
                                   @NotNull final PluginDescriptor pluginDescriptor,
                                   @NotNull final ServerPaths serverPaths,
                                   @NotNull final CloudInstancesProvider instancesProvider,
-                                  @NotNull final CloudManagerBase cloudManager
+                                  @NotNull final CloudManagerBase cloudManager,
+                                  @NotNull final ServerSettings serverSettings
                                   ) {
     super(cloudRegistrar);
     myInstancesProvider = instancesProvider;
@@ -69,6 +68,7 @@ public class VMWareCloudClientFactory extends AbstractCloudClientFactory<VmwareC
       myIdxStorage.mkdirs();
     }
     myHtmlPath = pluginDescriptor.getPluginResourcesPath("vmware-settings.html");
+    myServerSettings = serverSettings;
   }
 
   @NotNull
@@ -76,7 +76,7 @@ public class VMWareCloudClientFactory extends AbstractCloudClientFactory<VmwareC
   public VMWareCloudClient createNewClient(@NotNull final CloudState state,
                                            @NotNull final Collection<VmwareCloudImageDetails> images,
                                            @NotNull final CloudClientParameters params) {
-    final VMWareApiConnector apiConnector = createConnectorFromParams(params);
+    final VMWareApiConnector apiConnector = createConnectorFromParams(state, params);
     final VMWareCloudClient vmWareCloudClient = new VMWareCloudClient(params, apiConnector, myIdxStorage);
     try {
       apiConnector.test();
@@ -88,7 +88,7 @@ public class VMWareCloudClientFactory extends AbstractCloudClientFactory<VmwareC
 
   @Override
   public VMWareCloudClient createNewClient(@NotNull final CloudState state, @NotNull final CloudClientParameters params, final TypedCloudErrorInfo[] profileErrors) {
-    final VMWareCloudClient client = new VMWareCloudClient(params, createConnectorFromParams(params), myIdxStorage);
+    final VMWareCloudClient client = new VMWareCloudClient(params, createConnectorFromParams(state, params), myIdxStorage);
     client.updateErrors(profileErrors);
     return client;
   }
@@ -139,13 +139,13 @@ public class VMWareCloudClientFactory extends AbstractCloudClientFactory<VmwareC
   }
 
   @NotNull
-  protected VMWareApiConnector createConnectorFromParams(CloudClientParameters params){
+  protected VMWareApiConnector createConnectorFromParams(@NotNull final CloudState state, CloudClientParameters params){
     String serverUrl = params.getParameter(VMWareWebConstants.SERVER_URL);
     String username = params.getParameter(VMWareWebConstants.USERNAME);
     String password = params.getParameter(VMWareWebConstants.SECURE_PASSWORD);
     if (serverUrl != null && username != null) {
       try {
-        return new VMWareApiConnectorImpl(new URL(serverUrl), username, password, myInstancesProvider);
+        return new VMWareApiConnectorImpl(new URL(serverUrl), username, password, myServerSettings.getServerUUID(), state.getProfileId(), myInstancesProvider);
       } catch (MalformedURLException e) {
         LOG.warn(e.toString(), e);
       }

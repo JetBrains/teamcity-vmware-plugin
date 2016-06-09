@@ -44,12 +44,19 @@ public class VmwarePropertiesProcessor implements PropertiesProcessor {
         list.add(new InvalidProperty(VMWareWebConstants.PROFILE_INSTANCE_LIMIT, "Must be a positive integer or empty"));
       }
     }
+    if (list.size() > 0)
+      return list;
+
+    final String serverURL = properties.get(VMWareWebConstants.SERVER_URL);
 
     final String currentProfileId = properties.get(CloudConstants.PROFILE_ID);
     final Map<String, String> existingImages = new HashMap<>();
 
      myCloudManager.listProfiles().stream()
-      .filter(p->(VmwareConstants.TYPE.equals(p.getCloudCode()) && (currentProfileId == null || !currentProfileId.equals(p.getProfileId()))))
+      .filter(p->(VmwareConstants.TYPE.equals(p.getCloudCode())
+                  && (currentProfileId == null || !currentProfileId.equals(p.getProfileId()))
+                  && (serverURL.equals(p.getParameters().getParameter(VMWareWebConstants.SERVER_URL))))
+      )
       .forEach(p->
         myCloudManager
           .getClient(p.getProfileId())

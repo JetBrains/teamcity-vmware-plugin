@@ -352,4 +352,12 @@ public class FakeVirtualMachine extends VirtualMachine {
   public boolean isGone(){
     return myGone.get();
   }
+
+  @Override
+  public String toString() {
+    return "FakeVirtualMachine{" +
+           "myName='" + myName + '\'' +
+           ", myIsStarted=" + myIsStarted +
+           '}';
+  }
 }

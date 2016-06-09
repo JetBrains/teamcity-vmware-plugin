@@ -36,6 +36,7 @@ import jetbrains.buildServer.clouds.vmware.stubs.FakeVirtualMachine;
 import jetbrains.buildServer.clouds.vmware.web.VMWareWebConstants;
 import jetbrains.buildServer.serverSide.ServerPaths;
 import jetbrains.buildServer.serverSide.TeamCityProperties;
+import jetbrains.buildServer.serverSide.impl.ServerSettingsImpl;
 import jetbrains.buildServer.web.openapi.PluginDescriptor;
 import org.jetbrains.annotations.NotNull;
 import org.jmock.Expectations;
@@ -54,7 +55,8 @@ import org.testng.annotations.Test;
 @Test
 public class VmwareCloudIntegrationTest extends BaseTestCase {
 
-  private static final String PROFILE_ID = "cp1";
+  protected static final String PROFILE_ID = "cp1";
+  protected static final String TEST_SERVER_UUID = "1234-5678-9012";
 
   private VMWareCloudClient myClient;
   private FakeApiConnector myFakeApi;
@@ -71,16 +73,13 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
 
     setInternalProperty("teamcity.vsphere.instance.status.update.delay.ms", "250");
     myClientParameters = new CloudClientParameters();
-    myClientParameters.setParameter("serverUrl", "http://localhost:8080");
-    myClientParameters.setParameter("username", "un");
-    myClientParameters.setParameter("password", "pw");
     myClientParameters.setCloudImages(CloudImageParameters.collectionFromJson("[{sourceVmName:'image1', behaviour:'START_STOP'}," +
                                                                              "{sourceVmName:'image2',snapshot:'snap*',folder:'cf',pool:'rp',maxInstances:3,behaviour:'ON_DEMAND_CLONE', " +
                                                                              "customizationSpec:'someCustomization'}," +
                                                                              "{sourceVmName:'image_template', snapshot:'" + VmwareConstants.CURRENT_STATE +
                                                                              "',folder:'cf',pool:'rp',maxInstances:3,behaviour:'FRESH_CLONE', customizationSpec: 'linux'}]"));
 
-    myFakeApi = new FakeApiConnector();
+    myFakeApi = new FakeApiConnector(TEST_SERVER_UUID, PROFILE_ID, null);
     FakeModel.instance().addDatacenter("dc");
     FakeModel.instance().addFolder("cf").setParent("dc", Datacenter.class);
     FakeModel.instance().addResourcePool("rp").setParentFolder("cf");
@@ -128,7 +127,7 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
 
   public void check_start_type() throws MalformedURLException {
 
-    myFakeApi = new FakeApiConnector() {
+    myFakeApi = new FakeApiConnector(TEST_SERVER_UUID, PROFILE_ID) {
       @Override
       public Map<String, VmwareInstance> getVirtualMachines(boolean filterClones) throws VmwareCheckedCloudException {
         final Map<String, VmwareInstance> instances = super.getVirtualMachines(filterClones);
@@ -490,7 +489,7 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
     final AtomicBoolean failure = new AtomicBoolean(false);
     final AtomicLong lastApiCallTime = new AtomicLong(0);
     final AtomicLong lastUpdateTime = new AtomicLong(0);
-    myFakeApi = new FakeApiConnector(){
+    myFakeApi = new FakeApiConnector(TEST_SERVER_UUID, PROFILE_ID){
       @Override
       protected <T extends ManagedEntity> Collection<T> findAllEntities(final Class<T> instanceType) throws VmwareCheckedCloudException {
         lastApiCallTime.set(System.currentTimeMillis());
@@ -538,7 +537,7 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
   public void canstart_check_shouldnt_block_thread() throws InterruptedException, MalformedURLException {
     final Lock lock = new ReentrantLock();
     final AtomicBoolean shouldLock = new AtomicBoolean(false);
-    myFakeApi = new FakeApiConnector(){
+    myFakeApi = new FakeApiConnector(TEST_SERVER_UUID, PROFILE_ID){
       @Override
       public void test() throws VmwareCheckedCloudException {
         if (shouldLock.get()){
@@ -649,7 +648,7 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
     }
 
 
-    myFakeApi = new FakeApiConnector(){
+    myFakeApi = new FakeApiConnector(TEST_SERVER_UUID, PROFILE_ID){
 
       @Override
       protected <T extends ManagedEntity> Collection<T> findAllEntities(final Class<T> instanceType) throws VmwareCheckedCloudException {
@@ -693,12 +692,12 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
                                                                             public void markInstanceExpired(@NotNull final CloudInstance instance) {}
                                                                             public boolean isInstanceExpired(@NotNull final CloudInstance instance) {return false;}
                                                                           },
-                                                                          cloudManagerBase
+                                                                          cloudManagerBase, new ServerSettingsImpl()
                                                                           ){
 
       @NotNull
       @Override
-      protected VMWareApiConnector createConnectorFromParams(final CloudClientParameters params) {
+      protected VMWareApiConnector createConnectorFromParams(@NotNull final CloudState state, final CloudClientParameters params) {
         return myFakeApi;
       }
 
@@ -845,7 +844,7 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
         return instancesMarkedExpired.containsKey(instance.getInstanceId());
       }
     };
-    myFakeApi = new FakeApiConnector(instancesProviderStub);
+    myFakeApi = new FakeApiConnector(null, null, instancesProviderStub);
     final VmwareCloudInstance in = startNewInstanceAndWait("image2");
     assertEquals(VirtualMachinePowerState.poweredOn, FakeModel.instance().getVirtualMachine(in.getName()).getRuntime().getPowerState());
     FakeModel.instance().addVMSnapshot("image2", "snap2");
@@ -877,7 +876,7 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
   public void handle_instances_deleted_in_the_middle_of_check() throws MalformedURLException, VmwareCheckedCloudException {
     final Set<String> instances2RemoveAfterGet = new HashSet<>();
 
-    myFakeApi = new FakeApiConnector(){
+    myFakeApi = new FakeApiConnector(TEST_SERVER_UUID, PROFILE_ID){
       @Override
       protected <T extends ManagedEntity> Collection<T> findAllEntities(final Class<T> instanceType) throws VmwareCheckedCloudException {
         final Collection<T> entities = super.findAllEntities(instanceType);
@@ -901,6 +900,41 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
 
     final Map<String, AbstractInstance> image2Instances = myFakeApi.fetchInstances(getImageByName("image2"));
     assertEquals(1, image2Instances.size());
+  }
+
+  public void check_profile_id_and_server_uuid() throws Exception {
+
+    startAndCheckCloneDeletedAfterTermination("image2", new Checker<VmwareCloudInstance>() {
+      public void check(final VmwareCloudInstance data) throws CheckedCloudException {
+        assertTrue("image2-1".equals(data.getInstanceId()));
+        final Map<String, String> vmParams = myFakeApi.getVMParams(data.getInstanceId());
+        assertEquals("true", vmParams.get(VMWareApiConnector.TEAMCITY_VMWARE_CLONED_INSTANCE));
+        assertEquals("image2", vmParams.get(VMWareApiConnector.TEAMCITY_VMWARE_IMAGE_SOURCE_VM_NAME));
+        assertEquals("snap", vmParams.get(VMWareApiConnector.TEAMCITY_VMWARE_IMAGE_SNAPSHOT));
+        assertEquals(TEST_SERVER_UUID, vmParams.get(VMWareApiConnector.TEAMCITY_VMWARE_SERVER_UUID));
+        assertEquals(PROFILE_ID, vmParams.get(VMWareApiConnector.TEAMCITY_VMWARE_PROFILE_ID));
+      }
+    }, false);
+
+  }
+
+  public void do_not_catch_instances_from_another_server() throws MalformedURLException {
+    startNewInstanceAndWait("image2");
+    myFakeApi = new FakeApiConnector("2345-6789-0123", PROFILE_ID);
+    recreateClient();
+    assertEquals(0, getImageByName("image2").getInstances().size());
+    startNewInstanceAndWait("image2");
+    recreateClient();
+    assertEquals(1, getImageByName("image2").getInstances().size());
+  }
+
+  public void do_not_catch_instances_from_another_profile() throws MalformedURLException {
+    startNewInstanceAndWait("image2");
+    recreateClient();
+    assertEquals(1, getImageByName("image2").getInstances().size());
+    myFakeApi = new FakeApiConnector(TEST_SERVER_UUID, "cp2");
+    recreateClient();
+    assertEquals(0, getImageByName("image2").getInstances().size());
   }
   /*
   *
@@ -990,7 +1024,7 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
   private VmwareCloudInstance startNewInstanceAndWait(String imageName, Map<String, String> parameters) {
     final CloudInstanceUserData userData = createUserData(imageName + "_agent", parameters);
     final VmwareCloudInstance vmwareCloudInstance = myClient.startNewInstance(getImageByName(imageName), userData);
-    final WaitFor waitFor = new WaitFor(10 * 1000) {
+    final WaitFor waitFor = new WaitFor(2 * 1000) {
       @Override
       protected boolean condition() {
         return vmwareCloudInstance.getStatus() == InstanceStatus.RUNNING;
@@ -1048,7 +1082,7 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
       }
     };
     myClient.populateImagesData(images, updateDelay, updateDelay);
-    new WaitFor(1*1000){
+    new WaitFor(100*1000){
       @Override
       protected boolean condition() {
         return myClient.isInitialized();
