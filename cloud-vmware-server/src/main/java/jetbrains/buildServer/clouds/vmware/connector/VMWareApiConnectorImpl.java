@@ -266,7 +266,7 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
               continue;
             }
             final String profileId = vmInstance.getProfileId();
-            if (StringUtil.isNotEmpty(serverUUID) && !profileId.equals(myProfileId)) {
+            if (StringUtil.isNotEmpty(profileId) && !profileId.equals(myProfileId)) {
               LOG.debug(String.format("Instance '%s' belongs to another cloud profile id('%s'). Our cloud profile id is '%s'", vmInstance.getName(), profileId, myProfileId));
               continue;
             }
