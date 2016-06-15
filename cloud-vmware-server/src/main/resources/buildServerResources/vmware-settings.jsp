@@ -195,7 +195,7 @@
                 </td>
             </tr>
             <tr class="advancedSetting">
-              <th><label for="${cloudWebCons.agentPoolIdField}">Agent Pool:</label></th>
+              <th><label for="${cloudWebCons.agentPoolIdField}">Agent pool:</label></th>
               <td>
                 <select id="${cloudWebCons.agentPoolIdField}" data-id="${cloudWebCons.agentPoolIdField}" class="longField configParam">
                   <props:option value=""><c:out value="<Please select agent pool>"/></props:option>
