@@ -64,7 +64,7 @@ BS.Clouds.VMWareVSphere = BS.Clouds.VMWareVSphere || (function () {
             this.$cloneOptions = $j(this.selectors.cloneOptionsRow);
             this.$customizationSpec = $j('#customizationSpec');
 
-            this.$dialogSubmitButton = $j('#vmwareAddImageButton');
+            this.$addImageButton = $j('#vmwareAddImageButton');
             this.$fetchOptionsError = $j('#error_fetch_options');
             this.$cancelButton = $j('#vmwareCancelAddImageButton');
             this.$showDialogButton = $j('#vmwareShowDialogButton');
@@ -80,6 +80,7 @@ BS.Clouds.VMWareVSphere = BS.Clouds.VMWareVSphere || (function () {
             this._displaySnapshotSelect();
 
             this._toggleDialogShowButton();
+            this._toggleEditLinks();
             this.validateServerSettings() && this.fetchOptions();
             this._initImagesData();
             this._bindHandlers();
@@ -111,6 +112,7 @@ BS.Clouds.VMWareVSphere = BS.Clouds.VMWareVSphere || (function () {
                         this.fillOptions($vms, $pools, $folders, $custSpecs);
                         this._toggleDialogSubmitButton(true);
                         this._toggleDialogShowButton(true);
+                        this._toggleEditLinks(true);
                     }
 
                     this.validateImages();
@@ -242,9 +244,9 @@ BS.Clouds.VMWareVSphere = BS.Clouds.VMWareVSphere || (function () {
             BS.Hider.addHideFunction('VMWareImageDialog', this.resetDataAndDialog.bind(this));
 
             typeof imageId !== 'undefined' && (this._image = $j.extend({}, this.imagesData[imageId]));
-            this.$dialogSubmitButton.val(action ? 'Save' : 'Add').data('image-id', imageId);
+            this.$addImageButton.val(action ? 'Save' : 'Add').data('image-id', imageId);
             if (imageId === 'undefined'){
-                this.$dialogSubmitButton.removeData('image-id');
+                this.$addImageButton.removeData('image-id');
             }
 
             BS.VMWareImageDialog.showCentered();
@@ -382,7 +384,7 @@ BS.Clouds.VMWareVSphere = BS.Clouds.VMWareVSphere || (function () {
             //// Click Handlers
             this.$fetchOptionsButton.on('click', this._fetchOptionsClickHandler.bind(this));
             this.$showDialogButton.on('click', this._showDialogClickHandler.bind(this));
-            this.$dialogSubmitButton.on('click', this._submitDialogClickHandler.bind(this));
+            this.$addImageButton.on('click', this._submitDialogClickHandler.bind(this));
             this.$cancelButton.on('click', this._cancelDialogClickHandler.bind(this));
             this.$imagesTable.on('click', this.selectors.rmImageLink, function () {
                 var $this = $j(this),
@@ -395,8 +397,11 @@ BS.Clouds.VMWareVSphere = BS.Clouds.VMWareVSphere || (function () {
                 return false;
             });
             var editDelegates = this.selectors.imagesTableRow + ' .highlight, ' + this.selectors.editImageLink;
+            var that = this;
             this.$imagesTable.on('click', editDelegates, function () {
-                self.showEditDialog($j(this));
+                if (!that.$addImageButton.prop('disabled')) {
+                    self.showEditDialog($j(this));
+                }
                 return false;
             });
 
@@ -554,8 +559,8 @@ BS.Clouds.VMWareVSphere = BS.Clouds.VMWareVSphere || (function () {
                     delete this._image.maxInstances;
                 }
 
-                if (this.$dialogSubmitButton.val().toLowerCase() === 'save') {
-                    this.editImage(this.$dialogSubmitButton.data('image-id'));
+                if (this.$addImageButton.val().toLowerCase() === 'save') {
+                    this.editImage(this.$addImageButton.data('image-id'));
                 } else {
                     this.addImage();
                 }
@@ -659,8 +664,13 @@ BS.Clouds.VMWareVSphere = BS.Clouds.VMWareVSphere || (function () {
         _isClone: function () {
             return !!(this._image.behaviour && this._image.behaviour !== START_STOP);
         },
+        _toggleEditLinks: function (enable) {
+            $j(this.selectors.editImageLink).toggleClass('hidden', !enable);
+            $j(this.selectors.editImageLink + '_disabled').toggleClass('hidden', !!enable);
+        },
+
         _toggleDialogSubmitButton: function (enable) {
-            this.$dialogSubmitButton.prop('disabled', !enable);
+            this.$addImageButton.prop('disabled', !enable);
         },
         _toggleFetchOptionsButton: function (enable) {
             // $fetchOptionsButton is basically an anchor, also attribute allows to add styling
@@ -708,7 +718,7 @@ BS.Clouds.VMWareVSphere = BS.Clouds.VMWareVSphere || (function () {
 <td class="pool hidden highlight"></td>\
 <td class="behaviour highlight"></td>\
 <td class="maxInstances highlight"></td>\
-<td class="edit highlight"><a href="#" class="editVmImageLink">edit</a></td>\
+<td class="edit highlight"><span class="editVmImageLink_disabled" title="Editing is available after successful retrieval of data">edit</span><a href="#" class="editVmImageLink hidden">edit</a></td>\
 <td class="remove"><a href="#" class="removeVmImageLink">delete</a></td>\
         </tr>'),
                 imagesSelect: $j('<select name="prop:_image" id="image" class="longField" data-id="sourceVmName" data-err-id="sourceVmName">\
@@ -789,7 +799,7 @@ BS.Clouds.VMWareVSphere = BS.Clouds.VMWareVSphere || (function () {
 
                     nickname: function() {
                         Object.keys(this.imagesData).forEach(function(imageId){
-                            if (imageId == this.$dialogSubmitButton.data('image-id'))
+                            if (imageId == this.$addImageButton.data('image-id'))
                                 return;
                             var machine = this.imagesData[imageId];
 
