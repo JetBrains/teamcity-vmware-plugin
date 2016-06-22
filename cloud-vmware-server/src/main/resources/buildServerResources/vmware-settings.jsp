@@ -98,7 +98,7 @@
     </table>
     <jsp:useBean id="propertiesBean" scope="request" type="jetbrains.buildServer.controllers.BasePropertiesBean"/>
     <c:set var="sourceImagesJson" value="${propertiesBean.properties['source_images_json']}"/>
-    <input type="hidden" name="prop:source_images_json" id="source_images_json" value="<c:out value='${sourceImagesJson}'/>" data-err-id="source_images_json"/>
+    <input type="hidden" class="jsonParam" name="prop:source_images_json" id="source_images_json" value="<c:out value='${sourceImagesJson}'/>" data-err-id="source_images_json"/>
     <span class="error" id="error_source_images_json"></span>
   </div>
   <forms:addButton title="Add image" id="vmwareShowDialogButton">Add image</forms:addButton>
