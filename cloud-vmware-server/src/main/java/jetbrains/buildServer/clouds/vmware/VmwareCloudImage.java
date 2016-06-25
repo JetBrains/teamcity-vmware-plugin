@@ -172,8 +172,6 @@ public class VmwareCloudImage extends AbstractCloudImage<VmwareCloudInstance, Vm
       if (willClone && myImageDetails.getMaxInstances() <= myInstances.size()){
         final long stoppedOrphanedTimeout = TeamCityProperties.getLong("teamcity.vmware.stopped.orphaned.timeout", STOPPED_ORPHANED_TIMEOUT);
         final Date considerTime = new Date(System.currentTimeMillis() - stoppedOrphanedTimeout);
-        System.out.println(considerTime);
-        System.out.println(myInstances);
         processStoppedInstances(new Function<VmwareInstance, Boolean>() {
           public Boolean fun(final VmwareInstance vmInstance) {
             final String vmName = vmInstance.getName();
