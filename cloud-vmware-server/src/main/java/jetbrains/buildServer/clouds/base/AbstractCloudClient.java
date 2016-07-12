@@ -57,7 +57,7 @@ public abstract class AbstractCloudClient<G extends AbstractCloudInstance<T>, T 
 
   public AbstractCloudClient(@NotNull final CloudClientParameters params, @NotNull final CloudApiConnector apiConnector) {
     myParameters = params;
-    myAsyncTaskExecutor = new CloudAsyncTaskExecutor(params.getProfileDescription());
+    myAsyncTaskExecutor = new CloudAsyncTaskExecutor("Async tasks for cloud " + params.getProfileDescription());
     myImageMap = new HashMap<String, T>();
     myErrorProvider = new CloudErrorMap(VmwareErrorMessages.getInstance(), "Unable to initialize cloud client. See details");
     myApiConnector = apiConnector;
