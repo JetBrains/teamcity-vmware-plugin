@@ -72,6 +72,7 @@ public class CloudErrorMap implements UpdatableCloudErrorProvider {
     } else {
       myErrorInfo.set(null);
     }
+
   }
 
   private static Map<String, TypedCloudErrorInfo> mapFromArray(final TypedCloudErrorInfo[] array){
