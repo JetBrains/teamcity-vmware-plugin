@@ -83,6 +83,8 @@ public interface VMWareApiConnector extends CloudApiConnector<VmwareCloudImage, 
 
   Task stopInstance(VmwareCloudInstance instance);
 
+  Task deleteInstance(VmwareCloudInstance instance);
+
   void restartInstance(VmwareCloudInstance instance) throws VmwareCheckedCloudException;
 
   boolean checkVirtualMachineExists(@NotNull String vmName);

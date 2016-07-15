@@ -51,7 +51,7 @@ public abstract class AbstractCloudClient<G extends AbstractCloudInstance<T>, T 
   protected final Map<String, T> myImageMap;
   protected final UpdatableCloudErrorProvider myErrorProvider;
   protected final CloudAsyncTaskExecutor myAsyncTaskExecutor;
-  @NotNull protected CloudApiConnector myApiConnector;
+  @NotNull protected final CloudApiConnector myApiConnector;
   protected final CloudClientParameters myParameters;
   private volatile boolean myIsInitialized = false;
 

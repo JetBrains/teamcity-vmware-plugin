@@ -38,84 +38,58 @@ public class VmwareCloudInstance extends AbstractCloudInstance<VmwareCloudImage>
 
   private static final Logger LOG = Logger.getInstance(VmwareCloudInstance.class.getName());
 
-  private final String myInstanceName;
-  private final VmwareCloudImage myImage;
-  private String myIpAddress;
+  @Nullable private volatile String mySnapshotName = null;
+  private volatile boolean myIsReady = false;
 
-  @Nullable private final String mySnapshotName;
+  //
+  protected VmwareCloudInstance(@NotNull final VmwareCloudImage image) {
+    super(image);
+  }
+
+  protected VmwareCloudInstance(@NotNull final VmwareCloudImage image, @NotNull final String instanceName) {
+    this(image, instanceName, null);
+  }
 
   public VmwareCloudInstance(@NotNull final VmwareCloudImage image, @NotNull final String instanceName, @Nullable final String snapshotName) {
-    super(image, instanceName, instanceName);
-    myImage = image;
-    myInstanceName = instanceName;
+    super(image);
+    setInstanceId(instanceName);
+    setName(instanceName);
     mySnapshotName = snapshotName;
+    myIsReady = true;
   }
-
-  @NotNull
-  public String getInstanceId() {
-    return myInstanceName;
-  }
-
-  @NotNull
-  public String getName() {
-    return myInstanceName;
-  }
-
-  @NotNull
-  public String getImageId() {
-    return myImage.getId();
-  }
-
-  @NotNull
-  public VmwareCloudImage getImage() {
-    return myImage;
-  }
-
-
-  @Nullable
-  public String getNetworkIdentity() {
-    return myIpAddress;
-  }
-
 
   @Nullable
   public String getSnapshotName() {
     return mySnapshotName;
   }
 
-  public void updateVMInfo(@NotNull final VmwareInstance vm) {
-    if (!vm.isInitialized()){
-      if (myStatus != InstanceStatus.SCHEDULED_TO_START) {
-        setStatus(InstanceStatus.UNKNOWN); // still cloning
-      }
-      return;
-    }
-    if (vm.isPoweredOn()) {
-      if (myStatus == InstanceStatus.STOPPED) {
-        setStatus(InstanceStatus.RUNNING);
-      }
-      myIpAddress = vm.getIpAddress();
-    } else {
-      if (myStatus != InstanceStatus.SCHEDULED_TO_START && myStatus != InstanceStatus.STOPPED) {
-        setStatus(InstanceStatus.STOPPED);
-      }
-    }
+  public void setSnapshotName(@Nullable final String snapshotName) {
+    mySnapshotName = snapshotName;
   }
 
-  public boolean containsAgent(@NotNull AgentDescription agentDescription) {
+  public boolean containsAgent(@NotNull final AgentDescription agentDescription) {
     final Map<String, String> configParams = agentDescription.getConfigurationParameters();
     return getInstanceId().equals(configParams.get(INSTANCE_NAME));
   }
 
   public boolean isInPermanentStatus(){
-    return myStatus == InstanceStatus.STOPPED || myStatus == InstanceStatus.RUNNING;
+    final InstanceStatus status = getStatus();
+    return status == InstanceStatus.STOPPED || status == InstanceStatus.RUNNING;
+  }
+
+  public boolean isReady(){
+    return myIsReady;
+  }
+
+  public void setReady(final boolean ready) {
+    myIsReady = ready;
   }
 
   @Override
   public String toString() {
     return "VmwareCloudInstance{" +
-            "myInstanceName='" + myInstanceName + '\'' +
-            "myState='" + myStatus.getName() + '\'' +
+            "myInstanceName='" + getName() + '\'' +
+            "myState='" + getStatus().getName() + '\'' +
             "myStatusUpdateTime='" + getStatusUpdateTime() + '\'' +
             "}\n";
   }

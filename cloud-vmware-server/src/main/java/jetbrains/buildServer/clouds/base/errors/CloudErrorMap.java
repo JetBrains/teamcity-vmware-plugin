@@ -19,6 +19,7 @@
 package jetbrains.buildServer.clouds.base.errors;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
 import jetbrains.buildServer.clouds.CloudErrorInfo;
 import jetbrains.buildServer.clouds.CloudErrorProvider;
 import org.jetbrains.annotations.Nullable;
@@ -29,24 +30,21 @@ import org.jetbrains.annotations.Nullable;
  *         Time: 4:51 PM
  */
 public class CloudErrorMap implements UpdatableCloudErrorProvider {
-  protected final Map<String, TypedCloudErrorInfo> myErrors;
+  protected final Map<String, TypedCloudErrorInfo> myErrors = new HashMap<String, TypedCloudErrorInfo>();
   private final ErrorMessageUpdater myMessageUpdater;
-  private CloudErrorInfo myErrorInfo;
+  private final AtomicReference<CloudErrorInfo> myErrorInfo = new AtomicReference<>();
   private final String myDefaultMessage;
 
   public CloudErrorMap(final ErrorMessageUpdater messageUpdater, final String defaultMessage) {
     myMessageUpdater = messageUpdater;
-    myErrors = new HashMap<String, TypedCloudErrorInfo>();
     myDefaultMessage = defaultMessage;
   }
 
   public void updateErrors(@Nullable final TypedCloudErrorInfo... errors){
-    myErrorInfo = null;
-    if (errors != null) {
+    final Map<String, TypedCloudErrorInfo> errorInfoMap = mapFromArray(errors);
+    if (errors != null && errorInfoMap.size() > 0) {
       myErrors.clear();
-      myErrors.putAll(mapFromArray(errors));
-      if (myErrors.size() == 0)
-        return;
+      myErrors.putAll(errorInfoMap);
       if (myErrors.size() == 1) {
         final TypedCloudErrorInfo err = myErrors.values().iterator().next();
         final String message = err.getMessage();
@@ -58,9 +56,9 @@ public class CloudErrorMap implements UpdatableCloudErrorProvider {
           details = err.getDetails();
         }
         if (err.getThrowable() != null) {
-          myErrorInfo = new CloudErrorInfo(friendlyErrorMessage, details, err.getThrowable());
+          myErrorInfo.set(new CloudErrorInfo(friendlyErrorMessage, details, err.getThrowable()));
         } else {
-          myErrorInfo = new CloudErrorInfo(friendlyErrorMessage, details);
+          myErrorInfo.set(new CloudErrorInfo(friendlyErrorMessage, details));
         }
       } else {
         final StringBuilder msgBuilder = new StringBuilder();
@@ -69,8 +67,10 @@ public class CloudErrorMap implements UpdatableCloudErrorProvider {
           msgBuilder.append(",").append(myMessageUpdater.getFriendlyErrorMessage(errorInfo.getMessage()));
           detailsBuilder.append(",\n[").append(errorInfo.getDetails()).append("]");
         }
-        myErrorInfo = new CloudErrorInfo(msgBuilder.substring(1), detailsBuilder.substring(2));
+        myErrorInfo.set(new CloudErrorInfo(msgBuilder.substring(1), detailsBuilder.substring(2)));
       }
+    } else {
+      myErrorInfo.set(null);
     }
   }
 
@@ -83,7 +83,7 @@ public class CloudErrorMap implements UpdatableCloudErrorProvider {
   }
 
   public CloudErrorInfo getErrorInfo(){
-    return myErrorInfo;
+    return myErrorInfo.get();
   }
 
 }

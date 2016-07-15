@@ -15,6 +15,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.stream.Collectors;
 import jetbrains.buildServer.BaseTestCase;
 import jetbrains.buildServer.clouds.*;
 import jetbrains.buildServer.clouds.base.connector.AbstractInstance;
@@ -413,11 +414,10 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
     }
   }
 
-  @Test(expectedExceptions = RuntimeException.class, expectedExceptionsMessageRegExp = ".*Unable to find snapshot.*")
   public void shouldnt_start_when_snapshot_is_missing(){
     final VmwareCloudImage image2 = getImageByName("image2");
     FakeModel.instance().removeVmSnaphot(image2.getName(), "snap");
-    startNewInstanceAndWait("image2");
+    startNewInstanceAndCheck("image2", new HashMap<>(), false);
   }
 
   public void should_power_off_if_no_guest_tools_avail() throws InterruptedException {
@@ -467,12 +467,9 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
     }
     recreateClient();
     startNewInstanceAndWait("image_template");
-    try {
-      startNewInstanceAndWait("image_template");
-      fail("Should not clone, because limit exceeded");
-    } catch (QuotaException qex){
-      assertTrue(qex.getMessage().contains("image_template"));
-    }
+
+    // instance should not start
+    startNewInstanceAndCheck("image_template", new HashMap<>(), false);
   }
 
   @Test(expectedExceptions = QuotaException.class, expectedExceptionsMessageRegExp = "Unable to start more instances of image image2")
@@ -789,11 +786,8 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
     Thread.sleep(500);
 
     System.setProperty("teamcity.vmware.stopped.orphaned.timeout", "200");
-    try {
-      startNewInstanceAndWait("image_template");
-      fail("Should have failed to start");
-    } catch(Exception ex){}
 
+    startNewInstanceAndCheck("image_template", new HashMap<>(), false);
 
     new WaitFor(5000){
       @Override
@@ -995,7 +989,7 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
 
   private VmwareCloudInstance startAndCheckInstance(final String imageName, final Checker<VmwareCloudInstance> instanceChecker) throws Exception {
     final VmwareCloudInstance instance = startNewInstanceAndWait(imageName);
-    new WaitFor(10 * 1000) {
+    new WaitFor(3 * 1000) {
 
       @Override
       protected boolean condition() {
@@ -1022,16 +1016,51 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
   }
 
   private VmwareCloudInstance startNewInstanceAndWait(String imageName, Map<String, String> parameters) {
+    return startNewInstanceAndCheck(imageName, parameters, true);
+  }
+
+  private VmwareCloudInstance startNewInstanceAndCheck(String imageName, Map<String, String> parameters, boolean instanceShouldStart) {
     final CloudInstanceUserData userData = createUserData(imageName + "_agent", parameters);
-    final VmwareCloudInstance vmwareCloudInstance = myClient.startNewInstance(getImageByName(imageName), userData);
+    final VmwareCloudImage image = getImageByName(imageName);
+    final Collection<VmwareCloudInstance> runningInstances = image
+      .getInstances()
+      .stream()
+      .filter(i->i.getStatus() == InstanceStatus.RUNNING)
+      .collect(Collectors.toList());
+
+    final VmwareCloudInstance vmwareCloudInstance = myClient.startNewInstance(image, userData);
+    final boolean ready = vmwareCloudInstance.isReady();
+    System.out.printf("Instance '%s'. Ready: %b%n", vmwareCloudInstance.getName(), ready);
     final WaitFor waitFor = new WaitFor(2 * 1000) {
       @Override
       protected boolean condition() {
-        return vmwareCloudInstance.getStatus() == InstanceStatus.RUNNING;
+        if (ready) {
+          return vmwareCloudInstance.getStatus() == InstanceStatus.RUNNING;
+        } else {
+          return image
+            .getInstances()
+            .stream()
+            .anyMatch(i->i.getStatus() == InstanceStatus.RUNNING && !runningInstances.contains(i));
+        }
       }
     };
-    waitFor.assertCompleted();
-    return vmwareCloudInstance;
+    if (instanceShouldStart) {
+      waitFor.assertCompleted();
+
+      if (!ready) {
+        final VmwareCloudInstance startedInstance = image
+          .getInstances()
+          .stream()
+          .filter(i -> i.getStatus() == InstanceStatus.RUNNING && !runningInstances.contains(i)).findAny().get();
+        assertNotNull(startedInstance);
+        return startedInstance;
+      } else {
+        return vmwareCloudInstance;
+      }
+    } else {
+      assertFalse(waitFor.isConditionRealized());
+      return null;
+    }
   }
 
   private static String getExtraConfigValue(final OptionValue[] extraConfig, final String key) {

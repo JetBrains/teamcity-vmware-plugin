@@ -6,6 +6,7 @@ import com.vmware.vim25.VirtualMachineCloneSpec;
 import com.vmware.vim25.VirtualMachineRelocateDiskMoveOptions;
 import com.vmware.vim25.mo.ResourcePool;
 import com.vmware.vim25.mo.VirtualMachine;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -33,7 +34,7 @@ public class FakeModel {
   }
 
   public Map<String, FakeVirtualMachine> getVms() {
-    return myVms;
+    return Collections.unmodifiableMap(myVms);
   }
 
   public Map<String, FakeDatacenter> getDatacenters() {

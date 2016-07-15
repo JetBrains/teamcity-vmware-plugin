@@ -19,6 +19,7 @@
 package jetbrains.buildServer.clouds.base;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import jetbrains.buildServer.clouds.CloudErrorInfo;
 import jetbrains.buildServer.clouds.CloudImage;
 import jetbrains.buildServer.clouds.CloudInstance;
@@ -40,16 +41,14 @@ import org.jetbrains.annotations.Nullable;
  *         Time: 1:50 PM
  */
 public abstract class AbstractCloudImage<T extends AbstractCloudInstance, G extends CloudImageDetails> implements CloudImage, UpdatableCloudErrorProvider {
-  protected final UpdatableCloudErrorProvider myErrorProvider;
-  protected final Map<String, T> myInstances;
+  protected final UpdatableCloudErrorProvider myErrorProvider = new CloudErrorMap(VmwareErrorMessages.getInstance(), "Unable to process cloud image. See details");
+  private final Map<String, T> myInstances = new ConcurrentHashMap<String, T>();
   private final String myName;
   private final String myId;
 
   protected AbstractCloudImage(String name, String id) {
     myName = name;
     myId = id;
-    myErrorProvider = new CloudErrorMap(VmwareErrorMessages.getInstance(), "Unable to process cloud image. See details");
-    myInstances = new HashMap<String, T>();
   }
 
   @NotNull
@@ -77,12 +76,16 @@ public abstract class AbstractCloudImage<T extends AbstractCloudInstance, G exte
   }
 
   @Nullable
-  public T findInstanceById(@NotNull final String id) {
-    return myInstances.get(id);
+  public T findInstanceById(@NotNull final String instanceId) {
+    return myInstances.get(instanceId);
   }
 
-  public void removeInstance(@NotNull final String instanceName){
-    myInstances.remove(instanceName);
+  public void removeInstance(@NotNull final String instanceId){
+    myInstances.remove(instanceId);
+  }
+
+  public void addInstance(@NotNull final T instance){
+    myInstances.put(instance.getInstanceId(), instance);
   }
 
   public abstract boolean canStartNewInstance();

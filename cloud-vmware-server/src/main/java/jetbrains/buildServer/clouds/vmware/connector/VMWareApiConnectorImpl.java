@@ -650,7 +650,7 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
     try {
       VirtualMachine vm = findEntityByIdName(instance.getInstanceId(), VirtualMachine.class);
       if (getInstanceStatus(vm) == InstanceStatus.STOPPED) {
-        return successTask();
+        return emptyTask();
       }
       return doShutdown(instance, vm);
     } catch (Exception ex) {
@@ -758,6 +758,19 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
 
   private Task forceShutdown(@NotNull final VirtualMachine vm) throws RemoteException {
     return vm.powerOffVM_Task();
+  }
+
+  @Override
+  public Task deleteInstance(final VmwareCloudInstance instance) {
+    LOG.info("Will delete instance " + instance.getName());
+    try {
+      final VirtualMachine vm = findEntityByIdName(instance.getInstanceId(), VirtualMachine.class);
+      return vm.destroy_Task();
+    } catch (Exception e) {
+      LOG.warn("An exception during deleting instance " + instance.getName(), e);
+      instance.updateErrors(TypedCloudErrorInfo.fromException(e));
+    }
+    return emptyTask();
   }
 
   public void restartInstance(VmwareCloudInstance instance) throws VmwareCheckedCloudException {
@@ -915,7 +928,7 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
 
   }
 
-  private static Task successTask(){
+  private static Task emptyTask(){
     return new Task(null, null) {
       @Override
       public TaskInfo getTaskInfo() throws RemoteException {
