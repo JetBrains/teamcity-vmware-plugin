@@ -22,6 +22,7 @@ import com.intellij.openapi.diagnostic.Logger;
 
 import java.util.Date;
 
+import java.util.concurrent.atomic.AtomicReference;
 import jetbrains.buildServer.clouds.CloudErrorInfo;
 import jetbrains.buildServer.clouds.CloudInstance;
 import jetbrains.buildServer.clouds.InstanceStatus;
@@ -44,10 +45,11 @@ public abstract class AbstractCloudInstance<T extends AbstractCloudImage> implem
   protected InstanceStatus myStatus = InstanceStatus.UNKNOWN;
 
   @NotNull
-  protected final T myImage;
-  private Date myStartDate = new Date();
-  private Date myStatusUpdateTime = new Date();
-  private String myNetworkIdentify = null;
+  private final T myImage;
+  private final AtomicReference<Date> myStartDate = new AtomicReference<Date>(new Date());
+  private final AtomicReference<Date> myStatusUpdateTime = new AtomicReference<>(new Date());
+  private final AtomicReference<String> myNetworkIdentify = new AtomicReference<String>();
+
   private final String myName;
   private final String myInstanceId;
 
@@ -99,33 +101,33 @@ public abstract class AbstractCloudInstance<T extends AbstractCloudImage> implem
     }
     LOG.info(String.format("Changing %s(%x) status from %s to %s ", getName(), hashCode(), myStatus, status));
     myStatus = status;
-    myStatusUpdateTime = new Date();
+    myStatusUpdateTime.set(new Date());
   }
 
   @NotNull
   public Date getStartedTime() {
-    return myStartDate;
+    return myStartDate.get();
   }
 
   public void setStartDate(final Date startDate) {
-    if (startDate.after(myStartDate)) {
-      myStartDate = startDate;
-    } else if (startDate.before(myStartDate)) {
+    if (startDate.after(myStartDate.get())) {
+      myStartDate.set(startDate);
+    } else if (startDate.before(myStartDate.get())) {
       LOG.debug(String.format("Attempted to set start date to %s from %s", startDate.toString(), myStartDate.toString()));
     }
   }
 
   public Date getStatusUpdateTime() {
-    return myStatusUpdateTime;
+    return myStatusUpdateTime.get();
   }
 
   public void setNetworkIdentify(final String networkIdentify) {
-    myNetworkIdentify = networkIdentify;
+    myNetworkIdentify.set(networkIdentify);
   }
 
   @Nullable
   public String getNetworkIdentity() {
-    return null;
+    return myNetworkIdentify.get();
   }
 
   @Override

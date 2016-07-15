@@ -68,7 +68,6 @@ public class VmwareCloudImage extends AbstractCloudImage<VmwareCloudInstance, Vm
     myImageDetails = imageDetails;
     myApiConnector = apiConnector;
     myAsyncTaskExecutor = asyncTaskExecutor;
-    myInstances.clear();
     myActualSnapshotName = new AtomicReference<String>("");
     myIdxFile = new File(idxStorage, imageDetails.getSourceId() + ".idx");
     if (!myIdxFile.exists()){
@@ -93,7 +92,7 @@ public class VmwareCloudImage extends AbstractCloudImage<VmwareCloudInstance, Vm
 
     if (myImageDetails.getBehaviour().isUseOriginal()) {
       LOG.info("Won't create a new instance - using original");
-      return myInstances.get(myImageDetails.getSourceId());
+      return findInstanceById(myImageDetails.getSourceId());
     }
 
     final String latestSnapshotName = myApiConnector.getLatestSnapshot(myImageDetails.getSourceVmName(), myImageDetails.getSnapshotName());
@@ -109,7 +108,7 @@ public class VmwareCloudImage extends AbstractCloudImage<VmwareCloudInstance, Vm
       processStoppedInstances(new Function<VmwareInstance, Boolean>() {
         public Boolean fun(final VmwareInstance vmInstance) {
           final String vmName = vmInstance.getName();
-          final VmwareCloudInstance instance = myInstances.get(vmName);
+          final VmwareCloudInstance instance = findInstanceById(vmName);
 
           if (myImageDetails.useCurrentVersion()) {
             if (imageVm.getChangeVersion() == null || !imageVm.getChangeVersion().equals(vmInstance.getChangeVersion())) {
@@ -169,13 +168,13 @@ public class VmwareCloudImage extends AbstractCloudImage<VmwareCloudInstance, Vm
       };
 
       LOG.info("Will clone for " + instance.getName() + ": " + willClone);
-      if (willClone && myImageDetails.getMaxInstances() <= myInstances.size()){
+      if (willClone && myImageDetails.getMaxInstances() <= getInstances().size()){
         final long stoppedOrphanedTimeout = TeamCityProperties.getLong("teamcity.vmware.stopped.orphaned.timeout", STOPPED_ORPHANED_TIMEOUT);
         final Date considerTime = new Date(System.currentTimeMillis() - stoppedOrphanedTimeout);
         processStoppedInstances(new Function<VmwareInstance, Boolean>() {
           public Boolean fun(final VmwareInstance vmInstance) {
             final String vmName = vmInstance.getName();
-            final VmwareCloudInstance instance = myInstances.get(vmName);
+            final VmwareCloudInstance instance = findInstanceById(vmName);
 
 
             if (instance.getStatusUpdateTime().before(considerTime)){
@@ -190,7 +189,7 @@ public class VmwareCloudImage extends AbstractCloudImage<VmwareCloudInstance, Vm
         throw new QuotaException(String.format("Cannot clone '%s' into '%s' - limit exceeded", myImageDetails.getSourceVmName(), instance.getName()));
       }
       instance.setStatus(InstanceStatus.SCHEDULED_TO_START);
-      if (!myInstances.containsKey(instance.getName())) {
+      if (findInstanceById(instance.getInstanceId()) == null) {
         addInstance(instance);
       }
       if (willClone) {
@@ -291,7 +290,7 @@ public class VmwareCloudImage extends AbstractCloudImage<VmwareCloudInstance, Vm
     }
 
     if (myImageDetails.getBehaviour().isUseOriginal()) {
-      final VmwareCloudInstance myInstance = myInstances.get(myImageDetails.getSourceId());
+      final VmwareCloudInstance myInstance = findInstanceById(myImageDetails.getSourceId());
       if (myInstance == null) {
         return false;
       }
@@ -302,9 +301,9 @@ public class VmwareCloudImage extends AbstractCloudImage<VmwareCloudInstance, Vm
                                            && myImageDetails.getBehaviour().isDeleteAfterStop();
 
     final List<String> consideredInstances = new ArrayList<String>();
-    for (Map.Entry<String, VmwareCloudInstance> entry : myInstances.entrySet()) {
-      if (entry.getValue().getStatus() != InstanceStatus.STOPPED || countStoppedVmsInLimit)
-        consideredInstances.add(entry.getKey());
+    for ( VmwareCloudInstance instance : getInstances()) {
+      if (instance.getStatus() != InstanceStatus.STOPPED || countStoppedVmsInLimit)
+        consideredInstances.add(instance.getInstanceId());
     }
     final boolean canStartMore =  consideredInstances.size() < myImageDetails.getMaxInstances();
     LOG.debug(String.format("Instances count: %d %s, can start more: %s",
@@ -331,16 +330,6 @@ public class VmwareCloudImage extends AbstractCloudImage<VmwareCloudInstance, Vm
     return String.format("%s-%d", getId(), nextIdx);
   }
 
-  public void addInstance(@NotNull final VmwareCloudInstance instance){
-    LOG.info(String.format("Image %s, put instance %s", myImageDetails.getSourceId(), instance.getName()));
-    myInstances.put(instance.getName(), instance);
-  }
-
-  public void removeInstance(@NotNull final String name){
-    LOG.info(String.format("Image %s, remove instance %s", myImageDetails.getSourceVmName(), name));
-    myInstances.remove(name);
-  }
-
   public VmwareCloudImageDetails getImageDetails() {
     return myImageDetails;
   }
@@ -358,7 +347,7 @@ public class VmwareCloudImage extends AbstractCloudImage<VmwareCloudInstance, Vm
         if (vmInstance.getInstanceStatus() == InstanceStatus.STOPPED) {
 
           final String vmName = vmInstance.getName();
-          final VmwareCloudInstance instance = myInstances.get(vmName);
+          final VmwareCloudInstance instance = findInstanceById(vmName);
 
           if (instance == null) {
             LOG.warn("Unable to find instance " + vmName + " in myInstances.");

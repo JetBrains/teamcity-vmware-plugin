@@ -40,7 +40,6 @@ public class VmwareCloudInstance extends AbstractCloudInstance<VmwareCloudImage>
 
   private final String myInstanceName;
   private final VmwareCloudImage myImage;
-  private String myIpAddress;
 
   @Nullable private final String mySnapshotName;
 
@@ -71,13 +70,6 @@ public class VmwareCloudInstance extends AbstractCloudInstance<VmwareCloudImage>
     return myImage;
   }
 
-
-  @Nullable
-  public String getNetworkIdentity() {
-    return myIpAddress;
-  }
-
-
   @Nullable
   public String getSnapshotName() {
     return mySnapshotName;
@@ -94,7 +86,7 @@ public class VmwareCloudInstance extends AbstractCloudInstance<VmwareCloudImage>
       if (myStatus == InstanceStatus.STOPPED) {
         setStatus(InstanceStatus.RUNNING);
       }
-      myIpAddress = vm.getIpAddress();
+      setNetworkIdentify(vm.getIpAddress());
     } else {
       if (myStatus != InstanceStatus.SCHEDULED_TO_START && myStatus != InstanceStatus.STOPPED) {
         setStatus(InstanceStatus.STOPPED);
