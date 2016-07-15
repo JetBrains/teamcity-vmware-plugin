@@ -85,7 +85,7 @@ public class VmwareCloudImage extends AbstractCloudImage<VmwareCloudInstance, Vm
   }
 
   @NotNull
-  protected synchronized VmwareCloudInstance getOrCreateInstance() throws VmwareCheckedCloudException {
+  private VmwareCloudInstance getOrCreateInstance() throws VmwareCheckedCloudException {
     if (!canStartNewInstance()){
       throw new QuotaException("Unable to start more instances of image " + getName());
     }
@@ -103,35 +103,8 @@ public class VmwareCloudImage extends AbstractCloudImage<VmwareCloudInstance, Vm
 
     if (!myImageDetails.getBehaviour().isDeleteAfterStop()) {
       // on demand clone
-      final VmwareInstance imageVm = myApiConnector.getInstanceDetails(myImageDetails.getSourceVmName());
-      final AtomicReference<VmwareCloudInstance> candidate = new AtomicReference<VmwareCloudInstance>();
-      processStoppedInstances(new Function<VmwareInstance, Boolean>() {
-        public Boolean fun(final VmwareInstance vmInstance) {
-          final String vmName = vmInstance.getName();
-          final VmwareCloudInstance instance = findInstanceById(vmName);
-
-          if (myImageDetails.useCurrentVersion()) {
-            if (imageVm.getChangeVersion() == null || !imageVm.getChangeVersion().equals(vmInstance.getChangeVersion())) {
-              LOG.info(String.format("Change version for %s is outdated: '%s' vs '%s'", vmName, vmInstance.getChangeVersion(), imageVm.getChangeVersion()));
-              deleteInstance(instance);
-              return false;
-            }
-          } else {
-            final String snapshotName = vmInstance.getSnapshotName();
-            if (latestSnapshotName != null && !latestSnapshotName.equals(snapshotName)) {
-              LOG.info(String.format("VM %s Snapshot is not the latest one: '%s' vs '%s'", vmName, snapshotName, latestSnapshotName));
-              deleteInstance(instance);
-              return false;
-            }
-          }
-          LOG.info("Will use existing VM with name " + vmName);
-          candidate.set(instance);
-          return true;
-        }
-      });
-      if (candidate.get() != null){
-        return candidate.get();
-      }
+      final VmwareCloudInstance candidate = getExistingInstanceToStart(latestSnapshotName);
+      if (candidate != null) return candidate;
     }
     // wasn't able to find an existing candidate, so will clone into a new VM
     final String newVmName = generateNewVmName();
@@ -139,71 +112,161 @@ public class VmwareCloudImage extends AbstractCloudImage<VmwareCloudInstance, Vm
     return new VmwareCloudInstance(this, newVmName, latestSnapshotName);
   }
 
-  @Override
-  public synchronized VmwareCloudInstance startNewInstance(@NotNull final CloudInstanceUserData cloudInstanceUserData) throws QuotaException {
-    try {
-      final VmwareCloudInstance instance = getOrCreateInstance();
-      if (instance == null) {
-        return null;
-      }
-      boolean willClone = !myApiConnector.checkVirtualMachineExists(instance.getName());
+  @Nullable
+  private VmwareCloudInstance getExistingInstanceToStart(final String latestSnapshotName) throws VmwareCheckedCloudException {
+    final VmwareInstance imageVm = myApiConnector.getInstanceDetails(myImageDetails.getSourceVmName());
+    final AtomicReference<VmwareCloudInstance> candidate = new AtomicReference<VmwareCloudInstance>();
+    processStoppedInstances(new Function<VmwareInstance, Boolean>() {
+      public Boolean fun(final VmwareInstance vmInstance) {
+        final String vmName = vmInstance.getName();
+        final VmwareCloudInstance instance = findInstanceById(vmName);
 
-      final VmwareTaskWrapper startTask = new VmwareTaskWrapper(new Callable<Task>() {
-        public Task call() throws Exception {
-          return myApiConnector.cloneAndStartVm(instance);
-        }
-      }, "Clone and start instance " + instance.getName()
-      );
-      final ImageStatusTaskWrapper callbackHandler = new ImageStatusTaskWrapper(instance) {
-        @Override
-        public void onSuccess() {
-          reconfigureVmTask(instance, cloudInstanceUserData);
-        }
-
-        @Override
-        public void onError(final Throwable th) {
-          super.onError(th);
-          removeInstance(instance.getName());
-        }
-      };
-
-      LOG.info("Will clone for " + instance.getName() + ": " + willClone);
-      if (willClone && myImageDetails.getMaxInstances() <= getInstances().size()){
-        final long stoppedOrphanedTimeout = TeamCityProperties.getLong("teamcity.vmware.stopped.orphaned.timeout", STOPPED_ORPHANED_TIMEOUT);
-        final Date considerTime = new Date(System.currentTimeMillis() - stoppedOrphanedTimeout);
-        processStoppedInstances(new Function<VmwareInstance, Boolean>() {
-          public Boolean fun(final VmwareInstance vmInstance) {
-            final String vmName = vmInstance.getName();
-            final VmwareCloudInstance instance = findInstanceById(vmName);
-
-
-            if (instance.getStatusUpdateTime().before(considerTime)){
-              LOG.info(String.format("VM %s was orphaned and will be deleted", vmName));
-              deleteInstance(instance);
-              return true;
-            }
+        if (myImageDetails.useCurrentVersion()) {
+          if (imageVm.getChangeVersion() == null || !imageVm.getChangeVersion().equals(vmInstance.getChangeVersion())) {
+            LOG.info(String.format("Change version for %s is outdated: '%s' vs '%s'", vmName, vmInstance.getChangeVersion(), imageVm.getChangeVersion()));
+            deleteInstance(instance);
             return false;
           }
-        });
-
-        throw new QuotaException(String.format("Cannot clone '%s' into '%s' - limit exceeded", myImageDetails.getSourceVmName(), instance.getName()));
+        } else {
+          final String snapshotName = vmInstance.getSnapshotName();
+          if (latestSnapshotName != null && !latestSnapshotName.equals(snapshotName)) {
+            LOG.info(String.format("VM %s Snapshot is not the latest one: '%s' vs '%s'", vmName, snapshotName, latestSnapshotName));
+            deleteInstance(instance);
+            return false;
+          }
+        }
+        LOG.info("Will use existing VM with name " + vmName);
+        candidate.set(instance);
+        return true;
       }
-      instance.setStatus(InstanceStatus.SCHEDULED_TO_START);
-      if (findInstanceById(instance.getInstanceId()) == null) {
-        addInstance(instance);
-      }
-      if (willClone) {
-
-        myAsyncTaskExecutor.executeAsync(
-                startTask,
-                callbackHandler);
-      } else {
-        startVM(instance, cloudInstanceUserData);
-      }
-      return instance;
-    } catch (VmwareCheckedCloudException e) {
-      throw new CloudException("Unable to start new instance: " + e.toString());
+    });
+    if (candidate.get() != null){
+      return candidate.get();
     }
+    return null;
+  }
+
+
+  private VmwareCloudInstance getStartableInstanceFast(){
+    if (!canStartNewInstance()){
+      throw new QuotaException("Unable to start more instances of image " + getName());
+    }
+
+    if (myImageDetails.getBehaviour().isUseOriginal()) {
+      LOG.info("Won't create a new instance - using original");
+      return findInstanceById(myImageDetails.getSourceId());
+    }
+
+    if (myImageDetails.getBehaviour().isDeleteAfterStop()){ // will clone into new instance
+      final String newVmName = generateNewVmName();
+
+      final StartingVmwareCloudInstance instance = new StartingVmwareCloudInstance(this, newVmName);
+      addInstance(instance);
+      return instance;
+    }
+
+    final UnresolvedVmwareCloudInstance instance = new UnresolvedVmwareCloudInstance(this);
+    addInstance(instance);
+    return instance;
+  }
+
+  @Override
+  public synchronized VmwareCloudInstance startNewInstance(@NotNull final CloudInstanceUserData cloudInstanceUserData) throws QuotaException{
+    final VmwareCloudInstance instanceCandidate = getStartableInstanceFast();
+    instanceCandidate.setStatus(InstanceStatus.SCHEDULED_TO_START);
+    myAsyncTaskExecutor.submit("Preparing to start new instance...", () -> {
+      try {
+        boolean willClone = true;
+        VmwareCloudInstance instance = instanceCandidate;
+        if (myImageDetails.getBehaviour().isUseOriginal()){
+          willClone = false;
+        } else {
+          final String latestSnapshotName;
+          if (instanceCandidate.getSnapshotName() == null) {
+            latestSnapshotName = myApiConnector.getLatestSnapshot(myImageDetails.getSourceVmName(), myImageDetails.getSnapshotName());
+            if (latestSnapshotName == null){
+              if (!myImageDetails.useCurrentVersion() && latestSnapshotName == null) {
+                updateErrors(new TypedCloudErrorInfo("No such snapshot: " + getSnapshotName()));
+                LOG.warn("Unable to find snapshot: " + myImageDetails.getSnapshotName() + ". Won't start " + instanceCandidate.getInstanceId());
+                return;
+              }
+            }
+            instanceCandidate.setSnapshotName(latestSnapshotName);
+          } else {
+            latestSnapshotName = instanceCandidate.getSnapshotName();
+          }
+
+          if (!instance.isReady()) {
+            // need to resolve the real instance
+            VmwareCloudInstance existingInstanceToStart = getExistingInstanceToStart(latestSnapshotName);
+            if (existingInstanceToStart != null) {
+              removeInstance(instance.getInstanceId());
+              instance = existingInstanceToStart;
+              willClone = false;
+            } else {
+              final String newVmName = generateNewVmName();
+              instance.setName(newVmName);
+              instance.setInstanceId(newVmName);
+              instance.setSnapshotName(latestSnapshotName);
+              instance.setReady(true);
+            }
+          }
+
+          LOG.info("Should clone into " + instance.getName() + ": " + willClone);
+          if (willClone && myImageDetails.getMaxInstances() < getInstances().size()) {
+            LOG.info("Cannot clone - instances limit exceeded. Will try to clean up some old instances");
+            cleanupOldInstances();
+            // don't attempt to start so far
+            removeInstance(instance.getInstanceId());
+            return;
+          }
+        }
+
+        if (willClone) {
+
+          final VmwareCloudInstance finalInstance = instance;
+          myAsyncTaskExecutor.executeAsync(
+            new VmwareTaskWrapper(() -> myApiConnector.cloneAndStartVm(finalInstance), "Clone and start instance " + instance.getName()),
+            new ImageStatusTaskWrapper(instance) {
+              @Override
+              public void onSuccess() {
+                reconfigureVmTask(finalInstance, cloudInstanceUserData);
+              }
+
+              @Override
+              public void onError(final Throwable th) {
+                super.onError(th);
+                removeInstance(finalInstance.getName());
+              }
+            });
+        } else {
+          startVM(instance, cloudInstanceUserData);
+        }
+      } catch (Exception ex) {
+
+      }
+    });
+
+    return instanceCandidate;
+  }
+
+  private void cleanupOldInstances() throws VmwareCheckedCloudException {
+    final long stoppedOrphanedTimeout = TeamCityProperties.getLong("teamcity.vmware.stopped.orphaned.timeout", STOPPED_ORPHANED_TIMEOUT);
+    final Date considerTime = new Date(System.currentTimeMillis() - stoppedOrphanedTimeout);
+    processStoppedInstances(new Function<VmwareInstance, Boolean>() {
+      public Boolean fun(final VmwareInstance vmInstance) {
+        final String vmName = vmInstance.getName();
+        final VmwareCloudInstance instance = findInstanceById(vmName);
+
+
+        if (instance.getStatusUpdateTime().before(considerTime)){
+          LOG.info(String.format("VM %s was orphaned and will be deleted", vmName));
+          deleteInstance(instance);
+          return true;
+        }
+        return false;
+      }
+    });
   }
 
   private synchronized void startVM(@NotNull final VmwareCloudInstance instance, @NotNull final CloudInstanceUserData cloudInstanceUserData) {
@@ -264,29 +327,26 @@ public class VmwareCloudImage extends AbstractCloudImage<VmwareCloudInstance, Vm
   private void deleteInstance(@NotNull final VmwareCloudInstance instance){
     if (instance.getErrorInfo() == null) {
       LOG.info("Will delete instance " + instance.getName());
-      final VmwareInstance vmInstance;
-      try {
-        vmInstance = myApiConnector.getInstanceDetails(instance.getName());
-        myAsyncTaskExecutor.executeAsync(vmInstance.deleteInstance(), new ImageStatusTaskWrapper(instance) {
-          @Override
-          public void onSuccess() {
-            removeInstance(instance.getName());
-          }
-        });
-      } catch (VmwareCheckedCloudException e) {
-        LOG.warn("An exception during deleting instance " + instance.getName(), e);
-        instance.updateErrors(TypedCloudErrorInfo.fromException(e));
-      }
+      myAsyncTaskExecutor.executeAsync(new VmwareTaskWrapper(new Callable<Task>() {
+        public Task call() throws Exception {
+          return myApiConnector.deleteInstance(instance);
+        }
+      }, "Delete " + instance.getName()), new ImageStatusTaskWrapper(instance) {
+        @Override
+        public void onSuccess() {
+          removeInstance(instance.getName());
+        }
+      });
     } else {
       LOG.warn(String.format("Won't delete instance %s with error: %s (%s)",
                              instance.getName(), instance.getErrorInfo().getMessage(), instance.getErrorInfo().getDetailedMessage()));
     }
   }
 
-  public boolean canStartNewInstance() {
+  public synchronized boolean canStartNewInstance() {
     if (getErrorInfo() != null){
       LOG.debug("Can't start new instance, if image is erroneous");
-        return false;
+      return false;
     }
 
     if (myImageDetails.getBehaviour().isUseOriginal()) {
@@ -301,7 +361,7 @@ public class VmwareCloudImage extends AbstractCloudImage<VmwareCloudInstance, Vm
                                            && myImageDetails.getBehaviour().isDeleteAfterStop();
 
     final List<String> consideredInstances = new ArrayList<String>();
-    for ( VmwareCloudInstance instance : getInstances()) {
+    for (VmwareCloudInstance instance : getInstances()) {
       if (instance.getStatus() != InstanceStatus.STOPPED || countStoppedVmsInLimit)
         consideredInstances.add(instance.getInstanceId());
     }
@@ -319,15 +379,17 @@ public class VmwareCloudImage extends AbstractCloudImage<VmwareCloudInstance, Vm
 
   protected String generateNewVmName() {
     int nextIdx = 0;
-      try {
-        nextIdx = Integer.parseInt(FileUtil.readText(myIdxFile));
-        FileUtil.writeFileAndReportErrors(myIdxFile, String.valueOf(nextIdx+1));
-      } catch (Exception e) {
-        LOG.warn("Will generate random clone index. Reason: unable to read idx file: " + e.toString());
-        Random r = new Random();
-        nextIdx = 100000 + r.nextInt(100000);
-      }
-    return String.format("%s-%d", getId(), nextIdx);
+    try {
+      nextIdx = Integer.parseInt(FileUtil.readText(myIdxFile));
+      FileUtil.writeFileAndReportErrors(myIdxFile, String.valueOf(nextIdx + 1));
+    } catch (Exception e) {
+      LOG.warn("Will generate random clone index. Reason: unable to read idx file: " + e.toString());
+      Random r = new Random();
+      nextIdx = 100000 + r.nextInt(100000);
+    }
+    final String newVmName = String.format("%s-%d", getId(), nextIdx);
+    LOG.info("Will create a new VM with name " + newVmName);
+    return newVmName;
   }
 
   public VmwareCloudImageDetails getImageDetails() {

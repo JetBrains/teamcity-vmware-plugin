@@ -47,7 +47,7 @@ public class VmwareTaskWrapper implements AsyncCloudTask {
   private final AtomicBoolean myTaskCancelled;
   private final Lazy<Future<CloudTaskResult>> myFutureLazy;
   private final String myTaskName;
-  private long myStartTime;
+  private volatile long myStartTime;
 
   public VmwareTaskWrapper(@NotNull final Callable<Task> vmwareTask, String taskName){
     myVmwareTask = vmwareTask;

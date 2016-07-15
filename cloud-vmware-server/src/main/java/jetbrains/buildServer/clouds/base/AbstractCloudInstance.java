@@ -22,6 +22,7 @@ import com.intellij.openapi.diagnostic.Logger;
 
 import java.util.Date;
 
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import jetbrains.buildServer.clouds.CloudErrorInfo;
 import jetbrains.buildServer.clouds.CloudInstance;
@@ -40,9 +41,10 @@ import org.jetbrains.annotations.Nullable;
  */
 public abstract class AbstractCloudInstance<T extends AbstractCloudImage> implements CloudInstance, UpdatableCloudErrorProvider {
   private static final Logger LOG = Logger.getInstance(AbstractCloudInstance.class.getName());
+  private static final AtomicInteger STARTING_INSTANCE_IDX = new AtomicInteger(0);
 
-  private UpdatableCloudErrorProvider myErrorProvider;
-  protected InstanceStatus myStatus = InstanceStatus.UNKNOWN;
+  private final UpdatableCloudErrorProvider myErrorProvider;
+  private final AtomicReference<InstanceStatus> myStatus = new AtomicReference<>(InstanceStatus.UNKNOWN);
 
   @NotNull
   private final T myImage;
@@ -50,14 +52,28 @@ public abstract class AbstractCloudInstance<T extends AbstractCloudImage> implem
   private final AtomicReference<Date> myStatusUpdateTime = new AtomicReference<>(new Date());
   private final AtomicReference<String> myNetworkIdentify = new AtomicReference<String>();
 
-  private final String myName;
-  private final String myInstanceId;
+  private volatile String myName;
+  private volatile String myInstanceId;
+
+  protected AbstractCloudInstance(@NotNull final T image) {
+    this(image, "Initializing...", String.format("%s-%d", image.getName(), STARTING_INSTANCE_IDX.incrementAndGet()));
+  }
 
   protected AbstractCloudInstance(@NotNull final T image, @NotNull final String name, @NotNull final String instanceId) {
     myImage = image;
     myName = name;
     myInstanceId = instanceId;
     myErrorProvider = new CloudErrorMap(VmwareErrorMessages.getInstance(), "Unable to get instance details. See details");
+  }
+
+  public void setName(@NotNull final String name) {
+    myName = name;
+  }
+
+  public void setInstanceId(@NotNull final String instanceId) {
+    myImage.removeInstance(myInstanceId);
+    myInstanceId = instanceId;
+    myImage.addInstance(this);
   }
 
   @NotNull
@@ -92,15 +108,15 @@ public abstract class AbstractCloudInstance<T extends AbstractCloudImage> implem
 
   @NotNull
   public InstanceStatus getStatus() {
-    return myStatus;
+    return myStatus.get();
   }
 
   public void setStatus(@NotNull final InstanceStatus status) {
-    if (myStatus == status){
+    if (myStatus.get() == status){
       return;
     }
     LOG.info(String.format("Changing %s(%x) status from %s to %s ", getName(), hashCode(), myStatus, status));
-    myStatus = status;
+    myStatus.set(status);
     myStatusUpdateTime.set(new Date());
   }
 
@@ -109,11 +125,11 @@ public abstract class AbstractCloudInstance<T extends AbstractCloudImage> implem
     return myStartDate.get();
   }
 
-  public void setStartDate(final Date startDate) {
+  public void setStartDate(@NotNull final Date startDate) {
     if (startDate.after(myStartDate.get())) {
       myStartDate.set(startDate);
     } else if (startDate.before(myStartDate.get())) {
-      LOG.debug(String.format("Attempted to set start date to %s from %s", startDate.toString(), myStartDate.toString()));
+      LOG.debug(String.format("Attempted to set start date to %s from %s", startDate.toString(), myStartDate.get().toString()));
     }
   }
 
@@ -121,7 +137,7 @@ public abstract class AbstractCloudInstance<T extends AbstractCloudImage> implem
     return myStatusUpdateTime.get();
   }
 
-  public void setNetworkIdentify(final String networkIdentify) {
+  public void setNetworkIdentify(@NotNull final String networkIdentify) {
     myNetworkIdentify.set(networkIdentify);
   }
 
