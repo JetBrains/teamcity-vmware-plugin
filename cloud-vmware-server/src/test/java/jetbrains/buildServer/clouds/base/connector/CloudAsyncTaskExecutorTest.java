@@ -6,6 +6,7 @@ import jetbrains.buildServer.BaseTestCase;
 import jetbrains.buildServer.util.WaitFor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -113,5 +114,12 @@ public class CloudAsyncTaskExecutorTest extends BaseTestCase {
     public long getStartTime() {
       return myStartDate;
     }
+  }
+
+  @AfterMethod
+  @Override
+  protected void tearDown() throws Exception {
+    myCloudAsyncTaskExecutor.dispose();
+    super.tearDown();
   }
 }
