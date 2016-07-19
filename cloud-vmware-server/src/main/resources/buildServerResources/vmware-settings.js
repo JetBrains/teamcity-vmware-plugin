@@ -84,7 +84,13 @@ BS.Clouds.VMWareVSphere = BS.Clouds.VMWareVSphere || (function () {
             this.validateServerSettings() && this.fetchOptions();
             this._initImagesData();
             this._bindHandlers();
+            this._disableCheckModifiedForDialog();
             this.renderImagesTable();
+        },
+        _disableCheckModifiedForDialog: function(){
+          $j('.paramsTable input').
+              add($j('#realImageInput')).
+              add($j('.paramsTable select')).addClass('ignoreModified');
         },
         _fetchOptionsInProgress: function () {
             return this.fetchOptionsDeferred ?
@@ -163,6 +169,7 @@ BS.Clouds.VMWareVSphere = BS.Clouds.VMWareVSphere || (function () {
                 }.bind(this));
             }
             this._toggleImagesTable();
+            BS.Clouds.Admin.CreateProfileForm.checkIfModified();
         },
         fillOptions: function ($vms, $pools, $folders, $custSpecs) {
             this
@@ -616,6 +623,7 @@ BS.Clouds.VMWareVSphere = BS.Clouds.VMWareVSphere || (function () {
 
             this.$image.replaceWith($select);
             this.$image = $select;
+            this.$image.addClass('ignoreModified');
 
             return this;
         },
