@@ -110,7 +110,7 @@
         ><div class="message-wrapper"><div class="fetchingServerOptions message message_hidden"><i class="icon-refresh icon-spin"></i>Fetching server options...</div>
         <div class="fetchingSnapshots message message_hidden"><i class="icon-refresh icon-spin"></i>Fetching snapshots...</div>
     </div>
-    <table class="runnerFormTable">
+    <table class="runnerFormTable paramsTable">
 
         <tr>
             <th>Agent image:&nbsp;<l:star/></th>
