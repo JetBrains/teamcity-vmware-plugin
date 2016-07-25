@@ -930,6 +930,79 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
     recreateClient();
     assertEquals(0, getImageByName("image2").getInstances().size());
   }
+
+  public void start_instance_should_not_block_ui() throws MalformedURLException, InterruptedException, CheckedCloudException {
+    final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
+    final Lock lock = new ReentrantLock();
+    final AtomicBoolean shouldLock = new AtomicBoolean(false);
+    try {
+      myFakeApi = new FakeApiConnector(TEST_SERVER_UUID, PROFILE_ID) {
+
+        @Override
+        protected <T extends ManagedEntity> T findEntityByIdNameNullable(final String name, final Class<T> instanceType, final Datacenter dc) throws VmwareCheckedCloudException {
+          try {
+            if (shouldLock.get()) {
+              lock.lock(); // will stuck here
+            }
+            return super.findEntityByIdNameNullable(name, instanceType, dc);
+          } finally {
+            if (shouldLock.get())
+              lock.unlock();
+          }
+        }
+
+        @Override
+        protected <T extends ManagedEntity> Collection<T> findAllEntities(final Class<T> instanceType) throws VmwareCheckedCloudException {
+          try {
+            if (shouldLock.get()) {
+              lock.lock(); // will stuck here
+            }
+            return super.findAllEntities(instanceType);
+          } finally {
+            if (shouldLock.get())
+            lock.unlock();
+          }
+        }
+
+        @Override
+        protected <T extends ManagedEntity> Map<String, T> findAllEntitiesAsMap(final Class<T> instanceType) throws VmwareCheckedCloudException {
+          try {
+            if (shouldLock.get()) {
+              lock.lock(); // will stuck here
+            }
+            return super.findAllEntitiesAsMap(instanceType);
+          } finally {
+            if (shouldLock.get())
+            lock.unlock();
+          }
+        }
+
+      };
+
+      recreateClient();
+      final VmwareCloudInstance startedInstance = startNewInstanceAndWait("image2");
+      terminateAndDeleteIfNecessary(false, startedInstance);
+
+      shouldLock.set(true);
+      lock.lock();
+      executor.execute(new Runnable() {
+        public void run() {
+          // start already existing clone
+          myClient.startNewInstance(getImageByName("image2"), createUserData("image2_agent"));
+          // start-stop instance
+          myClient.startNewInstance(getImageByName("image1"), createUserData("image1_agent"));
+          // clone a new one
+          myClient.startNewInstance(getImageByName("image_template"), createUserData("image_template_agent"));
+        }
+      });
+      executor.shutdown();
+      assertTrue("canStart method blocks the thread!", executor.awaitTermination(100000, TimeUnit.MILLISECONDS));
+    } finally {
+      lock.unlock();
+      executor.shutdownNow();
+    }
+
+  }
   /*
   *
   *
