@@ -131,6 +131,7 @@ public abstract class AbstractCloudInstance<T extends AbstractCloudImage> implem
     }
   }
 
+  @NotNull
   public Date getStatusUpdateTime() {
     return myStatusUpdateTime.get();
   }
