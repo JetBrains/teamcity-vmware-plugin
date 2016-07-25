@@ -30,7 +30,6 @@ import org.jetbrains.annotations.Nullable;
  *         Time: 4:51 PM
  */
 public class CloudErrorMap implements UpdatableCloudErrorProvider {
-  protected final Map<String, TypedCloudErrorInfo> myErrors = new HashMap<String, TypedCloudErrorInfo>();
   private final ErrorMessageUpdater myMessageUpdater;
   private final AtomicReference<CloudErrorInfo> myErrorInfo = new AtomicReference<>();
 
@@ -39,12 +38,10 @@ public class CloudErrorMap implements UpdatableCloudErrorProvider {
   }
 
   public void updateErrors(@Nullable final TypedCloudErrorInfo... errors){
-    if (errors != null) {
-      final Map<String, TypedCloudErrorInfo> errorInfoMap = mapFromArray(errors);
-      myErrors.clear();
-      myErrors.putAll(errorInfoMap);
-      if (myErrors.size() == 1) {
-        final TypedCloudErrorInfo err = myErrors.values().iterator().next();
+    final Map<String, TypedCloudErrorInfo> errorInfoMap = mapFromArray(errors);
+    if (errors != null && errorInfoMap.size() > 0) {
+      if (errorInfoMap.size() == 1) {
+        final TypedCloudErrorInfo err = errorInfoMap.values().iterator().next();
         final String message = err.getMessage();
         final String friendlyErrorMessage = myMessageUpdater.getFriendlyErrorMessage(message);
         final String details;
@@ -61,7 +58,7 @@ public class CloudErrorMap implements UpdatableCloudErrorProvider {
       } else {
         final StringBuilder msgBuilder = new StringBuilder();
         final StringBuilder detailsBuilder = new StringBuilder();
-        for (TypedCloudErrorInfo errorInfo : myErrors.values()) {
+        for (TypedCloudErrorInfo errorInfo : errorInfoMap.values()) {
           msgBuilder.append(",").append(myMessageUpdater.getFriendlyErrorMessage(errorInfo.getMessage()));
           detailsBuilder.append(",\n[").append(errorInfo.getDetails()).append("]");
         }
@@ -73,10 +70,12 @@ public class CloudErrorMap implements UpdatableCloudErrorProvider {
 
   }
 
-  private static Map<String, TypedCloudErrorInfo> mapFromArray(final TypedCloudErrorInfo[] array){
+  private static Map<String, TypedCloudErrorInfo> mapFromArray(@Nullable  final TypedCloudErrorInfo[] array){
     final Map<String, TypedCloudErrorInfo> map = new HashMap<String, TypedCloudErrorInfo>();
-    for (TypedCloudErrorInfo errorInfo : array) {
-      map.put(errorInfo.getType(), errorInfo);
+    if (array != null) {
+      for (TypedCloudErrorInfo errorInfo : array) {
+        map.put(errorInfo.getType(), errorInfo);
+      }
     }
     return map;
   }
