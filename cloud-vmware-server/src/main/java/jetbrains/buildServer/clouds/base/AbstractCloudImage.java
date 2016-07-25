@@ -18,19 +18,18 @@
 
 package jetbrains.buildServer.clouds.base;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import jetbrains.buildServer.clouds.CloudErrorInfo;
 import jetbrains.buildServer.clouds.CloudImage;
-import jetbrains.buildServer.clouds.CloudInstance;
 import jetbrains.buildServer.clouds.CloudInstanceUserData;
 import jetbrains.buildServer.clouds.base.beans.CloudImageDetails;
 import jetbrains.buildServer.clouds.base.connector.AbstractInstance;
 import jetbrains.buildServer.clouds.base.errors.CloudErrorMap;
 import jetbrains.buildServer.clouds.base.errors.TypedCloudErrorInfo;
 import jetbrains.buildServer.clouds.base.errors.UpdatableCloudErrorProvider;
-import jetbrains.buildServer.clouds.vmware.VmwareCloudInstance;
-import jetbrains.buildServer.clouds.vmware.connector.VmwareInstance;
 import jetbrains.buildServer.clouds.vmware.errors.VmwareErrorMessages;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -41,7 +40,7 @@ import org.jetbrains.annotations.Nullable;
  *         Time: 1:50 PM
  */
 public abstract class AbstractCloudImage<T extends AbstractCloudInstance, G extends CloudImageDetails> implements CloudImage, UpdatableCloudErrorProvider {
-  protected final UpdatableCloudErrorProvider myErrorProvider = new CloudErrorMap(VmwareErrorMessages.getInstance(), "Unable to process cloud image. See details");
+  protected final UpdatableCloudErrorProvider myErrorProvider = new CloudErrorMap(VmwareErrorMessages.getInstance());
   private final Map<String, T> myInstances = new ConcurrentHashMap<String, T>();
   private final String myName;
   private final String myId;

@@ -18,10 +18,10 @@
 
 package jetbrains.buildServer.clouds.base.errors;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 import jetbrains.buildServer.clouds.CloudErrorInfo;
-import jetbrains.buildServer.clouds.CloudErrorProvider;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -33,16 +33,14 @@ public class CloudErrorMap implements UpdatableCloudErrorProvider {
   protected final Map<String, TypedCloudErrorInfo> myErrors = new HashMap<String, TypedCloudErrorInfo>();
   private final ErrorMessageUpdater myMessageUpdater;
   private final AtomicReference<CloudErrorInfo> myErrorInfo = new AtomicReference<>();
-  private final String myDefaultMessage;
 
-  public CloudErrorMap(final ErrorMessageUpdater messageUpdater, final String defaultMessage) {
+  public CloudErrorMap(final ErrorMessageUpdater messageUpdater) {
     myMessageUpdater = messageUpdater;
-    myDefaultMessage = defaultMessage;
   }
 
   public void updateErrors(@Nullable final TypedCloudErrorInfo... errors){
-    final Map<String, TypedCloudErrorInfo> errorInfoMap = mapFromArray(errors);
-    if (errors != null && errorInfoMap.size() > 0) {
+    if (errors != null) {
+      final Map<String, TypedCloudErrorInfo> errorInfoMap = mapFromArray(errors);
       myErrors.clear();
       myErrors.putAll(errorInfoMap);
       if (myErrors.size() == 1) {

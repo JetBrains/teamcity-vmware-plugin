@@ -19,9 +19,7 @@
 package jetbrains.buildServer.clouds.base;
 
 import com.intellij.openapi.diagnostic.Logger;
-
 import java.util.Date;
-
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import jetbrains.buildServer.clouds.CloudErrorInfo;
@@ -63,7 +61,7 @@ public abstract class AbstractCloudInstance<T extends AbstractCloudImage> implem
     myImage = image;
     myName = name;
     myInstanceId = instanceId;
-    myErrorProvider = new CloudErrorMap(VmwareErrorMessages.getInstance(), "Unable to get instance details. See details");
+    myErrorProvider = new CloudErrorMap(VmwareErrorMessages.getInstance());
   }
 
   public void setName(@NotNull final String name) {
