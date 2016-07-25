@@ -23,9 +23,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 import jetbrains.buildServer.clouds.*;
 import jetbrains.buildServer.clouds.base.beans.CloudImageDetails;
 import jetbrains.buildServer.clouds.base.connector.CloudApiConnector;
@@ -59,7 +57,7 @@ public abstract class AbstractCloudClient<G extends AbstractCloudInstance<T>, T 
     myParameters = params;
     myAsyncTaskExecutor = new CloudAsyncTaskExecutor("Async tasks for cloud " + params.getProfileDescription());
     myImageMap = new HashMap<String, T>();
-    myErrorProvider = new CloudErrorMap(VmwareErrorMessages.getInstance(), "Unable to initialize cloud client. See details");
+    myErrorProvider = new CloudErrorMap(VmwareErrorMessages.getInstance());
     myApiConnector = apiConnector;
   }
 
