@@ -686,6 +686,8 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
                                                                           new CloudInstancesProvider() {
                                                                             public void iterateInstances(@NotNull final CloudInstancesProviderCallback callback) {}
                                                                             public void iterateInstances(@NotNull final CloudInstancesProviderExtendedCallback callback) {}
+                                                                            public void iterateProfileInstances(@NotNull final CloudProfile profile,
+                                                                                                                @NotNull final CloudInstancesProviderCallback callback) {}
                                                                             public void markInstanceExpired(@NotNull final CloudInstance instance) {}
                                                                             public boolean isInstanceExpired(@NotNull final CloudInstance instance) {return false;}
                                                                           },
@@ -826,6 +828,13 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
 
       public void iterateInstances(@NotNull final CloudInstancesProviderExtendedCallback callback) {
         throw new UnsupportedOperationException(".iterateInstances");
+
+        //
+      }
+
+      @Override
+      public void iterateProfileInstances(@NotNull final CloudProfile profile, @NotNull final CloudInstancesProviderCallback callback) {
+        throw new UnsupportedOperationException(".iterateProfileInstances");
 
         //
       }
