@@ -4,8 +4,7 @@
     <name>vsphere</name>
     <display-name>VMware vSphere</display-name>
     <version>@Plugin_Version@</version>
-    <description>Runs cloud agents on VMware vSphere</description>
-    <download-url>https://github.com/JetBrains/teamcity-vmware-plugin</download-url>
+    <description>Runs cloud agents on VMware vCenter and vSphere</description>
     <vendor>
       <name>JetBrains, s.r.o.</name>
       <url>http://www.jetbrains.com</url>
