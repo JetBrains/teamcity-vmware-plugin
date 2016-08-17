@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <teamcity-plugin xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:shemas-jetbrains-com:teamcity-plugin-v1-xml">
   <info>
-    <name>vmware-cloud</name>
+    <name>vsphere</name>
     <display-name>VMware vSphere</display-name>
     <version>@Plugin_Version@</version>
     <description>Runs cloud agents on VMware vSphere</description>
