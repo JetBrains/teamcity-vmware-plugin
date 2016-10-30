@@ -123,6 +123,7 @@ public class UpdateInstancesTaskTest extends BaseTestCase {
       return new DummyCloudImage(imageDetails.getSourceId());
     }
 
+    @NotNull
     @Override
     protected UpdateInstancesTask<DummyCloudInstance, DummyCloudImage, ?> createUpdateInstancesTask() {
       return null;

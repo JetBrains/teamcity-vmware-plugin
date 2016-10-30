@@ -25,6 +25,7 @@ import java.net.URL;
 import java.util.Map;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import jetbrains.buildServer.clouds.vmware.connector.VmwareApiConnectorsPool;
 import jetbrains.buildServer.clouds.vmware.errors.VmwareCheckedCloudException;
 import jetbrains.buildServer.clouds.vmware.VmwareConstants;
 import jetbrains.buildServer.clouds.vmware.connector.VMWareApiConnector;
@@ -66,7 +67,7 @@ public class GetSnapshotsListController extends BaseFormXmlController {
     final String password = props.get(VMWareWebConstants.SECURE_PASSWORD);
     final String imageName = props.get("image");
     try {
-      final VMWareApiConnector myApiConnector = new VMWareApiConnectorImpl(new URL(serverUrl),username, password, null, null, null);
+      final VMWareApiConnector myApiConnector = VmwareApiConnectorsPool.getOrCreateConnector(new URL(serverUrl), username, password, null, null, null);
       final Map<String, VirtualMachineSnapshotTree> snapshotList = myApiConnector.getSnapshotList(imageName);
       Element snapshots = new Element("Snapshots");
       snapshots.setAttribute("vmName", imageName);

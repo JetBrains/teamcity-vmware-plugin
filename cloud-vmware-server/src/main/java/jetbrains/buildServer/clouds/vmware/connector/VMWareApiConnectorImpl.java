@@ -411,7 +411,7 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
     ManagedEntity entity = pool.getParent();
     while (entity != null){
       boolean skip = false;
-      if ("Resources".equals(entity.getName()) && entity.getParent() != null && !resPool.equals(entity.getParent().getMOR())) {
+      if ("Resources".equals(entity.getName()) && entity.getParent() != null && !resPool.equals(entity.getParent().getMOR().getVal())) {
         skip = true;
       }
       if (entity.getMOR().getType().equals(Folder.class.getSimpleName())){
@@ -847,6 +847,12 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
     getRootFolder();
   }
 
+  @NotNull
+  @Override
+  public String getKey() {
+    return getKey(myInstanceURL, myUsername);
+  }
+
   @Nullable
   @Override
   public InstanceStatus getInstanceStatusIfExists(@NotNull final String instanceName) {
@@ -942,5 +948,10 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
         return Task.SUCCESS;
       }
     };
+  }
+
+
+  public static String getKey(@NotNull final URL serverUrl, @NotNull final String username){
+    return String.format("%s_%s", serverUrl.toString().toLowerCase(), username.toLowerCase());
   }
 }

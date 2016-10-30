@@ -27,6 +27,7 @@ import jetbrains.buildServer.clouds.base.AbstractCloudImage;
 import jetbrains.buildServer.clouds.base.AbstractCloudInstance;
 import jetbrains.buildServer.clouds.base.connector.AbstractInstance;
 import jetbrains.buildServer.clouds.base.connector.CloudApiConnector;
+import jetbrains.buildServer.util.Disposable;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -34,20 +35,32 @@ import org.jetbrains.annotations.NotNull;
  *         Date: 7/22/2014
  *         Time: 1:52 PM
  */
-public class UpdateInstancesTask<G extends AbstractCloudInstance<T>, T extends AbstractCloudImage<G,?>, F extends AbstractCloudClient<G, T, ?>> implements Runnable {
+public class UpdateInstancesTask< G extends AbstractCloudInstance<T>,
+                                  T extends AbstractCloudImage<G,?>,
+                                  F extends AbstractCloudClient<G, T, ?>
+                                > implements Runnable {
   private static final Logger LOG = Logger.getInstance(UpdateInstancesTask.class.getName());
 
   private static final long STUCK_STATUS_TIME = 2*60*1000l; // 2 minutes;
 
-  @NotNull private final CloudApiConnector<T, G> myConnector;
-  protected final F myClient;
+  @NotNull protected final CloudApiConnector<T, G> myConnector;
+  @NotNull protected final F myClient;
+
+  @Used("Tests")
   private final long myStuckTime;
   @Used("Tests")
   private final boolean myRethrowException;
 
 
   public UpdateInstancesTask(@NotNull final CloudApiConnector<T, G> connector,
+                             @NotNull final F client) {
+    this(connector, client, STUCK_STATUS_TIME, false);
+  }
+
+  @Used("Tests")
+  public UpdateInstancesTask(@NotNull final CloudApiConnector<T, G> connector,
                               @NotNull final F client,
+                              @Used("Tests")
                               final long stuckTimeMillis,
                               @Used("Tests")
                               final boolean rethrowException) {
@@ -56,15 +69,13 @@ public class UpdateInstancesTask<G extends AbstractCloudInstance<T>, T extends A
     myStuckTime = stuckTimeMillis;
     myRethrowException = rethrowException;
   }
-  public UpdateInstancesTask(@NotNull final CloudApiConnector<T, G> connector, @NotNull final F client) {
-    this(connector, client, STUCK_STATUS_TIME, false);
-  }
 
   public void run() {
+    LOG.info("Updating...");
     final Map<InstanceStatus, List<String>> instancesByStatus = new HashMap<InstanceStatus, List<String>>();
     try {
       List<T> goodImages = new ArrayList<>();
-      final Collection<T> images =  myClient.getImages();
+      final Collection<T> images = getImages();
       for (final T image : images) {
         image.updateErrors(myConnector.checkImage(image));
         if (image.getErrorInfo() != null) {
@@ -145,6 +156,11 @@ public class UpdateInstancesTask<G extends AbstractCloudInstance<T>, T extends A
         LOG.debug(String.format("Instances in '%s' status: %s", instanceStatus.getText(), Arrays.toString(instancesByStatus.get(instanceStatus).toArray())));
       }
     }
+  }
+
+  @NotNull
+  protected Collection<T> getImages() {
+    return myClient.getImages();
   }
 
   private static boolean isStatusPermanent(InstanceStatus status){

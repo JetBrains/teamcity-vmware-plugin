@@ -70,7 +70,6 @@ public class VmwareTaskWrapper implements AsyncCloudTask {
     return myTaskName;
   }
 
-  @Nullable
   public long getStartTime() {
     return myStartTime;
   }

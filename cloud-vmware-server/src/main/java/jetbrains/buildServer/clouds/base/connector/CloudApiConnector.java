@@ -37,6 +37,16 @@ public interface CloudApiConnector<T extends AbstractCloudImage, G extends Abstr
 
   void test() throws CheckedCloudException;
 
+  /**
+   * A special key of the cloud connector. Used to determine whether this cloud connector can be used in several cloud profiles.
+   * <br/>
+   *
+   * It is supposed to represent the same username and server url/region/instance
+   * @return see above.
+   */
+  @NotNull
+  String getKey();
+
   @Nullable
   InstanceStatus getInstanceStatusIfExists(@NotNull String instanceName);
 
