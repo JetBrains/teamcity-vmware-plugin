@@ -101,6 +101,9 @@ public abstract class AbstractCloudClient<G extends AbstractCloudInstance<T>, T 
       myImageMap.put(image.getName(), image);
     }
     final UpdateInstancesTask<G, T, ?> updateInstancesTask = createUpdateInstancesTask();
+    if (updateInstancesTask == null) {
+      return;
+    }
     myAsyncTaskExecutor.submit("Populate images data", new Runnable() {
       public void run() {
         try {
@@ -116,6 +119,7 @@ public abstract class AbstractCloudClient<G extends AbstractCloudInstance<T>, T 
 
   protected abstract T checkAndCreateImage(@NotNull final D imageDetails);
 
+  @NotNull
   protected abstract UpdateInstancesTask<G,T,?> createUpdateInstancesTask();
 
   @Nullable

@@ -8,6 +8,7 @@
       <class name="jetbrains.buildServer.clouds.base.connector.CloudAsyncTaskExecutorTest"/>
       <class name="jetbrains.buildServer.clouds.vmware.connector.VmwareTaskWrapperTest"/>
       <class name="jetbrains.buildServer.clouds.vmware.VmwarePropertiesProcessorTest"/>
+      <class name="jetbrains.buildServer.clouds.vmware.VmwarePooledUpdateInstanceTaskTest"/>
     </classes>
   </test>
 </suite>

@@ -24,10 +24,7 @@ import java.util.*;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import jetbrains.buildServer.clouds.vmware.VmwareConstants;
-import jetbrains.buildServer.clouds.vmware.connector.VMWareApiConnector;
-import jetbrains.buildServer.clouds.vmware.connector.VMWareApiConnectorImpl;
-import jetbrains.buildServer.clouds.vmware.connector.VmwareInstance;
-import jetbrains.buildServer.clouds.vmware.connector.VmwareManagedEntity;
+import jetbrains.buildServer.clouds.vmware.connector.*;
 import jetbrains.buildServer.clouds.vmware.errors.VmwareErrorMessages;
 import jetbrains.buildServer.controllers.ActionErrors;
 import jetbrains.buildServer.controllers.BaseFormXmlController;
@@ -93,7 +90,7 @@ public class VMWareEditProfileController extends BaseFormXmlController {
     final String password = props.get(VMWareWebConstants.SECURE_PASSWORD);
 
     try {
-      final VMWareApiConnector myApiConnector = new VMWareApiConnectorImpl(new URL(serverUrl), username, password, null, null, null);
+      final VMWareApiConnector myApiConnector = VmwareApiConnectorsPool.getOrCreateConnector(new URL(serverUrl), username, password, null, null, null);
       xmlResponse.addContent(getVirtualMachinesAsElement(myApiConnector.getVirtualMachines(true)));
       xmlResponse.addContent(getFoldersAsElement(myApiConnector.getFolders()));
       xmlResponse.addContent(getResourcePoolsAsElement(myApiConnector.getResourcePools()));

@@ -18,6 +18,7 @@ import jetbrains.buildServer.clouds.vmware.connector.VMWareApiConnector;
 import jetbrains.buildServer.clouds.vmware.stubs.FakeApiConnector;
 import jetbrains.buildServer.clouds.vmware.stubs.FakeModel;
 import jetbrains.buildServer.clouds.vmware.stubs.FakeVirtualMachine;
+import jetbrains.buildServer.clouds.vmware.tasks.VmwareUpdateTaskManager;
 import jetbrains.buildServer.util.FileUtil;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
@@ -67,7 +68,7 @@ public class VmwareCloudImageTest extends BaseTestCase {
 
     myImage = new VmwareCloudImage(myApiConnector, myImageDetails, myTaskExecutor, myIdxStorage);
 
-    myCloudClient = new VMWareCloudClient(new CloudClientParameters(), myApiConnector, createTempDir());
+    myCloudClient = new VMWareCloudClient(new CloudClientParameters(), myApiConnector, new VmwareUpdateTaskManager(), createTempDir());
     myCloudClient.populateImagesData(Collections.singletonList(myImageDetails));
     myUpdateTask = new UpdateInstancesTask<VmwareCloudInstance, VmwareCloudImage, VMWareCloudClient>(
       myApiConnector, myCloudClient, 10*1000, false);

@@ -33,6 +33,8 @@ import jetbrains.buildServer.clouds.server.CloudManager;
 import jetbrains.buildServer.clouds.server.impl.CloudManagerBase;
 import jetbrains.buildServer.clouds.vmware.connector.VMWareApiConnector;
 import jetbrains.buildServer.clouds.vmware.connector.VMWareApiConnectorImpl;
+import jetbrains.buildServer.clouds.vmware.connector.VmwareApiConnectorsPool;
+import jetbrains.buildServer.clouds.vmware.tasks.VmwareUpdateTaskManager;
 import jetbrains.buildServer.clouds.vmware.web.VMWareWebConstants;
 import jetbrains.buildServer.serverSide.*;
 import jetbrains.buildServer.web.openapi.PluginDescriptor;
@@ -50,6 +52,7 @@ public class VMWareCloudClientFactory extends AbstractCloudClientFactory<VmwareC
   @NotNull private final String myHtmlPath;
   @NotNull private final File myIdxStorage;
   @NotNull private final CloudManagerBase myCloudManager;
+  @NotNull private final VmwareUpdateTaskManager myUpdateTaskManager;
   @NotNull private final CloudInstancesProvider myInstancesProvider;
   @NotNull private final ServerSettings myServerSettings;
 
@@ -58,12 +61,13 @@ public class VMWareCloudClientFactory extends AbstractCloudClientFactory<VmwareC
                                   @NotNull final ServerPaths serverPaths,
                                   @NotNull final CloudInstancesProvider instancesProvider,
                                   @NotNull final CloudManagerBase cloudManager,
-                                  @NotNull final ServerSettings serverSettings
-                                  ) {
+                                  @NotNull final ServerSettings serverSettings,
+                                  @NotNull final VmwareUpdateTaskManager updateTaskManager) {
     super(cloudRegistrar);
     myInstancesProvider = instancesProvider;
     myIdxStorage = new File(serverPaths.getPluginDataDirectory(), "vmwareIdx");
     myCloudManager = cloudManager;
+    myUpdateTaskManager = updateTaskManager;
     if (!myIdxStorage.exists()){
       myIdxStorage.mkdirs();
     }
@@ -77,7 +81,8 @@ public class VMWareCloudClientFactory extends AbstractCloudClientFactory<VmwareC
                                            @NotNull final Collection<VmwareCloudImageDetails> images,
                                            @NotNull final CloudClientParameters params) {
     final VMWareApiConnector apiConnector = createConnectorFromParams(state, params);
-    final VMWareCloudClient vmWareCloudClient = new VMWareCloudClient(params, apiConnector, myIdxStorage);
+    final VMWareCloudClient vmWareCloudClient =
+      new VMWareCloudClient(params, apiConnector, myUpdateTaskManager, myIdxStorage);
     try {
       apiConnector.test();
     } catch (CheckedCloudException e) {
@@ -87,8 +92,11 @@ public class VMWareCloudClientFactory extends AbstractCloudClientFactory<VmwareC
   }
 
   @Override
-  public VMWareCloudClient createNewClient(@NotNull final CloudState state, @NotNull final CloudClientParameters params, final TypedCloudErrorInfo[] profileErrors) {
-    final VMWareCloudClient client = new VMWareCloudClient(params, createConnectorFromParams(state, params), myIdxStorage);
+  public VMWareCloudClient createNewClient(@NotNull final CloudState state,
+                                           @NotNull final CloudClientParameters params,
+                                           final TypedCloudErrorInfo[] profileErrors) {
+    final VMWareCloudClient client =
+      new VMWareCloudClient(params, createConnectorFromParams(state, params), myUpdateTaskManager, myIdxStorage);
     client.updateErrors(profileErrors);
     return client;
   }
@@ -145,7 +153,7 @@ public class VMWareCloudClientFactory extends AbstractCloudClientFactory<VmwareC
     String password = params.getParameter(VMWareWebConstants.SECURE_PASSWORD);
     if (serverUrl != null && username != null) {
       try {
-        return new VMWareApiConnectorImpl(new URL(serverUrl), username, password, myServerSettings.getServerUUID(), state.getProfileId(), myInstancesProvider);
+        return VmwareApiConnectorsPool.getOrCreateConnector(new URL(serverUrl), username, password, myServerSettings.getServerUUID(), state.getProfileId(), myInstancesProvider);
       } catch (MalformedURLException e) {
         LOG.warn(e.toString(), e);
       }

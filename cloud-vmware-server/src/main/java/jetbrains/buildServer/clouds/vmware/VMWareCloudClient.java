@@ -21,12 +21,15 @@ package jetbrains.buildServer.clouds.vmware;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 import jetbrains.buildServer.clouds.CloudClientParameters;
 import jetbrains.buildServer.clouds.CloudImage;
 import jetbrains.buildServer.clouds.base.AbstractCloudClient;
 import jetbrains.buildServer.clouds.base.tasks.UpdateInstancesTask;
 import jetbrains.buildServer.clouds.vmware.connector.VMWareApiConnector;
+import jetbrains.buildServer.clouds.vmware.tasks.VmwareUpdateTaskManager;
 import jetbrains.buildServer.clouds.vmware.web.VMWareWebConstants;
 import jetbrains.buildServer.serverSide.AgentDescription;
 import org.jetbrains.annotations.NotNull;
@@ -40,15 +43,18 @@ import org.jetbrains.annotations.Nullable;
 public class VMWareCloudClient extends AbstractCloudClient<VmwareCloudInstance, VmwareCloudImage, VmwareCloudImageDetails>{
 
   private static final Logger LOG = Logger.getInstance(VMWareCloudClient.class.getName());
+  @NotNull private final VmwareUpdateTaskManager myTaskManager;
   @NotNull private final File myIdxStorage;
   private final Integer myProfileInstancesLimit;
+  private final List<DisposeHandler> myDisposeHandlers = new ArrayList<>();
 
 
   public VMWareCloudClient(@NotNull final CloudClientParameters cloudClientParameters,
                            @NotNull final VMWareApiConnector apiConnector,
-                           @NotNull final File idxStorage
-                    ) {
+                           @NotNull final VmwareUpdateTaskManager taskManager,
+                           @NotNull final File idxStorage) {
     super(cloudClientParameters, apiConnector);
+    myTaskManager = taskManager;
     myIdxStorage = idxStorage;
     final String limitStr = cloudClientParameters.getParameter(VMWareWebConstants.PROFILE_INSTANCE_LIMIT);
     myProfileInstancesLimit = StringUtil.isEmpty(limitStr) ? null : Integer.valueOf(limitStr);
@@ -86,9 +92,10 @@ public class VMWareCloudClient extends AbstractCloudClient<VmwareCloudInstance, 
     return super.canStartNewInstance(baseImage);
   }
 
+  @NotNull
   @Override
   protected UpdateInstancesTask<VmwareCloudInstance, VmwareCloudImage, VMWareCloudClient> createUpdateInstancesTask() {
-    return new UpdateInstancesTask<VmwareCloudInstance, VmwareCloudImage, VMWareCloudClient>(myApiConnector, this);
+    return myTaskManager.createUpdateTask((VMWareApiConnector)myApiConnector, this);
   }
 
   @Nullable
@@ -96,4 +103,23 @@ public class VMWareCloudClient extends AbstractCloudClient<VmwareCloudInstance, 
     return agentDescription.getAvailableParameters().get(VMWarePropertiesNames.INSTANCE_NAME);
   }
 
+  public void addDisposeHandler(@NotNull DisposeHandler disposeHandler){
+    myDisposeHandlers.add(disposeHandler);
+  }
+
+  @Override
+  public void dispose() {
+    myDisposeHandlers.forEach(d->{
+      try {
+        d.clientDisposing(this);
+      } catch (Exception e) {
+        LOG.warn("An exception occurred while disposing client", e);
+      }
+    });
+    super.dispose();
+  }
+
+  public static interface DisposeHandler{
+    public void clientDisposing(@NotNull final  VMWareCloudClient client);
+  }
 }

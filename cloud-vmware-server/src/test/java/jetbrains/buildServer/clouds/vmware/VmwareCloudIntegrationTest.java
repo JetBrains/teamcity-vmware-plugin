@@ -34,6 +34,7 @@ import jetbrains.buildServer.clouds.vmware.errors.VmwareCheckedCloudException;
 import jetbrains.buildServer.clouds.vmware.stubs.FakeApiConnector;
 import jetbrains.buildServer.clouds.vmware.stubs.FakeModel;
 import jetbrains.buildServer.clouds.vmware.stubs.FakeVirtualMachine;
+import jetbrains.buildServer.clouds.vmware.tasks.VmwareUpdateTaskManager;
 import jetbrains.buildServer.clouds.vmware.web.VMWareWebConstants;
 import jetbrains.buildServer.serverSide.ServerPaths;
 import jetbrains.buildServer.serverSide.TeamCityProperties;
@@ -691,7 +692,8 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
                                                                             public void markInstanceExpired(@NotNull final CloudInstance instance) {}
                                                                             public boolean isInstanceExpired(@NotNull final CloudInstance instance) {return false;}
                                                                           },
-                                                                          cloudManagerBase, new ServerSettingsImpl()
+                                                                          cloudManagerBase, new ServerSettingsImpl(),
+                                                                          new VmwareUpdateTaskManager()
                                                                           ){
 
       @NotNull
@@ -1179,8 +1181,9 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
       myClient.dispose();
     }
     final Collection<VmwareCloudImageDetails> images = VMWareCloudClientFactory.parseImageDataInternal(myClientParameters);
-    myClient = new VMWareCloudClient(myClientParameters, myFakeApi, myIdxStorage){
+    myClient = new VMWareCloudClient(myClientParameters, myFakeApi, new VmwareUpdateTaskManager(), myIdxStorage){
 
+      @NotNull
       @Override
       protected UpdateInstancesTask<VmwareCloudInstance, VmwareCloudImage, VMWareCloudClient> createUpdateInstancesTask() {
         return new UpdateInstancesTask<VmwareCloudInstance, VmwareCloudImage, VMWareCloudClient>(myFakeApi, this, stuckTime, false){

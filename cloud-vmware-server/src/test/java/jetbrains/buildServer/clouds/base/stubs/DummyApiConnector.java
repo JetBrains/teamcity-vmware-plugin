@@ -32,6 +32,20 @@ public class DummyApiConnector implements CloudApiConnector<DummyCloudImage, Dum
     checkLatch("test");
   }
 
+  /**
+   * A special key of the cloud connector. Used to determine whether this cloud connector can be used in several cloud profiles.
+   * <br/>
+   * <p>
+   * It is supposed to represent the same username and server url/region/instance
+   *
+   * @return see above.
+   */
+  @NotNull
+  @Override
+  public String getKey() {
+    return "dummy_connector";
+  }
+
   @Nullable
   @Override
   public InstanceStatus getInstanceStatusIfExists(@NotNull final String instanceName) {

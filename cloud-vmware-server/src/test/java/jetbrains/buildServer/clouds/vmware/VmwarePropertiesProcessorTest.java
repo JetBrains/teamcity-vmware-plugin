@@ -12,6 +12,7 @@ import jetbrains.buildServer.clouds.server.impl.CloudManagerBase;
 import jetbrains.buildServer.clouds.server.impl.profile.CloudProfileDataImpl;
 import jetbrains.buildServer.clouds.server.impl.profile.CloudProfileImpl;
 import jetbrains.buildServer.clouds.vmware.stubs.FakeApiConnector;
+import jetbrains.buildServer.clouds.vmware.tasks.VmwareUpdateTaskManager;
 import jetbrains.buildServer.clouds.vmware.web.VMWareWebConstants;
 import jetbrains.buildServer.serverSide.InvalidProperty;
 import org.jetbrains.annotations.NotNull;
@@ -231,7 +232,7 @@ public class VmwarePropertiesProcessorTest extends BaseTestCase {
   private CloudClientEx createClient(CloudClientParameters clientParameters) throws IOException {
     final Collection<VmwareCloudImageDetails> images = VMWareCloudClientFactory.parseImageDataInternal(clientParameters);
     FakeApiConnector apiConnector = new FakeApiConnector(TEST_SERVER_UUID, PROFILE_ID);
-    VMWareCloudClient client = new VMWareCloudClient(clientParameters, apiConnector, createTempDir());
+    VMWareCloudClient client = new VMWareCloudClient(clientParameters, apiConnector, new VmwareUpdateTaskManager(), createTempDir());
     client.populateImagesData(images, 1000, 1000);
     return client;
   }
