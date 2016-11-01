@@ -36,7 +36,7 @@ public class VmwareUpdateInstanceTask
 
   @Override
   public void run() {
-    LOG.info("Run inside...");
+    LOG.debug("Run inside...");
     myPoolTask.runIfNecessary(myClient);
   }
 

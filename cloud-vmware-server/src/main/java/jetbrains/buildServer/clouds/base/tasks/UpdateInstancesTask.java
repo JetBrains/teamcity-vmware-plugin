@@ -71,7 +71,7 @@ public class UpdateInstancesTask< G extends AbstractCloudInstance<T>,
   }
 
   public void run() {
-    LOG.info("Updating...");
+    LOG.debug("Updating...");
     final Map<InstanceStatus, List<String>> instancesByStatus = new HashMap<InstanceStatus, List<String>>();
     try {
       List<T> goodImages = new ArrayList<>();
