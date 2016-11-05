@@ -1,7 +1,10 @@
 package jetbrains.buildServer.clouds.vmware;
 
 import com.intellij.util.WaitFor;
-import com.vmware.vim25.*;
+import com.vmware.vim25.CustomizationLinuxOptions;
+import com.vmware.vim25.CustomizationSpec;
+import com.vmware.vim25.OptionValue;
+import com.vmware.vim25.VirtualMachinePowerState;
 import com.vmware.vim25.mo.Datacenter;
 import com.vmware.vim25.mo.ManagedEntity;
 import com.vmware.vim25.mo.Task;
@@ -25,7 +28,6 @@ import jetbrains.buildServer.clouds.server.CloudInstancesProvider;
 import jetbrains.buildServer.clouds.server.CloudInstancesProviderCallback;
 import jetbrains.buildServer.clouds.server.CloudInstancesProviderExtendedCallback;
 import jetbrains.buildServer.clouds.server.impl.CloudManagerBase;
-import jetbrains.buildServer.clouds.server.impl.CloudManagerFacade;
 import jetbrains.buildServer.clouds.server.impl.CloudRegistryImpl;
 import jetbrains.buildServer.clouds.server.instances.CloudEventDispatcher;
 import jetbrains.buildServer.clouds.vmware.connector.VMWareApiConnector;
@@ -834,7 +836,6 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
         //
       }
 
-      @Override
       public void iterateProfileInstances(@NotNull final CloudProfile profile, @NotNull final CloudInstancesProviderCallback callback) {
         throw new UnsupportedOperationException(".iterateProfileInstances");
 
