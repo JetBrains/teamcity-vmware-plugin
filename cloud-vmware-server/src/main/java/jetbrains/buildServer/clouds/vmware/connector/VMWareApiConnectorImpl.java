@@ -292,6 +292,8 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
   public Map<String, String> getCustomizationSpecs() {
     final Map<String,String> retval = new HashMap<>();
     final CustomizationSpecManager specManager = myServiceInstance.getCustomizationSpecManager();
+    if (specManager == null)
+      return retval;
     final CustomizationSpecInfo[] specs = specManager.getInfo();
     if (specs != null) {
       for (CustomizationSpecInfo spec : specs) {
@@ -304,6 +306,9 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
   @Override
   public CustomizationSpec getCustomizationSpec(final String name) throws VmwareCheckedCloudException {
     final CustomizationSpecManager specManager = myServiceInstance.getCustomizationSpecManager();
+    if (specManager == null){
+      throw new VmwareCheckedCloudException("Customization Spec in not available: '" + name + "'");
+    }
     try {
       return specManager.getCustomizationSpec(name).getSpec();
     } catch (RemoteException e) {
