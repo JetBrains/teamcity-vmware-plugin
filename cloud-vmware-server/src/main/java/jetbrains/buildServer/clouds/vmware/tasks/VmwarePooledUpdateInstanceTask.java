@@ -4,6 +4,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.stream.Collectors;
+import jetbrains.buildServer.Used;
 import jetbrains.buildServer.clouds.base.tasks.UpdateInstancesTask;
 import jetbrains.buildServer.clouds.vmware.VMWareCloudClient;
 import jetbrains.buildServer.clouds.vmware.VmwareCloudImage;
@@ -18,7 +19,8 @@ public class VmwarePooledUpdateInstanceTask
   extends UpdateInstancesTask<VmwareCloudInstance, VmwareCloudImage, VMWareCloudClient> {
   private static final Logger LOG = Logger.getInstance(VmwarePooledUpdateInstanceTask.class.getName());
 
-  private final List<VMWareCloudClient> myClients = new CopyOnWriteArrayList<>();
+  private volatile List<VMWareCloudClient> myClients = new CopyOnWriteArrayList<>();
+  private final List<VMWareCloudClient> myNewClients = new ArrayList<>();
   private final PooledTaskObsoleteHandler myHandler;
 
 
@@ -26,6 +28,19 @@ public class VmwarePooledUpdateInstanceTask
                                         @NotNull final VMWareCloudClient client,
                                         @NotNull final PooledTaskObsoleteHandler obsoleteHandler) {
     super(connector, client);
+    myHandler = obsoleteHandler;
+  }
+
+  @Used("tests")
+  public VmwarePooledUpdateInstanceTask(@NotNull final VMWareApiConnector connector,
+                                 @NotNull final VMWareCloudClient client,
+                                 @NotNull final PooledTaskObsoleteHandler obsoleteHandler,
+                                 @Used("Tests")
+                                 final long stuckTimeMillis,
+                                 @Used("Tests")
+                                 final boolean rethrowException
+                                 ) {
+    super(connector, client, stuckTimeMillis, rethrowException);
     myHandler = obsoleteHandler;
   }
 
@@ -37,6 +52,12 @@ public class VmwarePooledUpdateInstanceTask
    * Only run if the client is the top one in the list
    */
   public void runIfNecessary(@NotNull final VMWareCloudClient client){
+    if (myNewClients.size() != 0){
+      synchronized (this){
+        myClients.addAll(myNewClients);
+        myNewClients.clear();
+      }
+    }
     if (myClients.size() == 0){
       return;
     }
@@ -44,6 +65,7 @@ public class VmwarePooledUpdateInstanceTask
       return;
     }
     run();
+    myClients.forEach(VMWareCloudClient::setInitializedIfNecessary);
   }
 
   @NotNull
@@ -56,7 +78,7 @@ public class VmwarePooledUpdateInstanceTask
 
   public void addClient(@NotNull VMWareCloudClient client){
     synchronized (this) {
-      myClients.add(client);
+      myNewClients.add(client);
     }
   }
 

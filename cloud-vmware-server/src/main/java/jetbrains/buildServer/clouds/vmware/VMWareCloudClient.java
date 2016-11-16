@@ -47,6 +47,7 @@ public class VMWareCloudClient extends AbstractCloudClient<VmwareCloudInstance, 
   @NotNull private final File myIdxStorage;
   private final Integer myProfileInstancesLimit;
   private final List<DisposeHandler> myDisposeHandlers = new ArrayList<>();
+  private volatile boolean myInitialized = false;
 
 
   public VMWareCloudClient(@NotNull final CloudClientParameters cloudClientParameters,
@@ -58,6 +59,11 @@ public class VMWareCloudClient extends AbstractCloudClient<VmwareCloudInstance, 
     myIdxStorage = idxStorage;
     final String limitStr = cloudClientParameters.getParameter(VMWareWebConstants.PROFILE_INSTANCE_LIMIT);
     myProfileInstancesLimit = StringUtil.isEmpty(limitStr) ? null : Integer.valueOf(limitStr);
+  }
+
+  @Override
+  public boolean isInitialized() {
+    return myInitialized;
   }
 
   @Nullable
@@ -117,6 +123,11 @@ public class VMWareCloudClient extends AbstractCloudClient<VmwareCloudInstance, 
       }
     });
     super.dispose();
+  }
+
+  public void setInitializedIfNecessary() {
+    if (!myInitialized)
+      myInitialized = true;
   }
 
   public static interface DisposeHandler{
