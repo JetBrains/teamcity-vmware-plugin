@@ -57,8 +57,8 @@ public class VmwarePooledUpdateInstanceTask
     if (!myAlreadyRunning.compareAndSet(false, true))
       return;
     try {
-      if (myNewClients.size() != 0) {
-        synchronized (this) {
+      synchronized (this) {
+        if (myNewClients.size() != 0) {
           myClients.addAll(myNewClients);
           myNewClients.clear();
         }
@@ -93,6 +93,7 @@ public class VmwarePooledUpdateInstanceTask
   public void removeClient(@NotNull VMWareCloudClient client){
     synchronized (this) {
       myClients.remove(client);
+      myNewClients.remove(client);
       if (myClients.isEmpty()){
         myHandler.pooledTaskObsolete(this);
       }
@@ -104,6 +105,6 @@ public class VmwarePooledUpdateInstanceTask
   }
 
   public interface PooledTaskObsoleteHandler {
-    public void pooledTaskObsolete(@NotNull VmwarePooledUpdateInstanceTask task);
+    void pooledTaskObsolete(@NotNull VmwarePooledUpdateInstanceTask task);
   }
 }
