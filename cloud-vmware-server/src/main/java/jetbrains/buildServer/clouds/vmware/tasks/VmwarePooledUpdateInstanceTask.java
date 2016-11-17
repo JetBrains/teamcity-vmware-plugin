@@ -3,6 +3,7 @@ package jetbrains.buildServer.clouds.vmware.tasks;
 import com.intellij.openapi.diagnostic.Logger;
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 import jetbrains.buildServer.Used;
 import jetbrains.buildServer.clouds.base.tasks.UpdateInstancesTask;
@@ -21,6 +22,7 @@ public class VmwarePooledUpdateInstanceTask
 
   private volatile List<VMWareCloudClient> myClients = new CopyOnWriteArrayList<>();
   private final List<VMWareCloudClient> myNewClients = new ArrayList<>();
+  private volatile AtomicBoolean myAlreadyRunning = new AtomicBoolean(false);
   private final PooledTaskObsoleteHandler myHandler;
 
 
@@ -52,20 +54,26 @@ public class VmwarePooledUpdateInstanceTask
    * Only run if the client is the top one in the list
    */
   public void runIfNecessary(@NotNull final VMWareCloudClient client){
-    if (myNewClients.size() != 0){
-      synchronized (this){
-        myClients.addAll(myNewClients);
-        myNewClients.clear();
+    if (!myAlreadyRunning.compareAndSet(false, true))
+      return;
+    try {
+      if (myNewClients.size() != 0) {
+        synchronized (this) {
+          myClients.addAll(myNewClients);
+          myNewClients.clear();
+        }
       }
+      if (myClients.size() == 0) {
+        return;
+      }
+      if (client != myClients.get(0)) {
+        return;
+      }
+      run();
+      myClients.forEach(VMWareCloudClient::setInitializedIfNecessary);
+    } finally {
+      myAlreadyRunning.set(false);
     }
-    if (myClients.size() == 0){
-      return;
-    }
-    if (client != myClients.get(0)){
-      return;
-    }
-    run();
-    myClients.forEach(VMWareCloudClient::setInitializedIfNecessary);
   }
 
   @NotNull

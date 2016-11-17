@@ -1083,6 +1083,68 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
     }
   }
 
+  public void should_consider_profile_limit_on_reload_2(){
+    final CloudClientParameters clientParameters2 = new CloudClientParameters();
+    clientParameters2.setCloudImages(CloudImageParameters.collectionFromJson(
+      "[{sourceVmName:'image2',snapshot:'snap*',folder:'cf',pool:'rp'," +
+      "maxInstances:1,behaviour:'ON_DEMAND_CLONE',customizationSpec:'someCustomization'}]"));
+    final CloudClientParameters clientParameters3 = new CloudClientParameters();
+    clientParameters3.setCloudImages(CloudImageParameters.collectionFromJson(
+      "[{'source-id':'image_template',sourceVmName:'image_template', snapshot:'" + VmwareConstants.CURRENT_STATE +
+      "',folder:'cf',pool:'rp',maxInstances:1,behaviour:'FRESH_CLONE', customizationSpec: 'linux'}]"
+    ));
+    final VMWareCloudClient client2 = recreateClient(myClient, clientParameters2);
+    final VMWareCloudClient client3 = recreateClient(null, clientParameters3);
+
+    startNewInstanceAndWait(client2, "image2");
+
+    startNewInstanceAndWait(client3, "image_template");
+
+
+    client2.dispose();
+    client3.dispose();
+
+    try {
+      System.setProperty("teamcity.vsphere.instance.status.update.delay.ms", "2500");
+
+      final VMWareCloudClient client3_1 = recreateClient(null, clientParameters3, false);
+      final VMWareCloudClient client2_1 = recreateClient(null, clientParameters2, false);
+      new WaitFor(5000) {
+        @Override
+        protected boolean condition() {
+          return client3_1.isInitialized() || client2_1.isInitialized();
+        }
+      };
+      try {
+        if (client3_1.isInitialized() && client3_1.canStartNewInstance(getImageByName("image_template"))) {
+          startNewInstanceAndWait(client3_1, "image_template");
+          fail("Shouldn't start more of client3");
+        }
+      } catch (Exception ex) {
+
+      }
+      try {
+        if (client2_1.isInitialized() && client2_1.canStartNewInstance(getImageByName("image2"))) {
+          startNewInstanceAndWait(client2_1, "image2");
+          fail("Shouldn't start more of image2");
+        }
+      } catch (Exception ex) {
+
+      }
+
+      new WaitFor(5000) {
+        @Override
+        protected boolean condition() {
+          return client3_1.isInitialized() && client2_1.isInitialized();
+        }
+      }.assertCompleted("clients should be initialized in time");
+
+
+    } finally {
+      System.getProperties().remove("teamcity.vsphere.instance.status.update.delay.ms");
+    }
+  }
+
 
   /*
   *
@@ -1273,6 +1335,11 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
 
   private VMWareCloudClient recreateClient(final VMWareCloudClient oldClient,
                                            final CloudClientParameters parameters){
+    return recreateClient(oldClient, parameters, true);
+  }
+  private VMWareCloudClient recreateClient(final VMWareCloudClient oldClient,
+                                           final CloudClientParameters parameters,
+                                           boolean waitForInitialization){
     final long updateTime = TeamCityProperties.getLong("teamcity.vsphere.instance.status.update.delay.ms", 250);
 
     if (oldClient != null) {
@@ -1281,12 +1348,14 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
     final Collection<VmwareCloudImageDetails> images = VMWareCloudClientFactory.parseImageDataInternal(parameters);
     final VMWareCloudClient newClient = new VMWareCloudClient(parameters, myFakeApi, myTaskManager, myIdxStorage);
     newClient.populateImagesData(images, updateTime, updateTime);
-    new WaitFor(5000){
-      @Override
-      protected boolean condition() {
-        return newClient.isInitialized();
-      }
-    }.assertCompleted("Must be initialized");
+    if (waitForInitialization) {
+      new WaitFor(5000) {
+        @Override
+        protected boolean condition() {
+          return newClient.isInitialized();
+        }
+      }.assertCompleted("Must be initialized");
+    }
     return newClient;
   }
 
