@@ -36,6 +36,8 @@ import jetbrains.buildServer.clouds.vmware.errors.VmwareCheckedCloudException;
 import jetbrains.buildServer.clouds.vmware.stubs.FakeApiConnector;
 import jetbrains.buildServer.clouds.vmware.stubs.FakeModel;
 import jetbrains.buildServer.clouds.vmware.stubs.FakeVirtualMachine;
+import jetbrains.buildServer.clouds.vmware.tasks.VmwarePooledUpdateInstanceTask;
+import jetbrains.buildServer.clouds.vmware.tasks.VmwareUpdateInstanceTask;
 import jetbrains.buildServer.clouds.vmware.tasks.VmwareUpdateTaskManager;
 import jetbrains.buildServer.clouds.vmware.web.VMWareWebConstants;
 import jetbrains.buildServer.serverSide.ServerPaths;
@@ -65,7 +67,10 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
   private VMWareCloudClient myClient;
   private FakeApiConnector myFakeApi;
   private CloudClientParameters myClientParameters;
+  private VmwareUpdateTaskManager myTaskManager;
   private File myIdxStorage;
+  private AtomicLong myStuckTime;
+  private AtomicLong myLastRunTime;
 
   @BeforeMethod
   public void setUp() throws Exception {
@@ -93,6 +98,21 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
     FakeModel.instance().addVMSnapshot("image2", "snap");
     FakeModel.instance().getCustomizationSpecs().put("someCustomization", new CustomizationSpec());
     FakeModel.instance().getCustomizationSpecs().put("linux", new CustomizationSpec());
+    myLastRunTime = new AtomicLong(0);
+    myStuckTime = new AtomicLong(2*60*1000);
+
+    myTaskManager = new VmwareUpdateTaskManager(){
+      @Override
+      protected VmwarePooledUpdateInstanceTask createNewPooledTask(@NotNull final VMWareApiConnector connector, @NotNull final VMWareCloudClient client) {
+        return new VmwarePooledUpdateInstanceTask(connector, client, this, myStuckTime.get(), false){
+          @Override
+          public void run() {
+            super.run();
+            myLastRunTime.set(System.currentTimeMillis());
+          }
+        };
+      }
+    };
 
     recreateClient();
     assertNull(myClient.getErrorInfo());
@@ -488,7 +508,6 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
   public void do_not_clear_image_instances_list_on_error() throws ExecutionException, InterruptedException, MalformedURLException {
     final AtomicBoolean failure = new AtomicBoolean(false);
     final AtomicLong lastApiCallTime = new AtomicLong(0);
-    final AtomicLong lastUpdateTime = new AtomicLong(0);
     myFakeApi = new FakeApiConnector(TEST_SERVER_UUID, PROFILE_ID){
       @Override
       protected <T extends ManagedEntity> Collection<T> findAllEntities(final Class<T> instanceType) throws VmwareCheckedCloudException {
@@ -517,17 +536,18 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
         return super.findEntityByIdName(name, instanceType);
       }
     };
-    recreateClient(250, lastUpdateTime, 2*60*1000);
+    recreateClient(250);
     startNewInstanceAndWait("image2");
     startNewInstanceAndWait("image2");
     startNewInstanceAndWait("image2");
+    Thread.sleep(5*1000);
     failure.set(true);
     final long problemStart = System.currentTimeMillis();
     new WaitFor(5*1000){
 
       @Override
       protected boolean condition() {
-        return lastUpdateTime.get() > problemStart;
+        return myLastRunTime.get() > problemStart;
       }
     }.assertCompleted("Should have been checked at least once - delay set to 2 sec");
 
@@ -695,8 +715,7 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
                                                                             public boolean isInstanceExpired(@NotNull final CloudInstance instance) {return false;}
                                                                           },
                                                                           cloudManagerBase, new ServerSettingsImpl(),
-                                                                          new VmwareUpdateTaskManager()
-                                                                          ){
+                                                                          myTaskManager){
 
       @NotNull
       @Override
@@ -726,7 +745,8 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
   }
 
   public void enforce_change_of_stuck_instance_status() throws RemoteException, ExecutionException, InterruptedException {
-    recreateClient(250, new AtomicLong(0), 3*1000);
+    myStuckTime.set(3*1000);
+    recreateClient(250);
     final VmwareCloudInstance instance = startNewInstanceAndWait("image1");
     FakeModel.instance().getVms().get(instance.getName()).shutdownGuest();
     instance.setStatus(InstanceStatus.STOPPING);
@@ -1015,6 +1035,116 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
     }
 
   }
+
+  public void should_consider_profile_limit_on_reload(){
+    final CloudClientParameters clientParameters2 = new CloudClientParameters();
+    clientParameters2.setCloudImages(CloudImageParameters.collectionFromJson(
+      "[{sourceVmName:'image2',snapshot:'snap*',folder:'cf',pool:'rp'," +
+      "maxInstances:1,behaviour:'ON_DEMAND_CLONE',customizationSpec:'someCustomization'}]"));
+    final CloudClientParameters clientParameters3 = new CloudClientParameters();
+    clientParameters3.setCloudImages(CloudImageParameters.collectionFromJson(
+      "[{'source-id':'image_template',sourceVmName:'image_template', snapshot:'" + VmwareConstants.CURRENT_STATE +
+      "',folder:'cf',pool:'rp',maxInstances:1,behaviour:'FRESH_CLONE', customizationSpec: 'linux'}]"
+    ));
+    final VMWareCloudClient client2 = recreateClient(myClient, clientParameters2);
+    final VMWareCloudClient client3 = recreateClient(null, clientParameters3);
+
+    startNewInstanceAndWait(client2, "image2");
+
+    startNewInstanceAndWait(client3, "image_template");
+
+
+    client2.dispose();
+    client3.dispose();
+
+    try {
+      System.setProperty("teamcity.vsphere.instance.status.update.delay.ms", "2500");
+
+      final VMWareCloudClient client3_1 = recreateClient(null, clientParameters3);
+      final VMWareCloudClient client2_1 = recreateClient(null, clientParameters2);
+      try {
+        startNewInstanceAndWait(client3_1, "image_template");
+        fail("Shouldn't start more of client3");
+      } catch (Exception ex) {
+
+      }
+
+
+      try {
+        startNewInstanceAndWait(client2_1, "image2");
+        fail("Shouldn't start more of image2");
+      } catch (Exception ex) {
+
+      }
+
+    } finally {
+      System.getProperties().remove("teamcity.vsphere.instance.status.update.delay.ms");
+    }
+  }
+
+  public void should_consider_profile_limit_on_reload_2(){
+    final CloudClientParameters clientParameters2 = new CloudClientParameters();
+    clientParameters2.setCloudImages(CloudImageParameters.collectionFromJson(
+      "[{sourceVmName:'image2',snapshot:'snap*',folder:'cf',pool:'rp'," +
+      "maxInstances:1,behaviour:'ON_DEMAND_CLONE',customizationSpec:'someCustomization'}]"));
+    final CloudClientParameters clientParameters3 = new CloudClientParameters();
+    clientParameters3.setCloudImages(CloudImageParameters.collectionFromJson(
+      "[{'source-id':'image_template',sourceVmName:'image_template', snapshot:'" + VmwareConstants.CURRENT_STATE +
+      "',folder:'cf',pool:'rp',maxInstances:1,behaviour:'FRESH_CLONE', customizationSpec: 'linux'}]"
+    ));
+    final VMWareCloudClient client2 = recreateClient(myClient, clientParameters2);
+    final VMWareCloudClient client3 = recreateClient(null, clientParameters3);
+
+    startNewInstanceAndWait(client2, "image2");
+
+    startNewInstanceAndWait(client3, "image_template");
+
+
+    client2.dispose();
+    client3.dispose();
+
+    try {
+      System.setProperty("teamcity.vsphere.instance.status.update.delay.ms", "2500");
+
+      final VMWareCloudClient client3_1 = recreateClient(null, clientParameters3, false);
+      final VMWareCloudClient client2_1 = recreateClient(null, clientParameters2, false);
+      new WaitFor(5000) {
+        @Override
+        protected boolean condition() {
+          return client3_1.isInitialized() || client2_1.isInitialized();
+        }
+      };
+      try {
+        if (client3_1.isInitialized() && client3_1.canStartNewInstance(getImageByName("image_template"))) {
+          startNewInstanceAndWait(client3_1, "image_template");
+          fail("Shouldn't start more of client3");
+        }
+      } catch (Exception ex) {
+
+      }
+      try {
+        if (client2_1.isInitialized() && client2_1.canStartNewInstance(getImageByName("image2"))) {
+          startNewInstanceAndWait(client2_1, "image2");
+          fail("Shouldn't start more of image2");
+        }
+      } catch (Exception ex) {
+
+      }
+
+      new WaitFor(5000) {
+        @Override
+        protected boolean condition() {
+          return client3_1.isInitialized() && client2_1.isInitialized();
+        }
+      }.assertCompleted("clients should be initialized in time");
+
+
+    } finally {
+      System.getProperties().remove("teamcity.vsphere.instance.status.update.delay.ms");
+    }
+  }
+
+
   /*
   *
   *
@@ -1096,6 +1226,9 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
     return instance;
   }
 
+  private VmwareCloudInstance startNewInstanceAndWait(VMWareCloudClient client, String imageName) {
+    return startNewInstanceAndCheck(client, imageName, new HashMap<String, String>(), true);
+  }
   private VmwareCloudInstance startNewInstanceAndWait(String imageName) {
     return startNewInstanceAndWait(imageName, new HashMap<String, String>());
   }
@@ -1105,15 +1238,18 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
   }
 
   private VmwareCloudInstance startNewInstanceAndCheck(String imageName, Map<String, String> parameters, boolean instanceShouldStart) {
+    return startNewInstanceAndCheck(myClient, imageName, parameters, instanceShouldStart);
+  }
+  private VmwareCloudInstance startNewInstanceAndCheck(VMWareCloudClient client, String imageName, Map<String, String> parameters, boolean instanceShouldStart) {
     final CloudInstanceUserData userData = createUserData(imageName + "_agent", parameters);
-    final VmwareCloudImage image = getImageByName(imageName);
+    final VmwareCloudImage image = getImageByName(client, imageName);
     final Collection<VmwareCloudInstance> runningInstances = image
       .getInstances()
       .stream()
       .filter(i->i.getStatus() == InstanceStatus.RUNNING)
       .collect(Collectors.toList());
 
-    final VmwareCloudInstance vmwareCloudInstance = myClient.startNewInstance(image, userData);
+    final VmwareCloudInstance vmwareCloudInstance = client.startNewInstance(image, userData);
     final boolean ready = vmwareCloudInstance.isReady();
     System.out.printf("Instance '%s'. Ready: %b%n", vmwareCloudInstance.getName(), ready);
     final WaitFor waitFor = new WaitFor(2 * 1000) {
@@ -1158,7 +1294,11 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
   }
 
   private VmwareCloudImage getImageByName(final String name) {
-    for (CloudImage image : myClient.getImages()) {
+    return getImageByName(myClient, name);
+  }
+
+  private VmwareCloudImage getImageByName(final VMWareCloudClient client, final String name) {
+    for (CloudImage image : client.getImages()) {
       if (image.getName().equals(name)) {
         return (VmwareCloudImage)image;
       }
@@ -1169,7 +1309,7 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
   private void recreateClient()  {
     final long updateTime = TeamCityProperties.getLong("teamcity.vsphere.instance.status.update.delay.ms", 250);
     try {
-      recreateClient(updateTime, new AtomicLong(System.currentTimeMillis()), 250*1000);
+      recreateClient(updateTime);
     } catch (ExecutionException e) {
       fail(e.toString());
     } catch (InterruptedException e) {
@@ -1177,32 +1317,45 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
     }
   }
 
-  private void recreateClient(final long updateDelay, final AtomicLong lastUpdateTime, final long stuckTime) throws ExecutionException, InterruptedException {
+  private void recreateClient(final long updateDelay) throws ExecutionException, InterruptedException {
     if (myClient != null) {
       myClient.dispose();
     }
     final Collection<VmwareCloudImageDetails> images = VMWareCloudClientFactory.parseImageDataInternal(myClientParameters);
-    myClient = new VMWareCloudClient(myClientParameters, myFakeApi, new VmwareUpdateTaskManager(), myIdxStorage){
-
-      @NotNull
-      @Override
-      protected UpdateInstancesTask<VmwareCloudInstance, VmwareCloudImage, VMWareCloudClient> createUpdateInstancesTask() {
-        return new UpdateInstancesTask<VmwareCloudInstance, VmwareCloudImage, VMWareCloudClient>(myFakeApi, this, stuckTime, false){
-          @Override
-          public void run() {
-            super.run();
-            lastUpdateTime.set(System.currentTimeMillis());
-          }
-        };
-      }
-    };
+    myClient = new VMWareCloudClient(myClientParameters, myFakeApi, myTaskManager, myIdxStorage);
     myClient.populateImagesData(images, updateDelay, updateDelay);
-    new WaitFor(100*1000){
+    new WaitFor(5*1000){
       @Override
       protected boolean condition() {
         return myClient.isInitialized();
       }
     }.assertCompleted("Must be initialized");
+  }
+
+  private VMWareCloudClient recreateClient(final VMWareCloudClient oldClient,
+                                           final CloudClientParameters parameters){
+    return recreateClient(oldClient, parameters, true);
+  }
+  private VMWareCloudClient recreateClient(final VMWareCloudClient oldClient,
+                                           final CloudClientParameters parameters,
+                                           boolean waitForInitialization){
+    final long updateTime = TeamCityProperties.getLong("teamcity.vsphere.instance.status.update.delay.ms", 250);
+
+    if (oldClient != null) {
+      oldClient.dispose();
+    }
+    final Collection<VmwareCloudImageDetails> images = VMWareCloudClientFactory.parseImageDataInternal(parameters);
+    final VMWareCloudClient newClient = new VMWareCloudClient(parameters, myFakeApi, myTaskManager, myIdxStorage);
+    newClient.populateImagesData(images, updateTime, updateTime);
+    if (waitForInitialization) {
+      new WaitFor(5000) {
+        @Override
+        protected boolean condition() {
+          return newClient.isInitialized();
+        }
+      }.assertCompleted("Must be initialized");
+    }
+    return newClient;
   }
 
   @AfterMethod
