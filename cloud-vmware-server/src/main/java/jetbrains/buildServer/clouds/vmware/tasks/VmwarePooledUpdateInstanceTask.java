@@ -94,7 +94,7 @@ public class VmwarePooledUpdateInstanceTask
     synchronized (this) {
       myClients.remove(client);
       myNewClients.remove(client);
-      if (myClients.isEmpty()){
+      if (myClients.isEmpty() && myNewClients.isEmpty()){
         myHandler.pooledTaskObsolete(this);
       }
     }

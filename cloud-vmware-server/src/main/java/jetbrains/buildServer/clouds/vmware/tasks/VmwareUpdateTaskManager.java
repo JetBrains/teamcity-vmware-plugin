@@ -18,14 +18,10 @@ public class VmwareUpdateTaskManager implements VmwarePooledUpdateInstanceTask.P
   }
 
   @NotNull
-  public VmwareUpdateInstanceTask createUpdateTask(@NotNull final VMWareApiConnector connector,
+  public synchronized VmwareUpdateInstanceTask createUpdateTask(@NotNull final VMWareApiConnector connector,
                                                    @NotNull final VMWareCloudClient client){
-    final AtomicBoolean taskCreated = new AtomicBoolean();
     final VmwarePooledUpdateInstanceTask task =
-      myUpdateTasks.computeIfAbsent(connector.getKey(), k -> {
-        taskCreated.set(true);
-        return createNewPooledTask(connector, client);
-      });
+      myUpdateTasks.computeIfAbsent(connector.getKey(), k -> createNewPooledTask(connector, client));
 
     final VmwareUpdateInstanceTask retval = new VmwareUpdateInstanceTask(connector.getKey(), client, task);
     retval.register();
@@ -39,7 +35,7 @@ public class VmwareUpdateTaskManager implements VmwarePooledUpdateInstanceTask.P
   }
 
   @Override
-  public void pooledTaskObsolete(@NotNull final VmwarePooledUpdateInstanceTask task) {
+  public synchronized void pooledTaskObsolete(@NotNull final VmwarePooledUpdateInstanceTask task) {
     myUpdateTasks.remove(task.getKey());
   }
 }
