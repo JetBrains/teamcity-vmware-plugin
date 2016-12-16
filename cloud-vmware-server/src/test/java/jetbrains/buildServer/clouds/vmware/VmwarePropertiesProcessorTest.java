@@ -32,6 +32,7 @@ public class VmwarePropertiesProcessorTest extends BaseTestCase {
   private Map<String, String> myProperties;
   private Collection<CloudProfile> myProfiles;
   private Map<String, CloudClientEx> myClients;
+  private static final String PROJECT_ID = "MyProjectId";
 
   @BeforeMethod
   @Override
@@ -96,7 +97,7 @@ public class VmwarePropertiesProcessorTest extends BaseTestCase {
                                                                                  "',folder:'cf',pool:'rp',maxInstances:3,behaviour:'FRESH_CLONE', customizationSpec: 'linux'}]"));
     profileData.setParameters(cloudClientParameters);
     final String profileId = "vmw-1";
-    myProfiles.add(new CloudProfileImpl(profileId, profileData));
+    myProfiles.add(new CloudProfileImpl(PROJECT_ID, profileId, profileData));
     myProperties.put(VMWareWebConstants.SERVER_URL, "http://localhost:8080");
     myProperties.put(CloudImageParameters.SOURCE_IMAGES_JSON,
                      "[{'source-id':'image2',sourceVmName:'image2',snapshot:'snap*',folder:'cf',pool:'rp',maxInstances:3,behaviour:'ON_DEMAND_CLONE', " +
@@ -121,7 +122,7 @@ public class VmwarePropertiesProcessorTest extends BaseTestCase {
                                                                               "{'source-id':'image_template',sourceVmName:'image_template', snapshot:'" + VmwareConstants.CURRENT_STATE +
                                                                               "',folder:'cf',pool:'rp',maxInstances:3,behaviour:'FRESH_CLONE', customizationSpec: 'linux'}]"));
       profileData.setParameters(cloudClientParameters);
-      myProfiles.add(new CloudProfileImpl(profileId, profileData));
+      myProfiles.add(new CloudProfileImpl(PROJECT_ID, profileId, profileData));
       myClients.put(profileId, createClient(cloudClientParameters));
     }
     {
@@ -137,7 +138,7 @@ public class VmwarePropertiesProcessorTest extends BaseTestCase {
                                                                               "{'source-id':'image_template2',sourceVmName:'image_template2', snapshot:'" + VmwareConstants.CURRENT_STATE +
                                                                               "',folder:'cf',pool:'rp',maxInstances:3,behaviour:'FRESH_CLONE', customizationSpec: 'linux'}]"));
       profileData.setParameters(cloudClientParameters);
-      myProfiles.add(new CloudProfileImpl(profileId, profileData));
+      myProfiles.add(new CloudProfileImpl(PROJECT_ID, profileId, profileData));
       myClients.put(profileId, createClient(cloudClientParameters));
     }
 
@@ -170,7 +171,7 @@ public class VmwarePropertiesProcessorTest extends BaseTestCase {
                                                                               "{'source-id':'image_template',sourceVmName:'image_template', snapshot:'" + VmwareConstants.CURRENT_STATE +
                                                                               "',folder:'cf',pool:'rp',maxInstances:3,behaviour:'FRESH_CLONE', customizationSpec: 'linux'}]"));
       profileData.setParameters(cloudClientParameters);
-      myProfiles.add(new CloudProfileImpl(profileId, profileData));
+      myProfiles.add(new CloudProfileImpl(PROJECT_ID, profileId, profileData));
       myClients.put(profileId, createClient(cloudClientParameters));
     }
     {
@@ -186,7 +187,7 @@ public class VmwarePropertiesProcessorTest extends BaseTestCase {
                                                                               "{'source-id':'image_template2',sourceVmName:'image_template2', snapshot:'" + VmwareConstants.CURRENT_STATE +
                                                                               "',folder:'cf',pool:'rp',maxInstances:3,behaviour:'FRESH_CLONE', customizationSpec: 'linux'}]"));
       profileData.setParameters(cloudClientParameters);
-      myProfiles.add(new CloudProfileImpl(profileId, profileData));
+      myProfiles.add(new CloudProfileImpl(PROJECT_ID, profileId, profileData));
       myClients.put(profileId, createClient(cloudClientParameters));
     }
     myProperties.put(VMWareWebConstants.SERVER_URL, "http://localhost:8081");
