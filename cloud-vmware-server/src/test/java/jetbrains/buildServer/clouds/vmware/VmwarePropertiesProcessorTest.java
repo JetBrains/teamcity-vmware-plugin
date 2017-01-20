@@ -41,13 +41,18 @@ public class VmwarePropertiesProcessorTest extends BaseTestCase {
     final CloudManagerBase cloudManager = new DummyCloudManagerBase(){
       @NotNull
       @Override
-      public Collection<CloudProfile> listProfiles() {
+      public Collection<CloudProfile> listProjectProfiles(final String projectExtId) {
+        return myProfiles;
+      }
+
+      @Override
+      public Collection<CloudProfile> listAllProfiles() {
         return myProfiles;
       }
 
       @NotNull
       @Override
-      public CloudClientEx getClient(@NotNull final String profileId) {
+      public CloudClientEx getClient(final String projectExtId, @NotNull final String profileId) {
         return myClients.get(profileId);
       }
     };

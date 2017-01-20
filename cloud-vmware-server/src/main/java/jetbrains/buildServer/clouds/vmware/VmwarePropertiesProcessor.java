@@ -1,19 +1,12 @@
 package jetbrains.buildServer.clouds.vmware;
 
 import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import com.google.gson.JsonPrimitive;
 import java.util.*;
-import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 import jetbrains.buildServer.clouds.CloudConstants;
-import jetbrains.buildServer.clouds.CloudImage;
 import jetbrains.buildServer.clouds.CloudImageParameters;
-import jetbrains.buildServer.clouds.CloudProfile;
-import jetbrains.buildServer.clouds.server.CloudManager;
 import jetbrains.buildServer.clouds.server.impl.CloudManagerBase;
-import jetbrains.buildServer.clouds.server.impl.CloudManagerFacade;
 import jetbrains.buildServer.clouds.vmware.web.VMWareWebConstants;
 import jetbrains.buildServer.serverSide.InvalidProperty;
 import jetbrains.buildServer.serverSide.PropertiesProcessor;
@@ -52,14 +45,14 @@ public class VmwarePropertiesProcessor implements PropertiesProcessor {
     final String currentProfileId = properties.get(CloudConstants.PROFILE_ID);
     final Map<String, String> existingImages = new HashMap<>();
 
-     myCloudManager.listProfiles().stream()
-      .filter(p->(VmwareConstants.TYPE.equals(p.getCloudCode())
+     myCloudManager.listAllProfiles().stream()
+                   .filter(p->(VmwareConstants.TYPE.equals(p.getCloudCode())
                   && (currentProfileId == null || !currentProfileId.equals(p.getProfileId()))
                   && (serverURL.equals(p.getParameters().getParameter(VMWareWebConstants.SERVER_URL))))
       )
-      .forEach(p->
+                   .forEach(p->
         myCloudManager
-          .getClient(p.getProfileId())
+          .getClient(p.getProjectExtId(), p.getProfileId())
           .getImages()
           .stream()
           .forEach(i->existingImages.put(i.getId().toUpperCase(), p.getProfileName()))
