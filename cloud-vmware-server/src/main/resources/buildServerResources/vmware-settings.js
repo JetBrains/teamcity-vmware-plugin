@@ -703,10 +703,11 @@ BS.Clouds.VMWareVSphere = BS.Clouds.VMWareVSphere || (function () {
           var self = this;
               //$pools = this.$response.find('ResourcePools:eq(0) ResourcePool'),
               //$folders = this.$response.find('Folders:eq(0) Folder');
-
+          // alert($datacenterId);
           this.$cloneFolder.children('option').each(function(){
             var $folder = self.$response.find('Folder[value="' + this.value + '"]');
             var attr = $j($folder).attr('datacenterId');
+            debugger;
             $j(this).prop('disabled', !!attr && attr != $datacenterId);
           });
           this.$resourcePool.children('option').each(function(){

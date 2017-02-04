@@ -110,6 +110,22 @@
             </configuration>
           </execution>
 
+          <execution>
+            <id>install-yavijava</id>
+            <phase>package</phase>
+            <goals>
+              <goal>install-file</goal>
+            </goals>
+            <configuration>
+              <artifactId>yavijava</artifactId>
+              <groupId>com.toastcoders</groupId>
+              <version>6.0.05_SNAPSHOT</version>
+              <file>${basedir}/lib/yavijava-6.0.05-SNAPSHOT.jar</file>
+              <packaging>jar</packaging>
+              <createChecksum>true</createChecksum>
+            </configuration>
+          </execution>
+
         </executions>
       </plugin>
     </plugins>

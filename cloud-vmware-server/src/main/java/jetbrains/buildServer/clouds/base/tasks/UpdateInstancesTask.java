@@ -41,7 +41,7 @@ public class UpdateInstancesTask< G extends AbstractCloudInstance<T>,
                                 > implements Runnable {
   private static final Logger LOG = Logger.getInstance(UpdateInstancesTask.class.getName());
 
-  private static final long STUCK_STATUS_TIME = 2*60*1000l; // 2 minutes;
+  private static final long STUCK_STATUS_TIME = 10*60*1000l; // 2 minutes;
 
   @NotNull protected final CloudApiConnector<T, G> myConnector;
   @NotNull protected final F myClient;
@@ -84,6 +84,9 @@ public class UpdateInstancesTask< G extends AbstractCloudInstance<T>,
       }
 
       final Map<T, Map<String, AbstractInstance>> groupedInstances = myConnector.fetchInstances(goodImages);
+      groupedInstances.forEach((img, instMap)->{
+        LOG.debug(String.format("Instances for [%s]:[%s]", img.getId(), String.join(",", instMap.keySet())));
+      });
 
       for (T image : goodImages) {
         Map<String, AbstractInstance> realInstances = groupedInstances.get(image);
@@ -111,7 +114,7 @@ public class UpdateInstancesTask< G extends AbstractCloudInstance<T>,
         }
 
         final Collection<G> instances = image.getInstances();
-        List<String> instancesToRemove = new ArrayList<String>();
+        final Set<String> instancesToRemove = new HashSet<>();
         for (final G cloudInstance : instances) {
           try {
             final String instanceName = cloudInstance.getName();
@@ -134,8 +137,9 @@ public class UpdateInstancesTask< G extends AbstractCloudInstance<T>,
             LOG.debug("Error processing VM " + cloudInstance.getName() + ": " + ex.toString());
           }
         }
+        final Map<String, InstanceStatus> statuses = myConnector.getInstanceStatusesIfExists(instancesToRemove);
         for (String instanceName : instancesToRemove) {
-          final InstanceStatus currentStatus = myConnector.getInstanceStatusIfExists(instanceName);
+          final InstanceStatus currentStatus = statuses.get(instanceName);
           if (currentStatus == null) {
             image.removeInstance(instanceName);
           }

@@ -19,6 +19,7 @@
 package jetbrains.buildServer.clouds.vmware.connector;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Pair;
 import com.vmware.vim25.*;
 import com.vmware.vim25.mo.*;
 import com.vmware.vim25.mo.util.MorUtil;
@@ -28,8 +29,13 @@ import java.net.URL;
 import java.net.UnknownHostException;
 import java.rmi.RemoteException;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+import jetbrains.buildServer.Used;
 import jetbrains.buildServer.clouds.CloudException;
 import jetbrains.buildServer.clouds.CloudInstanceUserData;
 import jetbrains.buildServer.clouds.InstanceStatus;
@@ -40,11 +46,11 @@ import jetbrains.buildServer.clouds.vmware.VmwareCloudImage;
 import jetbrains.buildServer.clouds.vmware.VmwareCloudImageDetails;
 import jetbrains.buildServer.clouds.vmware.VmwareCloudInstance;
 import jetbrains.buildServer.clouds.vmware.VmwareConstants;
+import jetbrains.buildServer.clouds.vmware.connector.beans.FolderBean;
+import jetbrains.buildServer.clouds.vmware.connector.beans.ResourcePoolBean;
 import jetbrains.buildServer.clouds.vmware.errors.VmwareCheckedCloudException;
 import jetbrains.buildServer.serverSide.TeamCityProperties;
-import jetbrains.buildServer.util.CollectionsUtil;
 import jetbrains.buildServer.util.StringUtil;
-import jetbrains.buildServer.util.filters.Filter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -136,7 +142,7 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
   }
 
   @Nullable
-  protected <T extends ManagedEntity> T findEntityByIdNameNullable(@NotNull final String idName,
+  protected <T extends ManagedEntity> T findEntityByIdNameNullableOld(@NotNull final String idName,
                                                                    @NotNull final Class<T> instanceType,
                                                                    @Nullable final Datacenter dc) throws VmwareCheckedCloudException {
     try {
@@ -158,15 +164,163 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
   }
 
   @NotNull
-  protected <T extends ManagedEntity> T findEntityByIdName(String idName, Class<T> instanceType) throws VmwareCheckedCloudException  {
-    final T entity = findEntityByIdNameNullable(idName, instanceType, null);
-    if (entity == null) {
+  protected <T extends ManagedEntity> Pair<T,Datacenter> findEntityByIdNameOld(String idName, Class<T> instanceType) throws VmwareCheckedCloudException  {
+    final AtomicReference<VmwareCheckedCloudException> exceptionRef = new AtomicReference<>();
+    final Optional<Pair<T, Datacenter>> any = findAllEntitiesOld(Datacenter.class)
+      .stream()
+      .map(
+        dc -> {
+          try {
+            final T e = findEntityByIdNameNullableOld(idName, instanceType, dc);
+            return (e != null) ? Pair.create(e, dc) : null;
+          } catch (VmwareCheckedCloudException e) {
+            LOG.warnAndDebugDetails("An exception while searching", e);
+            exceptionRef.set(e);
+            return null;
+          }
+        })
+      .filter(Objects::nonNull)
+      .findAny();
+    if (exceptionRef.get() != null) {
+      throw exceptionRef.get();
+    }
+
+    if (!any.isPresent() ) {
       throw new VmwareCheckedCloudException(String.format("Unable to find %s '%s'", instanceType.getSimpleName(), idName));
     }
-    return entity;
+    return any.get();
   }
 
-  protected <T extends ManagedEntity> Collection<T> findAllEntities(Class<T> instanceType) throws VmwareCheckedCloudException  {
+  protected Collection<VmwareInstance> findAllVirtualMachines() throws VmwareCheckedCloudException {
+    final AtomicReference<VmwareCheckedCloudException> exceptionRef = new AtomicReference<>();
+    final Collection<VmwareInstance> result = findWithDatacenter(dc -> {
+      final String datacenterId = dc.getMOR().getVal();
+      try {
+        final ObjectContent[] ocs = new InventoryNavigator(dc).retrieveObjectContents(new String[][]{{
+          "VirtualMachine", "name", "config.extraConfig", "config.template" , "config.changeVersion"
+          , "runtime.powerState", "runtime.bootTime",
+          "guest.ipAddress", "parent"
+        },}, true);
+        return Arrays.stream(ocs).map(oc->{
+          final Map<String, Object> mappedProperties = Arrays.stream(oc.getPropSet()).collect(Collectors.toMap(
+            DynamicProperty::getName, DynamicProperty::getVal
+          ));
+
+          return new VmwareInstance(
+            String.valueOf(mappedProperties.get("name")),
+            oc.getObj().getVal(),
+            ((ArrayOfOptionValue)mappedProperties.get("config.extraConfig")).getOptionValue(),
+            (VirtualMachinePowerState)mappedProperties.get("runtime.powerState"),
+            (Boolean)mappedProperties.get("config.template"),
+            String.valueOf(mappedProperties.get("config.changeVersion")),
+            (Calendar)mappedProperties.get("runtime.bootTime"),
+            (String)mappedProperties.get("guest.ipAddress"),
+            (ManagedObjectReference)mappedProperties.get("parent"),
+            datacenterId
+          );
+        });
+      } catch (RemoteException e) {
+        LOG.warnAndDebugDetails("An error occurred while searching for all folders", e);
+        exceptionRef.set(new VmwareCheckedCloudException(e));
+        return Stream.empty();
+      }
+    });
+    if (exceptionRef.get() != null){
+      throw exceptionRef.get();
+    }
+    LOG.debug(
+      String.format("[%s]. All instances: [%s]"
+        , myProfileId, String.join(",", result
+          .stream()
+          .map(VmwareInstance::getName).collect(Collectors.toList())
+        )
+      )
+    );
+    return result;
+  }
+
+  protected Map<String, VmwareInstance> findAllVirtualMachinesAsMap() throws VmwareCheckedCloudException{
+    return findAllVirtualMachines().stream().collect(Collectors.toMap(VmwareInstance::getName, Function.identity()));
+  }
+
+  @NotNull
+  protected VmwareInstance findVirtualMachineOrThrowException(String vmName) throws VmwareCheckedCloudException {
+    final VmwareInstance vmwareInstance = findAllVirtualMachinesAsMap().get(vmName);
+    if (vmwareInstance == null) {
+      throw new VmwareCheckedCloudException(String.format("Unable to find VirtualMachine by name '%s'", vmName));
+    }
+    return vmwareInstance;
+  }
+
+  protected Collection<FolderBean> findAllFolders() throws VmwareCheckedCloudException {
+    final AtomicReference<VmwareCheckedCloudException> exceptionRef = new AtomicReference<>();
+    final Collection<FolderBean> result = findWithDatacenter(dc -> {
+      try {
+        final ObjectContent[] ocs = new InventoryNavigator(dc).retrieveObjectContents(new String[][]{{
+          "Folder", "name", "childType", "parent"
+        },}, true);
+        final String datacenterId = dc.getMOR().getVal();
+        return Arrays.stream(ocs).map(oc -> {
+          final Map<String, Object> mappedProperties = Arrays.stream(oc.getPropSet()).collect(Collectors.toMap(
+            DynamicProperty::getName, DynamicProperty::getVal
+          ));
+
+          return new FolderBean(oc.obj.getVal(),
+                                String.valueOf(mappedProperties.get("name")),
+                                ((ArrayOfString)mappedProperties.get("childType")).getString(),
+                                (ManagedObjectReference)mappedProperties.get("parent"),
+                                datacenterId
+          );
+        });
+      } catch (RemoteException e) {
+        LOG.warnAndDebugDetails("An error occurred while searching for all folders", e);
+        exceptionRef.set(new VmwareCheckedCloudException(e));
+        return Stream.empty();
+      }
+    });
+    if (exceptionRef.get() != null){
+      throw exceptionRef.get();
+    }
+    return result;
+  }
+
+  protected Collection<ResourcePoolBean> findAllResourcePools() throws VmwareCheckedCloudException {
+    final AtomicReference<VmwareCheckedCloudException> exceptionRef = new AtomicReference<>();
+    final Collection<ResourcePoolBean> result = findWithDatacenter(dc -> {
+      try {
+        final String datacenterId = dc.getMOR().getVal();
+        final ObjectContent[] ocs = new InventoryNavigator(dc).retrieveObjectContents(new String[][]{{
+          "ResourcePool", "name", "parent"
+        },}, true);
+        return Arrays.stream(ocs).map(oc -> {
+          final Map<String, Object> mappedProperties = Arrays.stream(oc.getPropSet()).collect(Collectors.toMap(
+            DynamicProperty::getName, DynamicProperty::getVal
+          ));
+
+          return new ResourcePoolBean(oc.obj.getVal(),
+                                      String.valueOf(mappedProperties.get("name")),
+                                      (ManagedObjectReference)mappedProperties.get("parent"),
+                                      datacenterId
+          );
+        });
+      } catch (RemoteException e) {
+        LOG.warnAndDebugDetails("An error occurred while searching for all resource pools", e);
+        exceptionRef.set(new VmwareCheckedCloudException(e));
+        return Stream.empty();
+      }
+    });
+    if (exceptionRef.get() != null){
+      throw exceptionRef.get();
+    }
+    return result;
+  }
+
+  private <T extends VmwareManagedEntity> Collection<T> findWithDatacenter(
+    Function<Datacenter, Stream<T>> mapper) throws VmwareCheckedCloudException {
+    return findAllEntitiesOld(Datacenter.class).stream().flatMap(mapper).collect(Collectors.toList());
+  }
+
+  protected <T extends ManagedEntity> Collection<T> findAllEntitiesOld(Class<T> instanceType) throws VmwareCheckedCloudException  {
     final ManagedEntity[] managedEntities;
     try {
       managedEntities = new InventoryNavigator(getRootFolder())
@@ -181,7 +335,7 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
     return retval;
   }
 
-  protected <T extends ManagedEntity> Map<String, T> findAllEntitiesAsMap(Class<T> instanceType) throws VmwareCheckedCloudException  {
+  protected <T extends ManagedEntity> Map<String, T> findAllEntitiesAsMapOld(Class<T> instanceType) throws VmwareCheckedCloudException  {
     final ManagedEntity[] managedEntities;
     try {
       managedEntities = new InventoryNavigator(getRootFolder())
@@ -200,23 +354,10 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
 
   @NotNull
   public Map<String, VmwareInstance> getVirtualMachines(boolean filterClones) throws VmwareCheckedCloudException {
-    final Map<String, VirtualMachine> allVms = findAllEntitiesAsMap(VirtualMachine.class);
-    final Map<String, VmwareInstance> filteredVms = new HashMap<String, VmwareInstance>();
-    for (String vmName : allVms.keySet()) {
-      final VirtualMachine vm = allVms.get(vmName);
-      final VmwareInstance vmInstance = new VmwareInstance(vm);
-      if (!vmInstance.isInitialized()) {
-        if (!filterClones) {
-          filteredVms.put(vmInstance.getName(), vmInstance);
-        }
-        continue;
-      }
-
-      if (!vmInstance.isClone() || !filterClones) {
-        filteredVms.put(vmName, vmInstance);
-      }
-    }
-    return filteredVms;
+    final Collection<VmwareInstance> allVms = findAllVirtualMachines();
+    return allVms.stream().filter(
+      vm -> vm.isInitialized() && (!filterClones || !vm.isClone())
+    ).collect(Collectors.toMap(VmwareInstance::getName, Function.identity()));
   }
 
   @Override
@@ -232,11 +373,17 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
   public <R extends AbstractInstance> Map<VmwareCloudImage, Map<String, R>> fetchInstances(@NotNull final Collection<VmwareCloudImage> images) throws VmwareCheckedCloudException {
     Map<VmwareCloudImage, Map<String, R>> result = new HashMap<>();
     List<VmwareCloudImage> unprocessed = new ArrayList<>();
+
+    final Map<String, VmwareInstance> allVmsAsMap = findAllVirtualMachines()
+      .stream()
+      .collect(Collectors.toMap(VmwareInstance::getName, Function.identity()));
     for (VmwareCloudImage image: images) {
       final VmwareCloudImageDetails imageDetails = image.getImageDetails();
       if(imageDetails.getBehaviour().isUseOriginal()){
-        final VirtualMachine vmEntity = findEntityByIdName(imageDetails.getSourceVmName(), VirtualMachine.class);
-        final VmwareInstance vmInstance = new VmwareInstance(vmEntity);
+        final VmwareInstance vmInstance = allVmsAsMap.get(imageDetails.getSourceVmName());
+        if (vmInstance == null){
+          throw new VmwareCheckedCloudException(String.format("Unable to find VirtualMachine '%s'", imageDetails.getSourceVmName()));
+        }
         result.put(image, Collections.singletonMap(image.getName(), (R)vmInstance));
       } else {
         unprocessed.add(image);
@@ -250,10 +397,8 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
       imageNameMap.put(image.getName(), image);
     }
 
-    final Collection<VirtualMachine> virtualMachines = findAllEntities(VirtualMachine.class);
-    for (VirtualMachine vm : virtualMachines) {
+    for (VmwareInstance vmInstance : allVmsAsMap.values()) {
       try {
-        final VmwareInstance vmInstance = new VmwareInstance(vm);
         final String instanceImage = vmInstance.getImageName();
         VmwareCloudImage image = imageNameMap.get(instanceImage);
         if (image != null) {
@@ -275,12 +420,7 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
           imageInstancesMap.put(vmInstance.getName(), (R)vmInstance);
         }
       } catch (Exception ex) {
-        final ManagedObjectReference mor = vm.getMOR();
-        if (mor != null) {
-          LOG.debug("Unable to process " + mor.getType() + " " + mor.getVal());
-        } else {
-          LOG.debug("Null MOR passed");
-        }
+        LOG.debug("Unable to process VirtualMachine" + vmInstance.getId());
       }
     }
 
@@ -316,63 +456,50 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
     }
   }
 
+  @Used("Tests")
   public Map<String, String> getVMParams(@NotNull final String vmName) throws VmwareCheckedCloudException {
-    final Map<String, String> map = new HashMap<String, String>();
-    VirtualMachine vm = findEntityByIdName(vmName, VirtualMachine.class);
-    final VirtualMachineConfigInfo config = vm.getConfig();
-    if (config != null) {
-      for (OptionValue val : config.getExtraConfig()) {
-        map.put(val.getKey(), String.valueOf(val.getValue()));
-      }
-    }
-
-    return map;
+    return findVirtualMachineOrThrowException(vmName).getProperties();
   }
 
   @NotNull
-  public Map<String, VmwareManagedEntity> getFolders() throws VmwareCheckedCloudException {
-    final Collection<Folder> allFolders = CollectionsUtil.filterCollection(findAllEntities(Folder.class), new Filter<Folder>() {
-      public boolean accept(@NotNull final Folder folder) {
-        return canContainVMs(folder);
-      }
-    });
+  public Map<String, FolderBean> getFolders() throws VmwareCheckedCloudException {
+    return findAllFolders().stream().filter(this::canContainVMs).collect(
+      Collectors.toMap(FolderBean::getUniqueName, Function.identity())
+    );
 
-    final boolean containsDuplicates = containsDuplicates(allFolders);
-    final Map<String, VmwareManagedEntity> filteredMap = new HashMap<String, VmwareManagedEntity>();
-
-    for (Folder folder : allFolders) {
-      String folderName = VmwareUtils.getEntityDisplayName(folder);
-      if (containsDuplicates) {
-        folderName = getFullFolderPath(folder);
-      }
-      filteredMap.put(folderName, new VmwareManagedEntityImpl(folder));
-    }
-    return filteredMap;
+    //final boolean containsDuplicates = containsDuplicates(allFolders);
+    //final Map<String, VmwareManagedEntity> filteredMap = new HashMap<String, VmwareManagedEntity>();
+    //
+    //for (FolderBean folder : allFolders) {
+    //  String folderName = VmwareUtils.getEntityDisplayName(folder);
+    //  if (containsDuplicates) {
+    //    folderName = getFullFolderPath(folder);
+    //  }
+    //  filteredMap.put(folderName, new FolderBean());
+    //}
   }
 
   @NotNull
-  public Map<String, VmwareManagedEntity> getResourcePools() throws VmwareCheckedCloudException {
-    final Collection<ResourcePool> allPools = CollectionsUtil.filterCollection(findAllEntities(ResourcePool.class), new Filter<ResourcePool>() {
-      public boolean accept(@NotNull final ResourcePool resourcePool) {
-        return !isSpecial(resourcePool);
-      }
-    });
-    boolean containsDuplicates = containsDuplicates(allPools);
-    Map<String, VmwareManagedEntity> retval = new HashMap<String, VmwareManagedEntity>();
-    for (ResourcePool pool : allPools) {
-
-      String poolName = pool.getName();
-
-      if (containsDuplicates) {
-        poolName = getFullResourcePoolPath(pool);
-      }
-      retval.put(poolName, new VmwareManagedEntityImpl(pool));
-    }
-    return retval;
+  public Map<String, ResourcePoolBean> getResourcePools() throws VmwareCheckedCloudException {
+    return findAllResourcePools().stream().filter(rp->!isSpecial(rp)).collect(
+      Collectors.toMap(ResourcePoolBean::getUniqueName, Function.identity())
+    );
+    //boolean containsDuplicates = containsDuplicates(allPools);
+    //Map<String, VmwareManagedEntity> retval = new HashMap<String, VmwareManagedEntity>();
+    //for (ResourcePool pool : allPools) {
+    //
+    //  String poolName = pool.getName();
+    //
+    //  if (containsDuplicates) {
+    //    poolName = getFullResourcePoolPath(pool);
+    //  }
+    //  retval.put(poolName, new VmwareManagedEntityImpl(pool));
+    //}
+    //return retval;
   }
 
 
-  private boolean canContainVMs(final Folder folder) {
+  private boolean canContainVMs(final FolderBean folder) {
     final String[] childTypes = folder.getChildType();
     for (String childType : childTypes) {
       if (VM_TYPE.equals(childType)) {
@@ -382,54 +509,57 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
     return false;
   }
 
-  private String getFullFolderPath(final Folder folder){
-    final String folderMORType = folder.getMOR().getType();
-    final StringBuilder pathBuilder = new StringBuilder(VmwareUtils.getEntityDisplayName(folder));
-    ManagedEntity entity = folder.getParent();
-    if (isSpecial(folder)){ // we'll skip the first parent
-      entity = entity.getParent();
-    }
-    while (entity != null){
-      boolean skip = false;
-      if (entity.getMOR().getType().equals(folderMORType)){
-        skip = true;
-        if (entity.getParent() != null && !entity.getName().equals("vm") && folderMORType.equals(entity.getParent().getMOR().getType())) {
-          final String[] childTypes = ((Folder)entity).getChildType();
-          for (String childType : childTypes) {
-            if (VirtualMachine.class.getSimpleName().equals(childType)) {
-              skip = false;
-              break;
-            }
-          }
-        }
-      }
-      if (!skip)
-        pathBuilder.insert(0, String.format("%s/", entity.getName()));
-      entity = entity.getParent();
-    }
-    return pathBuilder.toString();
+  private String getFullFolderPath(final FolderBean folder){
+    return folder.getName();
+    //TODO fix
+    //final String folderMORType = folder.getMOR().getType();
+    //final StringBuilder pathBuilder = new StringBuilder(VmwareUtils.getEntityDisplayName(folder));
+    //ManagedEntity entity = folder.getParent();
+    //if (isSpecial(folder)){ // we'll skip the first parent
+    //  entity = entity.getParent();
+    //}
+    //while (entity != null){
+    //  boolean skip = false;
+    //  if (entity.getMOR().getType().equals(folderMORType)){
+    //    skip = true;
+    //    if (entity.getParent() != null && !entity.getName().equals("vm") && folderMORType.equals(entity.getParent().getMOR().getType())) {
+    //      final String[] childTypes = ((Folder)entity).getChildType();
+    //      for (String childType : childTypes) {
+    //        if (VirtualMachine.class.getSimpleName().equals(childType)) {
+    //          skip = false;
+    //          break;
+    //        }
+    //      }
+    //    }
+    //  }
+    //  if (!skip)
+    //    pathBuilder.insert(0, String.format("%s/", entity.getName()));
+    //  entity = entity.getParent();
+    //}
+    //return pathBuilder.toString();
   }
 
-  private String getFullResourcePoolPath(final ResourcePool pool){
-    final String resPool = pool.getMOR().getType();
-    StringBuilder pathBuilder = new StringBuilder(pool.getName());
-    ManagedEntity entity = pool.getParent();
-    while (entity != null){
-      boolean skip = false;
-      if ("Resources".equals(entity.getName()) && entity.getParent() != null && !resPool.equals(entity.getParent().getMOR().getVal())) {
-        skip = true;
-      }
-      if (entity.getMOR().getType().equals(Folder.class.getSimpleName())){
-        skip = true;
-      }
-
-      if (!skip) {
-        pathBuilder.insert(0, String.format("%s/", entity.getName()));
-      }
-
-      entity = entity.getParent();
-    }
-    return pathBuilder.toString();
+  private String getFullResourcePoolPath(final ResourcePoolBean pool){
+    return pool.getName();
+    //final String resPool = pool.getMOR().getType();
+    //StringBuilder pathBuilder = new StringBuilder(pool.getName());
+    //ManagedEntity entity = pool.getParent();
+    //while (entity != null){
+    //  boolean skip = false;
+    //  if ("Resources".equals(entity.getName()) && entity.getParent() != null && !resPool.equals(entity.getParent().getMOR().getVal())) {
+    //    skip = true;
+    //  }
+    //  if (entity.getMOR().getType().equals(Folder.class.getSimpleName())){
+    //    skip = true;
+    //  }
+    //
+    //  if (!skip) {
+    //    pathBuilder.insert(0, String.format("%s/", entity.getName()));
+    //  }
+    //
+    //  entity = entity.getParent();
+    //}
+    //return pathBuilder.toString();
   }
 
 
@@ -443,7 +573,7 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
   }
 
   public Map<String, VirtualMachineSnapshotTree> getSnapshotList(final String vmName) throws VmwareCheckedCloudException {
-    return getSnapshotList(findEntityByIdName(vmName, VirtualMachine.class));
+    return getSnapshotList(findEntityByIdNameOld(vmName, VirtualMachine.class).getFirst());
   }
 
   @Nullable
@@ -455,9 +585,9 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
     return getLatestSnapshot(snapshotNameMask, snapshotList);
   }
 
-  private boolean containsDuplicates(Collection<? extends ManagedEntity> entities){
+  private boolean containsDuplicates(Collection<? extends VmwareManagedEntity> entities){
     final Set<String> names = new HashSet<String>();
-    for (ManagedEntity entity : entities) {
+    for (VmwareManagedEntity entity : entities) {
       if (!names.add(entity.getName())){
         return true;
       }
@@ -491,7 +621,7 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
   @Nullable
   public Task startInstance(@NotNull final VmwareCloudInstance instance, @NotNull final String agentName, @NotNull final CloudInstanceUserData userData)
     throws VmwareCheckedCloudException, InterruptedException {
-    final VirtualMachine vm = findEntityByIdName(instance.getInstanceId(), VirtualMachine.class);
+    final VirtualMachine vm = findEntityByIdNameOld(instance.getInstanceId(), VirtualMachine.class).getFirst();
     if (vm != null) {
       try {
         return vm.powerOnVM_Task(null);
@@ -506,7 +636,7 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
 
   public Task reconfigureInstance(@NotNull final VmwareCloudInstance instance, @NotNull final String agentName, @NotNull final CloudInstanceUserData userData)
     throws VmwareCheckedCloudException {
-    final VirtualMachine vm = findEntityByIdName(instance.getInstanceId(), VirtualMachine.class);
+    final VirtualMachine vm = findEntityByIdNameOld(instance.getInstanceId(), VirtualMachine.class).getFirst();
     final VirtualMachineConfigSpec spec = new VirtualMachineConfigSpec();
     spec.setExtraConfig(new OptionValue[]{
       createOptionValue(AGENT_NAME, agentName),
@@ -528,8 +658,10 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
   public Task cloneAndStartVm(@NotNull final VmwareCloudInstance instance) throws VmwareCheckedCloudException {
     final VmwareCloudImageDetails imageDetails = instance.getImage().getImageDetails();
     LOG.info(String.format("Attempting to clone VM %s into %s", imageDetails.getSourceVmName(), instance.getName()));
-    final VirtualMachine vm = findEntityByIdName(imageDetails.getSourceVmName(), VirtualMachine.class);
-    final Datacenter datacenter = getParentOfType(vm, Datacenter.class);
+
+    final Pair<VirtualMachine, Datacenter> pair = findEntityByIdNameOld(imageDetails.getSourceVmName(), VirtualMachine.class);
+    final VirtualMachine vm = pair.getFirst();
+    final Datacenter datacenter = pair.getSecond();
 
     final VirtualMachineConfigSpec config = new VirtualMachineConfigSpec();
     final VirtualMachineCloneSpec cloneSpec = new VirtualMachineCloneSpec();
@@ -540,7 +672,7 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
     cloneSpec.setConfig(config);
     final boolean disableOsCustomization = TeamCityProperties.getBoolean(VmwareConstants.DISABLE_OS_CUSTOMIZATION);
     if (!VmwareConstants.DEFAULT_RESOURCE_POOL.equals(imageDetails.getResourcePoolId())) {
-      final ResourcePool pool = findEntityByIdNameNullable(imageDetails.getResourcePoolId(), ResourcePool.class, datacenter);
+      final ResourcePool pool = findEntityByIdNameNullableOld(imageDetails.getResourcePoolId(), ResourcePool.class, datacenter);
       if (pool != null) {
         location.setPool(pool.getMOR());
       } else {
@@ -617,7 +749,7 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
     }
 
     try {
-      final Folder folder = findEntityByIdNameNullable(imageDetails.getFolderId(), Folder.class, datacenter);
+      final Folder folder = findEntityByIdNameNullableOld(imageDetails.getFolderId(), Folder.class, datacenter);
       if (folder != null) {
         return vm.cloneVM_Task(folder, instance.getName(), cloneSpec);
       } else {
@@ -653,7 +785,7 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
   public Task stopInstance(@NotNull final VmwareCloudInstance instance) {
     instance.setStatus(InstanceStatus.STOPPING);
     try {
-      VirtualMachine vm = findEntityByIdName(instance.getInstanceId(), VirtualMachine.class);
+      VirtualMachine vm = findEntityByIdNameOld(instance.getInstanceId(), VirtualMachine.class).getFirst();
       if (getInstanceStatus(vm) == InstanceStatus.STOPPED) {
         return emptyTask();
       }
@@ -710,15 +842,16 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
         }
 
         public InstanceStatus waitForStatus(long maxWaitTime, long delay) throws RemoteException, InterruptedException {
+          //TODO rework
           try {
-            VirtualMachine vmCopy = findEntityByIdName(instance.getInstanceId(), VirtualMachine.class);
+            VirtualMachine vmCopy = findEntityByIdNameOld(instance.getInstanceId(), VirtualMachine.class).getFirst();
             final long startHere = System.currentTimeMillis();
             while (getInstanceStatus(vmCopy) != InstanceStatus.STOPPED && (System.currentTimeMillis() - shutdownStartTime) < SHUTDOWN_TIMEOUT) {
               if ((System.currentTimeMillis() - startHere) >= maxWaitTime) {
                 break;
               }
               Thread.sleep(delay);
-              vmCopy = findEntityByIdName(instance.getInstanceId(), VirtualMachine.class);
+              vmCopy = findEntityByIdNameOld(instance.getInstanceId(), VirtualMachine.class).getFirst();
             }
             return getInstanceStatus(vmCopy);
           } catch (VmwareCheckedCloudException e) {
@@ -769,7 +902,7 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
   public Task deleteInstance(final VmwareCloudInstance instance) {
     LOG.info("Will delete instance " + instance.getName());
     try {
-      final VirtualMachine vm = findEntityByIdName(instance.getInstanceId(), VirtualMachine.class);
+      final VirtualMachine vm = findEntityByIdNameOld(instance.getInstanceId(), VirtualMachine.class).getFirst();
       return vm.destroy_Task();
     } catch (Exception e) {
       LOG.warn("An exception during deleting instance " + instance.getName(), e);
@@ -779,7 +912,7 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
   }
 
   public void restartInstance(VmwareCloudInstance instance) throws VmwareCheckedCloudException {
-    final VirtualMachine vm = findEntityByIdName(instance.getInstanceId(), VirtualMachine.class);
+    final VirtualMachine vm = findEntityByIdNameOld(instance.getInstanceId(), VirtualMachine.class).getFirst();
     try {
       vm.rebootGuest();
     } catch (RemoteException e) {
@@ -790,7 +923,7 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
 
   public boolean checkVirtualMachineExists(@NotNull final String vmName) {
     try {
-      return findEntityByIdNameNullable(vmName, VirtualMachine.class, null) != null;
+      return findEntityByIdNameNullableOld(vmName, VirtualMachine.class, null) != null;
     } catch (VmwareCheckedCloudException e) {
       return false;
     }
@@ -809,8 +942,7 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
 
   @NotNull
   public VmwareInstance getInstanceDetails(String instanceName) throws VmwareCheckedCloudException {
-    final VirtualMachine entity = findEntityByIdName(instanceName, VirtualMachine.class);
-    return new VmwareInstance(entity);
+    return findVirtualMachineOrThrowException(instanceName);
   }
 
   @Nullable
@@ -858,18 +990,17 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
     return getKey(myInstanceURL, myUsername);
   }
 
-  @Nullable
+  @NotNull
   @Override
-  public InstanceStatus getInstanceStatusIfExists(@NotNull final String instanceName) {
-    try {
-      final VirtualMachine vm = findEntityByIdNameNullable(instanceName, VirtualMachine.class, null);
-      if (vm == null) {
-        return null;
-      }
-      return getInstanceStatus(vm);
+  public Map<String, InstanceStatus> getInstanceStatusesIfExists(@NotNull Set<String> instanceNames) {
+  try {
+    return findAllVirtualMachines()
+      .stream()
+      .filter(vm->instanceNames.contains(vm.getName()))
+      .collect(Collectors.toMap(VmwareInstance::getName, VmwareInstance::getInstanceStatus));
     } catch (VmwareCheckedCloudException e) {
       LOG.debug(e.toString());
-      return InstanceStatus.ERROR;
+      return instanceNames.stream().collect(Collectors.toMap(Function.identity(), in-> InstanceStatus.ERROR));
     }
   }
 
@@ -878,7 +1009,7 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
     final VmwareCloudImageDetails imageDetails = image.getImageDetails();
     final String vmName = imageDetails.getSourceVmName();
     try {
-      final VirtualMachine vm = findEntityByIdNameNullable(vmName, VirtualMachine.class, null);
+      final VirtualMachine vm = findEntityByIdNameNullableOld(vmName, VirtualMachine.class, null);
       if (vm == null){
         return new TypedCloudErrorInfo[]{new TypedCloudErrorInfo("NoVM", "No such VM: " + vmName)};
       }

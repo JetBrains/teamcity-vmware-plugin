@@ -1,5 +1,6 @@
 package jetbrains.buildServer.clouds.vmware;
 
+import com.vmware.vim25.mo.Datacenter;
 import com.vmware.vim25.mo.Task;
 import java.io.File;
 import java.rmi.RemoteException;
@@ -60,9 +61,10 @@ public class VmwareCloudImageTest extends BaseTestCase {
 
     myImageDetails = new VmwareCloudImageDetails(imageParameters);
 
-    FakeModel.instance().addVM("srcVM");
-    FakeModel.instance().addFolder("folderId");
-    FakeModel.instance().addResourcePool("rpId");
+    FakeModel.instance().addDatacenter("dc2");
+    FakeModel.instance().addFolder("folderId").setParent("dc2", Datacenter.class);
+    FakeModel.instance().addVM("srcVM").setParentFolder("folderId");
+    FakeModel.instance().addResourcePool("rpId").setParentFolder("folderId");
 
     FakeModel.instance().addVMSnapshot("srcVM", "srcVMSnap");
 

@@ -3,6 +3,7 @@ package jetbrains.buildServer.clouds.vmware.connector;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
+import java.util.Set;
 import jetbrains.buildServer.clouds.InstanceStatus;
 import jetbrains.buildServer.clouds.base.connector.AbstractInstance;
 import jetbrains.buildServer.clouds.base.connector.CloudApiConnector;
@@ -43,10 +44,12 @@ public class DummyApiConnector implements CloudApiConnector<VmwareCloudImage, Vm
     return myKey;
   }
 
-  @Nullable
+  @NotNull
   @Override
-  public InstanceStatus getInstanceStatusIfExists(@NotNull final String instanceName) {
-    return null;
+  public Map<String, InstanceStatus> getInstanceStatusesIfExists(@NotNull final Set<String> instanceNames) {
+    throw new UnsupportedOperationException("DummyApiConnector.getInstanceStatusesIfExists");
+
+    //return null;
   }
 
   @NotNull

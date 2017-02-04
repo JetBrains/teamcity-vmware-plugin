@@ -20,6 +20,7 @@ package jetbrains.buildServer.clouds.vmware.web;
 
 import com.intellij.openapi.diagnostic.Logger;
 import java.net.URL;
+import java.text.SimpleDateFormat;
 import java.util.*;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -118,15 +119,13 @@ public class VMWareEditProfileController extends BaseFormXmlController {
       Element vmElement = new Element("VirtualMachine");
       vmElement.setAttribute("name", vm.getName());
       vmElement.setAttribute("template", String.valueOf(vm.isReadonly()));
-      if (vm.getDatacenterId() != null) {
-        vmElement.setAttribute("datacenterId", vm.getDatacenterId());
-      }
+      vmElement.setAttribute("datacenterId", vm.getDatacenterId());
       element.addContent(vmElement);
     }
     return element;
   }
 
-  private Element getFoldersAsElement(Map<String, VmwareManagedEntity> folders){
+  private Element getFoldersAsElement(Map<String, ? extends VmwareManagedEntity> folders){
     final Element element = new Element("Folders");
     final Set<String> folderNames = folders.keySet();
     final List<String> sortedList = getIgnoreCaseSortedList(folderNames);
@@ -141,7 +140,7 @@ public class VMWareEditProfileController extends BaseFormXmlController {
     return element;
   }
 
-  private Element getResourcePoolsAsElement(Map<String, VmwareManagedEntity> resourcePools){
+  private Element getResourcePoolsAsElement(Map<String, ? extends VmwareManagedEntity> resourcePools){
     final Element element = new Element("ResourcePools");
     final List<String> sortedList = getIgnoreCaseSortedList(resourcePools.keySet());
     final Element defaultPoolElem = new Element("ResourcePool");

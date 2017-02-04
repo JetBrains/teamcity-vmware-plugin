@@ -220,6 +220,7 @@ public class VmwareCloudImage extends AbstractCloudImage<VmwareCloudInstance, Vm
           startVM(instance, cloudInstanceUserData);
         }
       } catch (Exception ex) {
+        ex.printStackTrace();
         LOG.warnAndDebugDetails("Unexpected error while trying to start vSphere cloud instance", ex);
       }
     });
@@ -341,7 +342,7 @@ public class VmwareCloudImage extends AbstractCloudImage<VmwareCloudInstance, Vm
         consideredInstances.add(instance.getInstanceId());
     }
     final boolean canStartMore =  consideredInstances.size() < myImageDetails.getMaxInstances();
-    LOG.debug(String.format("Instances count: %d %s, can start more: %s",
+    LOG.debug(String.format("[%s] Instances count: %d %s, can start more: %s", myImageDetails.getSourceId(),
                            consideredInstances.size(), Arrays.toString(consideredInstances.toArray()), String.valueOf(canStartMore)));
     return canStartMore;
   }
@@ -422,6 +423,7 @@ public class VmwareCloudImage extends AbstractCloudImage<VmwareCloudInstance, Vm
       if (th != null) {
         myInstance.updateErrors(TypedCloudErrorInfo.fromException(th));
         LOG.warnAndDebugDetails("An error occurred: " + th.getLocalizedMessage() + " during processing " + myInstance.getName(), th);
+        th.printStackTrace();
       } else {
         myInstance.updateErrors(new TypedCloudErrorInfo("Unknown error during processing instance " + myInstance.getName()));
         LOG.warn("Unknown error during processing " + myInstance.getName());

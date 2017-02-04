@@ -6,10 +6,16 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.rmi.RemoteException;
 import java.util.*;
+import java.util.stream.Collectors;
 import jetbrains.buildServer.clouds.base.errors.CheckedCloudException;
 import jetbrains.buildServer.clouds.server.CloudInstancesProvider;
 import jetbrains.buildServer.clouds.vmware.connector.VMWareApiConnectorImpl;
+import jetbrains.buildServer.clouds.vmware.connector.VmwareInstance;
+import jetbrains.buildServer.clouds.vmware.connector.beans.FolderBean;
+import jetbrains.buildServer.clouds.vmware.connector.beans.ResourcePoolBean;
+import jetbrains.buildServer.clouds.vmware.connector.beans.VirtualMachineBean;
 import jetbrains.buildServer.clouds.vmware.errors.VmwareCheckedCloudException;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -33,7 +39,7 @@ public class FakeApiConnector extends VMWareApiConnectorImpl {
   }
 
   @Override
-  protected <T extends ManagedEntity> T findEntityByIdNameNullable(final String name, final Class<T> instanceType, Datacenter dc) throws VmwareCheckedCloudException {
+  protected <T extends ManagedEntity> T findEntityByIdNameNullableOld(final String name, final Class<T> instanceType, Datacenter dc) throws VmwareCheckedCloudException {
     test();
     final T t;
     if (instanceType == Folder.class){
@@ -42,6 +48,8 @@ public class FakeApiConnector extends VMWareApiConnectorImpl {
       t =  (T)FakeModel.instance().getResourcePool(name);
     } else if (instanceType == VirtualMachine.class){
       t =  (T)FakeModel.instance().getVirtualMachine(name);
+    } else if (instanceType == Datacenter.class){
+      t =  (T)FakeModel.instance().getDatacenter(name);
     } else {
       throw new IllegalArgumentException("Unknown entity type: " + instanceType.getCanonicalName());
     }
@@ -49,7 +57,7 @@ public class FakeApiConnector extends VMWareApiConnectorImpl {
   }
 
   @Override
-  protected <T extends ManagedEntity> Collection<T> findAllEntities(final Class<T> instanceType) throws VmwareCheckedCloudException {
+  protected <T extends ManagedEntity> Collection<T> findAllEntitiesOld(final Class<T> instanceType) throws VmwareCheckedCloudException {
     test();
     if (instanceType == Folder.class){
       return (Collection<T>)FakeModel.instance().getFolders().values();
@@ -57,12 +65,14 @@ public class FakeApiConnector extends VMWareApiConnectorImpl {
       return (Collection<T>)FakeModel.instance().getResourcePools().values();
     } else if (instanceType == VirtualMachine.class){
       return (Collection<T>)FakeModel.instance().getVms().values();
+    } else if (instanceType == Datacenter.class) {
+      return (Collection<T>)FakeModel.instance().getDatacenters().values();
     }
     throw new IllegalArgumentException("Unknown entity type: " + instanceType.getCanonicalName());
   }
 
   @Override
-  protected <T extends ManagedEntity> Map<String, T> findAllEntitiesAsMap(final Class<T> instanceType) throws VmwareCheckedCloudException {
+  protected <T extends ManagedEntity> Map<String, T> findAllEntitiesAsMapOld(final Class<T> instanceType) throws VmwareCheckedCloudException {
     test();
     if (instanceType == Folder.class){
       return (Map<String, T>)FakeModel.instance().getFolders();
@@ -70,8 +80,35 @@ public class FakeApiConnector extends VMWareApiConnectorImpl {
       return (Map<String, T>)FakeModel.instance().getResourcePools();
     } else if (instanceType == VirtualMachine.class){
       return (Map<String, T>)FakeModel.instance().getVms();
+    } else if (instanceType == Datacenter.class) {
+      return (Map<String, T>)FakeModel.instance().getDatacenters();
     }
     throw new IllegalArgumentException("Unknown entity type: " + instanceType.getCanonicalName());
+  }
+
+  @NotNull
+  @Override
+  public Collection<VmwareInstance> findAllVirtualMachines() throws VmwareCheckedCloudException {
+    return findAllEntitiesAsMapOld(VirtualMachine.class)
+      .entrySet().stream()
+      .map(e->new VmwareInstance(e.getValue(), "datacenter-10"))
+      .collect(Collectors.toList());
+  }
+
+  @NotNull
+  @Override
+  public Map<String, FolderBean> getFolders() throws VmwareCheckedCloudException {
+    return findAllEntitiesAsMapOld(Folder.class)
+      .entrySet().stream()
+      .collect(Collectors.toMap(Map.Entry::getKey, e->new FolderBean(e.getValue())));
+  }
+
+  @NotNull
+  @Override
+  public Map<String, ResourcePoolBean> getResourcePools() throws VmwareCheckedCloudException {
+    return findAllEntitiesAsMapOld(ResourcePool.class)
+      .entrySet().stream()
+      .collect(Collectors.toMap(Map.Entry::getKey, e->new ResourcePoolBean(e.getValue())));
   }
 
   @Override

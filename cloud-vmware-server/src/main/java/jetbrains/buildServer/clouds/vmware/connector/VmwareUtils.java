@@ -22,6 +22,11 @@ import com.vmware.vim25.mo.Datacenter;
 import com.vmware.vim25.mo.Folder;
 import com.vmware.vim25.mo.ManagedEntity;
 import com.vmware.vim25.mo.ResourcePool;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import jetbrains.buildServer.clouds.vmware.connector.beans.FolderBean;
+import jetbrains.buildServer.clouds.vmware.connector.beans.ResourcePoolBean;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,36 +40,23 @@ public class VmwareUtils {
   private static final String RESPOOL_TYPE = ResourcePool.class.getSimpleName();
   private static final String SPEC_FOLDER = "vm";
   private static final String SPEC_RESPOOL = "Resources";
+  private ConcurrentMap<String, String> myDatacenterCache = new ConcurrentHashMap<>();
 
-  @Nullable
-  static Datacenter getDatacenter(ManagedEntity entity){
-    try {
-      while (entity != null) {
-        entity = entity.getParent();
-        if (entity != null && entity instanceof Datacenter) {
-          return (Datacenter)entity;
-        }
-      }
-    } catch (Exception ex){}
-    return null;
-  }
-
-  static String getEntityDisplayName(@NotNull final ManagedEntity entity){
-    if (entity instanceof Folder) {
-      final Folder folder = (Folder) entity;
-      if (isSpecial(folder)) {
-        return folder.getParent().getName();
+  static String getEntityDisplayName(@NotNull final VmwareManagedEntity entity){
+    if (entity instanceof FolderBean) {
+      if (isSpecial((FolderBean)entity)) {
+        return "Special";
       }
     }
     return entity.getName();
   }
 
-  static boolean isSpecial(@NotNull final ResourcePool pool){
-    return SPEC_RESPOOL.equals(pool.getName()) && pool.getParent() != null && !RESPOOL_TYPE.equals(pool.getParent().getMOR().getType());
+  static boolean isSpecial(@NotNull final ResourcePoolBean pool){
+    return SPEC_RESPOOL.equals(pool.getName()) && pool.getParentRef() != null && !RESPOOL_TYPE.equals(pool.getParentRef().getType());
   }
 
-  static boolean isSpecial(@NotNull final Folder folder){
-    return SPEC_FOLDER.equals(folder.getName()) && folder.getParent() != null && !FOLDER_TYPE.equals(folder.getParent().getMOR().getType());
+  static boolean isSpecial(@NotNull final FolderBean folder){
+    return SPEC_FOLDER.equals(folder.getName()) && folder.getParentRef() != null && !FOLDER_TYPE.equals(folder.getParentRef().getType());
   }
 
 }

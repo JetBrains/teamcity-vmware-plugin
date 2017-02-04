@@ -89,7 +89,7 @@ public class FakeVirtualMachine extends VirtualMachine {
 
     myCustomUserData = new HashMap<String, String>();
     enableGuestTools();
-    myParent = null;
+    myParent = new ManagedEntity(getServerConnection(), createVMMor("parent"));
   }
 
   @Override
@@ -130,6 +130,7 @@ public class FakeVirtualMachine extends VirtualMachine {
   public Task cloneVM_Task(final Folder folder, final String name, final VirtualMachineCloneSpec spec)
     throws RemoteException {
     final FakeVirtualMachine newVm = FakeModel.instance().addVM(name, false, spec);
+    newVm.setParentFolder(folder.getName());
     final VirtualMachineConfigInfo oldConfig = newVm.myConfigInfo.get();
     newVm.myConfigInfo.set(null);
     newVm.myCustomizationSpec = spec.getCustomization();

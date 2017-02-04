@@ -32,6 +32,8 @@ import jetbrains.buildServer.clouds.base.connector.CloudApiConnector;
 import jetbrains.buildServer.clouds.vmware.VmwareCloudImage;
 import jetbrains.buildServer.clouds.vmware.VmwareCloudImageDetails;
 import jetbrains.buildServer.clouds.vmware.VmwareCloudInstance;
+import jetbrains.buildServer.clouds.vmware.connector.beans.FolderBean;
+import jetbrains.buildServer.clouds.vmware.connector.beans.ResourcePoolBean;
 import jetbrains.buildServer.clouds.vmware.errors.VmwareCheckedCloudException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -60,10 +62,10 @@ public interface VMWareApiConnector extends CloudApiConnector<VmwareCloudImage, 
   Map<String, String> getVMParams(@NotNull final String vmName) throws VmwareCheckedCloudException;
 
   @NotNull
-  Map<String, VmwareManagedEntity> getFolders() throws VmwareCheckedCloudException;
+  Map<String, FolderBean> getFolders() throws VmwareCheckedCloudException;
 
   @NotNull
-  Map<String, VmwareManagedEntity> getResourcePools() throws VmwareCheckedCloudException;
+  Map<String, ResourcePoolBean> getResourcePools() throws VmwareCheckedCloudException;
 
   @NotNull
   Map<String, VirtualMachineSnapshotTree> getSnapshotList(String vmName) throws VmwareCheckedCloudException;

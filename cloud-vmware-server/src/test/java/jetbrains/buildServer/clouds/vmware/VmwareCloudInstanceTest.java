@@ -12,6 +12,7 @@ import jetbrains.buildServer.clouds.base.connector.CloudAsyncTaskExecutor;
 import jetbrains.buildServer.clouds.base.types.CloneBehaviour;
 import jetbrains.buildServer.clouds.vmware.connector.VMWareApiConnector;
 import jetbrains.buildServer.clouds.vmware.stubs.FakeApiConnector;
+import jetbrains.buildServer.clouds.vmware.stubs.FakeDatacenter;
 import jetbrains.buildServer.clouds.vmware.stubs.FakeModel;
 import jetbrains.buildServer.clouds.vmware.stubs.FakeVirtualMachine;
 import org.testng.annotations.AfterMethod;
@@ -51,9 +52,10 @@ public class VmwareCloudInstanceTest extends BaseTestCase {
     imageParameters.setParameter("maxInstances", "5");
     myImageDetails = new VmwareCloudImageDetails(imageParameters);
 
-    FakeModel.instance().addVM("mySource");
+    final FakeDatacenter dc2 = FakeModel.instance().addDatacenter("dc2");
+    FakeModel.instance().addFolder("myFolder").setParent(dc2);
+    FakeModel.instance().addVM("mySource").setParentFolder("myFolder");
     FakeModel.instance().addVMSnapshot("mySource", "mySourceSnapshot");
-    FakeModel.instance().addFolder("myFolder");
     FakeModel.instance().addResourcePool("myPool");
     myImage = new VmwareCloudImage(myApiConnector, myImageDetails, myStatusTask, myIdxStorage);
   }

@@ -19,21 +19,13 @@
 package jetbrains.buildServer.clouds.vmware.connector;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.vmware.vim25.OptionValue;
-import com.vmware.vim25.VirtualMachineConfigInfo;
-import com.vmware.vim25.VirtualMachinePowerState;
-import com.vmware.vim25.VirtualMachineRuntimeInfo;
+import com.vmware.vim25.*;
 import com.vmware.vim25.mo.Datacenter;
-import com.vmware.vim25.mo.Task;
 import com.vmware.vim25.mo.VirtualMachine;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.Callable;
+import java.util.*;
+import jetbrains.buildServer.Used;
 import jetbrains.buildServer.clouds.InstanceStatus;
 import jetbrains.buildServer.clouds.base.connector.AbstractInstance;
-import jetbrains.buildServer.clouds.base.connector.AsyncCloudTask;
 import jetbrains.buildServer.util.StringUtil;
 import jetbrains.buildServer.util.impl.Lazy;
 import org.jetbrains.annotations.NotNull;
@@ -47,54 +39,73 @@ import org.jetbrains.annotations.Nullable;
 public class VmwareInstance extends AbstractInstance implements VmwareManagedEntity {
   private static final Logger LOG = Logger.getInstance(VmwareInstance.class.getName());
 
-  @NotNull private final VirtualMachine myVm;
   private final String myId;
-  private final Lazy<String> myDatacenterIdLazy;
+  @NotNull private final OptionValue[] myExtraConfig;
+  @NotNull private final VirtualMachinePowerState myPowerState;
+  @NotNull private final boolean myIsTemplate;
+  @NotNull private final String myChangeVersion;
+  @Nullable private final Calendar myBootTime;
+  @Nullable private final String myIpAddress;
+  @NotNull private final ManagedObjectReference myParent;
+  @NotNull private final String myDatacenterId;
   private final Map<String, String> myProperties;
   private final String myName;
 
-  public VmwareInstance(@NotNull final VirtualMachine vm) {
-    myVm = vm;
-    VirtualMachineConfigInfo configInfo = vm.getConfig();
-    if (configInfo == null) {
-      myName = vm.getName();
-    } else {
-      myName = configInfo.getName();
-    }
+  @Used("Tests")
+  public VmwareInstance(@NotNull final VirtualMachine vm, String datacenterId){
+    this(vm.getName(),
+         vm.getMOR().getVal(),
+         vm.getConfig() == null ? new OptionValue[0] : vm.getConfig().getExtraConfig(),
+         vm.getRuntime().getPowerState(),
+         vm.getConfig() == null ? false : vm.getConfig().isTemplate(),
+         vm.getConfig() == null ? "" : vm.getConfig().getChangeVersion(),
+         vm.getRuntime().getBootTime(),
+         vm.getGuest().getIpAddress(),
+         vm.getParent().getMOR(),
+         datacenterId);
+  }
 
-    myProperties = configInfo == null ? null : extractProperties(configInfo);
-    myId = vm.getMOR().getVal();
-    myDatacenterIdLazy = new Lazy<String>() {
-      @Nullable
-      @Override
-      protected String createValue() {
-        return calculateDatacenterId();
-      }
-    };
+  public VmwareInstance(@NotNull final String name,
+                        @NotNull final String id,
+                        @NotNull final OptionValue[] extraConfig,
+                        @NotNull final VirtualMachinePowerState powerState,
+                        @NotNull final boolean isTemplate,
+                        @NotNull final String changeVersion,
+                        @Nullable final Calendar bootTime,
+                        @Nullable final String ipAddress,
+                        @NotNull final ManagedObjectReference parent,
+                        @NotNull final String datacenterId
+                        ) {
+    myName = name;
+    myProperties = extractProperties(extraConfig);
+    myId = id;
+    myExtraConfig = extraConfig;
+    myPowerState = powerState;
+    myIsTemplate = isTemplate;
+    myChangeVersion = changeVersion;
+    myBootTime = bootTime;
+    myIpAddress = ipAddress;
+    myParent = parent;
+    myDatacenterId = datacenterId;
   }
 
 
   @Nullable
-  private static Map<String, String> extractProperties(@NotNull final VirtualMachineConfigInfo configInfo) {
+  private  Map<String, String> extractProperties(@NotNull final OptionValue[] configInfo) {
     try {
-      final OptionValue[] extraConfig = configInfo.getExtraConfig();
       Map<String, String> retval = new HashMap<String, String>();
-      for (OptionValue optionValue : extraConfig) {
+      for (OptionValue optionValue : configInfo) {
         retval.put(optionValue.getKey(), String.valueOf(optionValue.getValue()));
       }
       return retval;
     } catch (Exception ex){
-      LOG.info("Unable to retrieve instance properties for " + configInfo.getName() + ": " + ex.toString());
+      LOG.info("Unable to retrieve instance properties for " + myName  + ": " + ex.toString());
       return null;
     }
   }
 
   public boolean isPoweredOn() {
-    final VirtualMachineRuntimeInfo runtime = myVm.getRuntime();
-    if (runtime == null) {
-      return false;
-    }
-    return runtime.getPowerState() == VirtualMachinePowerState.poweredOn;
+    return myPowerState == VirtualMachinePowerState.poweredOn;
   }
 
   @NotNull
@@ -115,51 +126,35 @@ public class VmwareInstance extends AbstractInstance implements VmwareManagedEnt
 
   @Nullable
   public Date getStartDate() {
-    final VirtualMachineRuntimeInfo runtime = myVm.getRuntime();
-    if (runtime == null || runtime.getPowerState() != VirtualMachinePowerState.poweredOn) {
+    if (myPowerState != VirtualMachinePowerState.poweredOn) {
       return null;
     }
-    final Calendar bootTime = runtime.getBootTime();
-    return bootTime == null ? null : bootTime.getTime();
+    return myBootTime == null ? null : myBootTime.getTime();
   }
 
   @Nullable
   public String getIpAddress() {
-    return myVm.getGuest() == null ? null : myVm.getGuest().getIpAddress();
+    return myIpAddress;
   }
 
   @Override
   public InstanceStatus getInstanceStatus() {
-    if (myVm.getRuntime() == null || myVm.getRuntime().getPowerState() == VirtualMachinePowerState.poweredOff) {
+    if (myPowerState == VirtualMachinePowerState.poweredOff) {
       return InstanceStatus.STOPPED;
     }
-    if (myVm.getRuntime().getPowerState() == VirtualMachinePowerState.poweredOn) {
+    if (myPowerState == VirtualMachinePowerState.poweredOn) {
       return InstanceStatus.RUNNING;
     }
     return InstanceStatus.UNKNOWN;
   }
 
   public boolean isReadonly() {
-    final VirtualMachineConfigInfo config = myVm.getConfig();
-    if (config == null) {
-      return true;
-    }
-
-    return config.isTemplate();
+    return myIsTemplate;
   }
 
   @Nullable
   public String getChangeVersion() {
-    final VirtualMachineConfigInfo config = myVm.getConfig();
-    return config == null ? null : config.getChangeVersion();
-  }
-
-  public AsyncCloudTask deleteInstance(){
-    return new VmwareTaskWrapper(new Callable<Task>() {
-      public Task call() throws Exception {
-        return myVm.destroy_Task();
-      }
-    }, "Delete instance " + getName());
+    return myChangeVersion;
   }
 
   @Nullable
@@ -174,16 +169,7 @@ public class VmwareInstance extends AbstractInstance implements VmwareManagedEnt
 
   @Nullable
   public String getDatacenterId() {
-    return myDatacenterIdLazy.getValue();
-  }
-
-  private String calculateDatacenterId() {
-    final Datacenter datacenter = VmwareUtils.getDatacenter(myVm);
-    if (datacenter != null) {
-      return datacenter.getMOR().getVal();
-    } else {
-      return null;
-    }
+    return myDatacenterId;
   }
 
   public String getImageName(){
@@ -191,6 +177,10 @@ public class VmwareInstance extends AbstractInstance implements VmwareManagedEnt
 
     // for backward compatibility
     return nickname == null ? getProperty(VMWareApiConnector.TEAMCITY_VMWARE_IMAGE_SOURCE_VM_NAME) : nickname;
+  }
+
+  public Map<String, String> getProperties() {
+    return Collections.unmodifiableMap(myProperties);
   }
 
   @Nullable

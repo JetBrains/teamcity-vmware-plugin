@@ -1,5 +1,6 @@
 package jetbrains.buildServer.clouds.vmware;
 
+import com.intellij.openapi.util.Pair;
 import com.intellij.util.WaitFor;
 import com.vmware.vim25.CustomizationLinuxOptions;
 import com.vmware.vim25.CustomizationSpec;
@@ -155,8 +156,8 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
       @Override
       public Map<String, VmwareInstance> getVirtualMachines(boolean filterClones) throws VmwareCheckedCloudException {
         final Map<String, VmwareInstance> instances = super.getVirtualMachines(filterClones);
-        instances.put("image_template", new VmwareInstance(new FakeVirtualMachine("image_template", true, false)));
-        instances.put("image1", new VmwareInstance(new FakeVirtualMachine("image1", false, false)));
+        instances.put("image_template", new VmwareInstance(new FakeVirtualMachine("image_template", true, false), "datacenter-10"));
+        instances.put("image1", new VmwareInstance(new FakeVirtualMachine("image1", false, false), "datacenter-10"));
         return instances;
       }
     };
@@ -510,30 +511,30 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
     final AtomicLong lastApiCallTime = new AtomicLong(0);
     myFakeApi = new FakeApiConnector(TEST_SERVER_UUID, PROFILE_ID){
       @Override
-      protected <T extends ManagedEntity> Collection<T> findAllEntities(final Class<T> instanceType) throws VmwareCheckedCloudException {
+      protected <T extends ManagedEntity> Collection<T> findAllEntitiesOld(final Class<T> instanceType) throws VmwareCheckedCloudException {
         lastApiCallTime.set(System.currentTimeMillis());
         if (failure.get()){
           throw new VmwareCheckedCloudException("Cannot connect");
         }
-        return super.findAllEntities(instanceType);
+        return super.findAllEntitiesOld(instanceType);
       }
 
       @Override
-      protected <T extends ManagedEntity> Map<String, T> findAllEntitiesAsMap(final Class<T> instanceType) throws VmwareCheckedCloudException {
+      protected <T extends ManagedEntity> Map<String, T> findAllEntitiesAsMapOld(final Class<T> instanceType) throws VmwareCheckedCloudException {
         lastApiCallTime.set(System.currentTimeMillis());
         if (failure.get()){
           throw new VmwareCheckedCloudException("Cannot connect");
         }
-        return super.findAllEntitiesAsMap(instanceType);
+        return super.findAllEntitiesAsMapOld(instanceType);
       }
 
       @Override
-      protected <T extends ManagedEntity> T findEntityByIdName(final String name, final Class<T> instanceType) throws VmwareCheckedCloudException {
+      protected <T extends ManagedEntity> Pair<T,Datacenter> findEntityByIdNameOld(final String name, final Class<T> instanceType) throws VmwareCheckedCloudException {
         lastApiCallTime.set(System.currentTimeMillis());
         if (failure.get()){
           throw new VmwareCheckedCloudException("Cannot connect");
         }
-        return super.findEntityByIdName(name, instanceType);
+        return super.findEntityByIdNameOld(name, instanceType);
       }
     };
     recreateClient(250);
@@ -671,21 +672,21 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
     myFakeApi = new FakeApiConnector(TEST_SERVER_UUID, PROFILE_ID){
 
       @Override
-      protected <T extends ManagedEntity> Collection<T> findAllEntities(final Class<T> instanceType) throws VmwareCheckedCloudException {
+      protected <T extends ManagedEntity> Collection<T> findAllEntitiesOld(final Class<T> instanceType) throws VmwareCheckedCloudException {
         try {Thread.sleep(1000);} catch (InterruptedException e) {}
-        return super.findAllEntities(instanceType);
+        return super.findAllEntitiesOld(instanceType);
       }
 
       @Override
-      protected <T extends ManagedEntity> Map<String, T> findAllEntitiesAsMap(final Class<T> instanceType) throws VmwareCheckedCloudException {
+      protected <T extends ManagedEntity> Map<String, T> findAllEntitiesAsMapOld(final Class<T> instanceType) throws VmwareCheckedCloudException {
         try {Thread.sleep(1000);} catch (InterruptedException e) {}
-        return super.findAllEntitiesAsMap(instanceType);
+        return super.findAllEntitiesAsMapOld(instanceType);
       }
 
       @Override
-      protected <T extends ManagedEntity> T findEntityByIdNameNullable(final String name, final Class<T> instanceType, final Datacenter dc) throws VmwareCheckedCloudException {
+      protected <T extends ManagedEntity> T findEntityByIdNameNullableOld(final String name, final Class<T> instanceType, final Datacenter dc) throws VmwareCheckedCloudException {
         try {Thread.sleep(1000);} catch (InterruptedException e) {}
-        return super.findEntityByIdNameNullable(name, instanceType, dc);
+        return super.findEntityByIdNameNullableOld(name, instanceType, dc);
       }
 
       @Override
@@ -900,19 +901,22 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
   }
 
   public void handle_instances_deleted_in_the_middle_of_check() throws MalformedURLException, VmwareCheckedCloudException {
+    if (true)
+      throw new SkipException("Not relevant, because we now retrieve all data at once, without additional calls");
     final Set<String> instances2RemoveAfterGet = new HashSet<>();
 
     myFakeApi = new FakeApiConnector(TEST_SERVER_UUID, PROFILE_ID){
+      @NotNull
       @Override
-      protected <T extends ManagedEntity> Collection<T> findAllEntities(final Class<T> instanceType) throws VmwareCheckedCloudException {
-        final Collection<T> entities = super.findAllEntities(instanceType);
-        final Collection<T> result = new ArrayList<>();
-        for (T entity : entities) {
-          if (instances2RemoveAfterGet.contains(entity.getName()) && entity instanceof FakeVirtualMachine){
-            final FakeVirtualMachine fvm = (FakeVirtualMachine) entity;
+      protected <T extends ManagedEntity> Map<String, T> findAllEntitiesAsMapOld(final Class<T> instanceType) throws VmwareCheckedCloudException {
+        final Map<String, T> entities = super.findAllEntitiesAsMapOld(instanceType);
+        final Map<String, T> result = new HashMap<String, T>();
+        for (Map.Entry<String, T> entry : entities.entrySet()) {
+          if (instances2RemoveAfterGet.contains(entry.getKey()) && entry.getValue() instanceof FakeVirtualMachine){
+            final FakeVirtualMachine fvm = (FakeVirtualMachine) entry.getValue();
             fvm.setGone(true);
           }
-          result.add(entity);
+          result.put(entry.getKey(), entry.getValue());
         }
         return result;
       }
@@ -971,12 +975,12 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
       myFakeApi = new FakeApiConnector(TEST_SERVER_UUID, PROFILE_ID) {
 
         @Override
-        protected <T extends ManagedEntity> T findEntityByIdNameNullable(final String name, final Class<T> instanceType, final Datacenter dc) throws VmwareCheckedCloudException {
+        protected <T extends ManagedEntity> T findEntityByIdNameNullableOld(final String name, final Class<T> instanceType, final Datacenter dc) throws VmwareCheckedCloudException {
           try {
             if (shouldLock.get()) {
               lock.lock(); // will stuck here
             }
-            return super.findEntityByIdNameNullable(name, instanceType, dc);
+            return super.findEntityByIdNameNullableOld(name, instanceType, dc);
           } finally {
             if (shouldLock.get())
               lock.unlock();
@@ -984,12 +988,12 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
         }
 
         @Override
-        protected <T extends ManagedEntity> Collection<T> findAllEntities(final Class<T> instanceType) throws VmwareCheckedCloudException {
+        protected <T extends ManagedEntity> Collection<T> findAllEntitiesOld(final Class<T> instanceType) throws VmwareCheckedCloudException {
           try {
             if (shouldLock.get()) {
               lock.lock(); // will stuck here
             }
-            return super.findAllEntities(instanceType);
+            return super.findAllEntitiesOld(instanceType);
           } finally {
             if (shouldLock.get())
             lock.unlock();
@@ -997,12 +1001,12 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
         }
 
         @Override
-        protected <T extends ManagedEntity> Map<String, T> findAllEntitiesAsMap(final Class<T> instanceType) throws VmwareCheckedCloudException {
+        protected <T extends ManagedEntity> Map<String, T> findAllEntitiesAsMapOld(final Class<T> instanceType) throws VmwareCheckedCloudException {
           try {
             if (shouldLock.get()) {
               lock.lock(); // will stuck here
             }
-            return super.findAllEntitiesAsMap(instanceType);
+            return super.findAllEntitiesAsMapOld(instanceType);
           } finally {
             if (shouldLock.get())
             lock.unlock();

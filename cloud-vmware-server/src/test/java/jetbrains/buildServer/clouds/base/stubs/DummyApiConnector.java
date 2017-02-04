@@ -1,8 +1,6 @@
 package jetbrains.buildServer.clouds.base.stubs;
 
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -46,12 +44,13 @@ public class DummyApiConnector implements CloudApiConnector<DummyCloudImage, Dum
     return "dummy_connector";
   }
 
-  @Nullable
+  @NotNull
   @Override
-  public InstanceStatus getInstanceStatusIfExists(@NotNull final String instanceName) {
-    checkLatch("getInstanceStatusIfExists");
-    final DummyRealInstance instance = myRealInstanceMap.get(instanceName);
-    return instance == null ? null : instance.getInstanceStatus();
+  public Map<String, InstanceStatus> getInstanceStatusesIfExists(@NotNull final Set<String> instanceNames) {
+    checkLatch("getInstanceStatusesIfExists");
+    //final DummyRealInstance instance = myRealInstanceMap.get(instanceName);
+    //return instance == null ? null : instance.getInstanceStatus();
+    return Collections.emptyMap();
   }
 
   @NotNull

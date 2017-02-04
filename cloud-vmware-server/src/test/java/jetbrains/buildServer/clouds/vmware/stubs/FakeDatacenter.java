@@ -56,7 +56,7 @@ public class FakeDatacenter extends Datacenter {
     return new ManagedObjectReference(){
       @Override
       public String getVal() {
-        return "datacenter-" + name.hashCode();
+        return "datacenter-10";
       }
 
       @Override

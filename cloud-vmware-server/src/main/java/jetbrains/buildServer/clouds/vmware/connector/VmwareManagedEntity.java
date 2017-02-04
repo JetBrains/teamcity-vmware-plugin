@@ -27,9 +27,16 @@ import org.jetbrains.annotations.Nullable;
  *         Time: 4:43 PM
  */
 public interface VmwareManagedEntity {
-  @NotNull String getId();
+  @NotNull
+  String getId();
 
-  @NotNull String getName();
+  @NotNull
+  String getName();
 
-  @Nullable String getDatacenterId();
+  @Nullable
+  String getDatacenterId();
+
+  default String getUniqueName() {
+    return String.format("%s(%s)", getName(), getId());
+  }
 }
