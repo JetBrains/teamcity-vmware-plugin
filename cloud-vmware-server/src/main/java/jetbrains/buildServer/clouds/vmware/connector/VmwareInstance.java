@@ -46,7 +46,7 @@ public class VmwareInstance extends AbstractInstance implements VmwareManagedEnt
   @NotNull private final String myChangeVersion;
   @Nullable private final Calendar myBootTime;
   @Nullable private final String myIpAddress;
-  @NotNull private final ManagedObjectReference myParent;
+  @Nullable private final ManagedObjectReference myParent;
   @NotNull private final String myDatacenterId;
   private final Map<String, String> myProperties;
   private final String myName;
@@ -73,7 +73,7 @@ public class VmwareInstance extends AbstractInstance implements VmwareManagedEnt
                         @NotNull final String changeVersion,
                         @Nullable final Calendar bootTime,
                         @Nullable final String ipAddress,
-                        @NotNull final ManagedObjectReference parent,
+                        @Nullable final ManagedObjectReference parent,
                         @NotNull final String datacenterId
                         ) {
     myName = name;
