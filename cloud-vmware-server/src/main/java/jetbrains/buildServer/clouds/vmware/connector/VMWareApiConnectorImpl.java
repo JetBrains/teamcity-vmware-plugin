@@ -201,24 +201,30 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
           , "runtime.powerState", "runtime.bootTime",
           "guest.ipAddress", "parent"
         },}, true);
-        return Arrays.stream(ocs).map(oc->{
-          final Map<String, Object> mappedProperties = Arrays.stream(oc.getPropSet()).collect(Collectors.toMap(
-            DynamicProperty::getName, DynamicProperty::getVal
-          ));
+        return Arrays.stream(ocs)
+                     .map(oc->{
+            final Map<String, Object> mappedProperties = Arrays.stream(oc.getPropSet()).collect(Collectors.toMap(
+              DynamicProperty::getName, DynamicProperty::getVal
+            ));
 
-          return new VmwareInstance(
-            String.valueOf(mappedProperties.get("name")),
-            oc.getObj().getVal(),
-            ((ArrayOfOptionValue)mappedProperties.get("config.extraConfig")).getOptionValue(),
-            (VirtualMachinePowerState)mappedProperties.get("runtime.powerState"),
-            (Boolean)mappedProperties.get("config.template"),
-            String.valueOf(mappedProperties.get("config.changeVersion")),
-            (Calendar)mappedProperties.get("runtime.bootTime"),
-            (String)mappedProperties.get("guest.ipAddress"),
-            (ManagedObjectReference)mappedProperties.get("parent"),
-            datacenterId
-          );
-        });
+          final String vmName = String.valueOf(mappedProperties.get("name"));
+          try {
+            return new VmwareInstance(
+              vmName,
+              oc.getObj().getVal(),
+              ((ArrayOfOptionValue)mappedProperties.get("config.extraConfig")).getOptionValue(),
+              (VirtualMachinePowerState)mappedProperties.get("runtime.powerState"),
+              (Boolean)mappedProperties.get("config.template"),
+              String.valueOf(mappedProperties.get("config.changeVersion")),
+              (Calendar)mappedProperties.get("runtime.bootTime"),
+              (String)mappedProperties.get("guest.ipAddress"),
+              (ManagedObjectReference)mappedProperties.get("parent"),
+              datacenterId
+            );
+          } catch (Exception ex) {
+            LOG.warnAndDebugDetails("Unable to process VM with name '" + vmName + "'", ex);
+            return null;
+          }}).filter(Objects::nonNull);
       } catch (RemoteException e) {
         LOG.warnAndDebugDetails("An error occurred while searching for all folders", e);
         exceptionRef.set(new VmwareCheckedCloudException(e));
