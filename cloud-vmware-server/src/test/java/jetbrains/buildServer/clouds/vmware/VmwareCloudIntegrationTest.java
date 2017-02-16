@@ -958,13 +958,13 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
     assertEquals(1, getImageByName("image2").getInstances().size());
   }
 
-  public void do_not_catch_instances_from_another_profile() throws MalformedURLException {
+  public void do_catch_instances_from_another_profile() throws MalformedURLException {
     startNewInstanceAndWait("image2");
     recreateClient();
     assertEquals(1, getImageByName("image2").getInstances().size());
     myFakeApi = new FakeApiConnector(TEST_SERVER_UUID, "cp2");
     recreateClient();
-    assertEquals(0, getImageByName("image2").getInstances().size());
+    assertEquals(1, getImageByName("image2").getInstances().size());
   }
 
   public void start_instance_should_not_block_ui() throws MalformedURLException, InterruptedException, CheckedCloudException {
