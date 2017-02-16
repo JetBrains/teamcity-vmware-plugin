@@ -222,7 +222,7 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
               datacenterId
             );
           } catch (Exception ex) {
-            LOG.warnAndDebugDetails("Unable to process VM with name '" + vmName + "'", ex);
+            LOG.debug("Unable to process VM with name '" + vmName + "'. Not all properties are available");
             return null;
           }}).filter(Objects::nonNull);
       } catch (RemoteException e) {
