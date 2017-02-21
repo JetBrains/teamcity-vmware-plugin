@@ -32,7 +32,9 @@ import jetbrains.buildServer.controllers.BaseFormXmlController;
 import jetbrains.buildServer.controllers.BasePropertiesBean;
 import jetbrains.buildServer.controllers.admin.projects.PluginPropertiesUtil;
 import jetbrains.buildServer.serverSide.SBuildServer;
+import jetbrains.buildServer.serverSide.agentPools.AgentPool;
 import jetbrains.buildServer.serverSide.agentPools.AgentPoolManager;
+import jetbrains.buildServer.serverSide.agentPools.AgentPoolUtil;
 import jetbrains.buildServer.web.openapi.*;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -70,10 +72,15 @@ public class VMWareEditProfileController extends BaseFormXmlController {
   @Override
   protected ModelAndView doGet(@NotNull final HttpServletRequest request, @NotNull final HttpServletResponse response) {
     final ModelAndView mv = new ModelAndView(myJspPath);
+    final String projectId = request.getParameter("projectId");
     mv.getModel().put("refreshablePath", myHtmlPath);
     mv.getModel().put("refreshSnapshotsPath", mySnapshotsPath);
     mv.getModel().put("resPath", myPluginDescriptor.getPluginResourcesPath());
-    mv.getModel().put("agentPools", myAgentPoolManager.getAllAgentPools());
+
+    final List<AgentPool> pools = new ArrayList<>();
+    pools.add(AgentPoolUtil.DUMMY_PROJECT_POOL);
+    pools.addAll(myAgentPoolManager.getProjectOwnedAgentPools(projectId));
+    mv.getModel().put("agentPools", pools);
 
     return mv;
   }
