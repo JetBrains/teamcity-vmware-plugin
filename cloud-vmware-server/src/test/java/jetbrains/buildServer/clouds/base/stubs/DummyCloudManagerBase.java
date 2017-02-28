@@ -13,28 +13,28 @@ import org.jetbrains.annotations.Nullable;
  */
 public class DummyCloudManagerBase implements CloudManagerBase {
   @Override
-  public boolean isIntegrationEnabled(@NotNull final String projectExtId) {
+  public boolean isIntegrationEnabled(@NotNull final String projectId) {
     throw new UnsupportedOperationException("DummyCloudManagerBase.isIntegrationEnabled");
 
     //return false;
   }
 
   @Override
-  public void updateProjectProfiles(final String projectExtId) {
+  public void updateProjectProfiles(final String projectId) {
     throw new UnsupportedOperationException("DummyCloudManagerBase.updateProjectProfiles");
 
 
   }
 
   @Override
-  public void updateProfile(final String projectExtId, final CloudProfile cloudProfile) {
+  public void updateProfile(final String projectId, final CloudProfile cloudProfile) {
     throw new UnsupportedOperationException("DummyCloudManagerBase.updateProfile");
 
     //
   }
 
   @Override
-  public void disposeClient(final String projectExtId, final CloudClientEx cloudClient) {
+  public void disposeClient(final String projectId, final CloudClientEx cloudClient) {
     throw new UnsupportedOperationException("DummyCloudManagerBase.disposeClient");
 
     //
@@ -42,8 +42,8 @@ public class DummyCloudManagerBase implements CloudManagerBase {
 
   @NotNull
   @Override
-  public Collection<CloudProfile> listProjectProfiles(final String projectExtId) {
-    throw new UnsupportedOperationException("DummyCloudManagerBase.listProjectProfiles");
+  public Collection<CloudProfile> listProfilesByProjectExtId(final String projectExtId) {
+    throw new UnsupportedOperationException("DummyCloudManagerBase.listProfilesByProjectExtId");
 
     //return null;
   }
@@ -72,7 +72,7 @@ public class DummyCloudManagerBase implements CloudManagerBase {
 
   @Nullable
   @Override
-  public CloudProfile findProfileById(final String projectExtId, @NotNull final String profileId) {
+  public CloudProfile findProfileById(final String projectId, @NotNull final String profileId) {
     throw new UnsupportedOperationException("DummyCloudManagerBase.findProfileById");
 
     //return null;
@@ -88,22 +88,29 @@ public class DummyCloudManagerBase implements CloudManagerBase {
 
   @Nullable
   @Override
-  public CloudClientEx getClientIfExists(final String projectExtId, @NotNull final String profileId) {
+  public CloudClientEx getClientIfExists(final String projectId, @NotNull final String profileId) {
     throw new UnsupportedOperationException("DummyCloudManagerBase.getClientIfExists");
+
+    //return null;
+  }
+
+  @Override
+  public CloudClientEx getClientIfExistsByProjectExtId(final String projectExtId, @NotNull final String profileId) {
+    throw new UnsupportedOperationException("DummyCloudManagerBase.getClientIfExistsByProjectExtId");
 
     //return null;
   }
 
   @NotNull
   @Override
-  public CloudClientEx getClient(final String projectExtId, @NotNull final String profileId) {
+  public CloudClientEx getClient(final String projectId, @NotNull final String profileId) {
     throw new UnsupportedOperationException("DummyCloudManagerBase.getClient");
 
     //return null;
   }
 
   @Override
-  public void setIntegrationEnabled(final String projectExtId, final boolean isEnabled) {
+  public void setIntegrationEnabled(final String projectId, final boolean isEnabled) {
     throw new UnsupportedOperationException("DummyCloudManagerBase.setIntegrationEnabled");
 
     //

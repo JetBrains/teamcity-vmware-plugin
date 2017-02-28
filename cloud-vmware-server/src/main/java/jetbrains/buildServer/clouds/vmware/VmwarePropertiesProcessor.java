@@ -52,7 +52,7 @@ public class VmwarePropertiesProcessor implements PropertiesProcessor {
       )
                    .forEach(p->
         myCloudManager
-          .getClient(p.getProjectExtId(), p.getProfileId())
+          .getClient(p.getProjectId(), p.getProfileId())
           .getImages()
           .stream()
           .forEach(i->existingImages.put(i.getId().toUpperCase(), p.getProfileName()))

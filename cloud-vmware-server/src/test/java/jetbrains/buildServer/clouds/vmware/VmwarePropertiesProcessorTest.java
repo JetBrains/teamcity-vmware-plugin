@@ -32,7 +32,7 @@ public class VmwarePropertiesProcessorTest extends BaseTestCase {
   private Map<String, String> myProperties;
   private Collection<CloudProfile> myProfiles;
   private Map<String, CloudClientEx> myClients;
-  private static final String PROJECT_ID = "MyProjectId";
+  private static final String PROJECT_ID = "project4";
 
   @BeforeMethod
   @Override
@@ -41,7 +41,7 @@ public class VmwarePropertiesProcessorTest extends BaseTestCase {
     final CloudManagerBase cloudManager = new DummyCloudManagerBase(){
       @NotNull
       @Override
-      public Collection<CloudProfile> listProjectProfiles(final String projectExtId) {
+      public Collection<CloudProfile> listProfilesByProjectExtId(final String projectExtId) {
         return myProfiles;
       }
 
@@ -52,7 +52,7 @@ public class VmwarePropertiesProcessorTest extends BaseTestCase {
 
       @NotNull
       @Override
-      public CloudClientEx getClient(final String projectExtId, @NotNull final String profileId) {
+      public CloudClientEx getClient(final String projectId, @NotNull final String profileId) {
         return myClients.get(profileId);
       }
     };
