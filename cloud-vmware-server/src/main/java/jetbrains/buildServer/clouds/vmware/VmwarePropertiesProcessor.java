@@ -6,7 +6,7 @@ import java.util.*;
 import java.util.stream.StreamSupport;
 import jetbrains.buildServer.clouds.CloudConstants;
 import jetbrains.buildServer.clouds.CloudImageParameters;
-import jetbrains.buildServer.clouds.server.impl.CloudManagerBase;
+import jetbrains.buildServer.clouds.server.CloudManagerBase;
 import jetbrains.buildServer.clouds.vmware.web.VMWareWebConstants;
 import jetbrains.buildServer.serverSide.InvalidProperty;
 import jetbrains.buildServer.serverSide.PropertiesProcessor;

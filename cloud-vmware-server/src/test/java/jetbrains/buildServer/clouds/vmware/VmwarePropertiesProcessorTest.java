@@ -8,7 +8,7 @@ import java.util.Map;
 import jetbrains.buildServer.BaseTestCase;
 import jetbrains.buildServer.clouds.*;
 import jetbrains.buildServer.clouds.base.stubs.DummyCloudManagerBase;
-import jetbrains.buildServer.clouds.server.impl.CloudManagerBase;
+import jetbrains.buildServer.clouds.server.CloudManagerBase;
 import jetbrains.buildServer.clouds.server.impl.profile.CloudProfileDataImpl;
 import jetbrains.buildServer.clouds.server.impl.profile.CloudProfileImpl;
 import jetbrains.buildServer.clouds.vmware.stubs.FakeApiConnector;

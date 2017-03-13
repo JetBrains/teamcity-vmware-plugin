@@ -4,7 +4,7 @@ import java.util.Collection;
 import jetbrains.buildServer.clouds.CloudClientEx;
 import jetbrains.buildServer.clouds.CloudProfile;
 import jetbrains.buildServer.clouds.CloudType;
-import jetbrains.buildServer.clouds.server.impl.CloudManagerBase;
+import jetbrains.buildServer.clouds.server.CloudManagerBase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
