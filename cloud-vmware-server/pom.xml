@@ -136,6 +136,13 @@
       <version>${teamcity-version}</version>
     </dependency>
 
+    <dependency>
+      <groupId>org.jetbrains.teamcity</groupId>
+      <artifactId>cloud-server-api</artifactId>
+      <scope>provided</scope>
+      <version>${teamcity-version}</version>
+    </dependency>
+
   </dependencies>
   <build>
     <plugins>

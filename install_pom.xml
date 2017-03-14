@@ -31,6 +31,22 @@
           </execution>
 
           <execution>
+            <id>install-cloud-server-api</id>
+            <phase>package</phase>
+            <goals>
+              <goal>install-file</goal>
+            </goals>
+            <configuration>
+              <artifactId>cloud-server-api</artifactId>
+              <groupId>org.jetbrains.teamcity</groupId>
+              <version>${TeamCityVersion}</version>
+              <packaging>jar</packaging>
+              <createChecksum>true</createChecksum>
+              <file>${teamcity-lib-path}/cloud-server-api.jar</file>
+            </configuration>
+          </execution>
+
+          <execution>
             <id>install-server</id>
             <phase>package</phase>
             <goals>
