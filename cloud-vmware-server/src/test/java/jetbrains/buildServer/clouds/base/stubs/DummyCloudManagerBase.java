@@ -20,13 +20,6 @@ public class DummyCloudManagerBase implements CloudManagerBase {
   }
 
   @Override
-  public void updateProjectProfiles(final String projectId) {
-    throw new UnsupportedOperationException("DummyCloudManagerBase.updateProjectProfiles");
-
-
-  }
-
-  @Override
   public void updateProfile(final String projectId, final CloudProfile cloudProfile) {
     throw new UnsupportedOperationException("DummyCloudManagerBase.updateProfile");
 
