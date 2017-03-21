@@ -19,6 +19,19 @@ public class DummyCloudManagerBase implements CloudManagerBase {
     //return false;
   }
 
+  /**
+   * Returns true if user can enable/disable configuration in the current project's tree
+   *
+   * @param projectId project internal id
+   * @return see above
+   */
+  @Override
+  public boolean isConfigurationEnabled(@NotNull final String projectId) {
+    throw new UnsupportedOperationException("DummyCloudManagerBase.isConfigurationEnabled");
+
+    //return false;
+  }
+
   @Override
   public void updateProfile(final String projectId, final CloudProfile cloudProfile) {
     throw new UnsupportedOperationException("DummyCloudManagerBase.updateProfile");
@@ -103,8 +116,8 @@ public class DummyCloudManagerBase implements CloudManagerBase {
   }
 
   @Override
-  public void setIntegrationEnabled(final String projectId, final boolean isEnabled) {
-    throw new UnsupportedOperationException("DummyCloudManagerBase.setIntegrationEnabled");
+  public void setEnabled(final String projectId, final boolean isEnabled) {
+    throw new UnsupportedOperationException("DummyCloudManagerBase.setEnabled");
 
     //
   }
