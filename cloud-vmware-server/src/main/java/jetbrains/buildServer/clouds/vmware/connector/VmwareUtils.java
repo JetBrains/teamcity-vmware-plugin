@@ -42,21 +42,12 @@ public class VmwareUtils {
   private static final String SPEC_RESPOOL = "Resources";
   private ConcurrentMap<String, String> myDatacenterCache = new ConcurrentHashMap<>();
 
-  static String getEntityDisplayName(@NotNull final VmwareManagedEntity entity){
-    if (entity instanceof FolderBean) {
-      if (isSpecial((FolderBean)entity)) {
-        return "Special";
-      }
-    }
-    return entity.getName();
-  }
-
   static boolean isSpecial(@NotNull final ResourcePoolBean pool){
-    return SPEC_RESPOOL.equals(pool.getName()) && pool.getParentRef() != null && !RESPOOL_TYPE.equals(pool.getParentRef().getType());
+    return SPEC_RESPOOL.equals(pool.getName()) && pool.getParentMOR() != null && !RESPOOL_TYPE.equals(pool.getParentMOR().getType());
   }
 
   static boolean isSpecial(@NotNull final FolderBean folder){
-    return SPEC_FOLDER.equals(folder.getName()) && folder.getParentRef() != null && !FOLDER_TYPE.equals(folder.getParentRef().getType());
+    return SPEC_FOLDER.equals(folder.getName()) && folder.getParentMOR() != null && !FOLDER_TYPE.equals(folder.getParentMOR().getType());
   }
 
 }

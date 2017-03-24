@@ -12,22 +12,25 @@ import org.jetbrains.annotations.Nullable;
  */
 public class ResourcePoolBean implements VmwareManagedEntity {
   private final String myName;
-  private final String myId;
+  private final ManagedObjectReference myMOR;
+  @Nullable private final String myPath;
   private final ManagedObjectReference myParentRef;
   private final String myDatacenterId;
 
 
   @Used("Tests")
   public ResourcePoolBean(final ResourcePool rp){
-    this(rp.getMOR().getVal(), rp.getName(), rp.getParent().getMOR(), "dc");
+    this(rp.getMOR(), rp.getName(), null, rp.getParent().getMOR(), "dc");
   }
 
-  public ResourcePoolBean(final String id,
-                          final String name,
-                          final ManagedObjectReference parentRef,
-                          final String datacenterId) {
+  public ResourcePoolBean(@NotNull final ManagedObjectReference mor,
+                          @NotNull final String name,
+                          @Nullable final String path,
+                          @Nullable final ManagedObjectReference parentRef,
+                          @Nullable final String datacenterId) {
     myName = name;
-    myId = id;
+    myMOR = mor;
+    myPath = path;
     myParentRef = parentRef;
     myDatacenterId = datacenterId;
   }
@@ -35,11 +38,18 @@ public class ResourcePoolBean implements VmwareManagedEntity {
   @NotNull
   @Override
   public String getId() {
-    return myId;
+    return myMOR.getVal();
   }
 
+  @NotNull
   public String getName() {
     return myName;
+  }
+
+  @Override
+  @Nullable
+  public String getPath() {
+    return myPath;
   }
 
   @Nullable
@@ -48,7 +58,15 @@ public class ResourcePoolBean implements VmwareManagedEntity {
     return myDatacenterId;
   }
 
-  public ManagedObjectReference getParentRef() {
+  @NotNull
+  @Override
+  public ManagedObjectReference getMOR() {
+    return myMOR;
+  }
+
+  @Nullable
+  @Override
+  public ManagedObjectReference getParentMOR() {
     return myParentRef;
   }
 

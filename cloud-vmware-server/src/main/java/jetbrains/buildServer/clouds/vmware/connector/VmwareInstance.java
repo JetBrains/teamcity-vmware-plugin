@@ -114,6 +114,13 @@ public class VmwareInstance extends AbstractInstance implements VmwareManagedEnt
     return myName;
   }
 
+  @Nullable
+  @Override
+  public String getPath() {
+    // no need to have full path for VirtualMachines: their names are unique across the whole datacenter
+    return null;
+  }
+
   @Override
   public boolean isInitialized() {
     return myProperties != null;
@@ -170,6 +177,22 @@ public class VmwareInstance extends AbstractInstance implements VmwareManagedEnt
   @Nullable
   public String getDatacenterId() {
     return myDatacenterId;
+  }
+
+  @NotNull
+  @Override
+  public ManagedObjectReference getMOR() {
+    throw new UnsupportedOperationException("VmwareInstance.getMOR");
+
+    //return null;
+  }
+
+  @Nullable
+  @Override
+  public ManagedObjectReference getParentMOR() {
+    throw new UnsupportedOperationException("VmwareInstance.getParentMOR");
+
+    //return null;
   }
 
   public String getImageName(){

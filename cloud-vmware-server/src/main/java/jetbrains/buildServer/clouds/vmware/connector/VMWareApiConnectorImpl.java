@@ -18,6 +18,8 @@
 
 package jetbrains.buildServer.clouds.vmware.connector;
 
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.vmware.vim25.*;
@@ -29,6 +31,7 @@ import java.net.URL;
 import java.net.UnknownHostException;
 import java.rmi.RemoteException;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import java.util.regex.Matcher;
@@ -71,6 +74,12 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
   private static final Pattern RESPOOL_PATTERN = Pattern.compile("resgroup-\\d+");
   private static final Pattern FOLDER_PATTERN = Pattern.compile("group-v\\d+");
 
+  private static final String FOLDER_TYPE = Folder.class.getSimpleName();
+  private static final String RESPOOL_TYPE = ResourcePool.class.getSimpleName();
+  private static final String SPEC_FOLDER = "vm";
+  private static final String SPEC_RESPOOL = "Resources";
+
+
   private static final long SHUTDOWN_TIMEOUT = 60 * 1000;
 
   private final URL myInstanceURL;
@@ -78,6 +87,11 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
   private final String myPassword;
   private ServiceInstance myServiceInstance;
   private final String myDomain;
+
+  // short living cache
+  private static final Cache<Pair<String, String>, String> MANAGED_ENTITIES_NAMES_CACHE = CacheBuilder.newBuilder()
+                                                                                        .expireAfterWrite(20, TimeUnit.SECONDS)
+                                                                                        .build();
 
   @Nullable private final String myServerUUID;
   // it can be null, when we create a temporary api connector for a short-term use (for example, when we prepopulate information on create/edit cloud profile page
@@ -267,16 +281,39 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
         },}, true);
         final String datacenterId = dc.getMOR().getVal();
         return Arrays.stream(ocs).map(oc -> {
-          final Map<String, Object> mappedProperties = Arrays.stream(oc.getPropSet()).collect(Collectors.toMap(
-            DynamicProperty::getName, DynamicProperty::getVal
-          ));
+          try {
+            final Map<String, Object> mappedProperties = Arrays.stream(oc.getPropSet()).collect(Collectors.toMap(
+              DynamicProperty::getName, DynamicProperty::getVal
+            ));
 
-          return new FolderBean(oc.obj.getVal(),
-                                String.valueOf(mappedProperties.get("name")),
-                                ((ArrayOfString)mappedProperties.get("childType")).getString(),
-                                (ManagedObjectReference)mappedProperties.get("parent"),
-                                datacenterId
-          );
+            final String simpleName = String.valueOf(mappedProperties.get("name"));
+            if (simpleName.equals(SPEC_FOLDER))
+              return null;
+
+            final String fullFolderPath = getFullFolderPath(oc.getObj(), dc);
+
+            final String[] childTypes = ((ArrayOfString)mappedProperties.get("childType")).getString();
+            boolean skip = true;
+            for (String childType : childTypes) {
+              if (VM_TYPE.equals(childType)) {
+                skip = false;
+                break;
+              }
+            }
+            if (skip)
+              return null;
+
+            return new FolderBean(oc.obj,
+                                  simpleName,
+                                  fullFolderPath,
+                                  childTypes,
+                                  (ManagedObjectReference)mappedProperties.get("parent"),
+                                  datacenterId
+            );
+          } catch (Exception ex) {
+            LOG.warnAndDebugDetails("Error getting folder details", ex);
+            return null;
+          }
         });
       } catch (RemoteException e) {
         LOG.warnAndDebugDetails("An error occurred while searching for all folders", e);
@@ -284,9 +321,7 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
         return Stream.empty();
       }
     });
-    if (exceptionRef.get() != null){
-      throw exceptionRef.get();
-    }
+
     return result;
   }
 
@@ -302,10 +337,19 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
           final Map<String, Object> mappedProperties = Arrays.stream(oc.getPropSet()).collect(Collectors.toMap(
             DynamicProperty::getName, DynamicProperty::getVal
           ));
+          final String simpleName = String.valueOf(mappedProperties.get("name"));
+          final ManagedObjectReference parent = (ManagedObjectReference)mappedProperties.get("parent");
 
-          return new ResourcePoolBean(oc.obj.getVal(),
-                                      String.valueOf(mappedProperties.get("name")),
-                                      (ManagedObjectReference)mappedProperties.get("parent"),
+          if ("Resources".equals(simpleName) && parent != null && !oc.obj.getType().equals(parent.getVal())){
+            return null;
+          }
+
+          final String path = getResourcePoolPath(oc.getObj(), dc);
+
+          return new ResourcePoolBean(oc.obj,
+                                      simpleName,
+                                      path,
+                                      parent,
                                       datacenterId
           );
         });
@@ -323,7 +367,7 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
 
   private <T extends VmwareManagedEntity> Collection<T> findWithDatacenter(
     Function<Datacenter, Stream<T>> mapper) throws VmwareCheckedCloudException {
-    return findAllEntitiesOld(Datacenter.class).stream().flatMap(mapper).collect(Collectors.toList());
+    return findAllEntitiesOld(Datacenter.class).stream().flatMap(mapper).filter(Objects::nonNull).collect(Collectors.toList());
   }
 
   protected <T extends ManagedEntity> Collection<T> findAllEntitiesOld(Class<T> instanceType) throws VmwareCheckedCloudException  {
@@ -464,39 +508,21 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
 
   @NotNull
   public Map<String, FolderBean> getFolders() throws VmwareCheckedCloudException {
-    return findAllFolders().stream().filter(this::canContainVMs).collect(
-      Collectors.toMap(FolderBean::getUniqueName, Function.identity())
-    );
 
-    //final boolean containsDuplicates = containsDuplicates(allFolders);
-    //final Map<String, VmwareManagedEntity> filteredMap = new HashMap<String, VmwareManagedEntity>();
-    //
-    //for (FolderBean folder : allFolders) {
-    //  String folderName = VmwareUtils.getEntityDisplayName(folder);
-    //  if (containsDuplicates) {
-    //    folderName = getFullFolderPath(folder);
-    //  }
-    //  filteredMap.put(folderName, new FolderBean());
-    //}
+    final Collection<FolderBean> allFolders = findAllFolders();
+
+    return allFolders.stream().filter(this::canContainVMs).collect(
+      Collectors.toMap(FolderBean::getPath, Function.identity())
+    );
   }
 
   @NotNull
   public Map<String, ResourcePoolBean> getResourcePools() throws VmwareCheckedCloudException {
-    return findAllResourcePools().stream().filter(rp->!isSpecial(rp)).collect(
-      Collectors.toMap(ResourcePoolBean::getUniqueName, Function.identity())
+    final Collection<ResourcePoolBean> pools = findAllResourcePools();
+
+    return pools.stream().filter(rp->!isSpecial(rp)).collect(
+      Collectors.toMap(ResourcePoolBean::getPath, Function.identity())
     );
-    //boolean containsDuplicates = containsDuplicates(allPools);
-    //Map<String, VmwareManagedEntity> retval = new HashMap<String, VmwareManagedEntity>();
-    //for (ResourcePool pool : allPools) {
-    //
-    //  String poolName = pool.getName();
-    //
-    //  if (containsDuplicates) {
-    //    poolName = getFullResourcePoolPath(pool);
-    //  }
-    //  retval.put(poolName, new VmwareManagedEntityImpl(pool));
-    //}
-    //return retval;
   }
 
 
@@ -510,57 +536,59 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
     return false;
   }
 
-  private String getFullFolderPath(final FolderBean folder){
-    return folder.getName();
-    //TODO fix
-    //final String folderMORType = folder.getMOR().getType();
-    //final StringBuilder pathBuilder = new StringBuilder(VmwareUtils.getEntityDisplayName(folder));
-    //ManagedEntity entity = folder.getParent();
-    //if (isSpecial(folder)){ // we'll skip the first parent
-    //  entity = entity.getParent();
-    //}
-    //while (entity != null){
-    //  boolean skip = false;
-    //  if (entity.getMOR().getType().equals(folderMORType)){
-    //    skip = true;
-    //    if (entity.getParent() != null && !entity.getName().equals("vm") && folderMORType.equals(entity.getParent().getMOR().getType())) {
-    //      final String[] childTypes = ((Folder)entity).getChildType();
-    //      for (String childType : childTypes) {
-    //        if (VirtualMachine.class.getSimpleName().equals(childType)) {
-    //          skip = false;
-    //          break;
-    //        }
-    //      }
-    //    }
-    //  }
-    //  if (!skip)
-    //    pathBuilder.insert(0, String.format("%s/", entity.getName()));
-    //  entity = entity.getParent();
-    //}
-    //return pathBuilder.toString();
+  @Nullable
+  private String getFullFolderPath(final ManagedObjectReference mor, final Datacenter dc) {
+    ManagedEntity entity;
+    try {
+      entity = findEntityByIdNameNullableOld(mor.getVal(), Folder.class, dc);
+      if (entity != null) {
+        return getFullMORPath(entity, dc);
+      } else {
+        return null;
+      }
+    } catch (VmwareCheckedCloudException e) {
+      return mor.getVal();
+    }
   }
 
-  private String getFullResourcePoolPath(final ResourcePoolBean pool){
-    return pool.getName();
-    //final String resPool = pool.getMOR().getType();
-    //StringBuilder pathBuilder = new StringBuilder(pool.getName());
-    //ManagedEntity entity = pool.getParent();
-    //while (entity != null){
-    //  boolean skip = false;
-    //  if ("Resources".equals(entity.getName()) && entity.getParent() != null && !resPool.equals(entity.getParent().getMOR().getVal())) {
-    //    skip = true;
-    //  }
-    //  if (entity.getMOR().getType().equals(Folder.class.getSimpleName())){
-    //    skip = true;
-    //  }
-    //
-    //  if (!skip) {
-    //    pathBuilder.insert(0, String.format("%s/", entity.getName()));
-    //  }
-    //
-    //  entity = entity.getParent();
-    //}
-    //return pathBuilder.toString();
+  @Nullable
+  private String getResourcePoolPath(final ManagedObjectReference mor, final Datacenter dc) {
+    ManagedEntity entity;
+    try {
+      entity = findEntityByIdNameNullableOld(mor.getVal(), ResourcePool.class, dc);
+      if (entity != null) {
+        return getFullMORPath(entity, dc);
+      } else {
+        return null;
+      }
+    } catch (VmwareCheckedCloudException e) {
+      return mor.getVal();
+    }
+  }
+
+  private String getFullMORPath(@NotNull final ManagedEntity entity, @Nullable final Datacenter dc) {
+    final ManagedObjectReference mor = entity.getMOR();
+    final Pair<String, String> morPair = Pair.create(mor.getType(), mor.getVal());
+    final String existingPath = MANAGED_ENTITIES_NAMES_CACHE.getIfPresent(morPair);
+    if (existingPath != null)
+      return existingPath;
+    final ManagedEntity parent = entity.getParent();
+    final String entityName = entity.getName();
+    boolean skipName =
+      (mor.getType().equals(FOLDER_TYPE) && (entityName.equals(SPEC_FOLDER) || !FOLDER_PATTERN.matcher(morPair.getSecond()).matches() )) ||
+      (mor.getType().equals(RESPOOL_TYPE) && entityName.equals(SPEC_RESPOOL));
+
+    if (parent == null){
+      final String name = skipName ? "" : entityName;
+      MANAGED_ENTITIES_NAMES_CACHE.put(morPair, name);
+      return name;
+    } else {
+      final String fullMORPath = getFullMORPath(parent, dc);
+      final String delimiter = fullMORPath.isEmpty() ? "" : "/";
+      final String name = skipName ? fullMORPath : fullMORPath + delimiter + entityName;
+      MANAGED_ENTITIES_NAMES_CACHE.put(morPair, name);
+      return name;
+    }
   }
 
 

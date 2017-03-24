@@ -18,6 +18,7 @@
 
 package jetbrains.buildServer.clouds.vmware.connector;
 
+import com.vmware.vim25.ManagedObjectReference;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,8 +34,21 @@ public interface VmwareManagedEntity {
   @NotNull
   String getName();
 
+  /**
+   *
+   * @return full path
+   */
+  @Nullable
+  String getPath();
+
   @Nullable
   String getDatacenterId();
+
+  @NotNull
+  ManagedObjectReference getMOR();
+
+  @Nullable
+  ManagedObjectReference getParentMOR();
 
   default String getUniqueName() {
     return String.format("%s(%s)", getName(), getId());

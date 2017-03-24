@@ -11,26 +11,28 @@ import org.jetbrains.annotations.Nullable;
  * Created by sergeypak on 02/02/2017.
  */
 public class FolderBean implements VmwareManagedEntity {
+  private final String myPath;
   private final String[] myChildType;
   private final String myName;
-  private final String myId;
+  private final ManagedObjectReference myMOR;
   private final ManagedObjectReference myParentRef;
   private final String myDatacenterId;
 
   @Used("Tests")
   public FolderBean(final Folder folder){
-    this(folder.getMOR().getVal(), folder.getName(), folder.getChildType(), folder.getParent().getMOR(), "dc");
+    this(folder.getMOR(), folder.getName(), null, folder.getChildType(), folder.getParent().getMOR(), "dc");
   }
 
-  public FolderBean(final String id,
+  public FolderBean(final ManagedObjectReference mor,
                     final String name,
+                    final String path,
                     final String[] childType,
                     final ManagedObjectReference parentRef,
-                    final String datacenterId
-  ) {
+                    final String datacenterId) {
+    myPath = path;
     myChildType = childType;
     myName = name;
-    myId = id;
+    myMOR = mor;
     myParentRef = parentRef;
     myDatacenterId = datacenterId;
   }
@@ -42,7 +44,7 @@ public class FolderBean implements VmwareManagedEntity {
   @NotNull
   @Override
   public String getId() {
-    return myId;
+    return myMOR.getVal();
   }
 
   public String getName() {
@@ -51,11 +53,23 @@ public class FolderBean implements VmwareManagedEntity {
 
   @Nullable
   @Override
+  public String getPath() {
+    return myPath == null ? myName : myPath;
+  }
+
+  @Nullable
+  @Override
   public String getDatacenterId() {
     return myDatacenterId;
   }
 
-  public ManagedObjectReference getParentRef() {
+  @NotNull
+  @Override
+  public ManagedObjectReference getMOR() {
+    return myMOR;
+  }
+
+  public ManagedObjectReference getParentMOR() {
     return myParentRef;
   }
 }
