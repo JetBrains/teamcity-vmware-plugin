@@ -109,6 +109,13 @@
     </dependency>
 
     <dependency>
+      <groupId>com.google.guava</groupId>
+      <artifactId>guava</artifactId>
+      <version>13.0.1</version>
+      <scope>provided</scope>
+    </dependency>
+
+    <dependency>
       <groupId>org.jetbrains.teamcity</groupId>
       <artifactId>server</artifactId>
       <scope>provided</scope>
