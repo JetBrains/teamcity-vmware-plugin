@@ -5,6 +5,7 @@ import jetbrains.buildServer.clouds.CloudClientEx;
 import jetbrains.buildServer.clouds.CloudProfile;
 import jetbrains.buildServer.clouds.CloudType;
 import jetbrains.buildServer.clouds.server.CloudManagerBase;
+import jetbrains.buildServer.clouds.server.ProjectCloudIntegrationStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -14,7 +15,7 @@ import org.jetbrains.annotations.Nullable;
 public class DummyCloudManagerBase implements CloudManagerBase {
   @Override
   public boolean isIntegrationEnabled(@NotNull final String projectId) {
-    throw new UnsupportedOperationException("DummyCloudManagerBase.isIntegrationEnabled");
+    throw new UnsupportedOperationException("DummyCloudManagerBase.getIntegrationStatus");
 
     //return false;
   }
@@ -26,8 +27,8 @@ public class DummyCloudManagerBase implements CloudManagerBase {
    * @return see above
    */
   @Override
-  public boolean isConfigurationEnabled(@NotNull final String projectId) {
-    throw new UnsupportedOperationException("DummyCloudManagerBase.isConfigurationEnabled");
+  public boolean isConfigurable(@NotNull final String projectId) {
+    throw new UnsupportedOperationException("DummyCloudManagerBase.isConfigurable");
 
     //return false;
   }
@@ -116,9 +117,17 @@ public class DummyCloudManagerBase implements CloudManagerBase {
   }
 
   @Override
-  public void setEnabled(final String projectId, final boolean isEnabled) {
-    throw new UnsupportedOperationException("DummyCloudManagerBase.setEnabled");
+  public void updateStatus(final String projectId, @NotNull final ProjectCloudIntegrationStatus newStatus) {
+    throw new UnsupportedOperationException("DummyCloudManagerBase.updateStatus");
 
-    //
+
+  }
+
+  @Nullable
+  @Override
+  public ProjectCloudIntegrationStatus getProjectIntegrationStatus(final String projectId) {
+    throw new UnsupportedOperationException("DummyCloudManagerBase.getProjectIntegrationStatus");
+
+    //return null;
   }
 }
