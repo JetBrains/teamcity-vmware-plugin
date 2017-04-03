@@ -24,6 +24,7 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import jetbrains.buildServer.BuildProject;
 import jetbrains.buildServer.clouds.vmware.VmwareConstants;
 import jetbrains.buildServer.clouds.vmware.connector.*;
 import jetbrains.buildServer.clouds.vmware.errors.VmwareErrorMessages;
@@ -78,7 +79,9 @@ public class VMWareEditProfileController extends BaseFormXmlController {
     mv.getModel().put("resPath", myPluginDescriptor.getPluginResourcesPath());
 
     final List<AgentPool> pools = new ArrayList<>();
-    pools.add(AgentPoolUtil.DUMMY_PROJECT_POOL);
+    // TODO improve
+    if (!BuildProject.ROOT_PROJECT_ID.equals(projectId))
+      pools.add(AgentPoolUtil.DUMMY_PROJECT_POOL);
     pools.addAll(myAgentPoolManager.getProjectOwnedAgentPools(projectId));
     mv.getModel().put("agentPools", pools);
 
