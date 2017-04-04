@@ -732,8 +732,8 @@ BS.Clouds.VMWareVSphere = BS.Clouds.VMWareVSphere || (function () {
         </tr>'),
                 imagesSelect: $j('<select name="prop:_image" id="image" class="longField" data-id="sourceVmName" data-err-id="sourceVmName">\
 <option value="">--Please select a VM--</option>\
-<optgroup label="Virtual machines" class="vmGroup"></optgroup>\
 <optgroup label="Templates" class="templatesGroup"></optgroup>\
+<optgroup label="Virtual machines" class="vmGroup"></optgroup>\
 </select>')
         },
         dataDiv: $j('<div class="hidden imagesData"> \
