@@ -40,13 +40,6 @@ public class DummyCloudManagerBase implements CloudManagerBase {
     //
   }
 
-  @Override
-  public void disposeClient(final String projectId, final CloudClientEx cloudClient) {
-    throw new UnsupportedOperationException("DummyCloudManagerBase.disposeClient");
-
-    //
-  }
-
   @NotNull
   @Override
   public Collection<CloudProfile> listProfilesByProjectExtId(final String projectExtId) {
