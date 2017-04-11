@@ -42,8 +42,8 @@ public class DummyCloudManagerBase implements CloudManagerBase {
 
   @NotNull
   @Override
-  public Collection<CloudProfile> listProfilesByProjectExtId(final String projectExtId) {
-    throw new UnsupportedOperationException("DummyCloudManagerBase.listProfilesByProjectExtId");
+  public Collection<CloudProfile> listProfilesByProject(final String projectId) {
+    throw new UnsupportedOperationException("DummyCloudManagerBase.listProfilesByProject");
 
     //return null;
   }
