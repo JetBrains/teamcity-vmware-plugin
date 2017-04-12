@@ -42,7 +42,7 @@ public class DummyCloudManagerBase implements CloudManagerBase {
 
   @NotNull
   @Override
-  public Collection<CloudProfile> listProfilesByProject(final String projectId) {
+  public Collection<CloudProfile> listProfilesByProject(final String projectId, final boolean includeFromSubprojects) {
     throw new UnsupportedOperationException("DummyCloudManagerBase.listProfilesByProject");
 
     //return null;

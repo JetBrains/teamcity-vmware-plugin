@@ -41,7 +41,7 @@ public class VmwarePropertiesProcessorTest extends BaseTestCase {
     final CloudManagerBase cloudManager = new DummyCloudManagerBase(){
       @NotNull
       @Override
-      public Collection<CloudProfile> listProfilesByProject(final String projectId) {
+      public Collection<CloudProfile> listProfilesByProject(final String projectId, final boolean includeFromSubprojects) {
         return myProfiles;
       }
 
