@@ -153,7 +153,7 @@ public class VMWareCloudClientFactory extends AbstractCloudClientFactory<VmwareC
       try {
         return VmwareApiConnectorsPool.getOrCreateConnector(new URL(serverUrl), username, password, myServerSettings.getServerUUID(), state.getProfileId(), myInstancesProvider);
       } catch (MalformedURLException e) {
-        LOG.warn(e.toString(), e);
+        LOG.warnAndDebugDetails(e.toString(), e);
       }
     }
     throw new CloudException("Unable to create connector");

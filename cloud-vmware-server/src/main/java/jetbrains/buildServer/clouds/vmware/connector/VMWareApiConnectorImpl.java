@@ -934,7 +934,8 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
       final VirtualMachine vm = findEntityByIdNameOld(instance.getInstanceId(), VirtualMachine.class).getFirst();
       return vm.destroy_Task();
     } catch (Exception e) {
-      LOG.warn("An exception during deleting instance " + instance.getName(), e);
+      // stacktrace goes to SDK details, so no value of dumping it to log here
+      LOG.warnAndDebugDetails("An error occured during deleting instance " + instance.getName(), e);
       instance.updateErrors(TypedCloudErrorInfo.fromException(e));
     }
     return emptyTask();
