@@ -18,6 +18,7 @@
 
 package jetbrains.buildServer.clouds.vmware.errors;
 
+import java.net.UnknownHostException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import jetbrains.buildServer.clouds.base.errors.ErrorMessageUpdater;
@@ -30,47 +31,42 @@ import jetbrains.buildServer.util.StringUtil;
  */
 public class VmwareErrorMessages implements ErrorMessageUpdater {
 
-  private static final Pattern INVALID_LOGIN_PATTERN =
-    Pattern.compile("VI SDK invoke exception:com\\.vmware\\.vim25\\.InvalidLogin");
-
-  private static final Pattern INVALID_HOST_PATTERN =
-    Pattern.compile("VI SDK invoke exception:java\\.net\\.UnknownHostException: (.+)");
-
   private static final VmwareErrorMessages instance = new VmwareErrorMessages();
 
   public static VmwareErrorMessages getInstance() {
     return instance;
   }
 
-  private static String getUserFriendlyMessage(final String message, final String defaultMessage) {
+  private static String getFriendlyMessageInternal(final String message, final String defaultMessage) {
     if (StringUtil.isEmpty(message)){
-      return "No details available";
+      return defaultMessage;
     }
 
-    if (INVALID_LOGIN_PATTERN.matcher(message).matches()) {
-      return "Cannot authorize. Please check your username and password";
-    }
-    final Matcher invalidHostMatcher = INVALID_HOST_PATTERN.matcher(message);
-    if (invalidHostMatcher.matches()){
-      return String.format("Cannot connect to %s", invalidHostMatcher.group(1));
-    }
-
-    return defaultMessage;
+    return message;
   }
 
   public String getFriendlyErrorMessage(final String message) {
-    return getUserFriendlyMessage(message, message);
+    return getFriendlyMessageInternal(message, message);
   }
 
   public String getFriendlyErrorMessage(final String message, final String defaultMessage) {
-    return getUserFriendlyMessage(message, defaultMessage);
+    return getFriendlyMessageInternal(message, defaultMessage);
   }
 
   public String getFriendlyErrorMessage(final Throwable th) {
-    return getUserFriendlyMessage(th.getMessage(), th.getMessage());
+    return getFriendlyErrorMessage(th, th.getMessage());
   }
 
-  public String getFriendlyErrorMessage(final Throwable th, final String defaultMessage) {
-    return getUserFriendlyMessage(th.getMessage(), defaultMessage);
+  public String getFriendlyErrorMessage(Throwable th, final String defaultMessage) {
+    // showing only the root exception
+    while (th.getCause() != null){
+      th = th.getCause();
+    }
+
+    if (th instanceof UnknownHostException){
+      return "Unknown host: " + th.getMessage();
+    }
+
+    return getFriendlyMessageInternal(th.getMessage(), defaultMessage);
   }
 }
