@@ -41,7 +41,7 @@
 <table class="runnerFormTable">
   <tr>
     <th><label for="${webCons.serverUrl}">vCenter SDK URL: <l:star/></label>
-      <bs:help urlPrefix="https://pubs.vmware.com/vsphere-4-esx-vcenter" file="index.jsp?topic=/com.vmware.vsphere.installclassic.doc_41/install/lm_groups/t_urls_stand.html"/></th>
+      <bs:help urlPrefix="https://pubs.vmware.com/vsphere-51/topic/com.vmware.vsphere.install.doc/" file="GUID-191D86C8-EEF4-4198-9C11-2E0F25D2AB89.html"/></th>
     <td>
       <props:textProperty name="${webCons.serverUrl}" className="settings longField"/>
       <span id="error_${webCons.serverUrl}" class="error"></span>
