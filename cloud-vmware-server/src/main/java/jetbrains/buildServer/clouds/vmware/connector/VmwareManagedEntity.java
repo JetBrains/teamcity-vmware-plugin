@@ -38,7 +38,7 @@ public interface VmwareManagedEntity {
    *
    * @return full path
    */
-  @Nullable
+  @NotNull
   String getPath();
 
   @Nullable
@@ -50,7 +50,11 @@ public interface VmwareManagedEntity {
   @Nullable
   ManagedObjectReference getParentMOR();
 
-  default String getUniqueName() {
-    return String.format("%s(%s)", getName(), getId());
+  /*
+
+  @NotNull
+  default String getPathOrUniqueName() {
+    return getPath() == null ? String.format("%s(%s)", getName(), getId()) : getPath();
   }
+  */
 }

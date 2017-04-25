@@ -4,13 +4,14 @@ import com.vmware.vim25.ManagedObjectReference;
 import com.vmware.vim25.mo.Folder;
 import jetbrains.buildServer.Used;
 import jetbrains.buildServer.clouds.vmware.connector.VmwareManagedEntity;
+import jetbrains.buildServer.util.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * Created by sergeypak on 02/02/2017.
  */
-public class FolderBean implements VmwareManagedEntity {
+public class FolderBean implements VmwareManagedEntity, Comparable<FolderBean> {
   private final String myPath;
   private final String[] myChildType;
   private final String myName;
@@ -23,12 +24,12 @@ public class FolderBean implements VmwareManagedEntity {
     this(folder.getMOR(), folder.getName(), null, folder.getChildType(), folder.getParent().getMOR(), "dc");
   }
 
-  public FolderBean(final ManagedObjectReference mor,
-                    final String name,
-                    final String path,
-                    final String[] childType,
-                    final ManagedObjectReference parentRef,
-                    final String datacenterId) {
+  public FolderBean(@NotNull final ManagedObjectReference mor,
+                    @NotNull final String name,
+                    @NotNull final String path,
+                    @NotNull final String[] childType,
+                    @Nullable final ManagedObjectReference parentRef,
+                    @Nullable final String datacenterId) {
     myPath = path;
     myChildType = childType;
     myName = name;
@@ -51,7 +52,7 @@ public class FolderBean implements VmwareManagedEntity {
     return myName;
   }
 
-  @Nullable
+  @NotNull
   @Override
   public String getPath() {
     return myPath == null ? myName : myPath;
@@ -71,5 +72,13 @@ public class FolderBean implements VmwareManagedEntity {
 
   public ManagedObjectReference getParentMOR() {
     return myParentRef;
+  }
+
+  @Override
+  public int compareTo(@NotNull final FolderBean o) {
+    if (myPath == null && o.myPath == null) {
+      return StringUtil.compare(StringUtil.toLowerCase(myName), StringUtil.toLowerCase(o.myName));
+    }
+    return StringUtil.compare(StringUtil.toLowerCase(myPath), StringUtil.toLowerCase(o.myPath));
   }
 }

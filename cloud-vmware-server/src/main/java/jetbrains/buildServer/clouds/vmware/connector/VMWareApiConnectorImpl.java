@@ -53,6 +53,7 @@ import jetbrains.buildServer.clouds.vmware.connector.beans.FolderBean;
 import jetbrains.buildServer.clouds.vmware.connector.beans.ResourcePoolBean;
 import jetbrains.buildServer.clouds.vmware.errors.VmwareCheckedCloudException;
 import jetbrains.buildServer.serverSide.TeamCityProperties;
+import jetbrains.buildServer.serverSide.crypt.EncryptUtil;
 import jetbrains.buildServer.util.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -164,16 +165,27 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
         ManagedObjectReference mor = new ManagedObjectReference();
         mor.setType(instanceType.getSimpleName());
         mor.setVal(idName);
-        return (T)MorUtil.createExactManagedEntity(myServiceInstance.getServerConnection(), mor);
+        return createExactManagedEntity(mor);
       } else {
-        if (dc == null) {
-          return (T)new InventoryNavigator(getRootFolder()).searchManagedEntity(instanceType.getSimpleName(), idName);
-        } else {
-          return (T)new InventoryNavigator(dc).searchManagedEntity(instanceType.getSimpleName(), idName);
-        }
+        return searchManagedEntity(idName, instanceType, dc);
       }
     } catch (RemoteException e) {
       throw new VmwareCheckedCloudException(e);
+    }
+  }
+
+  protected  <T extends ManagedEntity> T createExactManagedEntity(final ManagedObjectReference mor) {
+    return (T)MorUtil.createExactManagedEntity(myServiceInstance.getServerConnection(), mor);
+  }
+
+  protected <T extends ManagedEntity> T searchManagedEntity(final @NotNull String idName,
+                                                            final @NotNull Class<T> instanceType,
+                                                            final @Nullable Datacenter dc)
+    throws RemoteException, VmwareCheckedCloudException {
+    if (dc == null) {
+      return (T)new InventoryNavigator(getRootFolder()).searchManagedEntity(instanceType.getSimpleName(), idName);
+    } else {
+      return (T)new InventoryNavigator(dc).searchManagedEntity(instanceType.getSimpleName(), idName);
     }
   }
 
@@ -210,11 +222,11 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
     final Collection<VmwareInstance> result = findWithDatacenter(dc -> {
       final String datacenterId = dc.getMOR().getVal();
       try {
-        final ObjectContent[] ocs = new InventoryNavigator(dc).retrieveObjectContents(new String[][]{{
+        final ObjectContent[] ocs = getObjectContents(dc, new String[][]{{
           "VirtualMachine", "name", "config.extraConfig", "config.template" , "config.changeVersion"
           , "runtime.powerState", "runtime.bootTime",
           "guest.ipAddress", "parent"
-        },}, true);
+        },});
         return Arrays.stream(ocs)
                      .map(oc->{
             final Map<String, Object> mappedProperties = Arrays.stream(oc.getPropSet()).collect(Collectors.toMap(
@@ -276,9 +288,9 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
     final AtomicReference<VmwareCheckedCloudException> exceptionRef = new AtomicReference<>();
     final Collection<FolderBean> result = findWithDatacenter(dc -> {
       try {
-        final ObjectContent[] ocs = new InventoryNavigator(dc).retrieveObjectContents(new String[][]{{
+        final ObjectContent[] ocs = getObjectContents(dc, new String[][]{{
           "Folder", "name", "childType", "parent"
-        },}, true);
+        },});
         final String datacenterId = dc.getMOR().getVal();
         return Arrays.stream(ocs).map(oc -> {
           try {
@@ -287,10 +299,15 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
             ));
 
             final String simpleName = String.valueOf(mappedProperties.get("name"));
-            if (simpleName.equals(SPEC_FOLDER))
-              return null;
+            final ManagedObjectReference parent = (ManagedObjectReference)mappedProperties.get("parent");
 
-            final String fullFolderPath = getFullFolderPath(oc.getObj(), dc);
+            LOG.debug("Found folder with name '" + simpleName + "'. Parent: " + (parent == null ? "null" : parent.toString()));
+            if (simpleName.equals(SPEC_FOLDER)) {
+              LOG.debug("The folder is a special folder. Skipping it...");
+              return null;
+            }
+
+
 
             final String[] childTypes = ((ArrayOfString)mappedProperties.get("childType")).getString();
             boolean skip = true;
@@ -300,14 +317,19 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
                 break;
               }
             }
-            if (skip)
+            if (skip) {
+              LOG.debug("The folder cannot contain VMs. Skipping it...");
               return null;
+            }
+
+            final String fullFolderPath = getFullPath(simpleName, oc.obj, parent, dc);
+            LOG.debug("Calculated path: " + fullFolderPath);
 
             return new FolderBean(oc.obj,
                                   simpleName,
                                   fullFolderPath,
                                   childTypes,
-                                  (ManagedObjectReference)mappedProperties.get("parent"),
+                                  parent,
                                   datacenterId
             );
           } catch (Exception ex) {
@@ -330,21 +352,22 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
     final Collection<ResourcePoolBean> result = findWithDatacenter(dc -> {
       try {
         final String datacenterId = dc.getMOR().getVal();
-        final ObjectContent[] ocs = new InventoryNavigator(dc).retrieveObjectContents(new String[][]{{
-          "ResourcePool", "name", "parent"
-        },}, true);
+        final ObjectContent[] ocs = getObjectContents(dc, new String[][]{{"ResourcePool", "name", "parent"},});
         return Arrays.stream(ocs).map(oc -> {
           final Map<String, Object> mappedProperties = Arrays.stream(oc.getPropSet()).collect(Collectors.toMap(
             DynamicProperty::getName, DynamicProperty::getVal
           ));
           final String simpleName = String.valueOf(mappedProperties.get("name"));
           final ManagedObjectReference parent = (ManagedObjectReference)mappedProperties.get("parent");
+          LOG.debug("Found respool with name '" + simpleName + "'. Parent: " + (parent == null ? "null" : parent.toString()));
 
           if ("Resources".equals(simpleName) && parent != null && !oc.obj.getType().equals(parent.getVal())){
+            LOG.debug("The pool is a special pool. Skipping it...");
             return null;
           }
 
-          final String path = getResourcePoolPath(oc.getObj(), dc);
+          final String path = getFullPath(simpleName, oc.obj, parent, dc);
+          LOG.debug("Calculated path: " + path);
 
           return new ResourcePoolBean(oc.obj,
                                       simpleName,
@@ -363,6 +386,11 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
       throw exceptionRef.get();
     }
     return result;
+  }
+
+  //protected 4 tests
+  protected ObjectContent[] getObjectContents(final Datacenter dc, final String[][] typeinfo) throws RemoteException {
+    return new InventoryNavigator(dc).retrieveObjectContents(typeinfo, true);
   }
 
   private <T extends VmwareManagedEntity> Collection<T> findWithDatacenter(
@@ -403,11 +431,12 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
   }
 
   @NotNull
-  public Map<String, VmwareInstance> getVirtualMachines(boolean filterClones) throws VmwareCheckedCloudException {
+  public List<VmwareInstance> getVirtualMachines(boolean filterClones) throws VmwareCheckedCloudException {
     final Collection<VmwareInstance> allVms = findAllVirtualMachines();
-    return allVms.stream().filter(
-      vm -> vm.isInitialized() && (!filterClones || !vm.isClone())
-    ).collect(Collectors.toMap(VmwareInstance::getName, Function.identity()));
+    return allVms.stream()
+                 .filter(vm -> vm.isInitialized() && (!filterClones || !vm.isClone()))
+                 .sorted()
+                 .collect(Collectors.toList());
   }
 
   @Override
@@ -507,22 +536,20 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
   }
 
   @NotNull
-  public Map<String, FolderBean> getFolders() throws VmwareCheckedCloudException {
-
+  public List<FolderBean> getFolders() throws VmwareCheckedCloudException {
     final Collection<FolderBean> allFolders = findAllFolders();
 
-    return allFolders.stream().filter(this::canContainVMs).collect(
-      Collectors.toMap(FolderBean::getPath, Function.identity())
-    );
+    return allFolders.stream().filter(this::canContainVMs).collect(Collectors.toList());
   }
 
   @NotNull
-  public Map<String, ResourcePoolBean> getResourcePools() throws VmwareCheckedCloudException {
+  public List<ResourcePoolBean> getResourcePools() throws VmwareCheckedCloudException {
     final Collection<ResourcePoolBean> pools = findAllResourcePools();
 
-    return pools.stream().filter(rp->!isSpecial(rp)).collect(
-      Collectors.toMap(ResourcePoolBean::getPath, Function.identity())
-    );
+    return pools.stream()
+                .filter(rp->!isSpecial(rp))
+                .sorted()
+                .collect(Collectors.toList());
   }
 
 
@@ -534,6 +561,27 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
       }
     }
     return false;
+  }
+
+  private String getFullPath(@NotNull final String entityName,
+                             @NotNull final ManagedObjectReference mor,
+                             @Nullable final ManagedObjectReference firstParent,
+                             @Nullable final Datacenter dc){
+    final String uniqueName = String.format("%s (%s)", entityName, mor.getVal());
+    if (firstParent == null) {
+      return uniqueName;
+    }
+    try {
+      final String morPath = getFullMORPath(createExactManagedEntity(firstParent), dc);
+      if (StringUtil.isEmpty(morPath)) {
+        return uniqueName;
+      } else {
+        return morPath + "/" + entityName;
+      }
+    } catch (Exception ex){
+      LOG.warnAndDebugDetails("Can't calculate full path for " + uniqueName, ex);
+      return uniqueName;
+    }
   }
 
   @Nullable
@@ -1017,7 +1065,7 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
   @NotNull
   @Override
   public String getKey() {
-    return getKey(myInstanceURL, myUsername);
+    return getKey(myInstanceURL, myUsername, myPassword);
   }
 
   @NotNull
@@ -1117,7 +1165,7 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
   }
 
 
-  public static String getKey(@NotNull final URL serverUrl, @NotNull final String username){
-    return String.format("%s_%s", serverUrl.toString().toLowerCase(), username.toLowerCase());
+  public static String getKey(@NotNull final URL serverUrl, @NotNull final String username, @NotNull final String pwd){
+    return String.format("%s_%s%s", serverUrl.toString().toLowerCase(), username.toLowerCase(), EncryptUtil.scramble(pwd));
   }
 }

@@ -20,13 +20,14 @@ package jetbrains.buildServer.clouds.vmware.web;
 
 import com.intellij.openapi.diagnostic.Logger;
 import java.net.URL;
-import java.text.SimpleDateFormat;
 import java.util.*;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import jetbrains.buildServer.BuildProject;
 import jetbrains.buildServer.clouds.vmware.VmwareConstants;
 import jetbrains.buildServer.clouds.vmware.connector.*;
+import jetbrains.buildServer.clouds.vmware.connector.beans.FolderBean;
+import jetbrains.buildServer.clouds.vmware.connector.beans.ResourcePoolBean;
 import jetbrains.buildServer.clouds.vmware.errors.VmwareErrorMessages;
 import jetbrains.buildServer.controllers.ActionErrors;
 import jetbrains.buildServer.controllers.BaseFormXmlController;
@@ -118,15 +119,9 @@ public class VMWareEditProfileController extends BaseFormXmlController {
     }
   }
 
-  private Element getVirtualMachinesAsElement(@NotNull final Map<String, VmwareInstance> vmMap){
+  private Element getVirtualMachinesAsElement(@NotNull final List<VmwareInstance> instances){
     final Element element = new Element("VirtualMachines");
-    final List<VmwareInstance> values = new ArrayList<VmwareInstance>(vmMap.values());
-    Collections.sort(values, new Comparator<VmwareInstance>() {
-      public int compare(@NotNull final VmwareInstance o1, @NotNull final VmwareInstance o2) {
-        return o1.getName().compareToIgnoreCase(o2.getName());
-      }
-    });
-    for (VmwareInstance vm : values) {
+    for (VmwareInstance vm : instances) {
       Element vmElement = new Element("VirtualMachine");
       vmElement.setAttribute("name", vm.getName());
       vmElement.setAttribute("template", String.valueOf(vm.isReadonly()));
@@ -136,34 +131,29 @@ public class VMWareEditProfileController extends BaseFormXmlController {
     return element;
   }
 
-  private Element getFoldersAsElement(Map<String, ? extends VmwareManagedEntity> folders){
+  private Element getFoldersAsElement(List<FolderBean> folders){
     final Element element = new Element("Folders");
-    final Set<String> folderNames = folders.keySet();
-    final List<String> sortedList = getIgnoreCaseSortedList(folderNames);
-    for (String folderName : sortedList) {
+    for (FolderBean folder : folders) {
       Element folderElement = new Element("Folder");
-      folderElement.setAttribute("name", folderName);
-      final VmwareManagedEntity entity = folders.get(folderName);
-      folderElement.setAttribute("value", entity.getId());
-      folderElement.setAttribute("datacenterId", entity.getDatacenterId());
+      folderElement.setAttribute("name", folder.getPath());
+      folderElement.setAttribute("value", folder.getId());
+      folderElement.setAttribute("datacenterId", folder.getDatacenterId());
       element.addContent(folderElement);
     }
     return element;
   }
 
-  private Element getResourcePoolsAsElement(Map<String, ? extends VmwareManagedEntity> resourcePools){
+  private Element getResourcePoolsAsElement(List<ResourcePoolBean> resourcePools){
     final Element element = new Element("ResourcePools");
-    final List<String> sortedList = getIgnoreCaseSortedList(resourcePools.keySet());
     final Element defaultPoolElem = new Element("ResourcePool");
     defaultPoolElem.setAttribute("name", "<Default>");
     defaultPoolElem.setAttribute("value", VmwareConstants.DEFAULT_RESOURCE_POOL);
     element.addContent(defaultPoolElem);
-    for (String poolName : sortedList) {
+    for (ResourcePoolBean pool : resourcePools) {
       Element poolElement = new Element("ResourcePool");
-      poolElement.setAttribute("name", poolName);
-      final VmwareManagedEntity entity = resourcePools.get(poolName);
-      poolElement.setAttribute("value", entity.getId());
-      poolElement.setAttribute("datacenterId", entity.getDatacenterId());
+      poolElement.setAttribute("name", pool.getPath());
+      poolElement.setAttribute("value", pool.getId());
+      poolElement.setAttribute("datacenterId", pool.getDatacenterId());
       element.addContent(poolElement);
     }
     return element;

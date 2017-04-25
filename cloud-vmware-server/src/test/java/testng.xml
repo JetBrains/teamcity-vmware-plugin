@@ -9,6 +9,7 @@
       <class name="jetbrains.buildServer.clouds.vmware.connector.VmwareTaskWrapperTest"/>
       <class name="jetbrains.buildServer.clouds.vmware.VmwarePropertiesProcessorTest"/>
       <class name="jetbrains.buildServer.clouds.vmware.VmwarePooledUpdateInstanceTaskTest"/>
+      <class name="jetbrains.buildServer.clouds.vmware.connector.VmwareApiConnectorTest"/>
     </classes>
   </test>
 </suite>

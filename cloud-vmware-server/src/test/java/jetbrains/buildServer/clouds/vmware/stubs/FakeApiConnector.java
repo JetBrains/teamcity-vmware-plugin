@@ -1,19 +1,18 @@
 package jetbrains.buildServer.clouds.vmware.stubs;
 
+import com.google.gson.internal.bind.ReflectiveTypeAdapterFactory;
 import com.vmware.vim25.CustomizationSpec;
 import com.vmware.vim25.mo.*;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.rmi.RemoteException;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
-import jetbrains.buildServer.clouds.base.errors.CheckedCloudException;
 import jetbrains.buildServer.clouds.server.CloudInstancesProvider;
 import jetbrains.buildServer.clouds.vmware.connector.VMWareApiConnectorImpl;
 import jetbrains.buildServer.clouds.vmware.connector.VmwareInstance;
 import jetbrains.buildServer.clouds.vmware.connector.beans.FolderBean;
 import jetbrains.buildServer.clouds.vmware.connector.beans.ResourcePoolBean;
-import jetbrains.buildServer.clouds.vmware.connector.beans.VirtualMachineBean;
 import jetbrains.buildServer.clouds.vmware.errors.VmwareCheckedCloudException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -95,20 +94,26 @@ public class FakeApiConnector extends VMWareApiConnectorImpl {
       .collect(Collectors.toList());
   }
 
-  @NotNull
-  @Override
-  public Map<String, FolderBean> getFolders() throws VmwareCheckedCloudException {
-    return findAllEntitiesAsMapOld(Folder.class)
-      .entrySet().stream()
-      .collect(Collectors.toMap(Map.Entry::getKey, e->new FolderBean(e.getValue())));
+  public Map<String, VmwareInstance> getAllVMsMap(boolean filterClones) throws VmwareCheckedCloudException {
+    return getVirtualMachines(filterClones).stream().collect(Collectors.toMap(VmwareInstance::getName, Function.identity()));
   }
 
   @NotNull
   @Override
-  public Map<String, ResourcePoolBean> getResourcePools() throws VmwareCheckedCloudException {
+  public List<FolderBean> getFolders() throws VmwareCheckedCloudException {
+    return findAllEntitiesAsMapOld(Folder.class)
+      .entrySet().stream()
+      .map(e->new FolderBean(e.getValue()))
+      .collect(Collectors.toList());
+  }
+
+  @NotNull
+  @Override
+  public List<ResourcePoolBean> getResourcePools() throws VmwareCheckedCloudException {
     return findAllEntitiesAsMapOld(ResourcePool.class)
       .entrySet().stream()
-      .collect(Collectors.toMap(Map.Entry::getKey, e->new ResourcePoolBean(e.getValue())));
+      .map(e->new ResourcePoolBean(e.getValue()))
+      .collect(Collectors.toList());
   }
 
   @Override

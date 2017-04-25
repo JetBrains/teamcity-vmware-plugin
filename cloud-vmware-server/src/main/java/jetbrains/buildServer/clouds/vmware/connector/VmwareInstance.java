@@ -36,7 +36,7 @@ import org.jetbrains.annotations.Nullable;
  *         Date: 7/25/2014
  *         Time: 6:45 PM
  */
-public class VmwareInstance extends AbstractInstance implements VmwareManagedEntity {
+public class VmwareInstance extends AbstractInstance implements VmwareManagedEntity, Comparable<VmwareInstance> {
   private static final Logger LOG = Logger.getInstance(VmwareInstance.class.getName());
 
   private final String myId;
@@ -57,10 +57,10 @@ public class VmwareInstance extends AbstractInstance implements VmwareManagedEnt
          vm.getMOR().getVal(),
          vm.getConfig() == null ? new OptionValue[0] : vm.getConfig().getExtraConfig(),
          vm.getRuntime().getPowerState(),
-         vm.getConfig() == null ? false : vm.getConfig().isTemplate(),
+         vm.getConfig() != null && vm.getConfig().isTemplate(),
          vm.getConfig() == null ? "" : vm.getConfig().getChangeVersion(),
          vm.getRuntime().getBootTime(),
-         vm.getGuest().getIpAddress(),
+         vm.getGuest() == null ? null : vm.getGuest().getIpAddress(),
          vm.getParent().getMOR(),
          datacenterId);
   }
@@ -114,11 +114,11 @@ public class VmwareInstance extends AbstractInstance implements VmwareManagedEnt
     return myName;
   }
 
-  @Nullable
+  @NotNull
   @Override
   public String getPath() {
     // no need to have full path for VirtualMachines: their names are unique across the whole datacenter
-    return null;
+    return getName();
   }
 
   @Override
@@ -217,5 +217,10 @@ public class VmwareInstance extends AbstractInstance implements VmwareManagedEnt
 
   public boolean isClone(){
     return "true".equals(getProperty(VMWareApiConnector.TEAMCITY_VMWARE_CLONED_INSTANCE));
+  }
+
+  @Override
+  public int compareTo(@NotNull final VmwareInstance o) {
+    return StringUtil.compare(StringUtil.toLowerCase(myName), StringUtil.toLowerCase(o.myName));
   }
 }

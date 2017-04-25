@@ -2,10 +2,7 @@ package jetbrains.buildServer.clouds.vmware;
 
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.WaitFor;
-import com.vmware.vim25.CustomizationLinuxOptions;
-import com.vmware.vim25.CustomizationSpec;
-import com.vmware.vim25.OptionValue;
-import com.vmware.vim25.VirtualMachinePowerState;
+import com.vmware.vim25.*;
 import com.vmware.vim25.mo.Datacenter;
 import com.vmware.vim25.mo.ManagedEntity;
 import com.vmware.vim25.mo.Task;
@@ -152,10 +149,10 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
 
     myFakeApi = new FakeApiConnector(TEST_SERVER_UUID, PROFILE_ID) {
       @Override
-      public Map<String, VmwareInstance> getVirtualMachines(boolean filterClones) throws VmwareCheckedCloudException {
-        final Map<String, VmwareInstance> instances = super.getVirtualMachines(filterClones);
-        instances.put("image_template", new VmwareInstance(new FakeVirtualMachine("image_template", true, false), "datacenter-10"));
-        instances.put("image1", new VmwareInstance(new FakeVirtualMachine("image1", false, false), "datacenter-10"));
+      public List<VmwareInstance> getVirtualMachines(boolean filterClones) throws VmwareCheckedCloudException {
+        final List<VmwareInstance> instances = super.getVirtualMachines(filterClones);
+        instances.add(new VmwareInstance(new FakeVirtualMachine("image_template", true, false), "datacenter-10"));
+        instances.add(new VmwareInstance(new FakeVirtualMachine("image1", false, false), "datacenter-10"));
         return instances;
       }
     };
@@ -168,7 +165,7 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
 
   public void check_startup_parameters() throws CheckedCloudException {
     startNewInstanceAndWait("image1", Collections.singletonMap("customParam1", "customValue1"));
-    final VmwareInstance vm = myFakeApi.getVirtualMachines(true).get("image1");
+    final VmwareInstance vm = myFakeApi.getAllVMsMap(true).get("image1");
 
     final String userDataEncoded = vm.getProperty(VMWarePropertiesNames.USER_DATA);
     assertNotNull(userDataEncoded);
@@ -1146,7 +1143,6 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
     }
   }
 
-
   /*
   *
   *
@@ -1192,7 +1188,7 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
       protected boolean condition() {
         try {
           if (shouldBeDeleted) {
-            return (myFakeApi.getVirtualMachines(false).get(name) == null);
+            return (myFakeApi.getAllVMsMap(false).get(name) == null);
           } else {
             return myFakeApi.getInstanceDetails(name).getInstanceStatus() == InstanceStatus.STOPPED;
           }
@@ -1212,14 +1208,14 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
       protected boolean condition() {
         final VmwareInstance vm;
         try {
-          vm = myFakeApi.getVirtualMachines(false).get(instance.getName());
+          vm = myFakeApi.getAllVMsMap(false).get(instance.getName());
           return vm != null && vm.getInstanceStatus() == InstanceStatus.RUNNING;
         } catch (CheckedCloudException e) {
           return false;
         }
       }
     };
-    final VmwareInstance vm = myFakeApi.getVirtualMachines(false).get(instance.getName());
+    final VmwareInstance vm = myFakeApi.getAllVMsMap(false).get(instance.getName());
     assertNotNull("instance " + instance.getName() + " must exists", vm);
     assertEquals("Must be running", InstanceStatus.RUNNING, vm.getInstanceStatus());
     if (instanceChecker != null) {
