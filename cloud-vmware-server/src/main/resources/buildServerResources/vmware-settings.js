@@ -707,7 +707,6 @@ BS.Clouds.VMWareVSphere = BS.Clouds.VMWareVSphere || (function () {
           this.$cloneFolder.children('option').each(function(){
             var $folder = self.$response.find('Folder[value="' + this.value + '"]');
             var attr = $j($folder).attr('datacenterId');
-            debugger;
             $j(this).prop('disabled', !!attr && attr != $datacenterId);
           });
           this.$resourcePool.children('option').each(function(){
@@ -896,15 +895,27 @@ BS.Clouds.VMWareVSphere = BS.Clouds.VMWareVSphere || (function () {
             var image = this._image;
 
             this.$image.trigger('change', image.sourceVmName || '');
+            BS.enableJQueryDropDownFilter(this.$image.attr('id'), {});
+
             this.$behaviour.trigger('change', image.behaviour || '');
             this.fetchSnapshotsDeferred && this.fetchSnapshotsDeferred
                 .then(function () {
                     this.$snapshot.trigger('change', image.snapshot || '');
+                    BS.enableJQueryDropDownFilter(this.$snapshot.attr('id'), {});
                 }.bind(this));
+
             this.$resourcePool.trigger('change', image.pool || '');
+            BS.enableJQueryDropDownFilter(this.$resourcePool.attr('id'), {});
+
             this.$customizationSpec.trigger('change', image.customizationSpec || '');
+            BS.enableJQueryDropDownFilter(this.$customizationSpec.attr('id'), {});
+
             this.$agentPool.trigger('change', image['agent_pool_id'] || '');
+            BS.enableJQueryDropDownFilter(this.$agentPool.attr('id'), {});
+
             this.$cloneFolder.trigger('change', image.folder || '');
+            BS.enableJQueryDropDownFilter(this.$cloneFolder.attr('id'), {});
+
             this.$maxInstances.trigger('change', image.maxInstances || '');
             this.$nickname.trigger('change', image.nickname || '');
         },
