@@ -227,6 +227,9 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
           , "runtime.powerState", "runtime.bootTime",
           "guest.ipAddress", "parent"
         },});
+        if (ocs == null){
+          return Stream.empty();
+        }
         return Arrays.stream(ocs)
                      .map(oc->{
             final Map<String, Object> mappedProperties = Arrays.stream(oc.getPropSet()).collect(Collectors.toMap(
@@ -291,6 +294,9 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
         final ObjectContent[] ocs = getObjectContents(dc, new String[][]{{
           "Folder", "name", "childType", "parent"
         },});
+        if (ocs == null){
+          return Stream.empty();
+        }
         final String datacenterId = dc.getMOR().getVal();
         return Arrays.stream(ocs).map(oc -> {
           try {
@@ -353,6 +359,9 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
       try {
         final String datacenterId = dc.getMOR().getVal();
         final ObjectContent[] ocs = getObjectContents(dc, new String[][]{{"ResourcePool", "name", "parent"},});
+        if (ocs == null){
+          return Stream.empty();
+        }
         return Arrays.stream(ocs).map(oc -> {
           final Map<String, Object> mappedProperties = Arrays.stream(oc.getPropSet()).collect(Collectors.toMap(
             DynamicProperty::getName, DynamicProperty::getVal
