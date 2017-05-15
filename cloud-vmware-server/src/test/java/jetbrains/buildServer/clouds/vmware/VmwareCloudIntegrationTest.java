@@ -39,6 +39,7 @@ import jetbrains.buildServer.clouds.vmware.web.VMWareWebConstants;
 import jetbrains.buildServer.serverSide.ServerPaths;
 import jetbrains.buildServer.serverSide.TeamCityProperties;
 import jetbrains.buildServer.serverSide.impl.ServerSettingsImpl;
+import jetbrains.buildServer.util.TestFor;
 import jetbrains.buildServer.web.openapi.PluginDescriptor;
 import org.jetbrains.annotations.NotNull;
 import org.jmock.Expectations;
@@ -1141,6 +1142,20 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
     } finally {
       System.getProperties().remove("teamcity.vsphere.instance.status.update.delay.ms");
     }
+  }
+
+  @TestFor(issues = "TW-47486")
+  public void shouldnt_throw_error_when_stopping_nonexisting_instance(){
+    setInternalProperty("teamcity.vsphere.instance.status.update.delay.ms", "250000");
+    recreateClient();
+    final VmwareCloudInstance startedInstance = startNewInstanceAndWait("image_template");
+    final FakeVirtualMachine vm = FakeModel.instance().getVirtualMachine(startedInstance.getName());
+    assertNotNull(vm);
+    FakeModel.instance().removeVM(vm.getName());
+    final VmwareCloudImage image = startedInstance.getImage();
+    assertContains(image.getInstances(), startedInstance);
+    myClient.terminateInstance(startedInstance);
+    assertNotContains(image.getInstances(), startedInstance);
   }
 
   /*
