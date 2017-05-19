@@ -22,7 +22,10 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
+import java.util.Collections;
+import java.util.HashMap;
 import jetbrains.buildServer.CommandLineExecutor;
+import jetbrains.buildServer.serverSide.TeamCityProperties;
 import jetbrains.buildServer.util.StringUtil;
 import java.io.File;
 import java.util.Map;
@@ -43,15 +46,19 @@ import static jetbrains.buildServer.clouds.vmware.VMWarePropertiesNames.*;
 public class VMWarePropertiesReader {
 
   private static final Logger LOG = Logger.getInstance(VMWarePropertiesReader.class.getName());
+  private static final String RPC_TOOL_PARAMETER = "teamcity.vmware.rpctool.path";
 
   private static final String[] WINDOWS_COMMANDS = {"C:\\Program Files\\VMware\\VMware Tools\\rpctool.exe"};
   private static final String[] LINUX_COMMANDS = {"/usr/sbin/vmware-rpctool", "/usr/bin/vmware-rpctool"};
-  private static final String[] MAC_COMMANDS = {"/usr/sbin/vmware-rpctool", "/sbin/rpctool"};
+  private static final String[] MAC_COMMANDS = {"/usr/sbin/vmware-rpctool", "/sbin/rpctool", "/Library/Application Support/VMware Tools/vmware-tools-daemon"};
 
   private static final String VMWARE_RPCTOOL_NAME = "vmware-rpctool";
   private final String myVMWareRPCToolPath;
 
   private final BuildAgentConfigurationEx myAgentConfiguration;
+  private static final Map<String, String> SPECIAL_COMMAND_FORMATS = Collections.unmodifiableMap(new HashMap<String, String>(){{
+    put("/Library/Application Support/VMware Tools/vmware-tools-daemon", "--cmd='info-get %s'");
+  }});
 
 
   public VMWarePropertiesReader(final BuildAgentConfigurationEx agentConfiguration,
@@ -112,7 +119,8 @@ public class VMWarePropertiesReader {
   private String getPropertyValue(String propName){
     final GeneralCommandLine commandLine = new GeneralCommandLine();
     commandLine.setExePath(myVMWareRPCToolPath);
-    final String param = String.format("info-get %s", propName);
+    final String specialCommand = SPECIAL_COMMAND_FORMATS.get(myVMWareRPCToolPath);
+    final String param = String.format(specialCommand != null ? specialCommand : "info-get %s", propName);
     commandLine.addParameter(param);
     final CommandLineExecutor executor = new CommandLineExecutor(commandLine);
     try {
@@ -126,6 +134,11 @@ public class VMWarePropertiesReader {
 
   @Nullable
   private static String getToolPath(@NotNull final BuildAgentConfiguration configuration) {
+    final String rpctoolPath = TeamCityProperties.getProperty(RPC_TOOL_PARAMETER);
+    if (StringUtil.isNotEmpty(rpctoolPath)){
+      return rpctoolPath;
+    }
+
     if (SystemInfo.isUnix) { // Linux, MacOSX, FreeBSD
       final Map<String, String> envs = configuration.getBuildParameters().getEnvironmentVariables();
       final String path = envs.get("PATH");
