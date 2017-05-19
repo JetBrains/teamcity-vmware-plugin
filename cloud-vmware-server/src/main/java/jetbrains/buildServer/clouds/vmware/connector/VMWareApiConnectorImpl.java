@@ -875,7 +875,12 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
   public Task stopInstance(@NotNull final VmwareCloudInstance instance) {
     instance.setStatus(InstanceStatus.STOPPING);
     try {
-      VirtualMachine vm = findEntityByIdNameOld(instance.getInstanceId(), VirtualMachine.class).getFirst();
+      final VirtualMachine vm = findEntityByIdNameNullableOld(instance.getInstanceId(), VirtualMachine.class, null);
+      if (vm == null){
+        // VM no longer exists TW-47486
+        instance.getImage().removeInstance(instance.getInstanceId());
+        return emptyTask();
+      }
       if (getInstanceStatus(vm) == InstanceStatus.STOPPED) {
         return emptyTask();
       }
