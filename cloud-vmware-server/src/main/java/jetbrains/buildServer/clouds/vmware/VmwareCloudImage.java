@@ -213,7 +213,6 @@ public class VmwareCloudImage extends AbstractCloudImage<VmwareCloudInstance, Vm
               @Override
               public void onError(final Throwable th) {
                 super.onError(th);
-                removeInstance(finalInstance.getName());
               }
             });
         } else {

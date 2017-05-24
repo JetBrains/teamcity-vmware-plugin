@@ -79,6 +79,7 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
   private static final String RESPOOL_TYPE = ResourcePool.class.getSimpleName();
   private static final String SPEC_FOLDER = "vm";
   private static final String SPEC_RESPOOL = "Resources";
+  private static final String RESPOOL_PRIVILEGE = "Resource.AssignVMToPool";
 
 
   private static final long SHUTDOWN_TIMEOUT = 60 * 1000;
@@ -370,10 +371,7 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
           final ManagedObjectReference parent = (ManagedObjectReference)mappedProperties.get("parent");
           LOG.debug("Found respool with name '" + simpleName + "'. Parent: " + (parent == null ? "null" : parent.toString()));
 
-          if ("Resources".equals(simpleName) && parent != null && !oc.obj.getType().equals(parent.getVal())){
-            LOG.debug("The pool is a special pool. Skipping it...");
-            return null;
-          }
+          final ResourcePool pool =  (ResourcePool)createExactManagedEntity(oc.getObj());
 
           final String path = getFullPath(simpleName, oc.obj, parent, dc);
           LOG.debug("Calculated path: " + path);
@@ -560,7 +558,6 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
     final Collection<ResourcePoolBean> pools = findAllResourcePools();
 
     return pools.stream()
-                .filter(rp->!isSpecial(rp))
                 .sorted()
                 .collect(Collectors.toList());
   }
@@ -588,6 +585,9 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
       final String morPath = getFullMORPath(createExactManagedEntity(firstParent), dc);
       if (StringUtil.isEmpty(morPath)) {
         return uniqueName;
+      } else if ("Resources".equals(entityName) && !mor.getType().equals(firstParent.getType())) {
+        LOG.debug("The pool is a special pool. Skipping it...");
+        return morPath;
       } else {
         return morPath + "/" + entityName;
       }
@@ -764,7 +764,21 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
     if (!VmwareConstants.DEFAULT_RESOURCE_POOL.equals(imageDetails.getResourcePoolId())) {
       final ResourcePool pool = findEntityByIdNameNullableOld(imageDetails.getResourcePoolId(), ResourcePool.class, datacenter);
       if (pool != null) {
-        location.setPool(pool.getMOR());
+        boolean canAdd = isCanAddVM2Pool(pool);
+
+        if (canAdd)
+          location.setPool(pool.getMOR());
+        else {
+          instance.setStatus(InstanceStatus.ERROR);
+          throw new VmwareCheckedCloudException(String.format("Unable to start '%s' - missing " +
+                                                              "'Assign a virtual machine to a resource pool' privilege on pool '%s'.",
+                                                              instance.getName(),
+                                                              getFullPath(pool.getName(),
+                                                                          pool.getMOR(),
+                                                                          pool.getParent() == null ? null : pool.getParent().getMOR(),
+                                                                          datacenter)));
+        }
+
       } else {
         LOG.warn(String.format("Unable to find resource pool %s at datacenter %s. Will clone at the image resource pool instead"
           , imageDetails.getResourcePoolId()
@@ -849,8 +863,63 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
         );
       }
     } catch (RemoteException e) {
+      instance.setStatus(InstanceStatus.ERROR);
       throw new VmwareCheckedCloudException(e);
     }
+  }
+
+  /**
+   * checks whether user can add VM to pool.
+   * @param pool
+   * @return whether user can add VM to pool. The result is false positive, i.e. can return true, when VM can't actually be added.
+   */
+  @Override
+  public boolean isCanAddVM2Pool(final String poolId) throws VmwareCheckedCloudException {
+    final Pair<ResourcePool, Datacenter> pair = findEntityByIdNameOld(poolId, ResourcePool.class);
+    if (pair.getFirst() == null){
+      return true;
+    }
+
+    return isCanAddVM2Pool(pair.getFirst());
+  }
+
+  /**
+   * checks whether user can add VM to pool.
+   * @param pool
+   * @return whether user can add VM to pool. The result is false positive, i.e. can return true, when VM can't actually be added.
+   */
+  private boolean isCanAddVM2Pool(final ResourcePool pool) {
+    final Set<Integer> rolesSet = new HashSet<>();
+    final int[] role = pool.getEffectiveRole();
+    if (role == null) {
+      return true; // don't perform the check
+    }
+
+    for(int roleId : role){
+      rolesSet.add(roleId);
+    }
+
+    final AuthorizationManager authorizationManager = myServiceInstance.getAuthorizationManager();
+    if (authorizationManager == null)
+      return true; // don't perform the check
+
+    final AuthorizationRole[] roleList = authorizationManager.getRoleList();
+    if (roleList == null)
+      return true; // don't perform the check
+
+    for (AuthorizationRole authRole : roleList) {
+      if (!rolesSet.contains(authRole.getRoleId())) {
+        continue;
+      }
+      for (String p : authRole.getPrivilege()) {
+        if (p.equalsIgnoreCase(RESPOOL_PRIVILEGE)) {
+          return true;
+        }
+      }
+    }
+
+    // can't add
+    return false;
   }
 
 

@@ -23,6 +23,9 @@ public class VmwareApiConnectorsPool {
                                                         @Nullable final String serverUUID,
                                                         @Nullable final String profileId,
                                                         @Nullable final CloudInstancesProvider instancesProvider){
+    if (serverUUID == null || profileId == null){ // this is just for fetching data
+      return new VMWareApiConnectorImpl(instanceURL, username, password, serverUUID, profileId, instancesProvider);
+    }
 
     final String key = VMWareApiConnectorImpl.getKey(instanceURL, username, password);
     return myConnectors.computeIfAbsent(key, k->new VMWareApiConnectorImpl(instanceURL, username, password, serverUUID, profileId, instancesProvider));

@@ -83,6 +83,8 @@ public interface VMWareApiConnector extends CloudApiConnector<VmwareCloudImage, 
 
   Task cloneAndStartVm(@NotNull final VmwareCloudInstance instance) throws VmwareCheckedCloudException;
 
+  boolean isCanAddVM2Pool(String poolId) throws VmwareCheckedCloudException;
+
   Task stopInstance(VmwareCloudInstance instance);
 
   Task deleteInstance(VmwareCloudInstance instance);
