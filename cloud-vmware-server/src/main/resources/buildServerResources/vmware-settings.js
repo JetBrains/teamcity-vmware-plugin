@@ -325,7 +325,6 @@ BS.Clouds.VMWareVSphere = BS.Clouds.VMWareVSphere || (function () {
               parameters: BS.Clouds.Admin.CreateProfileForm.serializeParameters(),
               onSuccess: function(response){
                 var $response = $j(response.responseXML);
-                debugger;
                 if ($response.length){
                     var find = $response.find("fieldValid");
                     if (find.text() == 'false'){
