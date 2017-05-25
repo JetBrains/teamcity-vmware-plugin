@@ -54,6 +54,7 @@ public class VMWareEditProfileController extends BaseFormXmlController {
   @NotNull private final String myJspPath;
   @NotNull private final String myHtmlPath;
   @NotNull private final String mySnapshotsPath;
+  @NotNull private final String myConfigHelperPath;
   @NotNull private final PluginDescriptor myPluginDescriptor;
   @NotNull private final AgentPoolManager myAgentPoolManager;
 
@@ -67,8 +68,10 @@ public class VMWareEditProfileController extends BaseFormXmlController {
     myAgentPoolManager = agentPoolManager;
     myJspPath = myPluginDescriptor.getPluginResourcesPath("vmware-settings.jsp");
     mySnapshotsPath = pluginDescriptor.getPluginResourcesPath("vmware-getsnapshotlist.html");
+    myConfigHelperPath = pluginDescriptor.getPluginResourcesPath("vmware-config-helper.html");
     manager.registerController(myHtmlPath, this);
     manager.registerController(pluginDescriptor.getPluginResourcesPath("vmware-getsnapshotlist.html"), new GetSnapshotsListController());
+    manager.registerController(pluginDescriptor.getPluginResourcesPath("vmware-config-helper.html"), new ConfigurationHelperController());
   }
 
   @Override
@@ -77,6 +80,7 @@ public class VMWareEditProfileController extends BaseFormXmlController {
     final String projectId = request.getParameter("projectId");
     mv.getModel().put("refreshablePath", myHtmlPath);
     mv.getModel().put("refreshSnapshotsPath", mySnapshotsPath);
+    mv.getModel().put("configurationHelperPath", myConfigHelperPath);
     mv.getModel().put("resPath", myPluginDescriptor.getPluginResourcesPath());
 
     final List<AgentPool> pools = new ArrayList<>();

@@ -32,6 +32,7 @@
 
 <jsp:useBean id="refreshablePath" class="java.lang.String" scope="request"/>
 <jsp:useBean id="refreshSnapshotsPath" class="java.lang.String" scope="request"/>
+<jsp:useBean id="configurationHelperPath" class="java.lang.String" scope="request"/>
 </table>
 
 <script type="text/javascript">
@@ -105,6 +106,8 @@
 </div>
 
 <input type="hidden" name="prop:image" id="realImageInput"/><!-- this one is required for getting snapshots -->
+<input type="hidden" name="prop:helperFieldValue" id="helperFieldValue">
+<input type="hidden" name="prop:helperFieldId" id="helperFieldId">
 <bs:dialog dialogId="VMWareImageDialog" title="Add Image" closeCommand="BS.VMWareImageDialog.close()"
            dialogClass="VMWareImageDialog vmWareSphereOptions" titleId="VMWareImageDialogTitle"
         ><div class="message-wrapper"><div class="fetchingServerOptions message message_hidden"><i class="icon-refresh icon-spin"></i>Fetching server options...</div>
@@ -225,6 +228,7 @@
         success: function () {
             BS.Clouds.VMWareVSphere.init('<c:url value="${refreshablePath}"/>',
                     '<c:url value="${refreshSnapshotsPath}"/>',
+                    '<c:url value="${configurationHelperPath}"/>',
                     'source_images_json',
                     '${webCons.serverUrl}');
         },
