@@ -764,21 +764,7 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
     if (!VmwareConstants.DEFAULT_RESOURCE_POOL.equals(imageDetails.getResourcePoolId())) {
       final ResourcePool pool = findEntityByIdNameNullableOld(imageDetails.getResourcePoolId(), ResourcePool.class, datacenter);
       if (pool != null) {
-        boolean canAdd = isCanAddVM2Pool(pool);
-
-        if (canAdd)
           location.setPool(pool.getMOR());
-        else {
-          instance.setStatus(InstanceStatus.ERROR);
-          throw new VmwareCheckedCloudException(String.format("Unable to start '%s' - missing " +
-                                                              "'Assign a virtual machine to a resource pool' privilege on pool '%s'.",
-                                                              instance.getName(),
-                                                              getFullPath(pool.getName(),
-                                                                          pool.getMOR(),
-                                                                          pool.getParent() == null ? null : pool.getParent().getMOR(),
-                                                                          datacenter)));
-        }
-
       } else {
         LOG.warn(String.format("Unable to find resource pool %s at datacenter %s. Will clone at the image resource pool instead"
           , imageDetails.getResourcePoolId()
