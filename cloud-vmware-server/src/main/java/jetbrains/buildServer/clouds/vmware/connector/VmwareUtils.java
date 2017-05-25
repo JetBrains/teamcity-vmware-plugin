@@ -40,7 +40,6 @@ public class VmwareUtils {
   private static final String RESPOOL_TYPE = ResourcePool.class.getSimpleName();
   private static final String SPEC_FOLDER = "vm";
   private static final String SPEC_RESPOOL = "Resources";
-  private ConcurrentMap<String, String> myDatacenterCache = new ConcurrentHashMap<>();
 
   static boolean isSpecial(@NotNull final ResourcePoolBean pool){
     return SPEC_RESPOOL.equals(pool.getName()) && pool.getParentMOR() != null && !RESPOOL_TYPE.equals(pool.getParentMOR().getType());

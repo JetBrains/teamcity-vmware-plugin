@@ -508,11 +508,15 @@ BS.Clouds.VMWareVSphere = BS.Clouds.VMWareVSphere || (function () {
                 this.$currentStateWarning.toggleClass('hidden', this._image.snapshot !== CURRENT_STATE);
                 this.validateOptions(e.target.getAttribute('data-id'));
             }.bind(this));
-            // - folder
-            // - pool
+
             this.$resourcePool.on('change', function(e, value){
               this.checkHelper('respool', this.$resourcePool.val(), 'pool');
             }.bind(this));
+
+            this.$cloneFolder.on('change', function(e, value){
+              this.checkHelper('folder', this.$cloneFolder.val(), 'folder');
+            }.bind(this));
+
             this.$cloneFolder
                 .add(this.$resourcePool)
                 .add(this.$customizationSpec)
@@ -776,6 +780,7 @@ BS.Clouds.VMWareVSphere = BS.Clouds.VMWareVSphere || (function () {
             templateStart: 'The Start/Stop behaviour cannot be selected for templates',
             nonNegative: 'Must be non-negative number',
             noAccessPool: 'You do not have the privilege "Resource > Assign virtual machine to resource pool" on the selected host/resource pool.',
+            noAccessFolder: 'You do not have the privilege "Create from existing virtual machine" on the selected Folder/Datacenter',
             unique: 'There is another source with the same name/nickname',
             nonexistent: 'The %%elem%% &laquo;%%val%%&raquo; does not exist'
         },

@@ -79,7 +79,6 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
   private static final String RESPOOL_TYPE = ResourcePool.class.getSimpleName();
   private static final String SPEC_FOLDER = "vm";
   private static final String SPEC_RESPOOL = "Resources";
-  private static final String RESPOOL_PRIVILEGE = "Resource.AssignVMToPool";
 
 
   private static final long SHUTDOWN_TIMEOUT = 60 * 1000;
@@ -309,12 +308,6 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
             final ManagedObjectReference parent = (ManagedObjectReference)mappedProperties.get("parent");
 
             LOG.debug("Found folder with name '" + simpleName + "'. Parent: " + (parent == null ? "null" : parent.toString()));
-            if (simpleName.equals(SPEC_FOLDER)) {
-              LOG.debug("The folder is a special folder. Skipping it...");
-              return null;
-            }
-
-
 
             final String[] childTypes = ((ArrayOfString)mappedProperties.get("childType")).getString();
             boolean skip = true;
@@ -585,7 +578,7 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
       final String morPath = getFullMORPath(createExactManagedEntity(firstParent), dc);
       if (StringUtil.isEmpty(morPath)) {
         return uniqueName;
-      } else if ("Resources".equals(entityName) && !mor.getType().equals(firstParent.getType())) {
+      } else if (("Resources".equals(entityName) || "vm".equals(entityName)) && !mor.getType().equals(firstParent.getType())) {
         LOG.debug("The pool is a special pool. Skipping it...");
         return morPath;
       } else {
@@ -855,28 +848,22 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
   }
 
   /**
-   * checks whether user can add VM to pool.
+   * checks whether user has a certain privilege on a certain resource.
    * @param pool
-   * @return whether user can add VM to pool. The result is false positive, i.e. can return true, when VM can't actually be added.
+   * @param instanceType
+   * @param permission
+   * @return whether user has a certain privilege on a certain resource. The result is false positive, i.e. can return true, when the permission existence cannot be checked.
    */
-  @Override
-  public boolean isCanAddVM2Pool(final String poolId) throws VmwareCheckedCloudException {
-    final Pair<ResourcePool, Datacenter> pair = findEntityByIdNameOld(poolId, ResourcePool.class);
+  public <T extends ManagedEntity> boolean hasPrivilegeOnResource(@NotNull final String entityId,
+                                                                  @NotNull final Class<T> instanceType,
+                                                                  @NotNull final String permission) throws VmwareCheckedCloudException {
+    final Pair<T, Datacenter> pair = findEntityByIdNameOld(entityId, instanceType);
     if (pair.getFirst() == null){
       return true;
     }
 
-    return isCanAddVM2Pool(pair.getFirst());
-  }
-
-  /**
-   * checks whether user can add VM to pool.
-   * @param pool
-   * @return whether user can add VM to pool. The result is false positive, i.e. can return true, when VM can't actually be added.
-   */
-  private boolean isCanAddVM2Pool(final ResourcePool pool) {
     final Set<Integer> rolesSet = new HashSet<>();
-    final int[] role = pool.getEffectiveRole();
+    final int[] role = pair.getFirst().getEffectiveRole();
     if (role == null) {
       return true; // don't perform the check
     }
@@ -898,7 +885,7 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
         continue;
       }
       for (String p : authRole.getPrivilege()) {
-        if (p.equalsIgnoreCase(RESPOOL_PRIVILEGE)) {
+        if (p.equalsIgnoreCase(permission)) {
           return true;
         }
       }
