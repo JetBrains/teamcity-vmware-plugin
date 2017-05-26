@@ -82,11 +82,8 @@ public class ConfigurationHelperController extends BaseFormXmlController {
           // do nothing
           break;
       }
-    } catch (VmwareCheckedCloudException e) {
-      LOG.warn("Unable to get snapshot list: " + e.toString());
-      LOG.debug("Unable to get snapshot list: " + e.toString(), e);
-    } catch (MalformedURLException e) {
-      LOG.warn("Unable to get snapshot list: " + e.toString());
+    } catch (Exception e) {
+      LOG.warnAndDebugDetails("Unable to perform check", e);
     }
 
   }
