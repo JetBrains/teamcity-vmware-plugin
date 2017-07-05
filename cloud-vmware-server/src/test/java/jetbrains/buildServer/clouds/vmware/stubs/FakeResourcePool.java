@@ -70,4 +70,8 @@ public class FakeResourcePool extends ResourcePool {
     };
   }
 
+  @Override
+  public int[] getEffectiveRole() {
+    return null;
+  }
 }

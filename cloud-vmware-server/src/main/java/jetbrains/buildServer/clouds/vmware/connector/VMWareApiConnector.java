@@ -20,6 +20,7 @@ package jetbrains.buildServer.clouds.vmware.connector;
 
 import com.vmware.vim25.CustomizationSpec;
 import com.vmware.vim25.VirtualMachineSnapshotTree;
+import com.vmware.vim25.mo.ManagedEntity;
 import com.vmware.vim25.mo.Task;
 import com.vmware.vim25.mo.VirtualMachine;
 import java.util.Collection;
@@ -83,6 +84,9 @@ public interface VMWareApiConnector extends CloudApiConnector<VmwareCloudImage, 
 
   Task cloneAndStartVm(@NotNull final VmwareCloudInstance instance) throws VmwareCheckedCloudException;
 
+  <T extends ManagedEntity> boolean hasPrivilegeOnResource(@NotNull final String entityId,
+                                                           @NotNull final Class<T> instanceType,
+                                                           @NotNull final String permission) throws VmwareCheckedCloudException;
   Task stopInstance(VmwareCloudInstance instance);
 
   Task deleteInstance(VmwareCloudInstance instance);

@@ -308,12 +308,6 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
             final ManagedObjectReference parent = (ManagedObjectReference)mappedProperties.get("parent");
 
             LOG.debug("Found folder with name '" + simpleName + "'. Parent: " + (parent == null ? "null" : parent.toString()));
-            if (simpleName.equals(SPEC_FOLDER)) {
-              LOG.debug("The folder is a special folder. Skipping it...");
-              return null;
-            }
-
-
 
             final String[] childTypes = ((ArrayOfString)mappedProperties.get("childType")).getString();
             boolean skip = true;
@@ -370,10 +364,7 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
           final ManagedObjectReference parent = (ManagedObjectReference)mappedProperties.get("parent");
           LOG.debug("Found respool with name '" + simpleName + "'. Parent: " + (parent == null ? "null" : parent.toString()));
 
-          if ("Resources".equals(simpleName) && parent != null && !oc.obj.getType().equals(parent.getVal())){
-            LOG.debug("The pool is a special pool. Skipping it...");
-            return null;
-          }
+          final ResourcePool pool =  (ResourcePool)createExactManagedEntity(oc.getObj());
 
           final String path = getFullPath(simpleName, oc.obj, parent, dc);
           LOG.debug("Calculated path: " + path);
@@ -560,7 +551,6 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
     final Collection<ResourcePoolBean> pools = findAllResourcePools();
 
     return pools.stream()
-                .filter(rp->!isSpecial(rp))
                 .sorted()
                 .collect(Collectors.toList());
   }
@@ -588,6 +578,9 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
       final String morPath = getFullMORPath(createExactManagedEntity(firstParent), dc);
       if (StringUtil.isEmpty(morPath)) {
         return uniqueName;
+      } else if (("Resources".equals(entityName) || "vm".equals(entityName)) && !mor.getType().equals(firstParent.getType())) {
+        LOG.debug("The pool is a special pool. Skipping it...");
+        return morPath;
       } else {
         return morPath + "/" + entityName;
       }
@@ -764,7 +757,7 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
     if (!VmwareConstants.DEFAULT_RESOURCE_POOL.equals(imageDetails.getResourcePoolId())) {
       final ResourcePool pool = findEntityByIdNameNullableOld(imageDetails.getResourcePoolId(), ResourcePool.class, datacenter);
       if (pool != null) {
-        location.setPool(pool.getMOR());
+          location.setPool(pool.getMOR());
       } else {
         LOG.warn(String.format("Unable to find resource pool %s at datacenter %s. Will clone at the image resource pool instead"
           , imageDetails.getResourcePoolId()
@@ -849,8 +842,57 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
         );
       }
     } catch (RemoteException e) {
+      instance.setStatus(InstanceStatus.ERROR);
       throw new VmwareCheckedCloudException(e);
     }
+  }
+
+  /**
+   * checks whether user has a certain privilege on a certain resource.
+   * @param pool
+   * @param instanceType
+   * @param permission
+   * @return whether user has a certain privilege on a certain resource. The result is false positive, i.e. can return true, when the permission existence cannot be checked.
+   */
+  public <T extends ManagedEntity> boolean hasPrivilegeOnResource(@NotNull final String entityId,
+                                                                  @NotNull final Class<T> instanceType,
+                                                                  @NotNull final String permission) throws VmwareCheckedCloudException {
+    final Pair<T, Datacenter> pair = findEntityByIdNameOld(entityId, instanceType);
+    if (pair.getFirst() == null){
+      return true;
+    }
+
+    final Set<Integer> rolesSet = new HashSet<>();
+    final int[] role = pair.getFirst().getEffectiveRole();
+    if (role == null) {
+      return true; // don't perform the check
+    }
+
+    for(int roleId : role){
+      rolesSet.add(roleId);
+    }
+
+    final AuthorizationManager authorizationManager = myServiceInstance.getAuthorizationManager();
+    if (authorizationManager == null)
+      return true; // don't perform the check
+
+    final AuthorizationRole[] roleList = authorizationManager.getRoleList();
+    if (roleList == null)
+      return true; // don't perform the check
+
+    for (AuthorizationRole authRole : roleList) {
+      if (!rolesSet.contains(authRole.getRoleId())) {
+        continue;
+      }
+      for (String p : authRole.getPrivilege()) {
+        if (p.equalsIgnoreCase(permission)) {
+          return true;
+        }
+      }
+    }
+
+    // can't add
+    return false;
   }
 
 
