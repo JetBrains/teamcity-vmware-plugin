@@ -275,7 +275,9 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
   }
 
   protected Map<String, VmwareInstance> findAllVirtualMachinesAsMap() throws VmwareCheckedCloudException{
-    return findAllVirtualMachines().stream().collect(Collectors.toMap(VmwareInstance::getName, Function.identity()));
+    return findAllVirtualMachines()
+      .stream()
+      .collect(Collectors.toMap(VmwareInstance::getName, Function.identity(), (k, v) -> k));
   }
 
   @NotNull
@@ -453,9 +455,8 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
     Map<VmwareCloudImage, Map<String, R>> result = new HashMap<>();
     List<VmwareCloudImage> unprocessed = new ArrayList<>();
 
-    final Map<String, VmwareInstance> allVmsAsMap = findAllVirtualMachines()
-      .stream()
-      .collect(Collectors.toMap(VmwareInstance::getName, Function.identity()));
+    final Map<String, VmwareInstance> allVmsAsMap = findAllVirtualMachinesAsMap();
+
     for (VmwareCloudImage image: images) {
       final VmwareCloudImageDetails imageDetails = image.getImageDetails();
       if(imageDetails.getBehaviour().isUseOriginal()){
@@ -1135,7 +1136,7 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
     return findAllVirtualMachines()
       .stream()
       .filter(vm->instanceNames.contains(vm.getName()))
-      .collect(Collectors.toMap(VmwareInstance::getName, VmwareInstance::getInstanceStatus));
+      .collect(Collectors.toMap(VmwareInstance::getName, VmwareInstance::getInstanceStatus, (k,v)->k));
     } catch (VmwareCheckedCloudException e) {
       LOG.debug(e.toString());
       return instanceNames.stream().collect(Collectors.toMap(Function.identity(), in-> InstanceStatus.ERROR));
