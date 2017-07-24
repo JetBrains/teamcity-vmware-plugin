@@ -246,6 +246,10 @@ public class VmwareCloudImage extends AbstractCloudImage<VmwareCloudInstance, Vm
 
   private synchronized void startVM(@NotNull final VmwareCloudInstance instance, @NotNull final CloudInstanceUserData cloudInstanceUserData) {
     instance.setStartDate(new Date());
+    if (instance.getStatus() != InstanceStatus.SCHEDULED_TO_START) {
+      LOG.debug("Skipped double start attempts");
+      return;
+    }
     instance.setStatus(InstanceStatus.STARTING);
     myAsyncTaskExecutor.executeAsync(new VmwareTaskWrapper(new Callable<Task>() {
       public Task call() throws Exception {
