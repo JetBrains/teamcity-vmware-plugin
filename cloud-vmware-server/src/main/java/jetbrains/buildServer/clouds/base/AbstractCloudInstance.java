@@ -124,11 +124,8 @@ public abstract class AbstractCloudInstance<T extends AbstractCloudImage> implem
   }
 
   public void setStartDate(@NotNull final Date startDate) {
-    if (startDate.after(myStartDate.get())) {
-      myStartDate.set(startDate);
-    } else if (startDate.before(myStartDate.get())) {
-      LOG.debug(String.format("Attempted to set start date to %s from %s", startDate.toString(), myStartDate.get().toString()));
-    }
+    LOG.debug(String.format("Setting start date to %s from %s", startDate.toString(), myStartDate.get().toString()));
+    myStartDate.set(startDate);
   }
 
   @NotNull
