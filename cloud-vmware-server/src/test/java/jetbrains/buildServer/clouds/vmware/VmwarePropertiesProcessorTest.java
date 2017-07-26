@@ -28,6 +28,8 @@ import static jetbrains.buildServer.clouds.vmware.VmwareCloudIntegrationTest.TES
  */
 @Test
 public class VmwarePropertiesProcessorTest extends BaseTestCase {
+  protected static final String PROFILE_ID = "cp1";
+
   private VmwarePropertiesProcessor myProcessor;
   private Map<String, String> myProperties;
   private Collection<CloudProfile> myProfiles;
@@ -238,7 +240,10 @@ public class VmwarePropertiesProcessorTest extends BaseTestCase {
   private CloudClientEx createClient(CloudClientParameters clientParameters) throws IOException {
     final Collection<VmwareCloudImageDetails> images = VMWareCloudClientFactory.parseImageDataInternal(clientParameters);
     FakeApiConnector apiConnector = new FakeApiConnector(TEST_SERVER_UUID, PROFILE_ID);
-    VMWareCloudClient client = new VMWareCloudClient(clientParameters, apiConnector, new VmwareUpdateTaskManager(), createTempDir());
+    VMWareCloudClient client = new VMWareCloudClient(VmwareTestUtils.createProfileFromProps(clientParameters),
+                                                     apiConnector,
+                                                     new VmwareUpdateTaskManager(),
+                                                     createTempDir());
     client.populateImagesData(images, 1000, 1000);
     return client;
   }

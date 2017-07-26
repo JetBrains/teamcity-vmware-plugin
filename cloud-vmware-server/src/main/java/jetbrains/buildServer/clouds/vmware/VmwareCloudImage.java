@@ -27,6 +27,7 @@ import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicReference;
 import jetbrains.buildServer.clouds.CloudInstanceUserData;
+import jetbrains.buildServer.clouds.CloudProfile;
 import jetbrains.buildServer.clouds.InstanceStatus;
 import jetbrains.buildServer.clouds.QuotaException;
 import jetbrains.buildServer.clouds.base.AbstractCloudImage;
@@ -61,15 +62,18 @@ public class VmwareCloudImage extends AbstractCloudImage<VmwareCloudInstance, Vm
   private final VmwareCloudImageDetails myImageDetails;
   private final AtomicReference<String> myActualSnapshotName;
   private final File myIdxFile;
+  private final CloudProfile myProfile;
 
   public VmwareCloudImage(@NotNull final VMWareApiConnector apiConnector,
                           @NotNull final VmwareCloudImageDetails imageDetails,
                           @NotNull final CloudAsyncTaskExecutor asyncTaskExecutor,
-                          @NotNull final File idxStorage) {
+                          @NotNull final File idxStorage,
+                          @NotNull final CloudProfile profile) {
     super(imageDetails.getSourceId(), imageDetails.getSourceId());
     myImageDetails = imageDetails;
     myApiConnector = apiConnector;
     myAsyncTaskExecutor = asyncTaskExecutor;
+    myProfile = profile;
     myActualSnapshotName = new AtomicReference<String>("");
     myIdxFile = new File(idxStorage, imageDetails.getSourceId() + ".idx");
     if (!myIdxFile.exists()){
@@ -406,6 +410,10 @@ public class VmwareCloudImage extends AbstractCloudImage<VmwareCloudInstance, Vm
   @Override
   public Integer getAgentPoolId() {
     return myImageDetails.getAgentPoolId();
+  }
+
+  public CloudProfile getProfile() {
+    return myProfile;
   }
 
   private static class ImageStatusTaskWrapper extends TaskCallbackHandler {

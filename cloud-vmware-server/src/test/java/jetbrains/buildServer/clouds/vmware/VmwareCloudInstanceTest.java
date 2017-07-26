@@ -5,6 +5,7 @@ import java.io.File;
 import java.util.Calendar;
 import java.util.Collections;
 import jetbrains.buildServer.BaseTestCase;
+import jetbrains.buildServer.clouds.CloudClientParameters;
 import jetbrains.buildServer.clouds.CloudImageParameters;
 import jetbrains.buildServer.clouds.CloudInstanceUserData;
 import jetbrains.buildServer.clouds.InstanceStatus;
@@ -52,12 +53,19 @@ public class VmwareCloudInstanceTest extends BaseTestCase {
     imageParameters.setParameter("maxInstances", "5");
     myImageDetails = new VmwareCloudImageDetails(imageParameters);
 
+    final CloudClientParameters clientParameters = new CloudClientParameters();
+    clientParameters.setCloudImages(Collections.singleton(imageParameters));
+
     final FakeDatacenter dc2 = FakeModel.instance().addDatacenter("dc2");
     FakeModel.instance().addFolder("myFolder").setParent(dc2);
     FakeModel.instance().addVM("mySource").setParentFolder("myFolder");
     FakeModel.instance().addVMSnapshot("mySource", "mySourceSnapshot");
     FakeModel.instance().addResourcePool("myPool");
-    myImage = new VmwareCloudImage(myApiConnector, myImageDetails, myStatusTask, myIdxStorage);
+    myImage = new VmwareCloudImage(myApiConnector,
+                                   myImageDetails,
+                                   myStatusTask,
+                                   myIdxStorage,
+                                   VmwareTestUtils.createProfileFromProps(clientParameters));
   }
 
 

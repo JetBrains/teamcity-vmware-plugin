@@ -8,13 +8,12 @@ import java.util.*;
 
 import com.intellij.util.WaitFor;
 import jetbrains.buildServer.BaseTestCase;
-import jetbrains.buildServer.clouds.CloudClientParameters;
-import jetbrains.buildServer.clouds.CloudImageParameters;
-import jetbrains.buildServer.clouds.CloudInstanceUserData;
-import jetbrains.buildServer.clouds.InstanceStatus;
+import jetbrains.buildServer.clouds.*;
 import jetbrains.buildServer.clouds.base.connector.CloudAsyncTaskExecutor;
 import jetbrains.buildServer.clouds.base.tasks.UpdateInstancesTask;
 import jetbrains.buildServer.clouds.base.types.CloneBehaviour;
+import jetbrains.buildServer.clouds.server.impl.profile.CloudProfileDataImpl;
+import jetbrains.buildServer.clouds.server.impl.profile.CloudProfileImpl;
 import jetbrains.buildServer.clouds.vmware.connector.VMWareApiConnector;
 import jetbrains.buildServer.clouds.vmware.stubs.FakeApiConnector;
 import jetbrains.buildServer.clouds.vmware.stubs.FakeModel;
@@ -40,7 +39,7 @@ public class VmwareCloudImageTest extends BaseTestCase {
   private File myIdxStorage;
   private UpdateInstancesTask<VmwareCloudInstance, VmwareCloudImage, VMWareCloudClient> myUpdateTask;
   private VMWareCloudClient myCloudClient;
-
+  private CloudProfile myProfile;
 
 
   @BeforeMethod
@@ -68,14 +67,12 @@ public class VmwareCloudImageTest extends BaseTestCase {
 
     FakeModel.instance().addVMSnapshot("srcVM", "srcVMSnap");
 
-    myImage = new VmwareCloudImage(myApiConnector, myImageDetails, myTaskExecutor, myIdxStorage);
+    myProfile = VmwareTestUtils.createProfileFromProps(new CloudClientParameters());
+    myImage = new VmwareCloudImage(myApiConnector, myImageDetails, myTaskExecutor, myIdxStorage, myProfile);
 
-    myCloudClient = new VMWareCloudClient(new CloudClientParameters(), myApiConnector, new VmwareUpdateTaskManager(), createTempDir());
+    myCloudClient = new VMWareCloudClient(myProfile, myApiConnector, new VmwareUpdateTaskManager(), createTempDir());
     myCloudClient.populateImagesData(Collections.singletonList(myImageDetails));
-    myUpdateTask = new UpdateInstancesTask<VmwareCloudInstance, VmwareCloudImage, VMWareCloudClient>(
-      myApiConnector, myCloudClient, 10*1000, false);
-
-
+    myUpdateTask = new UpdateInstancesTask<VmwareCloudInstance, VmwareCloudImage, VMWareCloudClient>(myApiConnector, myCloudClient, 10*1000, false);
   }
 
   public void check_clone_name_generation(){

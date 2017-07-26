@@ -27,6 +27,8 @@ import jetbrains.buildServer.clouds.server.CloudInstancesProviderExtendedCallbac
 import jetbrains.buildServer.clouds.server.CloudManagerBase;
 import jetbrains.buildServer.clouds.server.impl.CloudRegistryImpl;
 import jetbrains.buildServer.clouds.server.CloudEventDispatcher;
+import jetbrains.buildServer.clouds.server.impl.profile.CloudProfileDataImpl;
+import jetbrains.buildServer.clouds.server.impl.profile.CloudProfileImpl;
 import jetbrains.buildServer.clouds.vmware.connector.VMWareApiConnector;
 import jetbrains.buildServer.clouds.vmware.connector.VmwareInstance;
 import jetbrains.buildServer.clouds.vmware.errors.VmwareCheckedCloudException;
@@ -59,11 +61,13 @@ import org.testng.annotations.Test;
 public class VmwareCloudIntegrationTest extends BaseTestCase {
 
   protected static final String PROFILE_ID = "cp1";
+  protected static final String PROJECT_ID = "project123";
   protected static final String TEST_SERVER_UUID = "1234-5678-9012";
 
   private VMWareCloudClient myClient;
   private FakeApiConnector myFakeApi;
   private CloudClientParameters myClientParameters;
+  private CloudProfile myProfile;
   private VmwareUpdateTaskManager myTaskManager;
   private File myIdxStorage;
   private AtomicLong myStuckTime;
@@ -698,18 +702,24 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
     final CloudManagerBase cloudManagerBase = m.mock(CloudManagerBase.class);
 
     final PluginDescriptor pd = m.mock(PluginDescriptor.class);
+    final CloudState state = m.mock(CloudState.class);
     m.checking(new Expectations(){{
       allowing(pd).getPluginResourcesPath("vmware-settings.html"); will(returnValue("aaa.html"));
+      allowing(state).getProfileId(); will(returnValue(PROFILE_ID));
+      allowing(state).getProjectId(); will(returnValue(PROJECT_ID));
+      allowing(cloudManagerBase).findProfileById(PROJECT_ID, PROFILE_ID); will(returnValue(myProfile));
     }});
-    final CloudState state = m.mock(CloudState.class);
+
     final VMWareCloudClientFactory factory = new VMWareCloudClientFactory(cloudRegistrar, pd, new ServerPaths(myIdxStorage.getAbsolutePath()),
                                                                           new CloudInstancesProvider() {
                                                                             public void iterateInstances(@NotNull final CloudInstancesProviderCallback callback) {}
                                                                             public void iterateInstances(@NotNull final CloudInstancesProviderExtendedCallback callback) {}
                                                                             public void iterateProfileInstances(@NotNull final CloudProfile profile,
                                                                                                                 @NotNull final CloudInstancesProviderCallback callback) {}
-                                                                            public void markInstanceExpired(@NotNull final CloudInstance instance) {}
-                                                                            public boolean isInstanceExpired(@NotNull final CloudInstance instance) {return false;}
+                                                                            public void markInstanceExpired(final CloudProfile profile,
+                                                                                                            @NotNull final CloudInstance instance) {}
+                                                                            public boolean isInstanceExpired(final CloudProfile profile,
+                                                                                                             @NotNull final CloudInstance instance) {return false;}
                                                                           },
                                                                           cloudManagerBase, new ServerSettingsImpl(),
                                                                           myTaskManager){
@@ -859,11 +869,11 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
         //
       }
 
-      public void markInstanceExpired(@NotNull final CloudInstance instance) {
+      public void markInstanceExpired(final CloudProfile profile, @NotNull final CloudInstance instance) {
         instancesMarkedExpired.put(instance.getInstanceId(),instance );
       }
 
-      public boolean isInstanceExpired(@NotNull final CloudInstance instance) {
+      public boolean isInstanceExpired(final CloudProfile profile, @NotNull final CloudInstance instance) {
         return instancesMarkedExpired.containsKey(instance.getInstanceId());
       }
     };
@@ -872,7 +882,7 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
     assertEquals(VirtualMachinePowerState.poweredOn, FakeModel.instance().getVirtualMachine(in.getName()).getRuntime().getPowerState());
     FakeModel.instance().addVMSnapshot("image2", "snap2");
     myFakeApi.checkImage(getImageByName("image2"));
-    assertTrue(instancesProviderStub.isInstanceExpired(in));
+    assertTrue(instancesProviderStub.isInstanceExpired(myProfile, in));
   }
 
   public void shouldConsiderProfileInstancesLimit(){
@@ -1319,46 +1329,37 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
     throw new RuntimeException("unable to find image by name: " + name);
   }
 
-  private void recreateClient()  {
-    final long updateTime = TeamCityProperties.getLong("teamcity.vsphere.instance.status.update.delay.ms", 250);
-    try {
-      recreateClient(updateTime);
-    } catch (ExecutionException e) {
-      fail(e.toString());
-    } catch (InterruptedException e) {
-      fail(e.toString());
-    }
+  private void recreateClient(){
+    recreateClient(TeamCityProperties.getLong("teamcity.vsphere.instance.status.update.delay.ms", 250));
   }
 
-  private void recreateClient(final long updateDelay) throws ExecutionException, InterruptedException {
-    if (myClient != null) {
-      myClient.dispose();
-    }
-    final Collection<VmwareCloudImageDetails> images = VMWareCloudClientFactory.parseImageDataInternal(myClientParameters);
-    myClient = new VMWareCloudClient(myClientParameters, myFakeApi, myTaskManager, myIdxStorage);
-    myClient.populateImagesData(images, updateDelay, updateDelay);
-    new WaitFor(5*1000){
-      @Override
-      protected boolean condition() {
-        return myClient.isInitialized();
-      }
-    }.assertCompleted("Must be initialized");
+  private void recreateClient(final long updateDelay) {
+    myClient = recreateClient(myClient, myClientParameters, updateDelay, true);
   }
 
   private VMWareCloudClient recreateClient(final VMWareCloudClient oldClient,
                                            final CloudClientParameters parameters){
-    return recreateClient(oldClient, parameters, true);
+    final long updateTime = TeamCityProperties.getLong("teamcity.vsphere.instance.status.update.delay.ms", 250);
+    return recreateClient(oldClient, parameters, updateTime, true);
   }
   private VMWareCloudClient recreateClient(final VMWareCloudClient oldClient,
                                            final CloudClientParameters parameters,
                                            boolean waitForInitialization){
     final long updateTime = TeamCityProperties.getLong("teamcity.vsphere.instance.status.update.delay.ms", 250);
+    return recreateClient(oldClient, parameters, updateTime, waitForInitialization);
+  }
 
+  private VMWareCloudClient recreateClient(final VMWareCloudClient oldClient,
+                                           final CloudClientParameters parameters,
+                                           long updateTime,
+                                           boolean waitForInitialization){
     if (oldClient != null) {
       oldClient.dispose();
     }
+    myProfile = VmwareTestUtils.createProfileFromProps(parameters);
+    final VMWareCloudClient newClient = new VMWareCloudClient(myProfile, myFakeApi, myTaskManager, myIdxStorage);
+
     final Collection<VmwareCloudImageDetails> images = VMWareCloudClientFactory.parseImageDataInternal(parameters);
-    final VMWareCloudClient newClient = new VMWareCloudClient(parameters, myFakeApi, myTaskManager, myIdxStorage);
     newClient.populateImagesData(images, updateTime, updateTime);
     if (waitForInitialization) {
       new WaitFor(5000) {

@@ -78,9 +78,13 @@ public class VMWareCloudClientFactory extends AbstractCloudClientFactory<VmwareC
   public VMWareCloudClient createNewClient(@NotNull final CloudState state,
                                            @NotNull final Collection<VmwareCloudImageDetails> images,
                                            @NotNull final CloudClientParameters params) {
+    final CloudProfile profile = myCloudManager.findProfileById(state.getProjectId(), state.getProfileId());
+    if (profile == null){
+      throw new CloudException(String.format("Unable to find profile by profileId '%s' and projectId '%s'", state.getProfileId(), state.getProjectId()));
+    }
     final VMWareApiConnector apiConnector = createConnectorFromParams(state, params);
     final VMWareCloudClient vmWareCloudClient =
-      new VMWareCloudClient(params, apiConnector, myUpdateTaskManager, myIdxStorage);
+      new VMWareCloudClient(profile, apiConnector, myUpdateTaskManager, myIdxStorage);
     try {
       apiConnector.test();
     } catch (CheckedCloudException e) {
@@ -93,8 +97,15 @@ public class VMWareCloudClientFactory extends AbstractCloudClientFactory<VmwareC
   public VMWareCloudClient createNewClient(@NotNull final CloudState state,
                                            @NotNull final CloudClientParameters params,
                                            final TypedCloudErrorInfo[] profileErrors) {
-    final VMWareCloudClient client =
-      new VMWareCloudClient(params, createConnectorFromParams(state, params), myUpdateTaskManager, myIdxStorage);
+    final CloudProfile profile = myCloudManager.findProfileById(state.getProjectId(), state.getProfileId());
+    if (profile == null){
+      throw new CloudException(String.format("Unable to find profile by profileId '%s' and projectId '%s'", state.getProfileId(), state.getProjectId()));
+    }
+    final VMWareCloudClient client = new VMWareCloudClient(
+      profile, createConnectorFromParams(state, params),
+      myUpdateTaskManager,
+      myIdxStorage
+    );
     client.updateErrors(profileErrors);
     return client;
   }

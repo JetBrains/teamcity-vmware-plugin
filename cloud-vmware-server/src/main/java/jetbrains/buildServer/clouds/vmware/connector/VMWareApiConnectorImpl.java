@@ -1164,7 +1164,7 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
           final Collection<VmwareCloudInstance> instances = image.getInstances();
           for (VmwareCloudInstance instance : instances) {
             if (!StringUtil.areEqual(instance.getSnapshotName(), latestSnapshot)) {
-              myInstancesProvider.markInstanceExpired(instance);
+              myInstancesProvider.markInstanceExpired(image.getProfile(), instance);
             }
           }
         } else {

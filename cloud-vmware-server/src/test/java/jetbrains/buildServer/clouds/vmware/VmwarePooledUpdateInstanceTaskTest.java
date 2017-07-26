@@ -16,6 +16,9 @@ import jetbrains.buildServer.BaseTestCase;
 import jetbrains.buildServer.clouds.CloudClientParameters;
 import jetbrains.buildServer.clouds.CloudException;
 import jetbrains.buildServer.clouds.CloudImageParameters;
+import jetbrains.buildServer.clouds.CloudProfile;
+import jetbrains.buildServer.clouds.server.impl.profile.CloudProfileDataImpl;
+import jetbrains.buildServer.clouds.server.impl.profile.CloudProfileImpl;
 import jetbrains.buildServer.clouds.vmware.connector.VMWareApiConnector;
 import jetbrains.buildServer.clouds.vmware.errors.VmwareCheckedCloudException;
 import jetbrains.buildServer.clouds.vmware.stubs.FakeApiConnector;
@@ -35,6 +38,7 @@ import org.testng.annotations.Test;
 @Test
 public class VmwarePooledUpdateInstanceTaskTest extends BaseTestCase {
 
+  protected static final String PROJECT_ID = "project123";
   protected static final String PROFILE_ID = "cp1";
   protected static final String TEST_SERVER_UUID = "1234-5678-9012";
   private File myIdxStorage;
@@ -235,11 +239,15 @@ public class VmwarePooledUpdateInstanceTaskTest extends BaseTestCase {
 
     private final Map<VMWareCloudClient, Boolean> myGetImagesCalled;
 
-    public MyClient(@NotNull final CloudClientParameters cloudClientParameters,
+    public MyClient(@NotNull final CloudClientParameters params,
                     Map<VMWareCloudClient, Boolean> getImagesCalled) {
-      super(cloudClientParameters, myFakeApiConnector, myTaskManager, myIdxStorage);
+      this(VmwareTestUtils.createProfileFromProps(params), getImagesCalled);
+    }
+    public MyClient(@NotNull final CloudProfile profile,
+                    Map<VMWareCloudClient, Boolean> getImagesCalled) {
+      super(profile, myFakeApiConnector, myTaskManager, myIdxStorage);
       myGetImagesCalled = getImagesCalled;
-      populateImagesData(VMWareCloudClientFactory.parseImageDataInternal(cloudClientParameters));
+      populateImagesData(VMWareCloudClientFactory.parseImageDataInternal(profile.getParameters()));
     }
 
     @NotNull

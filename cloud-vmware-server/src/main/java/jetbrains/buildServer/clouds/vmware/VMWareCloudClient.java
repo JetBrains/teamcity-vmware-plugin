@@ -24,8 +24,8 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
-import jetbrains.buildServer.clouds.CloudClientParameters;
 import jetbrains.buildServer.clouds.CloudImage;
+import jetbrains.buildServer.clouds.CloudProfile;
 import jetbrains.buildServer.clouds.base.AbstractCloudClient;
 import jetbrains.buildServer.clouds.base.tasks.UpdateInstancesTask;
 import jetbrains.buildServer.clouds.vmware.connector.VMWareApiConnector;
@@ -45,19 +45,21 @@ public class VMWareCloudClient extends AbstractCloudClient<VmwareCloudInstance, 
   private static final Logger LOG = Logger.getInstance(VMWareCloudClient.class.getName());
   @NotNull private final VmwareUpdateTaskManager myTaskManager;
   @NotNull private final File myIdxStorage;
+  @NotNull private final CloudProfile myProfile;
   private final Integer myProfileInstancesLimit;
   private final List<DisposeHandler> myDisposeHandlers = new ArrayList<>();
   private volatile boolean myInitialized = false;
 
 
-  public VMWareCloudClient(@NotNull final CloudClientParameters cloudClientParameters,
+  public VMWareCloudClient(@NotNull final CloudProfile profile,
                            @NotNull final VMWareApiConnector apiConnector,
                            @NotNull final VmwareUpdateTaskManager taskManager,
                            @NotNull final File idxStorage) {
-    super(cloudClientParameters, apiConnector);
+    super(profile.getParameters(), apiConnector);
     myTaskManager = taskManager;
     myIdxStorage = idxStorage;
-    final String limitStr = cloudClientParameters.getParameter(VMWareWebConstants.PROFILE_INSTANCE_LIMIT);
+    myProfile = profile;
+    final String limitStr = profile.getParameters().getParameter(VMWareWebConstants.PROFILE_INSTANCE_LIMIT);
     myProfileInstancesLimit = StringUtil.isEmpty(limitStr) ? null : Integer.valueOf(limitStr);
   }
 
@@ -81,7 +83,7 @@ public class VMWareCloudClient extends AbstractCloudClient<VmwareCloudInstance, 
   @Override
   protected VmwareCloudImage checkAndCreateImage(@NotNull final VmwareCloudImageDetails imageDetails) {
     final VMWareApiConnector apiConnector = (VMWareApiConnector)myApiConnector;
-    return new VmwareCloudImage(apiConnector, imageDetails, myAsyncTaskExecutor, myIdxStorage);
+    return new VmwareCloudImage(apiConnector, imageDetails, myAsyncTaskExecutor, myIdxStorage, myProfile);
   }
 
   @Override
