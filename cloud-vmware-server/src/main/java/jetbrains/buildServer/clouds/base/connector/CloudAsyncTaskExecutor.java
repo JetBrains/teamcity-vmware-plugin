@@ -23,6 +23,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.*;
 import jetbrains.buildServer.util.NamedThreadFactory;
+import jetbrains.buildServer.util.ThreadUtil;
 import jetbrains.buildServer.util.executors.ExecutorsFactory;
 import org.jetbrains.annotations.NotNull;
 
@@ -39,8 +40,10 @@ public class CloudAsyncTaskExecutor {
   private final ScheduledExecutorService myExecutor;
   private final ConcurrentMap<AsyncCloudTask, TaskCallbackHandler> myExecutingTasks;
   private final Map<AsyncCloudTask, Long> myLongTasks = new HashMap<AsyncCloudTask, Long>();
+  private final String myPrefix;
 
   public CloudAsyncTaskExecutor(String prefix) {
+    myPrefix = prefix;
     myExecutingTasks = new ConcurrentHashMap<AsyncCloudTask, TaskCallbackHandler>();
     myExecutor = ExecutorsFactory.newFixedScheduledDaemonExecutor(prefix, 2);
     scheduleWithFixedDelay("Check for tasks", new Runnable() {
@@ -124,10 +127,7 @@ public class CloudAsyncTaskExecutor {
   }
 
   public void dispose(){
-    myExecutor.shutdown();
-    try {
-      myExecutor.awaitTermination(30, TimeUnit.SECONDS);
-    } catch (InterruptedException e) {}
+    ThreadUtil.shutdownNowAndWait(myExecutor, myPrefix);
     myExecutingTasks.clear();
   }
 
