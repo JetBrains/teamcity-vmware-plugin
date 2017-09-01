@@ -54,7 +54,12 @@ public class FakeModel {
   }
 
   public FakeVirtualMachine getVirtualMachine(String name){
-    return myVms.get(name);
+    final FakeVirtualMachine vm = myVms.get(name);
+    if (vm != null) {
+      return vm;
+    } else {
+      return myVms.values().stream().filter(v->name.equals(v.getMOR().getVal())).findAny().orElse(null);
+    }
   }
 
   public FakeDatacenter getDatacenter(String name){

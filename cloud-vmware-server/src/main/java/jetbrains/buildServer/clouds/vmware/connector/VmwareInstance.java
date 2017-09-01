@@ -26,6 +26,7 @@ import java.util.*;
 import jetbrains.buildServer.Used;
 import jetbrains.buildServer.clouds.InstanceStatus;
 import jetbrains.buildServer.clouds.base.connector.AbstractInstance;
+import jetbrains.buildServer.clouds.vmware.VmwareSourceState;
 import jetbrains.buildServer.util.StringUtil;
 import jetbrains.buildServer.util.impl.Lazy;
 import org.jetbrains.annotations.NotNull;
@@ -165,8 +166,11 @@ public class VmwareInstance extends AbstractInstance implements VmwareManagedEnt
   }
 
   @Nullable
-  public String getSnapshotName(){
-    return StringUtil.nullIfEmpty(getProperty(VMWareApiConnector.TEAMCITY_VMWARE_IMAGE_SNAPSHOT));
+  public VmwareSourceState getVmSourceState(){
+    return VmwareSourceState.from(
+      StringUtil.nullIfEmpty(getProperty(VMWareApiConnector.TEAMCITY_VMWARE_IMAGE_SNAPSHOT)),
+      StringUtil.nullIfEmpty(getProperty(VMWareApiConnector.TEAMCITY_VMWARE_IMAGE_SOURCE_VM_ID))
+    );
   }
 
   @NotNull

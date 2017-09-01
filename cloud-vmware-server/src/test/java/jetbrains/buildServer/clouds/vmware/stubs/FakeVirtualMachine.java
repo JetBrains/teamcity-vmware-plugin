@@ -21,7 +21,7 @@ public class FakeVirtualMachine extends VirtualMachine {
   private VirtualMachineRuntimeInfo myRuntimeInfo;
   private GuestInfo myGuestInfo;
   private VirtualMachineSnapshotInfo mySnapshotInfo;
-  private final AtomicReference<VirtualMachineConfigInfo> myConfigInfo = new AtomicReference<VirtualMachineConfigInfo>();
+  private final AtomicReference<VirtualMachineConfigInfo> myConfigInfoRef = new AtomicReference<VirtualMachineConfigInfo>();
   private Map<String, String> myCustomUserData;
   private boolean myTasksSuccessfull = true;
   private AtomicBoolean myIsStarted = new AtomicBoolean(false);
@@ -31,13 +31,14 @@ public class FakeVirtualMachine extends VirtualMachine {
   private Calendar myBootTime;
   private CustomizationSpec myCustomizationSpec;
   private AtomicBoolean myGone = new AtomicBoolean(false);
+  private volatile ManagedObjectReference selfMOR = null;
 
   public FakeVirtualMachine(final String name, final boolean isTemplate, final boolean isRunning) {
     super(null, createVMMor(name));
     myName = name;
     updateVersion();
     myIsStarted.set(isRunning);
-    myConfigInfo.set(new VirtualMachineConfigInfo(){
+    myConfigInfoRef.set(new VirtualMachineConfigInfo(){
       @Override
       public String getName() {
         return myName;
@@ -131,8 +132,8 @@ public class FakeVirtualMachine extends VirtualMachine {
     throws RemoteException {
     final FakeVirtualMachine newVm = FakeModel.instance().addVM(name, false, spec);
     newVm.setParentFolder(folder.getName());
-    final VirtualMachineConfigInfo oldConfig = newVm.myConfigInfo.get();
-    newVm.myConfigInfo.set(null);
+    final VirtualMachineConfigInfo oldConfig = newVm.myConfigInfoRef.get();
+    newVm.myConfigInfoRef.set(null);
     newVm.myCustomizationSpec = spec.getCustomization();
     final CountDownLatch latch = new CountDownLatch(1);
     new Thread(){
@@ -140,7 +141,7 @@ public class FakeVirtualMachine extends VirtualMachine {
       public void run() {
         try {sleep(500);} catch (InterruptedException e) {}
         latch.countDown();
-        newVm.myConfigInfo.set(oldConfig);
+        newVm.myConfigInfoRef.set(oldConfig);
 
         if (spec.isPowerOn()){
           if (!newVm.myIsStarted.compareAndSet(false, true)){
@@ -178,8 +179,13 @@ public class FakeVirtualMachine extends VirtualMachine {
   @Override
   public VirtualMachineConfigInfo getConfig() {
     checkIfInstanceIsGone();
-    return myConfigInfo.get();
+    return myConfigInfoRef.get();
   }
+
+  public void setConfigInfo(VirtualMachineConfigInfo configInfo){
+    myConfigInfoRef.set(configInfo);
+  }
+
 
   @Override
   public Task destroy_Task() throws RemoteException {
@@ -307,6 +313,17 @@ public class FakeVirtualMachine extends VirtualMachine {
 
   private void updateVersion(){
     myVersion = new Date().toString();
+  }
+
+  @Override
+  public void setMOR(final ManagedObjectReference mor) {
+     selfMOR = mor;
+     super.setMOR(mor);
+  }
+
+  @Override
+  public ManagedObjectReference getMOR() {
+    return selfMOR == null ? super.getMOR() : selfMOR;
   }
 
   public void enableGuestTools(){

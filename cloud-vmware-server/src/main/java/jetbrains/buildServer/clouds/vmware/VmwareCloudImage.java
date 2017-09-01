@@ -60,7 +60,7 @@ public class VmwareCloudImage extends AbstractCloudImage<VmwareCloudInstance, Vm
   private final VMWareApiConnector myApiConnector;
   @NotNull private final CloudAsyncTaskExecutor myAsyncTaskExecutor;
   private final VmwareCloudImageDetails myImageDetails;
-  private final AtomicReference<String> myActualSnapshotName;
+  private final AtomicReference<VmwareSourceState> myActualSourceState;
   private final File myIdxFile;
   private final CloudProfile myProfile;
 
@@ -74,7 +74,7 @@ public class VmwareCloudImage extends AbstractCloudImage<VmwareCloudInstance, Vm
     myApiConnector = apiConnector;
     myAsyncTaskExecutor = asyncTaskExecutor;
     myProfile = profile;
-    myActualSnapshotName = new AtomicReference<String>("");
+    myActualSourceState = new AtomicReference<>();
     myIdxFile = new File(idxStorage, imageDetails.getSourceId() + ".idx");
     if (!myIdxFile.exists()){
       try {
@@ -91,7 +91,7 @@ public class VmwareCloudImage extends AbstractCloudImage<VmwareCloudInstance, Vm
   }
 
   @Nullable
-  private VmwareCloudInstance getExistingInstanceToStart(final String latestSnapshotName) throws VmwareCheckedCloudException {
+  private VmwareCloudInstance getExistingInstanceToStart(@NotNull final VmwareSourceState currentSourceState) throws VmwareCheckedCloudException {
     final VmwareInstance imageVm = myApiConnector.getInstanceDetails(myImageDetails.getSourceVmName());
     final AtomicReference<VmwareCloudInstance> candidate = new AtomicReference<VmwareCloudInstance>();
     processStoppedInstances(new Function<VmwareInstance, Boolean>() {
@@ -107,9 +107,9 @@ public class VmwareCloudImage extends AbstractCloudImage<VmwareCloudInstance, Vm
               return false;
             }
           } else {
-            final String snapshotName = vmInstance.getSnapshotName();
-            if (latestSnapshotName != null && !latestSnapshotName.equals(snapshotName)) {
-              LOG.info(String.format("VM %s Snapshot is not the latest one: '%s' vs '%s'", vmName, snapshotName, latestSnapshotName));
+            final VmwareSourceState vmSourceState = vmInstance.getVmSourceState();
+            if (!vmSourceState.equals(currentSourceState)){
+              LOG.info(String.format("Source for VM %s has been changed: %s", vmName, currentSourceState.getDiffMessage(vmSourceState)));
               deleteInstance(instance);
               return false;
             }
@@ -156,15 +156,19 @@ public class VmwareCloudImage extends AbstractCloudImage<VmwareCloudInstance, Vm
     final VmwareCloudInstance instanceCandidate = getStartableInstanceFast();
     instanceCandidate.setStatus(InstanceStatus.SCHEDULED_TO_START);
     myAsyncTaskExecutor.submit("Preparing to start new instance...", () -> {
+      VmwareInstance sourceVm = null;
       try {
         boolean willClone = true;
         VmwareCloudInstance instance = instanceCandidate;
         if (myImageDetails.getBehaviour().isUseOriginal()){
           willClone = false;
         } else {
-          final String latestSnapshotName;
-          if (instanceCandidate.getSnapshotName() == null) {
-            latestSnapshotName = myApiConnector.getLatestSnapshot(myImageDetails.getSourceVmName(), myImageDetails.getSnapshotName());
+          sourceVm = myApiConnector.getInstanceDetails(myImageDetails.getSourceVmName());
+
+          final VmwareSourceState sourceState;
+          if (instanceCandidate.getSourceState().getSnapshotName() == null) {
+            String latestSnapshotName;
+            latestSnapshotName = myApiConnector.getLatestSnapshot(sourceVm.getId(), myImageDetails.getSnapshotName());
             if (latestSnapshotName == null){
               if (!myImageDetails.useCurrentVersion()) {
                 updateErrors(new TypedCloudErrorInfo("No such snapshot: " + getSnapshotName()));
@@ -172,14 +176,16 @@ public class VmwareCloudImage extends AbstractCloudImage<VmwareCloudInstance, Vm
                 return;
               }
             }
-            instanceCandidate.setSnapshotName(latestSnapshotName);
+            sourceState = VmwareSourceState.from(latestSnapshotName, sourceVm.getId());
+            instanceCandidate.setSourceState(sourceState);
           } else {
-            latestSnapshotName = instanceCandidate.getSnapshotName();
+            sourceState = sourceVm.getVmSourceState();
           }
 
           if (!instance.isReady()) {
+            assert sourceState != null;
             // need to resolve the real instance
-            VmwareCloudInstance existingInstanceToStart = getExistingInstanceToStart(latestSnapshotName);
+            VmwareCloudInstance existingInstanceToStart = getExistingInstanceToStart(sourceState);
             if (existingInstanceToStart != null) {
               removeInstance(instance.getInstanceId());
               instance = existingInstanceToStart;
@@ -188,7 +194,7 @@ public class VmwareCloudImage extends AbstractCloudImage<VmwareCloudInstance, Vm
               final String newVmName = generateNewVmName();
               instance.setName(newVmName);
               instance.setInstanceId(newVmName);
-              instance.setSnapshotName(latestSnapshotName);
+              instance.setSourceState(sourceState);
               instance.setReady(true);
             }
           }
@@ -379,7 +385,7 @@ public class VmwareCloudImage extends AbstractCloudImage<VmwareCloudInstance, Vm
   @Override
   protected VmwareCloudInstance createInstanceFromReal(final AbstractInstance realInstance) {
     final VmwareInstance vmwareInstance = (VmwareInstance) realInstance;
-    return new VmwareCloudInstance(this, realInstance.getName(), vmwareInstance.getSnapshotName());
+    return new VmwareCloudInstance(this, realInstance.getName(), vmwareInstance.getVmSourceState());
   }
 
   private void processStoppedInstances(final Function<VmwareInstance, Boolean> function)  {
@@ -438,10 +444,10 @@ public class VmwareCloudImage extends AbstractCloudImage<VmwareCloudInstance, Vm
     }
   }
 
-  public void updateActualSnapshotName(@NotNull final String snapshotName){
-    if (StringUtil.isNotEmpty(snapshotName) && !snapshotName.equals(myActualSnapshotName.get())){
-        LOG.info("Updated actual snapshot name for " + myImageDetails.getSourceId() + " to " + snapshotName);
-        myActualSnapshotName.set(snapshotName);
+  public void updateActualSourceState(@NotNull final VmwareSourceState state){
+    if (StringUtil.isNotEmpty(state.getSnapshotName()) && state.equals(myActualSourceState.get())){
+        myActualSourceState.set(state);
+        LOG.info("Updated actual vm source state name for " + myImageDetails.getSourceId() + " to " + state);
     }
   }
 }

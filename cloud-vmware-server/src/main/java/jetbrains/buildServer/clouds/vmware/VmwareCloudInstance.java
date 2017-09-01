@@ -37,8 +37,8 @@ import static jetbrains.buildServer.clouds.vmware.VMWarePropertiesNames.INSTANCE
 public class VmwareCloudInstance extends AbstractCloudInstance<VmwareCloudImage> {
 
   private static final Logger LOG = Logger.getInstance(VmwareCloudInstance.class.getName());
+  @NotNull private volatile VmwareSourceState mySourceState = VmwareSourceState.from(null, null);
 
-  @Nullable private volatile String mySnapshotName = null;
   private volatile boolean myIsReady = false;
 
   //
@@ -47,24 +47,26 @@ public class VmwareCloudInstance extends AbstractCloudInstance<VmwareCloudImage>
   }
 
   protected VmwareCloudInstance(@NotNull final VmwareCloudImage image, @NotNull final String instanceName) {
-    this(image, instanceName, null);
+    this(image, instanceName, VmwareSourceState.from(null, null));
   }
 
-  public VmwareCloudInstance(@NotNull final VmwareCloudImage image, @NotNull final String instanceName, @Nullable final String snapshotName) {
+  public VmwareCloudInstance(@NotNull final VmwareCloudImage image,
+                             @NotNull final String instanceName,
+                             @NotNull final VmwareSourceState sourceState) {
     super(image);
+    mySourceState = sourceState;
     setInstanceId(instanceName);
     setName(instanceName);
-    mySnapshotName = snapshotName;
     myIsReady = true;
   }
 
-  @Nullable
-  public String getSnapshotName() {
-    return mySnapshotName;
+  @NotNull
+  public VmwareSourceState getSourceState() {
+    return mySourceState;
   }
 
-  public void setSnapshotName(@Nullable final String snapshotName) {
-    mySnapshotName = snapshotName;
+  public void setSourceState(@NotNull final VmwareSourceState sourceState) {
+    mySourceState = sourceState;
   }
 
   public boolean containsAgent(@NotNull final AgentDescription agentDescription) {

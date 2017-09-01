@@ -45,10 +45,7 @@ import jetbrains.buildServer.clouds.InstanceStatus;
 import jetbrains.buildServer.clouds.base.connector.AbstractInstance;
 import jetbrains.buildServer.clouds.base.errors.TypedCloudErrorInfo;
 import jetbrains.buildServer.clouds.server.CloudInstancesProvider;
-import jetbrains.buildServer.clouds.vmware.VmwareCloudImage;
-import jetbrains.buildServer.clouds.vmware.VmwareCloudImageDetails;
-import jetbrains.buildServer.clouds.vmware.VmwareCloudInstance;
-import jetbrains.buildServer.clouds.vmware.VmwareConstants;
+import jetbrains.buildServer.clouds.vmware.*;
 import jetbrains.buildServer.clouds.vmware.connector.beans.FolderBean;
 import jetbrains.buildServer.clouds.vmware.connector.beans.ResourcePoolBean;
 import jetbrains.buildServer.clouds.vmware.errors.VmwareCheckedCloudException;
@@ -74,6 +71,7 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
   private static final Pattern FQDN_PATTERN = Pattern.compile("[^\\.]+\\.(.+)");
   private static final Pattern RESPOOL_PATTERN = Pattern.compile("resgroup-\\d+");
   private static final Pattern FOLDER_PATTERN = Pattern.compile("group-v\\d+");
+  private static final Pattern VM_PATTERN = Pattern.compile("vm-\\d+");
 
   private static final String FOLDER_TYPE = Folder.class.getSimpleName();
   private static final String RESPOOL_TYPE = ResourcePool.class.getSimpleName();
@@ -151,6 +149,8 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
       return RESPOOL_PATTERN.matcher(idName).matches();
     } else if (instanceType == Folder.class) {
       return FOLDER_PATTERN.matcher(idName).matches();
+    } else if (instanceType == VirtualMachine.class) {
+      return VM_PATTERN.matcher(idName).matches();
     } else {
       return false;
     }
@@ -766,22 +766,22 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
       }
     }
     final Map<String, VirtualMachineSnapshotTree> snapshotList = getSnapshotList(vm);
-    final String snapshotName = instance.getSnapshotName();
-    if (imageDetails.useCurrentVersion() || StringUtil.isEmpty(snapshotName)) {
+    final VmwareSourceState sourceState = instance.getSourceState();
+    if (imageDetails.useCurrentVersion() || StringUtil.isEmptyOrSpaces(sourceState.getSnapshotName())) {
       LOG.info("Snapshot name is not specified. Will clone latest VM state");
     } else {
-      final VirtualMachineSnapshotTree obj = snapshotList.get(snapshotName);
+      final VirtualMachineSnapshotTree obj = snapshotList.get(sourceState.getSnapshotName());
       final ManagedObjectReference snapshot = obj == null ? null : obj.getSnapshot();
       cloneSpec.setSnapshot(snapshot);
       if (snapshot != null) {
         if (TeamCityProperties.getBooleanOrTrue(VmwareConstants.USE_LINKED_CLONE)) {
-          LOG.info("Using linked clone. Snapshot name: " + snapshotName);
+          LOG.info("Using linked clone. Snapshot name: " + sourceState.getSnapshotName());
           location.setDiskMoveType(VirtualMachineRelocateDiskMoveOptions.createNewChildDiskBacking.name());
         } else {
-          LOG.info("Using full clone. Snapshot name: " + snapshotName);
+          LOG.info("Using full clone. Snapshot name: " + sourceState.getSnapshotName());
         }
       } else {
-        final String errorText = "Unable to find snapshot " + snapshotName;
+        final String errorText = "Unable to find snapshot " + sourceState.getSnapshotName();
         throw new VmwareCheckedCloudException(errorText);
       }
     }
@@ -791,7 +791,8 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
       createOptionValue(TEAMCITY_VMWARE_CLONED_INSTANCE, "true"),
       createOptionValue(TEAMCITY_VMWARE_IMAGE_SOURCE_VM_NAME, imageDetails.getSourceVmName()),
       createOptionValue(TEAMCITY_VMWARE_IMAGE_SOURCE_ID, imageDetails.getSourceId()),
-      createOptionValue(TEAMCITY_VMWARE_IMAGE_SNAPSHOT, snapshotName),
+      createOptionValue(TEAMCITY_VMWARE_IMAGE_SOURCE_VM_ID, vm.getMOR().getVal()),
+      createOptionValue(TEAMCITY_VMWARE_IMAGE_SNAPSHOT, sourceState.getSnapshotName()),
       createOptionValue(TEAMCITY_VMWARE_IMAGE_CHANGE_VERSION, vmConfig.getChangeVersion()),
       createOptionValue(TEAMCITY_VMWARE_PROFILE_ID, StringUtil.emptyIfNull(myProfileId)),
       createOptionValue(TEAMCITY_VMWARE_SERVER_UUID, StringUtil.emptyIfNull(myServerUUID))
@@ -1159,11 +1160,14 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
         if (StringUtil.isNotEmpty(snapshotName) && latestSnapshot == null) {
           return new TypedCloudErrorInfo[]{new TypedCloudErrorInfo("NoSnapshot", "No such snapshot: " + snapshotName)};
         }
-        image.updateActualSnapshotName(latestSnapshot);
+        final VmwareSourceState actualState = VmwareSourceState.from(latestSnapshot, vm.getMOR().getVal());
+        image.updateActualSourceState(actualState);
         if (myInstancesProvider != null) {
           final Collection<VmwareCloudInstance> instances = image.getInstances();
           for (VmwareCloudInstance instance : instances) {
-            if (!StringUtil.areEqual(instance.getSnapshotName(), latestSnapshot)) {
+            final VmwareSourceState vmSourceState = instance.getSourceState();
+            if (!actualState.equals(vmSourceState)) {
+              LOG.info("marking instance expired: " + actualState.getDiffMessage(vmSourceState));
               myInstancesProvider.markInstanceExpired(image.getProfile(), instance);
             }
           }

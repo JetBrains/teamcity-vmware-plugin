@@ -51,6 +51,8 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import static jetbrains.buildServer.clouds.vmware.connector.VMWareApiConnector.TEAMCITY_VMWARE_IMAGE_SOURCE_VM_ID;
+
 
 /**
  * @author Sergey.Pak
@@ -347,6 +349,9 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
   }
 
   public void catch_tc_started_instances_on_startup() throws MalformedURLException, RemoteException {
+    final FakeVirtualMachine image2 = FakeModel.instance().getVirtualMachine("image2");
+    final FakeVirtualMachine image_template = FakeModel.instance().getVirtualMachine("image_template");
+
     startNewInstanceAndWait("image1");
     startNewInstanceAndWait("image2");
     startNewInstanceAndWait("image_template");
@@ -375,9 +380,11 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
         assertEquals("image1", instance.getName());
       } else if ("image2".equals(image.getName())) {
         assertTrue(instance.getName().startsWith(image.getName()));
-        assertEquals("snap", instance.getSnapshotName());
+        assertEquals("snap", instance.getSourceState().getSnapshotName());
+        assertEquals(image2.getMOR().getVal(), instance.getSourceState().getSourceVmId());
       } else if ("image_template".equals(image.getName())) {
         assertTrue(instance.getName().startsWith(image.getName()));
+        assertEquals(image_template.getMOR().getVal(), instance.getSourceState().getSourceVmId());
       }
     }
 
@@ -878,11 +885,124 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
       }
     };
     myFakeApi = new FakeApiConnector(null, null, instancesProviderStub);
+    recreateClient();
     final VmwareCloudInstance in = startNewInstanceAndWait("image2");
     assertEquals(VirtualMachinePowerState.poweredOn, FakeModel.instance().getVirtualMachine(in.getName()).getRuntime().getPowerState());
     FakeModel.instance().addVMSnapshot("image2", "snap2");
     myFakeApi.checkImage(getImageByName("image2"));
     assertTrue(instancesProviderStub.isInstanceExpired(myProfile, in));
+  }
+
+  public void mark_instance_expired_when_sourcevmid_changes() throws MalformedURLException {
+    final Map<String, CloudInstance> instancesMarkedExpired = new HashMap<String, CloudInstance>();
+    final CloudInstancesProvider instancesProviderStub = new CloudInstancesProvider() {
+      public void iterateInstances(@NotNull final CloudInstancesProviderCallback callback) {
+        throw new UnsupportedOperationException(".iterateInstances");
+      }
+
+      public void iterateInstances(@NotNull final CloudInstancesProviderExtendedCallback callback) {
+        throw new UnsupportedOperationException(".iterateInstances");
+      }
+
+      public void iterateProfileInstances(@NotNull final CloudProfile profile, @NotNull final CloudInstancesProviderCallback callback) {
+        throw new UnsupportedOperationException(".iterateProfileInstances");
+      }
+
+      public void markInstanceExpired(final CloudProfile profile, @NotNull final CloudInstance instance) {
+        instancesMarkedExpired.put(instance.getInstanceId(),instance );
+      }
+
+      public boolean isInstanceExpired(final CloudProfile profile, @NotNull final CloudInstance instance) {
+        return instancesMarkedExpired.containsKey(instance.getInstanceId());
+      }
+    };
+    myFakeApi = new FakeApiConnector(null, null, instancesProviderStub);
+    recreateClient(250);
+
+    final VmwareCloudInstance in = startNewInstanceAndWait("image2");
+    assertEquals(VirtualMachinePowerState.poweredOn, FakeModel.instance().getVirtualMachine(in.getName()).getRuntime().getPowerState());
+
+    final FakeVirtualMachine image2 = FakeModel.instance().getVirtualMachine("image2");
+    final ManagedObjectReference mor = new ManagedObjectReference();
+    mor.setVal("vm-123456");
+    mor.setType("VirtualMachine");
+    image2.setMOR(mor);
+
+    myFakeApi.checkImage(getImageByName("image2"));
+    assertTrue(instancesProviderStub.isInstanceExpired(myProfile, in));
+  }
+
+  public void shouldnt_mark_expired_if_vmsourceid_is_absent() throws MalformedURLException {
+    final Map<String, CloudInstance> instancesMarkedExpired = new HashMap<String, CloudInstance>();
+    final CloudInstancesProvider instancesProviderStub = new CloudInstancesProvider() {
+      public void iterateInstances(@NotNull final CloudInstancesProviderCallback callback) {
+        throw new UnsupportedOperationException(".iterateInstances");
+      }
+
+      public void iterateInstances(@NotNull final CloudInstancesProviderExtendedCallback callback) {
+        throw new UnsupportedOperationException(".iterateInstances");
+      }
+
+      public void iterateProfileInstances(@NotNull final CloudProfile profile, @NotNull final CloudInstancesProviderCallback callback) {
+        throw new UnsupportedOperationException(".iterateProfileInstances");
+      }
+
+      public void markInstanceExpired(final CloudProfile profile, @NotNull final CloudInstance instance) {
+        instancesMarkedExpired.put(instance.getInstanceId(),instance );
+      }
+
+      public boolean isInstanceExpired(final CloudProfile profile, @NotNull final CloudInstance instance) {
+        return instancesMarkedExpired.containsKey(instance.getInstanceId());
+      }
+    };
+    myFakeApi = new FakeApiConnector(null, null, instancesProviderStub);
+    recreateClient(250);
+
+    final VmwareCloudInstance in = startNewInstanceAndWait("image2");
+    assertEquals(VirtualMachinePowerState.poweredOn, FakeModel.instance().getVirtualMachine(in.getName()).getRuntime().getPowerState());
+
+    final FakeVirtualMachine clonedVM = FakeModel.instance().getVirtualMachine(in.getName());
+    final VirtualMachineConfigInfo oldConfig = clonedVM.getConfig();
+    clonedVM.setConfigInfo(new VirtualMachineConfigInfo(){
+      @Override
+      public String getName() {
+        return oldConfig.getName();
+      }
+
+      @Override
+      public boolean isTemplate() {
+        return oldConfig.isTemplate();
+      }
+
+      @Override
+      public String getChangeVersion() {
+        return oldConfig.getChangeVersion();
+      }
+
+      @Override
+      public OptionValue[] getExtraConfig() {
+        final OptionValue[] extraConfig = oldConfig.getExtraConfig();
+        return Arrays.stream(extraConfig).filter(o->!o.getKey().equals(TEAMCITY_VMWARE_IMAGE_SOURCE_VM_ID)).toArray(OptionValue[]::new);
+      }
+    });
+
+    recreateClient(250);
+    new WaitFor(5*1000){
+      protected boolean condition() {
+        return getImageByName("image2").getInstances().size() == 1;
+      }
+    }.assertCompleted("Should have found started instance");
+
+
+
+    final ManagedObjectReference mor = new ManagedObjectReference();
+    mor.setVal("vm-123456");
+    mor.setType("VirtualMachine");
+    FakeModel.instance().getVirtualMachine("image2").setMOR(mor);
+
+
+    myFakeApi.checkImage(getImageByName("image2"));
+    assertFalse(instancesProviderStub.isInstanceExpired(myProfile, in));
   }
 
   public void shouldConsiderProfileInstancesLimit(){
