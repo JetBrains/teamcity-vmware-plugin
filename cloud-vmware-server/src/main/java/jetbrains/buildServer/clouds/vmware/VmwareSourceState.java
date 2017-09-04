@@ -23,9 +23,9 @@ public class VmwareSourceState {
   @Nullable
   public String getDiffMessage(final VmwareSourceState vmState) {
     if (!Objects.equals(vmState.mySnapshotName, this.mySnapshotName)) {
-      return String.format("Snapshot is not the latest one. VM: '%s' vs Latest: '%s'", mySnapshotName, vmState.mySnapshotName);
+      return String.format("Snapshot is outdated. VM: '%s' vs Actual: '%s'", mySnapshotName, vmState.mySnapshotName);
     } else if (!Objects.equals(vmState.mySourceVmId, this.mySourceVmId) && mySourceVmId != null && vmState.mySourceVmId != null) {
-      return String.format("Source VM id the current one. VM: '%s' vs Current: '%s'", mySourceVmId, vmState.mySourceVmId);
+      return String.format("Source VM id is outdated. VM: '%s' vs Actual: '%s'", mySourceVmId, vmState.mySourceVmId);
     }
     return null;
   }
