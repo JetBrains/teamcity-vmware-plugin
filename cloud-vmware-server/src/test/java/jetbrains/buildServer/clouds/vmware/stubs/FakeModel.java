@@ -9,6 +9,8 @@ import com.vmware.vim25.mo.VirtualMachine;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 /**
  * @author Sergey.Pak
@@ -19,11 +21,11 @@ public class FakeModel {
   private static final FakeModel myInstance = new FakeModel();
   public static FakeModel instance() {return myInstance;}
 
-  private final Map<String, FakeFolder> myFolders = new HashMap<String, FakeFolder>();
-  private final Map<String, ResourcePool> myResourcePools = new HashMap<String, ResourcePool>();
-  private final Map<String, FakeVirtualMachine> myVms = new HashMap<String, FakeVirtualMachine>();
-  private final Map<String, FakeDatacenter> myDatacenters = new HashMap<String, FakeDatacenter>();
-  private final Map<String, CustomizationSpec> myCustomizationSpecs = new HashMap<>();
+  private final ConcurrentMap<String, FakeFolder> myFolders = new ConcurrentHashMap<>();
+  private final ConcurrentMap<String, ResourcePool> myResourcePools = new ConcurrentHashMap<String, ResourcePool>();
+  private final ConcurrentMap<String, FakeVirtualMachine> myVms = new ConcurrentHashMap<String, FakeVirtualMachine>();
+  private final ConcurrentMap<String, FakeDatacenter> myDatacenters = new ConcurrentHashMap<String, FakeDatacenter>();
+  private final ConcurrentMap<String, CustomizationSpec> myCustomizationSpecs = new ConcurrentHashMap<>();
 
   public Map<String, FakeFolder> getFolders() {
     return myFolders;
