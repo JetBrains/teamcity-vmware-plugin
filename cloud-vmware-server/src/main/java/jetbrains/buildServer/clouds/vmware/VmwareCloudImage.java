@@ -445,7 +445,7 @@ public class VmwareCloudImage extends AbstractCloudImage<VmwareCloudInstance, Vm
   }
 
   public void updateActualSourceState(@NotNull final VmwareSourceState state){
-    if (StringUtil.isNotEmpty(state.getSnapshotName()) && state.equals(myActualSourceState.get())){
+    if (StringUtil.isNotEmpty(state.getSnapshotName()) && !state.equals(myActualSourceState.get())){
         myActualSourceState.set(state);
         LOG.info("Updated actual vm source state name for " + myImageDetails.getSourceId() + " to " + state);
     }
