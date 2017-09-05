@@ -1,3 +1,5 @@
+[![official JetBrains project](http://jb.gg/badges/official.svg)](https://confluence.jetbrains.com/display/ALL/JetBrains+on+GitHub)
+
 ### TeamCity vSphere cloud plugin
 #### Enables TeamCity integration with WMware vSphere cloud and allows users to automatically create/start/stop/delete virtual machines.
 
