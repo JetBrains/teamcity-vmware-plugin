@@ -117,15 +117,38 @@ public class VMWarePropertiesReader {
   }
 
   private String getPropertyValue(String propName){
+    final StringBuilder commandOutput = new StringBuilder();
     final GeneralCommandLine commandLine = new GeneralCommandLine();
-    commandLine.setExePath(myVMWareRPCToolPath);
-    final String specialCommand = SPECIAL_COMMAND_FORMATS.get(myVMWareRPCToolPath);
-    final String param = String.format(specialCommand != null ? specialCommand : "info-get %s", propName);
-    commandLine.addParameter(param);
+    if (myVMWareRPCToolPath.contains(" ")){
+      commandLine.setExePath("/bin/sh");
+      commandLine.addParameter("-c");
+      final String specialCommand = SPECIAL_COMMAND_FORMATS.get(myVMWareRPCToolPath);
+      final String param = String.format(specialCommand != null ? specialCommand : "info-get %s", propName);
+      commandLine.addParameter(String.format("\"%s\" %s", myVMWareRPCToolPath, param));
+    } else {
+      commandLine.setExePath(myVMWareRPCToolPath);
+      final String specialCommand = SPECIAL_COMMAND_FORMATS.get(myVMWareRPCToolPath);
+      final String param = String.format(specialCommand != null ? specialCommand : "info-get %s", propName);
+      commandLine.addParameter(param);
+    }
+    commandOutput.append("Will execute: ").append(commandLine.toString()).append("\n");
     final CommandLineExecutor executor = new CommandLineExecutor(commandLine);
     try {
-      final ExecResult result = executor.runProcess(5);
-      return result != null ? StringUtil.trim(result.getStdout()) : null;
+      final int executionTimeoutSeconds = TeamCityProperties.getInteger("teamcity.guest.props.read.timeout.sec", 5);
+      final ExecResult result = executor.runProcess(executionTimeoutSeconds);
+      if (result != null) {
+        final String executionResult = result.getStdout();
+        commandOutput.append("Execution result: ").append(StringUtil.trim(executionResult)).append('\n');
+        commandOutput.append("Execution errors: ").append(StringUtil.trim(result.getStderr())).append('\n');
+        commandOutput.append("Exit code:").append(result.getExitCode()).append('\n');
+        if (result.getExitCode() != 0){
+          LOG.warn("Got non-zero exit code for '" + commandLine.toString() + "'. Output:\n" + commandOutput.toString());
+        }
+        return executionResult;
+      } else {
+        LOG.error("Didn't get response for " + commandLine.toString() + " in " + executionTimeoutSeconds + " seconds.\n" +
+                  "Consider setting agent property 'teamcity.guest.props.read.timeout.sec' to a higher value (default=5)");
+      }
     } catch (ExecutionException e) {
       LOG.info("Error getting property " + propName + ": " + e.toString());
     }
