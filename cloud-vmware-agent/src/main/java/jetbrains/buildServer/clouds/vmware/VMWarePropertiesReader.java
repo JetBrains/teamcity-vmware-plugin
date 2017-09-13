@@ -119,7 +119,7 @@ public class VMWarePropertiesReader {
   private String getPropertyValue(String propName){
     final StringBuilder commandOutput = new StringBuilder();
     final GeneralCommandLine commandLine = new GeneralCommandLine();
-    if (myVMWareRPCToolPath.contains(" ")){
+    if (myVMWareRPCToolPath.contains(" ") && SystemInfo.isMac){
       commandLine.setExePath("/bin/sh");
       commandLine.addParameter("-c");
       final String specialCommand = SPECIAL_COMMAND_FORMATS.get(myVMWareRPCToolPath);
