@@ -134,7 +134,7 @@ public class VMWarePropertiesReader {
     commandOutput.append("Will execute: ").append(commandLine.toString()).append("\n");
     final CommandLineExecutor executor = new CommandLineExecutor(commandLine);
     try {
-      final int executionTimeoutSeconds = TeamCityProperties.getInteger("teamcity.guest.props.read.timeout.sec", 5);
+      final int executionTimeoutSeconds = TeamCityProperties.getInteger("teamcity.vsphere.properties.readTimeout.sec", 60);
       final ExecResult result = executor.runProcess(executionTimeoutSeconds);
       if (result != null) {
         final String executionResult = result.getStdout();
