@@ -76,7 +76,7 @@ public class GetSnapshotsListController extends BaseFormXmlController {
       currentVersion.setAttribute("name", "<Current State>");
       currentVersion.setAttribute("value", VmwareConstants.CURRENT_STATE);
       snapshots.addContent((Content) currentVersion);
-      if (snapshotList.size() > 0 && TeamCityProperties.getBoolean(VmwareConstants.ENABLE_LATEST_SNAPSHOT)){
+      if (snapshotList.size() > 0){
         final Element latestSnapshot = new Element("Snapshot");
         latestSnapshot.setAttribute("name", "<Latest snapshot>");
         latestSnapshot.setAttribute("value", VmwareConstants.LATEST_SNAPSHOT);

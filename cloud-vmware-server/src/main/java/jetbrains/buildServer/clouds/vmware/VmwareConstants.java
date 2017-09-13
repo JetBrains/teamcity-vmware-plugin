@@ -28,7 +28,6 @@ import org.jetbrains.annotations.NotNull;
 public class VmwareConstants {
   @NotNull public static final String TYPE = "vmw";
   @NotNull public static final String USE_LINKED_CLONE = "teamcity.clouds.vmware.use.linked.clone"; // true by default
-  @NotNull public static final String ENABLE_LATEST_SNAPSHOT = "teamcity.clouds.vmware.enable.latest.snapshot"; // false by default
   @NotNull public static final String DISABLE_OS_CUSTOMIZATION = "teamcity.clouds.vmware.disable.os.customization"; // false by default
   @NotNull public static final String CONSIDER_STOPPED_VMS_LIMIT = "teamcity.clouds.vmware.consider.stopped.vms.limit"; // true by default
   @NotNull public static final String LATEST_SNAPSHOT = "*"; // true by default
