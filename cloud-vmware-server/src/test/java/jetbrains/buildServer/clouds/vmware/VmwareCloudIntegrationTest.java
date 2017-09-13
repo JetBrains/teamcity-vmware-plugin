@@ -821,7 +821,7 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
         }
         return stoppedCount ==2;
       }
-    };
+    }.assertCompleted("Should have stopped");
     // requires time for orphaned timeout
     Thread.sleep(500);
 
@@ -846,7 +846,7 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
         final VmwareCloudImage img = getImageByName("image_template");
         return img.getInstances().size() == 1;
       }
-    };
+    }.assertCompleted("should have only 1 instance");
 
 
     for (int i=0; i<2; i++){
