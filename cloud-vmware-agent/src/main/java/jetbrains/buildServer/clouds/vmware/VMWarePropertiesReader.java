@@ -137,8 +137,8 @@ public class VMWarePropertiesReader {
       final int executionTimeoutSeconds = TeamCityProperties.getInteger("teamcity.vsphere.properties.readTimeout.sec", 60);
       final ExecResult result = executor.runProcess(executionTimeoutSeconds);
       if (result != null) {
-        final String executionResult = result.getStdout();
-        commandOutput.append("Execution result: ").append(StringUtil.trim(executionResult)).append('\n');
+        final String executionResult = StringUtil.trim(result.getStdout());
+        commandOutput.append("Execution result: ").append(executionResult).append('\n');
         commandOutput.append("Execution errors: ").append(StringUtil.trim(result.getStderr())).append('\n');
         commandOutput.append("Exit code:").append(result.getExitCode()).append('\n');
         if (result.getExitCode() != 0){
