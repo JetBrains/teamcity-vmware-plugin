@@ -88,6 +88,14 @@ public class DummyCloudManagerBase implements CloudManagerBase {
 
   @Nullable
   @Override
+  public String findProjectIdByProfileId(@NotNull final String profileId) {
+    throw new UnsupportedOperationException("DummyCloudManagerBase.findProjectIdByProfileId");
+
+    //return null;
+  }
+
+  @Nullable
+  @Override
   public CloudClientEx getClientIfExists(final String projectId, @NotNull final String profileId) {
     throw new UnsupportedOperationException("DummyCloudManagerBase.getClientIfExists");
 
