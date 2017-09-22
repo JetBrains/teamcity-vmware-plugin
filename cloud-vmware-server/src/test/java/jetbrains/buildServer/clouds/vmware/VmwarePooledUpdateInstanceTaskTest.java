@@ -15,12 +15,8 @@ import java.util.concurrent.atomic.AtomicReference;
 import jetbrains.buildServer.BaseTestCase;
 import jetbrains.buildServer.clouds.CloudClientParameters;
 import jetbrains.buildServer.clouds.CloudException;
-import jetbrains.buildServer.clouds.CloudImageParameters;
 import jetbrains.buildServer.clouds.CloudProfile;
-import jetbrains.buildServer.clouds.server.impl.profile.CloudClientParametersImpl;
-import jetbrains.buildServer.clouds.server.impl.profile.CloudImageParametersImpl;
-import jetbrains.buildServer.clouds.server.impl.profile.CloudProfileDataImpl;
-import jetbrains.buildServer.clouds.server.impl.profile.CloudProfileImpl;
+import jetbrains.buildServer.clouds.server.impl.profile.*;
 import jetbrains.buildServer.clouds.vmware.connector.VMWareApiConnector;
 import jetbrains.buildServer.clouds.vmware.errors.VmwareCheckedCloudException;
 import jetbrains.buildServer.clouds.vmware.stubs.FakeApiConnector;
@@ -29,7 +25,6 @@ import jetbrains.buildServer.clouds.vmware.tasks.VmwareUpdateInstanceTask;
 import jetbrains.buildServer.clouds.vmware.tasks.VmwarePooledUpdateInstanceTask;
 import jetbrains.buildServer.clouds.vmware.tasks.VmwareUpdateTaskManager;
 import org.jetbrains.annotations.NotNull;
-import org.testng.SkipException;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -75,6 +70,17 @@ public class VmwarePooledUpdateInstanceTaskTest extends BaseTestCase {
     final AtomicBoolean getByNameCalledOnce = new AtomicBoolean();
 
     myFakeApiConnector = new FakeApiConnector(TEST_SERVER_UUID, PROFILE_ID, null) {
+
+      @Override
+      protected <T extends ManagedEntity> Map<String, T> findAllEntitiesAsMapOld(final Class<T> instanceType) throws VmwareCheckedCloudException {
+        if (!listAllCanBeCalled.get()) {
+          fail("Shouldn't be called");
+        }
+        assertFalse(listAllCalledOnce.get());
+        listAllCalledOnce.set(true);
+        return super.findAllEntitiesAsMapOld(instanceType);
+      }
+
       @Override
       protected <T extends ManagedEntity> Collection<T> findAllEntitiesOld(final Class<T> instanceType) throws VmwareCheckedCloudException {
         if (!listAllCanBeCalled.get()) {
@@ -83,6 +89,16 @@ public class VmwarePooledUpdateInstanceTaskTest extends BaseTestCase {
         assertFalse(listAllCalledOnce.get());
         listAllCalledOnce.set(true);
         return super.findAllEntitiesOld(instanceType);
+      }
+
+      @Override
+      protected <T extends ManagedEntity> T findEntityByIdNameNullableOld(final String name, final Class<T> instanceType, final Datacenter dc) throws VmwareCheckedCloudException {
+        if (!getByNameCanBeCalled.get()) {
+          fail("Shouldn't be called");
+        }
+        assertFalse(getByNameCalledOnce.get());
+        getByNameCalledOnce.set(true);
+        return super.findEntityByIdNameNullableOld(name, instanceType, dc);
       }
 
       @NotNull
@@ -98,18 +114,18 @@ public class VmwarePooledUpdateInstanceTaskTest extends BaseTestCase {
     };
 
     final CloudClientParameters clientParameters1 = new CloudClientParametersImpl(
-      "descr", Collections.emptyMap(), CloudImageParametersImpl.collectionFromJson("[{sourceVmName:'image1', behaviour:'START_STOP'}]"));
+      "descr", Collections.emptyMap(), CloudProfileUtil.collectionFromJson("[{sourceVmName:'image1', behaviour:'START_STOP'}]"));
     final VMWareCloudClient client1 = new MyClient(clientParameters1, null);
 
 
     final CloudClientParameters clientParameters2 = new CloudClientParametersImpl(
-      "descr", Collections.emptyMap(),CloudImageParametersImpl.collectionFromJson(
+      "descr", Collections.emptyMap(), CloudProfileUtil.collectionFromJson(
       "[{sourceVmName:'image2',snapshot:'snap*',folder:'cf',pool:'rp'," +
       "maxInstances:3,behaviour:'ON_DEMAND_CLONE',customizationSpec:'someCustomization'}]"));
     final VMWareCloudClient client2 = new MyClient(clientParameters2, null);
 
     final CloudClientParameters clientParameters3 = new CloudClientParametersImpl(
-      "descr", Collections.emptyMap(), CloudImageParametersImpl.collectionFromJson(
+      "descr", Collections.emptyMap(), CloudProfileUtil.collectionFromJson(
       "[{'source-id':'image_template',sourceVmName:'image_template', snapshot:'" + VmwareConstants.CURRENT_STATE +
       "',folder:'cf',pool:'rp',maxInstances:3,behaviour:'FRESH_CLONE', customizationSpec: 'linux'}]"
     ));
@@ -132,12 +148,12 @@ public class VmwarePooledUpdateInstanceTaskTest extends BaseTestCase {
 
   public void check_cleared_after_dispose(){
     final CloudClientParameters clientParameters1 = new CloudClientParametersImpl(
-      "descr", Collections.emptyMap(), CloudImageParametersImpl.collectionFromJson("[{sourceVmName:'image1', behaviour:'START_STOP'}]"));
+      "descr", Collections.emptyMap(), CloudProfileUtil.collectionFromJson("[{sourceVmName:'image1', behaviour:'START_STOP'}]"));
     final VMWareCloudClient client1 = new MyClient(clientParameters1, null);
 
 
     final CloudClientParameters clientParameters2 = new CloudClientParametersImpl(
-      "descr", Collections.emptyMap(), CloudImageParametersImpl.collectionFromJson(
+      "descr", Collections.emptyMap(), CloudProfileUtil.collectionFromJson(
       "[{sourceVmName:'image2',snapshot:'snap*',folder:'cf',pool:'rp'," +
       "maxInstances:3,behaviour:'ON_DEMAND_CLONE',customizationSpec:'someCustomization'}]"));
 
@@ -206,12 +222,12 @@ public class VmwarePooledUpdateInstanceTaskTest extends BaseTestCase {
     };
 
     final CloudClientParameters clientParameters1 = new CloudClientParametersImpl(
-      "descr", Collections.emptyMap(), CloudImageParametersImpl.collectionFromJson("[{sourceVmName:'image1', behaviour:'START_STOP'}]"));
+      "descr", Collections.emptyMap(), CloudProfileUtil.collectionFromJson("[{sourceVmName:'image1', behaviour:'START_STOP'}]"));
     final VMWareCloudClient client1 = new MyClient(clientParameters1, null);
 
 
     final CloudClientParameters clientParameters2 = new CloudClientParametersImpl(
-      "descr", Collections.emptyMap(), CloudImageParametersImpl.collectionFromJson(
+      "descr", Collections.emptyMap(), CloudProfileUtil.collectionFromJson(
       "[{sourceVmName:'image2',snapshot:'snap*',folder:'cf',pool:'rp'," +
       "maxInstances:3,behaviour:'ON_DEMAND_CLONE',customizationSpec:'someCustomization'}]"));
 

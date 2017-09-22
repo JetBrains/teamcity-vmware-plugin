@@ -27,10 +27,7 @@ import jetbrains.buildServer.clouds.server.CloudInstancesProviderExtendedCallbac
 import jetbrains.buildServer.clouds.server.CloudManagerBase;
 import jetbrains.buildServer.clouds.server.impl.CloudRegistryImpl;
 import jetbrains.buildServer.clouds.server.CloudEventDispatcher;
-import jetbrains.buildServer.clouds.server.impl.profile.CloudClientParametersImpl;
-import jetbrains.buildServer.clouds.server.impl.profile.CloudImageParametersImpl;
-import jetbrains.buildServer.clouds.server.impl.profile.CloudProfileDataImpl;
-import jetbrains.buildServer.clouds.server.impl.profile.CloudProfileImpl;
+import jetbrains.buildServer.clouds.server.impl.profile.*;
 import jetbrains.buildServer.clouds.vmware.connector.VMWareApiConnector;
 import jetbrains.buildServer.clouds.vmware.connector.VmwareInstance;
 import jetbrains.buildServer.clouds.vmware.errors.VmwareCheckedCloudException;
@@ -88,11 +85,11 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
     setInternalProperty("teamcity.vsphere.instance.status.update.delay.ms", "250");
     myClientParameters = new CloudClientParametersImpl("descr",
                                                        Collections.emptyMap(),
-                                                       CloudImageParametersImpl.collectionFromJson("[{sourceVmName:'image1', behaviour:'START_STOP'}," +
-                                                                                                   "{sourceVmName:'image2',snapshot:'snap*',folder:'cf',pool:'rp',maxInstances:3,behaviour:'ON_DEMAND_CLONE', " +
-                                                                                                   "customizationSpec:'someCustomization'}," +
-                                                                                                   "{sourceVmName:'image_template', snapshot:'" + VmwareConstants.CURRENT_STATE +
-                                                                                                   "',folder:'cf',pool:'rp',maxInstances:3,behaviour:'FRESH_CLONE', customizationSpec: 'linux'}]"));
+                                                       CloudProfileUtil.collectionFromJson("[{sourceVmName:'image1', behaviour:'START_STOP'}," +
+                                                                                           "{sourceVmName:'image2',snapshot:'snap*',folder:'cf',pool:'rp',maxInstances:3,behaviour:'ON_DEMAND_CLONE', " +
+                                                                                           "customizationSpec:'someCustomization'}," +
+                                                                                           "{sourceVmName:'image_template', snapshot:'" + VmwareConstants.CURRENT_STATE +
+                                                                                           "',folder:'cf',pool:'rp',maxInstances:3,behaviour:'FRESH_CLONE', customizationSpec: 'linux'}]"));
 
     myFakeApi = new FakeApiConnector(TEST_SERVER_UUID, PROFILE_ID, null);
     FakeModel.instance().addDatacenter("dc");
@@ -299,9 +296,9 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
   }
 
   public void on_demand_clone_should_create_new_when_version_changes() throws Exception {
-    updateClientParameters(CloudImageParametersImpl.collectionFromJson("[{sourceVmName:'image1', snapshot:'"+VmwareConstants.CURRENT_STATE +"',folder:'cf',pool:'rp',maxInstances:3, behaviour:'ON_DEMAND_CLONE'}," +
-                                                                   "{sourceVmName:'image2',snapshot:'snap*',folder:'cf',pool:'rp',maxInstances:3,behaviour:'ON_DEMAND_CLONE'}," +
-                                                                   "{sourceVmName:'image_template', snapshot:'"+VmwareConstants.CURRENT_STATE +"', folder:'cf',pool:'rp',maxInstances:3,behaviour:'FRESH_CLONE'}]"));
+    updateClientParameters(CloudProfileUtil.collectionFromJson("[{sourceVmName:'image1', snapshot:'" + VmwareConstants.CURRENT_STATE + "',folder:'cf',pool:'rp',maxInstances:3, behaviour:'ON_DEMAND_CLONE'}," +
+                                                               "{sourceVmName:'image2',snapshot:'snap*',folder:'cf',pool:'rp',maxInstances:3,behaviour:'ON_DEMAND_CLONE'}," +
+                                                               "{sourceVmName:'image_template', snapshot:'" + VmwareConstants.CURRENT_STATE + "', folder:'cf',pool:'rp',maxInstances:3,behaviour:'FRESH_CLONE'}]"));
     recreateClient();
 
 
@@ -485,10 +482,10 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
 
   public void existing_clones_with_start_stop() {
     final VmwareCloudInstance cloneInstance = startNewInstanceAndWait("image2");
-    updateClientParameters(CloudImageParametersImpl.collectionFromJson("[{sourceVmName:'image1', behaviour:'START_STOP'}," +
-                                                          "{sourceVmName:'image2', behaviour:'START_STOP'}," +
-                                                          "{sourceVmName:'image_template', snapshot:'" + VmwareConstants.CURRENT_STATE +
-                                                          "', folder:'cf',pool:'rp',maxInstances:3,behaviour:'FRESH_CLONE'}]"));
+    updateClientParameters(CloudProfileUtil.collectionFromJson("[{sourceVmName:'image1', behaviour:'START_STOP'}," +
+                                                               "{sourceVmName:'image2', behaviour:'START_STOP'}," +
+                                                               "{sourceVmName:'image_template', snapshot:'" + VmwareConstants.CURRENT_STATE +
+                                                               "', folder:'cf',pool:'rp',maxInstances:3,behaviour:'FRESH_CLONE'}]"));
 
     recreateClient();
     boolean checked = false;
@@ -611,7 +608,7 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
     FakeModel.instance().addFolder("cf2").setParent("dc2", Datacenter.class);
     FakeModel.instance().addResourcePool("rp2").setParentFolder("cf2");
     FakeModel.instance().addVM("image3").setParentFolder("cf");
-    updateClientParameters(CloudImageParametersImpl.collectionFromJson(
+    updateClientParameters(CloudProfileUtil.collectionFromJson(
       "[{sourceVmName:'image1', behaviour:'START_STOP'}," +
         "{sourceVmName:'image2',snapshot:'snap*',folder:'cf',pool:'rp',maxInstances:3,behaviour:'ON_DEMAND_CLONE'}," +
         "{sourceVmName:'image_template', snapshot:'" + VmwareConstants.CURRENT_STATE + "',folder:'cf',pool:'rp',maxInstances:3,behaviour:'FRESH_CLONE'}, " +
@@ -632,7 +629,7 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
   }
 
   public void check_nickname(){
-    updateClientParameters(CloudImageParametersImpl.collectionFromJson(
+    updateClientParameters(CloudProfileUtil.collectionFromJson(
       "[{sourceVmName:'image1', behaviour:'START_STOP'}," +
                                                           "{nickname:'image2Nick1', sourceVmName:'image2',snapshot:'snap*',folder:'cf',pool:'rp',maxInstances:3,behaviour:'ON_DEMAND_CLONE'}," +
                                                           "{nickname:'image2Nick2', sourceVmName:'image2',snapshot:'snap*',folder:'cf',pool:'rp',maxInstances:3,behaviour:'ON_DEMAND_CLONE'}," +
@@ -684,10 +681,10 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
     final List<CloudClientParameters> profileParams = new ArrayList<CloudClientParameters>();
     for (int i=0; i< extraProfileCount; i++){
       profileParams.add(new CloudClientParametersImpl(
-        "descr",createMap(VMWareWebConstants.SERVER_URL, "http://localhost:8080",
+        "descr", createMap(VMWareWebConstants.SERVER_URL, "http://localhost:8080",
                           VMWareWebConstants.USERNAME, "un",
                           VMWareWebConstants.PASSWORD, "pw"),
-        CloudImageParametersImpl.collectionFromJson("[{sourceVmName:'image_new"+i+"', behaviour:'START_STOP'}]")
+        CloudProfileUtil.collectionFromJson("[{sourceVmName:'image_new" + i + "', behaviour:'START_STOP'}]")
       ));
     }
 
@@ -1184,11 +1181,11 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
 
   public void should_consider_profile_limit_on_reload(){
     final CloudClientParameters clientParameters2 =
-      new CloudClientParametersImpl("descr", Collections.emptyMap(), CloudImageParametersImpl.collectionFromJson(
+      new CloudClientParametersImpl("descr", Collections.emptyMap(), CloudProfileUtil.collectionFromJson(
       "[{sourceVmName:'image2',snapshot:'snap*',folder:'cf',pool:'rp'," +
       "maxInstances:1,behaviour:'ON_DEMAND_CLONE',customizationSpec:'someCustomization'}]"));
     final CloudClientParameters clientParameters3 =
-      new CloudClientParametersImpl("descr", Collections.emptyMap(), CloudImageParametersImpl.collectionFromJson(
+      new CloudClientParametersImpl("descr", Collections.emptyMap(), CloudProfileUtil.collectionFromJson(
       "[{'source-id':'image_template',sourceVmName:'image_template', snapshot:'" + VmwareConstants.CURRENT_STATE +
       "',folder:'cf',pool:'rp',maxInstances:1,behaviour:'FRESH_CLONE', customizationSpec: 'linux'}]"
     ));
@@ -1230,11 +1227,11 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
 
   public void should_consider_profile_limit_on_reload_2(){
     final CloudClientParameters clientParameters2 = new CloudClientParametersImpl(
-      "descr", Collections.emptyMap(), CloudImageParametersImpl.collectionFromJson(
+      "descr", Collections.emptyMap(), CloudProfileUtil.collectionFromJson(
       "[{sourceVmName:'image2',snapshot:'snap*',folder:'cf',pool:'rp'," +
       "maxInstances:1,behaviour:'ON_DEMAND_CLONE',customizationSpec:'someCustomization'}]"));
     final CloudClientParameters clientParameters3 = new CloudClientParametersImpl(
-      "descr", Collections.emptyMap(), CloudImageParametersImpl.collectionFromJson(
+      "descr", Collections.emptyMap(), CloudProfileUtil.collectionFromJson(
       "[{'source-id':'image_template',sourceVmName:'image_template', snapshot:'" + VmwareConstants.CURRENT_STATE +
       "',folder:'cf',pool:'rp',maxInstances:1,behaviour:'FRESH_CLONE', customizationSpec: 'linux'}]"
     ));

@@ -6,10 +6,7 @@ import jetbrains.buildServer.BaseTestCase;
 import jetbrains.buildServer.clouds.*;
 import jetbrains.buildServer.clouds.base.stubs.DummyCloudManagerBase;
 import jetbrains.buildServer.clouds.server.CloudManagerBase;
-import jetbrains.buildServer.clouds.server.impl.profile.CloudClientParametersImpl;
-import jetbrains.buildServer.clouds.server.impl.profile.CloudImageParametersImpl;
-import jetbrains.buildServer.clouds.server.impl.profile.CloudProfileDataImpl;
-import jetbrains.buildServer.clouds.server.impl.profile.CloudProfileImpl;
+import jetbrains.buildServer.clouds.server.impl.profile.*;
 import jetbrains.buildServer.clouds.vmware.stubs.FakeApiConnector;
 import jetbrains.buildServer.clouds.vmware.tasks.VmwareUpdateTaskManager;
 import jetbrains.buildServer.clouds.vmware.web.VMWareWebConstants;
@@ -19,7 +16,6 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import static jetbrains.buildServer.clouds.vmware.VmwareCloudIntegrationTest.PROFILE_ID;
 import static jetbrains.buildServer.clouds.vmware.VmwareCloudIntegrationTest.TEST_SERVER_UUID;
 
 /**
@@ -93,7 +89,7 @@ public class VmwarePropertiesProcessorTest extends BaseTestCase {
   public void check_same_source_ids_new_profile() throws IOException {
     final CloudClientParameters cloudClientParameters = new CloudClientParametersImpl(
       "descr", Collections.singletonMap(VMWareWebConstants.SERVER_URL, "http://localhost:8080"),
-      CloudImageParametersImpl.collectionFromJson(
+      CloudProfileUtil.collectionFromJson(
         "[{sourceVmName:'image1', behaviour:'START_STOP'}," +
         "{sourceVmName:'image2',snapshot:'snap*',folder:'cf',pool:'rp',maxInstances:3,behaviour:'ON_DEMAND_CLONE', " +
         "customizationSpec:'someCustomization'}," +
@@ -116,7 +112,7 @@ public class VmwarePropertiesProcessorTest extends BaseTestCase {
     {
       final CloudClientParameters cloudClientParameters = new CloudClientParametersImpl(
         "descr", Collections.singletonMap(VMWareWebConstants.SERVER_URL, "http://localhost:8080"),
-        CloudImageParametersImpl.collectionFromJson(
+        CloudProfileUtil.collectionFromJson(
           "[{'source-id':'image1',sourceVmName:'image1', behaviour:'START_STOP'}," +
           "{'source-id':'image2',sourceVmName:'image2',snapshot:'snap*',folder:'cf',pool:'rp',maxInstances:3,behaviour:'ON_DEMAND_CLONE', " +
           "customizationSpec:'someCustomization'}," +
@@ -131,7 +127,7 @@ public class VmwarePropertiesProcessorTest extends BaseTestCase {
     {
       final CloudClientParameters cloudClientParameters = new CloudClientParametersImpl(
         "descr", Collections.singletonMap(VMWareWebConstants.SERVER_URL, "http://localhost:8080"),
-        CloudImageParametersImpl.collectionFromJson(
+        CloudProfileUtil.collectionFromJson(
           "[{'source-id':'image3',sourceVmName:'image3', behaviour:'START_STOP'}," +
           "{'source-id':'image4',sourceVmName:'image4',snapshot:'snap*',folder:'cf',pool:'rp',maxInstances:3,behaviour:'ON_DEMAND_CLONE', " +
           "customizationSpec:'someCustomization'}," +
@@ -163,7 +159,7 @@ public class VmwarePropertiesProcessorTest extends BaseTestCase {
     {
       final CloudClientParameters cloudClientParameters = new CloudClientParametersImpl(
         "descr", Collections.singletonMap(VMWareWebConstants.SERVER_URL, "http://localhost:8081"),
-        CloudImageParametersImpl.collectionFromJson(
+        CloudProfileUtil.collectionFromJson(
           "[{'source-id':'image1',sourceVmName:'image1', behaviour:'START_STOP'}," +
           "{'source-id':'image2',sourceVmName:'image2',snapshot:'snap*',folder:'cf',pool:'rp',maxInstances:3,behaviour:'ON_DEMAND_CLONE', " +
           "customizationSpec:'someCustomization'}," +
@@ -178,7 +174,7 @@ public class VmwarePropertiesProcessorTest extends BaseTestCase {
     {
       final CloudClientParameters cloudClientParameters = new CloudClientParametersImpl(
         "descr", Collections.singletonMap(VMWareWebConstants.SERVER_URL, "http://localhost:8082"),
-        CloudImageParametersImpl.collectionFromJson(
+        CloudProfileUtil.collectionFromJson(
           "[{'source-id':'image3',sourceVmName:'image3', behaviour:'START_STOP'}," +
           "{'source-id':'image4',sourceVmName:'image4',snapshot:'snap*',folder:'cf',pool:'rp',maxInstances:3,behaviour:'ON_DEMAND_CLONE', " +
           "customizationSpec:'someCustomization'}," +
