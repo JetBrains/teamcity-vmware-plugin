@@ -12,6 +12,8 @@ import jetbrains.buildServer.clouds.*;
 import jetbrains.buildServer.clouds.base.connector.CloudAsyncTaskExecutor;
 import jetbrains.buildServer.clouds.base.tasks.UpdateInstancesTask;
 import jetbrains.buildServer.clouds.base.types.CloneBehaviour;
+import jetbrains.buildServer.clouds.server.impl.profile.CloudClientParametersImpl;
+import jetbrains.buildServer.clouds.server.impl.profile.CloudImageParametersImpl;
 import jetbrains.buildServer.clouds.server.impl.profile.CloudProfileDataImpl;
 import jetbrains.buildServer.clouds.server.impl.profile.CloudProfileImpl;
 import jetbrains.buildServer.clouds.vmware.connector.VMWareApiConnector;
@@ -49,14 +51,15 @@ public class VmwareCloudImageTest extends BaseTestCase {
     myTaskExecutor = new CloudAsyncTaskExecutor("Test-vmware");
     myApiConnector = new FakeApiConnector(VmwareCloudIntegrationTest.TEST_SERVER_UUID, VmwareCloudIntegrationTest.PROFILE_ID);
     myIdxStorage = createTempDir();
-    CloudImageParameters imageParameters = new CloudImageParameters();
-    imageParameters.setParameter("nickname", "imageNickname");
-    imageParameters.setParameter("sourceVmName", "srcVM");
-    imageParameters.setParameter("snapshot", "srcVMSnap");
-    imageParameters.setParameter("folder", "folderId");
-    imageParameters.setParameter("pool", "rpId");
-    imageParameters.setParameter("behaviour", CloneBehaviour.FRESH_CLONE.toString());
-    imageParameters.setParameter("maxInstances", "5");
+    Map<String, String> params = new HashMap<>();
+    params.put("nickname", "imageNickname");
+    params.put("sourceVmName", "srcVM");
+    params.put("snapshot", "srcVMSnap");
+    params.put("folder", "folderId");
+    params.put("pool", "rpId");
+    params.put("behaviour", CloneBehaviour.FRESH_CLONE.toString());
+    params.put("maxInstances", "5");
+    CloudImageParameters imageParameters = new CloudImageParametersImpl(params);
 
     myImageDetails = new VmwareCloudImageDetails(imageParameters);
 
@@ -67,7 +70,7 @@ public class VmwareCloudImageTest extends BaseTestCase {
 
     FakeModel.instance().addVMSnapshot("srcVM", "srcVMSnap");
 
-    myProfile = VmwareTestUtils.createProfileFromProps(new CloudClientParameters());
+    myProfile = VmwareTestUtils.createProfileFromProps(new CloudClientParametersImpl("", Collections.emptyMap(), Collections.emptyList()));
     myImage = new VmwareCloudImage(myApiConnector, myImageDetails, myTaskExecutor, myIdxStorage, myProfile);
 
     myCloudClient = new VMWareCloudClient(myProfile, myApiConnector, new VmwareUpdateTaskManager(), createTempDir());

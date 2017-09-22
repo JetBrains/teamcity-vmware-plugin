@@ -12,14 +12,16 @@ public class VmwareTestUtils {
 
 
   public static CloudProfile createProfileFromProps(CloudClientParameters params){
-    final CloudProfileDataImpl data = new CloudProfileDataImpl();
-    data.setEnabled(true);
-    data.setParameters(params);
-    data.setName("Profile name");
-    data.setDescription("Description");
-    data.setCloudCode(VmwareConstants.TYPE);
-    final CloudProfile profile = new CloudProfileImpl(PROJECT_ID, PROFILE_ID, data);
-    return profile;
+    return createProfileFromProps(PROJECT_ID, PROFILE_ID, params);
+  }
+
+  public static CloudProfile createProfileFromProps(String projectId, String profileId, CloudClientParameters params){
+    return createProfileFromProps(projectId, profileId, params, "Profile name");
+  }
+
+  public static CloudProfile createProfileFromProps(String projectId, String profileId, CloudClientParameters params, String name){
+    final CloudProfileDataImpl data = new CloudProfileDataImpl(VmwareConstants.TYPE, name, "Description", null, true, params);
+    return new CloudProfileImpl(projectId, profileId, data);
   }
 
 
