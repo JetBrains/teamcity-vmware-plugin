@@ -16,7 +16,7 @@ public class VmwareTestUtils {
   }
 
   public static CloudProfile createProfileFromProps(String projectId, String profileId, CloudClientParameters params){
-    return createProfileFromProps(projectId, profileId, params, "Profile name");
+    return createProfileFromProps(projectId, profileId, params, "Vmware profile");
   }
 
   public static CloudProfile createProfileFromProps(String projectId, String profileId, CloudClientParameters params, String name){
