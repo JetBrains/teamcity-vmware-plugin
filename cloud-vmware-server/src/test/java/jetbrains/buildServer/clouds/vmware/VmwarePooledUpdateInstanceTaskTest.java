@@ -4,6 +4,7 @@ import com.intellij.openapi.util.Pair;
 import com.vmware.vim25.CustomizationSpec;
 import com.vmware.vim25.mo.Datacenter;
 import com.vmware.vim25.mo.ManagedEntity;
+import com.vmware.vim25.mo.VirtualMachine;
 import java.io.File;
 import java.net.MalformedURLException;
 import java.util.Collection;
@@ -25,6 +26,7 @@ import jetbrains.buildServer.clouds.vmware.tasks.VmwareUpdateInstanceTask;
 import jetbrains.buildServer.clouds.vmware.tasks.VmwarePooledUpdateInstanceTask;
 import jetbrains.buildServer.clouds.vmware.tasks.VmwareUpdateTaskManager;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -82,34 +84,13 @@ public class VmwarePooledUpdateInstanceTaskTest extends BaseTestCase {
       }
 
       @Override
-      protected <T extends ManagedEntity> Collection<T> findAllEntitiesOld(final Class<T> instanceType) throws VmwareCheckedCloudException {
-        if (!listAllCanBeCalled.get()) {
-          fail("Shouldn't be called");
-        }
-        assertFalse(listAllCalledOnce.get());
-        listAllCalledOnce.set(true);
-        return super.findAllEntitiesOld(instanceType);
-      }
-
-      @Override
-      protected <T extends ManagedEntity> T findEntityByIdNameNullableOld(final String name, final Class<T> instanceType, final Datacenter dc) throws VmwareCheckedCloudException {
+      protected Map<String, VirtualMachine> searchVMsByNames(@NotNull final Collection<String> names, @Nullable final Datacenter dc) throws VmwareCheckedCloudException {
         if (!getByNameCanBeCalled.get()) {
           fail("Shouldn't be called");
         }
         assertFalse(getByNameCalledOnce.get());
         getByNameCalledOnce.set(true);
-        return super.findEntityByIdNameNullableOld(name, instanceType, dc);
-      }
-
-      @NotNull
-      @Override
-      protected <T extends ManagedEntity> Pair<T,Datacenter> findEntityByIdNameOld(final String idName, final Class<T> instanceType) throws VmwareCheckedCloudException {
-        if (!getByNameCanBeCalled.get()) {
-          fail("Shouldn't be called");
-        }
-        assertFalse(getByNameCalledOnce.get());
-        getByNameCalledOnce.set(true);
-        return super.findEntityByIdNameOld(idName, instanceType);
+        return super.searchVMsByNames(names, dc);
       }
     };
 
@@ -197,27 +178,27 @@ public class VmwarePooledUpdateInstanceTaskTest extends BaseTestCase {
 
   public void check_cleared_after_dispose_2() throws MalformedURLException {
     final AtomicBoolean canBeCalled = new AtomicBoolean();
-    final AtomicBoolean actuallCalled = new AtomicBoolean();
+    final AtomicInteger callsCount = new AtomicInteger();
 
     myFakeApiConnector = new FakeApiConnector(TEST_SERVER_UUID, PROFILE_ID, null) {
       @Override
-      protected <T extends ManagedEntity> Collection<T> findAllEntitiesOld(final Class<T> instanceType) throws VmwareCheckedCloudException {
+      protected <T extends ManagedEntity> Map<String, T> findAllEntitiesAsMapOld(final Class<T> instanceType) throws VmwareCheckedCloudException {
         processChecks();
-        return Collections.emptyList();
+        return Collections.emptyMap();
       }
 
       private void processChecks() {
         if (!canBeCalled.get()) {
           fail("Shouldn't be called");
         }
-        assertFalse(actuallCalled.get());
-        actuallCalled.set(true);
+        assertTrue(callsCount.get() < 2);
+        callsCount.incrementAndGet();
       }
 
       @Override
-      protected <T extends ManagedEntity> T findEntityByIdNameNullableOld(final String name, final Class<T> instanceType, final Datacenter dc) throws VmwareCheckedCloudException {
+      protected Map<String, VirtualMachine> searchVMsByNames(@NotNull final Collection<String> names, @Nullable final Datacenter dc) throws VmwareCheckedCloudException {
         processChecks();
-        return null;
+        return Collections.emptyMap();
       }
     };
 
@@ -236,16 +217,16 @@ public class VmwarePooledUpdateInstanceTaskTest extends BaseTestCase {
 
 
     canBeCalled.set(true);
-    actuallCalled.set(false);
+    callsCount.set(0);
     task1.run();
-    assertTrue(actuallCalled.get());
+    assertTrue(callsCount.get() > 0);
 
     client1.dispose();
     final VmwareUpdateInstanceTask task2 = myTaskManager.createUpdateTask(myFakeApiConnector, client2);
     canBeCalled.set(true);
-    actuallCalled.set(false);
+    callsCount.set(0);
     task2.run();
-    assertTrue(actuallCalled.get());
+    assertTrue(callsCount.get() > 0);
 
 
   }

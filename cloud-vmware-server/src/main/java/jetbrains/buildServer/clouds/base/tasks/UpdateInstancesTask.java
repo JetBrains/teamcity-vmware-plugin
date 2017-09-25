@@ -20,6 +20,8 @@ package jetbrains.buildServer.clouds.base.tasks;
 
 import com.intellij.openapi.diagnostic.Logger;
 import java.util.*;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import jetbrains.buildServer.Used;
 import jetbrains.buildServer.clouds.InstanceStatus;
 import jetbrains.buildServer.clouds.base.AbstractCloudClient;
@@ -27,6 +29,8 @@ import jetbrains.buildServer.clouds.base.AbstractCloudImage;
 import jetbrains.buildServer.clouds.base.AbstractCloudInstance;
 import jetbrains.buildServer.clouds.base.connector.AbstractInstance;
 import jetbrains.buildServer.clouds.base.connector.CloudApiConnector;
+import jetbrains.buildServer.clouds.base.errors.CheckedCloudException;
+import jetbrains.buildServer.clouds.base.errors.TypedCloudErrorInfo;
 import jetbrains.buildServer.util.Disposable;
 import org.jetbrains.annotations.NotNull;
 
@@ -74,14 +78,11 @@ public class UpdateInstancesTask< G extends AbstractCloudInstance<T>,
     final Map<InstanceStatus, List<String>> instancesByStatus = new HashMap<InstanceStatus, List<String>>();
     try {
       List<T> goodImages = new ArrayList<>();
-      final Collection<T> images = getImages();
-      for (final T image : images) {
-        image.updateErrors(myConnector.checkImage(image));
-        if (image.getErrorInfo() != null) {
-          continue;
-        }
-        goodImages.add(image);
-      }
+      myConnector.checkImages(getImages()).forEach((img, errors)->{
+        img.updateErrors(errors);
+        if (img.getErrorInfo() == null)
+          goodImages.add(img);
+      });
 
       final Map<T, Map<String, AbstractInstance>> groupedInstances = myConnector.fetchInstances(goodImages);
       groupedInstances.forEach((img, instMap)->{
@@ -137,9 +138,9 @@ public class UpdateInstancesTask< G extends AbstractCloudInstance<T>,
             LOG.debug("Error processing VM " + cloudInstance.getName() + ": " + ex.toString());
           }
         }
-        final Map<String, InstanceStatus> statuses = myConnector.getInstanceStatusesIfExists(instancesToRemove);
         for (String instanceName : instancesToRemove) {
-          final InstanceStatus currentStatus = statuses.get(instanceName);
+          AbstractInstance realInstanceNullable = realInstances.get(instanceName);
+          final InstanceStatus currentStatus = realInstanceNullable==null ? null : realInstanceNullable.getInstanceStatus();
           if (currentStatus == null) {
             image.removeInstance(instanceName);
           }
@@ -147,12 +148,12 @@ public class UpdateInstancesTask< G extends AbstractCloudInstance<T>,
         image.detectNewInstances(realInstances);
       }
       myClient.updateErrors();
-    } catch (Exception ex){
+    } catch (CheckedCloudException e) {
+      LOG.warnAndDebugDetails("An error occurred during updateInstanceTask", e);
       if (myRethrowException){
         // for tests
-        throw new RuntimeException(ex);
+        throw new RuntimeException(e);
       }
-      LOG.warn(ex.toString(), ex);
     } finally {
       //logging here:
       for (InstanceStatus instanceStatus : instancesByStatus.keySet()) {

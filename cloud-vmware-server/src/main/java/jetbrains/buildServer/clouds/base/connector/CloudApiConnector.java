@@ -49,16 +49,17 @@ public interface CloudApiConnector<T extends AbstractCloudImage, G extends Abstr
   String getKey();
 
   @NotNull
-  Map<String, InstanceStatus> getInstanceStatusesIfExists(@NotNull Set<String> instanceNames);
-
-  @NotNull
   <R extends AbstractInstance> Map<String, R> fetchInstances(@NotNull final T image) throws CheckedCloudException;
 
   @NotNull
   <R extends AbstractInstance> Map<T, Map<String, R>> fetchInstances(@NotNull final Collection<T> images) throws CheckedCloudException;
 
   @NotNull
+  @Deprecated
   TypedCloudErrorInfo[] checkImage(@NotNull final T image);
+
+  @NotNull
+  Map<T, TypedCloudErrorInfo[]> checkImages(@NotNull final Collection<T> images);
 
   @NotNull
   TypedCloudErrorInfo[] checkInstance(@NotNull final G instance);

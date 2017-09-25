@@ -3,14 +3,13 @@ package jetbrains.buildServer.clouds.base.stubs;
 import java.util.*;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 import java.util.stream.Collectors;
-import jetbrains.buildServer.clouds.InstanceStatus;
 import jetbrains.buildServer.clouds.base.connector.AbstractInstance;
 import jetbrains.buildServer.clouds.base.connector.CloudApiConnector;
 import jetbrains.buildServer.clouds.base.errors.CheckedCloudException;
 import jetbrains.buildServer.clouds.base.errors.TypedCloudErrorInfo;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * Created by Sergey.Pak on 3/4/2016.
@@ -46,15 +45,6 @@ public class DummyApiConnector implements CloudApiConnector<DummyCloudImage, Dum
 
   @NotNull
   @Override
-  public Map<String, InstanceStatus> getInstanceStatusesIfExists(@NotNull final Set<String> instanceNames) {
-    checkLatch("getInstanceStatusesIfExists");
-    //final DummyRealInstance instance = myRealInstanceMap.get(instanceName);
-    //return instance == null ? null : instance.getInstanceStatus();
-    return Collections.emptyMap();
-  }
-
-  @NotNull
-  @Override
   public <R extends AbstractInstance> Map<DummyCloudImage, Map<String, R>> fetchInstances(@NotNull final Collection<DummyCloudImage> images) throws CheckedCloudException {
     Map<DummyCloudImage, Map<String, R>> result = new HashMap<>();
     for (DummyCloudImage image: images) {
@@ -78,6 +68,13 @@ public class DummyApiConnector implements CloudApiConnector<DummyCloudImage, Dum
   public TypedCloudErrorInfo[] checkImage(@NotNull final DummyCloudImage image) {
     checkLatch("checkImage");
     return new TypedCloudErrorInfo[0];
+  }
+
+  @NotNull
+  @Override
+  public Map<DummyCloudImage, TypedCloudErrorInfo[]> checkImages(@NotNull final Collection<DummyCloudImage> images) {
+    checkLatch("checkImages");
+    return images.stream().collect(Collectors.toMap(Function.identity(), img->new TypedCloudErrorInfo[0]));
   }
 
   @NotNull

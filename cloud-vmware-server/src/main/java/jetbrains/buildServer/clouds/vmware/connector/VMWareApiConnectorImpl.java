@@ -189,6 +189,17 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
     }
   }
 
+  protected Map<String, VirtualMachine> searchVMsByNames(final @NotNull Collection<String> names, final @Nullable Datacenter dc) throws  VmwareCheckedCloudException {
+
+    try {
+      ManagedEntity searchFolder = (dc == null) ? getRootFolder() : dc;
+      Map<String, ManagedEntity> rawVmsMaps = new InventoryNavigator(searchFolder).searchManagedEntities("VirtualMachine", names);
+      return rawVmsMaps.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, e -> (VirtualMachine)e.getValue(), (k, v) -> k));
+    } catch (RemoteException  re){
+      throw new VmwareCheckedCloudException(re);
+    }
+  }
+
   @NotNull
   protected <T extends ManagedEntity> Pair<T,Datacenter> findEntityByIdNameOld(String idName, Class<T> instanceType) throws VmwareCheckedCloudException  {
     final AtomicReference<VmwareCheckedCloudException> exceptionRef = new AtomicReference<>();
@@ -1131,34 +1142,39 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
   }
 
   @NotNull
-  @Override
-  public Map<String, InstanceStatus> getInstanceStatusesIfExists(@NotNull Set<String> instanceNames) {
-  try {
-    return findAllVirtualMachines()
-      .stream()
-      .filter(vm->instanceNames.contains(vm.getName()))
-      .collect(Collectors.toMap(VmwareInstance::getName, VmwareInstance::getInstanceStatus, (k,v)->k));
-    } catch (VmwareCheckedCloudException e) {
-      LOG.debug(e.toString());
-      return instanceNames.stream().collect(Collectors.toMap(Function.identity(), in-> InstanceStatus.ERROR));
-    }
+  public TypedCloudErrorInfo[] checkImage(@NotNull final VmwareCloudImage image) {
+    return checkImages(Collections.singleton(image)).get(image);
   }
 
-  @NotNull
-  public TypedCloudErrorInfo[] checkImage(@NotNull final VmwareCloudImage image) {
-    final VmwareCloudImageDetails imageDetails = image.getImageDetails();
-    final String vmName = imageDetails.getSourceVmName();
+  @Override
+  public Map<VmwareCloudImage, TypedCloudErrorInfo[]> checkImages(@NotNull final Collection<VmwareCloudImage> images) {
+    final Set<String> imageNames = images.stream().map(img->img.getImageDetails().getSourceVmName()).collect(Collectors.toSet());
+    final Map<VmwareCloudImage, TypedCloudErrorInfo[]> retval = new HashMap<>();
+
+    final  Map<String, VirtualMachine> imageVms;
     try {
-      final VirtualMachine vm = findEntityByIdNameNullableOld(vmName, VirtualMachine.class, null);
+      imageVms = searchVMsByNames(imageNames, null);
+    } catch (VmwareCheckedCloudException e) {
+      LOG.warnAndDebugDetails("An error occurred during seaching for VMs", e);
+      images.forEach(image->{
+        retval.put(image, new TypedCloudErrorInfo[]{TypedCloudErrorInfo.fromException(e)});
+      });
+      return retval;
+    }
+    images.forEach(image->{
+      final VmwareCloudImageDetails imageDetails = image.getImageDetails();
+      final VirtualMachine vm = imageVms.get(imageDetails.getSourceVmName());
       if (vm == null){
-        return new TypedCloudErrorInfo[]{new TypedCloudErrorInfo("NoVM", "No such VM: " + vmName)};
+        retval.put(image, new TypedCloudErrorInfo[]{new TypedCloudErrorInfo("NoVM", "No such VM: " + imageDetails.getSourceVmName())});
+        return;
       }
       if (!imageDetails.getBehaviour().isUseOriginal() && !imageDetails.useCurrentVersion()) {
         final String snapshotName = imageDetails.getSnapshotName();
         final Map<String, VirtualMachineSnapshotTree> snapshotList = getSnapshotList(vm);
         final String latestSnapshot = getLatestSnapshot(snapshotName, snapshotList);
         if (StringUtil.isNotEmpty(snapshotName) && latestSnapshot == null) {
-          return new TypedCloudErrorInfo[]{new TypedCloudErrorInfo("NoSnapshot", "No such snapshot: " + snapshotName)};
+          retval.put(image, new TypedCloudErrorInfo[]{new TypedCloudErrorInfo("NoSnapshot", "No such snapshot: " + snapshotName)});
+          return;
         }
         final VmwareSourceState actualState = VmwareSourceState.from(latestSnapshot, vm.getMOR().getVal());
         image.updateActualSourceState(actualState);
@@ -1175,10 +1191,10 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
           LOG.debug("CloudInstancesProvider is null");
         }
       }
-    } catch (VmwareCheckedCloudException e) {
-      return new TypedCloudErrorInfo[]{TypedCloudErrorInfo.fromException(e)};
-    }
-    return new TypedCloudErrorInfo[0];
+      retval.put(image, new TypedCloudErrorInfo[0]);
+
+    });
+    return retval;
   }
 
   @NotNull

@@ -72,5 +72,16 @@
     <orderEntry type="module" module-name="cloud-shared" />
     <orderEntry type="module" module-name="server" />
     <orderEntry type="library" name="gson" level="project" />
+    <orderEntry type="module-library" scope="PROVIDED">
+      <library name="yavijava - src + doc">
+        <CLASSES />
+        <JAVADOC>
+          <root url="jar://$MODULE_DIR$/../lib/yavijava-6.0.05-SNAPSHOT-javadoc.jar!/" />
+        </JAVADOC>
+        <SOURCES>
+          <root url="jar://$MODULE_DIR$/../lib/yavijava-6.0.05-SNAPSHOT-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
   </component>
 </module>

@@ -82,7 +82,7 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
 
     myIdxStorage = createTempDir();
 
-    setInternalProperty("teamcity.vsphere.instance.status.update.delay.ms", "250");
+    setInternalProperty("teamcity.vsphere.instance.status.update.delay.ms", "50");
     myClientParameters = new CloudClientParametersImpl("descr",
                                                        Collections.emptyMap(),
                                                        CloudProfileUtil.collectionFromJson("[{sourceVmName:'image1', behaviour:'START_STOP'}," +
@@ -603,7 +603,7 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
     assertTrue("canStart method blocks the thread!", executor.awaitTermination(100, TimeUnit.MILLISECONDS));
   }
 
-  public void create_within_the_same_datacenter() throws InterruptedException {
+  public void check_same_datacenter() throws InterruptedException {
     FakeModel.instance().addDatacenter("dc2");
     FakeModel.instance().addFolder("cf2").setParent("dc2", Datacenter.class);
     FakeModel.instance().addResourcePool("rp2").setParentFolder("cf2");
@@ -736,9 +736,9 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
                                                                             public void iterateInstances(@NotNull final CloudInstancesProviderExtendedCallback callback) {}
                                                                             public void iterateProfileInstances(@NotNull final CloudProfile profile,
                                                                                                                 @NotNull final CloudInstancesProviderCallback callback) {}
-                                                                            public void markInstanceExpired(final CloudProfile profile,
+                                                                            public void markInstanceExpired(@NotNull final CloudProfile profile,
                                                                                                             @NotNull final CloudInstance instance) {}
-                                                                            public boolean isInstanceExpired(final CloudProfile profile,
+                                                                            public boolean isInstanceExpired(@NotNull final CloudProfile profile,
                                                                                                              @NotNull final CloudInstance instance) {return false;}
                                                                           },
                                                                           cloudManagerBase, new ServerSettingsImpl(),
@@ -889,11 +889,11 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
         //
       }
 
-      public void markInstanceExpired(final CloudProfile profile, @NotNull final CloudInstance instance) {
+      public void markInstanceExpired(@NotNull final CloudProfile profile, @NotNull final CloudInstance instance) {
         instancesMarkedExpired.put(instance.getInstanceId(),instance );
       }
 
-      public boolean isInstanceExpired(final CloudProfile profile, @NotNull final CloudInstance instance) {
+      public boolean isInstanceExpired(@NotNull final CloudProfile profile, @NotNull final CloudInstance instance) {
         return instancesMarkedExpired.containsKey(instance.getInstanceId());
       }
     };
@@ -921,11 +921,11 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
         throw new UnsupportedOperationException(".iterateProfileInstances");
       }
 
-      public void markInstanceExpired(final CloudProfile profile, @NotNull final CloudInstance instance) {
+      public void markInstanceExpired(@NotNull final CloudProfile profile, @NotNull final CloudInstance instance) {
         instancesMarkedExpired.put(instance.getInstanceId(),instance );
       }
 
-      public boolean isInstanceExpired(final CloudProfile profile, @NotNull final CloudInstance instance) {
+      public boolean isInstanceExpired(@NotNull final CloudProfile profile, @NotNull final CloudInstance instance) {
         return instancesMarkedExpired.containsKey(instance.getInstanceId());
       }
     };
@@ -960,11 +960,11 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
         throw new UnsupportedOperationException(".iterateProfileInstances");
       }
 
-      public void markInstanceExpired(final CloudProfile profile, @NotNull final CloudInstance instance) {
+      public void markInstanceExpired(@NotNull final CloudProfile profile, @NotNull final CloudInstance instance) {
         instancesMarkedExpired.put(instance.getInstanceId(),instance );
       }
 
-      public boolean isInstanceExpired(final CloudProfile profile, @NotNull final CloudInstance instance) {
+      public boolean isInstanceExpired(@NotNull final CloudProfile profile, @NotNull final CloudInstance instance) {
         return instancesMarkedExpired.containsKey(instance.getInstanceId());
       }
     };
@@ -1200,29 +1200,23 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
     client2.dispose();
     client3.dispose();
 
+    final VMWareCloudClient client3_1 = recreateClient(null, clientParameters3);
+    final VMWareCloudClient client2_1 = recreateClient(null, clientParameters2);
     try {
-      System.setProperty("teamcity.vsphere.instance.status.update.delay.ms", "2500");
+      startNewInstanceAndWait(client3_1, "image_template");
+      fail("Shouldn't start more of client3");
+    } catch (Exception ex) {
 
-      final VMWareCloudClient client3_1 = recreateClient(null, clientParameters3);
-      final VMWareCloudClient client2_1 = recreateClient(null, clientParameters2);
-      try {
-        startNewInstanceAndWait(client3_1, "image_template");
-        fail("Shouldn't start more of client3");
-      } catch (Exception ex) {
-
-      }
-
-
-      try {
-        startNewInstanceAndWait(client2_1, "image2");
-        fail("Shouldn't start more of image2");
-      } catch (Exception ex) {
-
-      }
-
-    } finally {
-      System.getProperties().remove("teamcity.vsphere.instance.status.update.delay.ms");
     }
+
+
+    try {
+      startNewInstanceAndWait(client2_1, "image2");
+      fail("Shouldn't start more of image2");
+    } catch (Exception ex) {
+
+    }
+
   }
 
   public void should_consider_profile_limit_on_reload_2(){
@@ -1246,45 +1240,38 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
     client2.dispose();
     client3.dispose();
 
+    final VMWareCloudClient client3_1 = recreateClient(null, clientParameters3, false);
+    final VMWareCloudClient client2_1 = recreateClient(null, clientParameters2, false);
+    new WaitFor(5000) {
+      @Override
+      protected boolean condition() {
+        return client3_1.isInitialized() || client2_1.isInitialized();
+      }
+    };
     try {
-      System.setProperty("teamcity.vsphere.instance.status.update.delay.ms", "2500");
-
-      final VMWareCloudClient client3_1 = recreateClient(null, clientParameters3, false);
-      final VMWareCloudClient client2_1 = recreateClient(null, clientParameters2, false);
-      new WaitFor(5000) {
-        @Override
-        protected boolean condition() {
-          return client3_1.isInitialized() || client2_1.isInitialized();
-        }
-      };
-      try {
-        if (client3_1.isInitialized() && client3_1.canStartNewInstance(getImageByName("image_template"))) {
-          startNewInstanceAndWait(client3_1, "image_template");
-          fail("Shouldn't start more of client3");
-        }
-      } catch (Exception ex) {
-
+      if (client3_1.isInitialized() && client3_1.canStartNewInstance(getImageByName("image_template"))) {
+        startNewInstanceAndWait(client3_1, "image_template");
+        fail("Shouldn't start more of client3");
       }
-      try {
-        if (client2_1.isInitialized() && client2_1.canStartNewInstance(getImageByName("image2"))) {
-          startNewInstanceAndWait(client2_1, "image2");
-          fail("Shouldn't start more of image2");
-        }
-      } catch (Exception ex) {
+    } catch (Exception ex) {
 
-      }
-
-      new WaitFor(5000) {
-        @Override
-        protected boolean condition() {
-          return client3_1.isInitialized() && client2_1.isInitialized();
-        }
-      }.assertCompleted("clients should be initialized in time");
-
-
-    } finally {
-      System.getProperties().remove("teamcity.vsphere.instance.status.update.delay.ms");
     }
+    try {
+      if (client2_1.isInitialized() && client2_1.canStartNewInstance(getImageByName("image2"))) {
+        startNewInstanceAndWait(client2_1, "image2");
+        fail("Shouldn't start more of image2");
+      }
+    } catch (Exception ex) {
+
+    }
+
+    new WaitFor(5000) {
+      @Override
+      protected boolean condition() {
+        return client3_1.isInitialized() && client2_1.isInitialized();
+      }
+    }.assertCompleted("clients should be initialized in time");
+
   }
 
   @TestFor(issues = "TW-47486")
@@ -1507,7 +1494,7 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
 
   @AfterMethod
   public void tearDown() throws Exception {
-    System.getProperties().remove("teamcity.vsphere.instance.status.update.delay.ms");
+    removeInternalProperty("teamcity.vsphere.instance.status.update.delay.ms");
     if (myClient != null) {
       myClient.dispose();
       myClient = null;

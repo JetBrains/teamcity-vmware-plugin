@@ -85,6 +85,11 @@ public class FakeApiConnector extends VMWareApiConnectorImpl {
     throw new IllegalArgumentException("Unknown entity type: " + instanceType.getCanonicalName());
   }
 
+  @Override
+  protected Map<String, VirtualMachine> searchVMsByNames(@NotNull final Collection<String> names, @Nullable final Datacenter dc) throws VmwareCheckedCloudException {
+    return names.stream().map(name -> FakeModel.instance().getVirtualMachine(name)).collect(Collectors.toMap(VirtualMachine::getName,Function.identity()));
+  }
+
   @NotNull
   @Override
   public Collection<VmwareInstance> findAllVirtualMachines() throws VmwareCheckedCloudException {

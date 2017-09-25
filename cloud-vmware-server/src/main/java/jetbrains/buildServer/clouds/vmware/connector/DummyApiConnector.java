@@ -3,8 +3,8 @@ package jetbrains.buildServer.clouds.vmware.connector;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
-import java.util.Set;
-import jetbrains.buildServer.clouds.InstanceStatus;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import jetbrains.buildServer.clouds.base.connector.AbstractInstance;
 import jetbrains.buildServer.clouds.base.connector.CloudApiConnector;
 import jetbrains.buildServer.clouds.base.errors.CheckedCloudException;
@@ -12,7 +12,6 @@ import jetbrains.buildServer.clouds.base.errors.TypedCloudErrorInfo;
 import jetbrains.buildServer.clouds.vmware.VmwareCloudImage;
 import jetbrains.buildServer.clouds.vmware.VmwareCloudInstance;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * Created by sergeypak on 28/10/2016.
@@ -46,14 +45,6 @@ public class DummyApiConnector implements CloudApiConnector<VmwareCloudImage, Vm
 
   @NotNull
   @Override
-  public Map<String, InstanceStatus> getInstanceStatusesIfExists(@NotNull final Set<String> instanceNames) {
-    throw new UnsupportedOperationException("DummyApiConnector.getInstanceStatusesIfExists");
-
-    //return null;
-  }
-
-  @NotNull
-  @Override
   public <R extends AbstractInstance> Map<String, R> fetchInstances(@NotNull final VmwareCloudImage image) throws CheckedCloudException {
     return Collections.emptyMap();
   }
@@ -68,6 +59,12 @@ public class DummyApiConnector implements CloudApiConnector<VmwareCloudImage, Vm
   @Override
   public TypedCloudErrorInfo[] checkImage(@NotNull final VmwareCloudImage image) {
     return new TypedCloudErrorInfo[0];
+  }
+
+  @NotNull
+  @Override
+  public Map<VmwareCloudImage, TypedCloudErrorInfo[]> checkImages(@NotNull final Collection<VmwareCloudImage> images) {
+    return images.stream().collect(Collectors.toMap(Function.identity(), img->new TypedCloudErrorInfo[0]));
   }
 
   @NotNull
