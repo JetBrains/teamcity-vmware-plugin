@@ -6,7 +6,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import jetbrains.buildServer.BaseTestCase;
-import jetbrains.buildServer.clouds.CloudClientParameters;
 import jetbrains.buildServer.clouds.InstanceStatus;
 import jetbrains.buildServer.clouds.base.connector.CloudApiConnector;
 import jetbrains.buildServer.clouds.base.stubs.*;
@@ -116,7 +115,7 @@ public class UpdateInstancesTaskTest extends BaseTestCase {
   private class MyClient extends AbstractCloudClient<DummyCloudInstance, DummyCloudImage, DummyImageDetails>{
 
     public MyClient(@NotNull final CloudApiConnector apiConnector) {
-      super(new CloudClientParametersImpl("descr", Collections.emptyMap(), Collections.emptyList()), apiConnector);
+      super(new CloudClientParametersImpl(Collections.emptyMap(), Collections.emptyList()), apiConnector);
     }
 
     @Override

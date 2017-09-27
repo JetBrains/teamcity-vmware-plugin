@@ -1,6 +1,5 @@
 package jetbrains.buildServer.clouds.vmware;
 
-import com.intellij.openapi.util.Pair;
 import com.vmware.vim25.CustomizationSpec;
 import com.vmware.vim25.mo.Datacenter;
 import com.vmware.vim25.mo.ManagedEntity;
@@ -95,18 +94,18 @@ public class VmwarePooledUpdateInstanceTaskTest extends BaseTestCase {
     };
 
     final CloudClientParameters clientParameters1 = new CloudClientParametersImpl(
-      "descr", Collections.emptyMap(), CloudProfileUtil.collectionFromJson("[{sourceVmName:'image1', behaviour:'START_STOP'}]"));
+      Collections.emptyMap(), CloudProfileUtil.collectionFromJson("[{sourceVmName:'image1', behaviour:'START_STOP'}]"));
     final VMWareCloudClient client1 = new MyClient(clientParameters1, null);
 
 
     final CloudClientParameters clientParameters2 = new CloudClientParametersImpl(
-      "descr", Collections.emptyMap(), CloudProfileUtil.collectionFromJson(
+      Collections.emptyMap(), CloudProfileUtil.collectionFromJson(
       "[{sourceVmName:'image2',snapshot:'snap*',folder:'cf',pool:'rp'," +
       "maxInstances:3,behaviour:'ON_DEMAND_CLONE',customizationSpec:'someCustomization'}]"));
     final VMWareCloudClient client2 = new MyClient(clientParameters2, null);
 
     final CloudClientParameters clientParameters3 = new CloudClientParametersImpl(
-      "descr", Collections.emptyMap(), CloudProfileUtil.collectionFromJson(
+      Collections.emptyMap(), CloudProfileUtil.collectionFromJson(
       "[{'source-id':'image_template',sourceVmName:'image_template', snapshot:'" + VmwareConstants.CURRENT_STATE +
       "',folder:'cf',pool:'rp',maxInstances:3,behaviour:'FRESH_CLONE', customizationSpec: 'linux'}]"
     ));
@@ -129,12 +128,12 @@ public class VmwarePooledUpdateInstanceTaskTest extends BaseTestCase {
 
   public void check_cleared_after_dispose(){
     final CloudClientParameters clientParameters1 = new CloudClientParametersImpl(
-      "descr", Collections.emptyMap(), CloudProfileUtil.collectionFromJson("[{sourceVmName:'image1', behaviour:'START_STOP'}]"));
+      Collections.emptyMap(), CloudProfileUtil.collectionFromJson("[{sourceVmName:'image1', behaviour:'START_STOP'}]"));
     final VMWareCloudClient client1 = new MyClient(clientParameters1, null);
 
 
     final CloudClientParameters clientParameters2 = new CloudClientParametersImpl(
-      "descr", Collections.emptyMap(), CloudProfileUtil.collectionFromJson(
+      Collections.emptyMap(), CloudProfileUtil.collectionFromJson(
       "[{sourceVmName:'image2',snapshot:'snap*',folder:'cf',pool:'rp'," +
       "maxInstances:3,behaviour:'ON_DEMAND_CLONE',customizationSpec:'someCustomization'}]"));
 
@@ -203,12 +202,12 @@ public class VmwarePooledUpdateInstanceTaskTest extends BaseTestCase {
     };
 
     final CloudClientParameters clientParameters1 = new CloudClientParametersImpl(
-      "descr", Collections.emptyMap(), CloudProfileUtil.collectionFromJson("[{sourceVmName:'image1', behaviour:'START_STOP'}]"));
+      Collections.emptyMap(), CloudProfileUtil.collectionFromJson("[{sourceVmName:'image1', behaviour:'START_STOP'}]"));
     final VMWareCloudClient client1 = new MyClient(clientParameters1, null);
 
 
     final CloudClientParameters clientParameters2 = new CloudClientParametersImpl(
-      "descr", Collections.emptyMap(), CloudProfileUtil.collectionFromJson(
+      Collections.emptyMap(), CloudProfileUtil.collectionFromJson(
       "[{sourceVmName:'image2',snapshot:'snap*',folder:'cf',pool:'rp'," +
       "maxInstances:3,behaviour:'ON_DEMAND_CLONE',customizationSpec:'someCustomization'}]"));
 

@@ -58,7 +58,7 @@ public class VmwareCloudInstanceTest extends BaseTestCase {
     CloudImageParameters imageParameters = new CloudImageParametersImpl(imgParams);
     myImageDetails = new VmwareCloudImageDetails(imageParameters);
 
-    final CloudClientParameters clientParameters = new CloudClientParametersImpl("descr", createMap(), createSet(imageParameters));
+    final CloudClientParameters clientParameters = new CloudClientParametersImpl(createMap(), createSet(imageParameters));
 
     final FakeDatacenter dc2 = FakeModel.instance().addDatacenter("dc2");
     FakeModel.instance().addFolder("myFolder").setParent(dc2);

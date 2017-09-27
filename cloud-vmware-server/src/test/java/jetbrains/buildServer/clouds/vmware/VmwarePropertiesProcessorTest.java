@@ -88,7 +88,7 @@ public class VmwarePropertiesProcessorTest extends BaseTestCase {
 
   public void check_same_source_ids_new_profile() throws IOException {
     final CloudClientParameters cloudClientParameters = new CloudClientParametersImpl(
-      "descr", Collections.singletonMap(VMWareWebConstants.SERVER_URL, "http://localhost:8080"),
+      Collections.singletonMap(VMWareWebConstants.SERVER_URL, "http://localhost:8080"),
       CloudProfileUtil.collectionFromJson(
         "[{sourceVmName:'image1', behaviour:'START_STOP'}," +
         "{sourceVmName:'image2',snapshot:'snap*',folder:'cf',pool:'rp',maxInstances:3,behaviour:'ON_DEMAND_CLONE', " +
@@ -111,7 +111,7 @@ public class VmwarePropertiesProcessorTest extends BaseTestCase {
   public void check_same_source_ids_edit_profile() throws IOException {
     {
       final CloudClientParameters cloudClientParameters = new CloudClientParametersImpl(
-        "descr", Collections.singletonMap(VMWareWebConstants.SERVER_URL, "http://localhost:8080"),
+        Collections.singletonMap(VMWareWebConstants.SERVER_URL, "http://localhost:8080"),
         CloudProfileUtil.collectionFromJson(
           "[{'source-id':'image1',sourceVmName:'image1', behaviour:'START_STOP'}," +
           "{'source-id':'image2',sourceVmName:'image2',snapshot:'snap*',folder:'cf',pool:'rp',maxInstances:3,behaviour:'ON_DEMAND_CLONE', " +
@@ -126,7 +126,7 @@ public class VmwarePropertiesProcessorTest extends BaseTestCase {
     }
     {
       final CloudClientParameters cloudClientParameters = new CloudClientParametersImpl(
-        "descr", Collections.singletonMap(VMWareWebConstants.SERVER_URL, "http://localhost:8080"),
+        Collections.singletonMap(VMWareWebConstants.SERVER_URL, "http://localhost:8080"),
         CloudProfileUtil.collectionFromJson(
           "[{'source-id':'image3',sourceVmName:'image3', behaviour:'START_STOP'}," +
           "{'source-id':'image4',sourceVmName:'image4',snapshot:'snap*',folder:'cf',pool:'rp',maxInstances:3,behaviour:'ON_DEMAND_CLONE', " +
@@ -158,7 +158,7 @@ public class VmwarePropertiesProcessorTest extends BaseTestCase {
   public void check_same_source_same_server_url() throws IOException {
     {
       final CloudClientParameters cloudClientParameters = new CloudClientParametersImpl(
-        "descr", Collections.singletonMap(VMWareWebConstants.SERVER_URL, "http://localhost:8081"),
+        Collections.singletonMap(VMWareWebConstants.SERVER_URL, "http://localhost:8081"),
         CloudProfileUtil.collectionFromJson(
           "[{'source-id':'image1',sourceVmName:'image1', behaviour:'START_STOP'}," +
           "{'source-id':'image2',sourceVmName:'image2',snapshot:'snap*',folder:'cf',pool:'rp',maxInstances:3,behaviour:'ON_DEMAND_CLONE', " +
@@ -173,7 +173,7 @@ public class VmwarePropertiesProcessorTest extends BaseTestCase {
     }
     {
       final CloudClientParameters cloudClientParameters = new CloudClientParametersImpl(
-        "descr", Collections.singletonMap(VMWareWebConstants.SERVER_URL, "http://localhost:8082"),
+        Collections.singletonMap(VMWareWebConstants.SERVER_URL, "http://localhost:8082"),
         CloudProfileUtil.collectionFromJson(
           "[{'source-id':'image3',sourceVmName:'image3', behaviour:'START_STOP'}," +
           "{'source-id':'image4',sourceVmName:'image4',snapshot:'snap*',folder:'cf',pool:'rp',maxInstances:3,behaviour:'ON_DEMAND_CLONE', " +
