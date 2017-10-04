@@ -13,6 +13,7 @@ import jetbrains.buildServer.clouds.CloudInstanceUserData;
 import jetbrains.buildServer.clouds.InstanceStatus;
 import jetbrains.buildServer.clouds.base.connector.CloudAsyncTaskExecutor;
 import jetbrains.buildServer.clouds.base.types.CloneBehaviour;
+import jetbrains.buildServer.clouds.server.impl.profile.CloudClientParametersImpl;
 import jetbrains.buildServer.clouds.server.impl.profile.CloudImageParametersImpl;
 import jetbrains.buildServer.clouds.vmware.connector.VMWareApiConnector;
 import jetbrains.buildServer.clouds.vmware.stubs.FakeApiConnector;
@@ -57,7 +58,7 @@ public class VmwareCloudInstanceTest extends BaseTestCase {
     CloudImageParameters imageParameters = new CloudImageParametersImpl(imgParams);
     myImageDetails = new VmwareCloudImageDetails(imageParameters);
 
-    final CloudClientParameters clientParameters = new CloudClientParameters(createMap(), createSet(imageParameters));
+    final CloudClientParameters clientParameters = new CloudClientParametersImpl(createMap(), createSet(imageParameters));
 
     final FakeDatacenter dc2 = FakeModel.instance().addDatacenter("dc2");
     FakeModel.instance().addFolder("myFolder").setParent(dc2);

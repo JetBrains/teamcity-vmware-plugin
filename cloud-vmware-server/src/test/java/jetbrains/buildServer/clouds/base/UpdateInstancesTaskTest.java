@@ -11,6 +11,7 @@ import jetbrains.buildServer.clouds.InstanceStatus;
 import jetbrains.buildServer.clouds.base.connector.CloudApiConnector;
 import jetbrains.buildServer.clouds.base.stubs.*;
 import jetbrains.buildServer.clouds.base.tasks.UpdateInstancesTask;
+import jetbrains.buildServer.clouds.server.impl.profile.CloudClientParametersImpl;
 import jetbrains.buildServer.serverSide.AgentDescription;
 import jetbrains.buildServer.util.WaitFor;
 import org.jetbrains.annotations.NotNull;
@@ -115,7 +116,7 @@ public class UpdateInstancesTaskTest extends BaseTestCase {
   private class MyClient extends AbstractCloudClient<DummyCloudInstance, DummyCloudImage, DummyImageDetails>{
 
     public MyClient(@NotNull final CloudApiConnector apiConnector) {
-      super(new CloudClientParameters(Collections.emptyMap(), Collections.emptyList()), apiConnector);
+      super(new CloudClientParametersImpl(Collections.emptyMap(), Collections.emptyList()), apiConnector);
     }
 
     @Override
