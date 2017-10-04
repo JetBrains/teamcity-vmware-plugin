@@ -87,7 +87,7 @@ public class VmwarePropertiesProcessorTest extends BaseTestCase {
   }
 
   public void check_same_source_ids_new_profile() throws IOException {
-    final CloudClientParameters cloudClientParameters = new CloudClientParametersImpl(
+    final CloudClientParameters cloudClientParameters = new CloudClientParameters(
       Collections.singletonMap(VMWareWebConstants.SERVER_URL, "http://localhost:8080"),
       CloudProfileUtil.collectionFromJson(
         "[{sourceVmName:'image1', behaviour:'START_STOP'}," +
@@ -110,7 +110,7 @@ public class VmwarePropertiesProcessorTest extends BaseTestCase {
 
   public void check_same_source_ids_edit_profile() throws IOException {
     {
-      final CloudClientParameters cloudClientParameters = new CloudClientParametersImpl(
+      final CloudClientParameters cloudClientParameters = new CloudClientParameters(
         Collections.singletonMap(VMWareWebConstants.SERVER_URL, "http://localhost:8080"),
         CloudProfileUtil.collectionFromJson(
           "[{'source-id':'image1',sourceVmName:'image1', behaviour:'START_STOP'}," +
@@ -125,7 +125,7 @@ public class VmwarePropertiesProcessorTest extends BaseTestCase {
       myClients.put(profileId, createClient(cloudClientParameters));
     }
     {
-      final CloudClientParameters cloudClientParameters = new CloudClientParametersImpl(
+      final CloudClientParameters cloudClientParameters = new CloudClientParameters(
         Collections.singletonMap(VMWareWebConstants.SERVER_URL, "http://localhost:8080"),
         CloudProfileUtil.collectionFromJson(
           "[{'source-id':'image3',sourceVmName:'image3', behaviour:'START_STOP'}," +
@@ -157,7 +157,7 @@ public class VmwarePropertiesProcessorTest extends BaseTestCase {
 
   public void check_same_source_same_server_url() throws IOException {
     {
-      final CloudClientParameters cloudClientParameters = new CloudClientParametersImpl(
+      final CloudClientParameters cloudClientParameters = new CloudClientParameters(
         Collections.singletonMap(VMWareWebConstants.SERVER_URL, "http://localhost:8081"),
         CloudProfileUtil.collectionFromJson(
           "[{'source-id':'image1',sourceVmName:'image1', behaviour:'START_STOP'}," +
@@ -172,7 +172,7 @@ public class VmwarePropertiesProcessorTest extends BaseTestCase {
       myClients.put(profileId, createClient(cloudClientParameters));
     }
     {
-      final CloudClientParameters cloudClientParameters = new CloudClientParametersImpl(
+      final CloudClientParameters cloudClientParameters = new CloudClientParameters(
         Collections.singletonMap(VMWareWebConstants.SERVER_URL, "http://localhost:8082"),
         CloudProfileUtil.collectionFromJson(
           "[{'source-id':'image3',sourceVmName:'image3', behaviour:'START_STOP'}," +

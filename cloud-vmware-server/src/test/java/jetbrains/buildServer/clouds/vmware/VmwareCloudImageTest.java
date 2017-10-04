@@ -12,7 +12,6 @@ import jetbrains.buildServer.clouds.*;
 import jetbrains.buildServer.clouds.base.connector.CloudAsyncTaskExecutor;
 import jetbrains.buildServer.clouds.base.tasks.UpdateInstancesTask;
 import jetbrains.buildServer.clouds.base.types.CloneBehaviour;
-import jetbrains.buildServer.clouds.server.impl.profile.CloudClientParametersImpl;
 import jetbrains.buildServer.clouds.server.impl.profile.CloudImageParametersImpl;
 import jetbrains.buildServer.clouds.vmware.connector.VMWareApiConnector;
 import jetbrains.buildServer.clouds.vmware.stubs.FakeApiConnector;
@@ -68,7 +67,7 @@ public class VmwareCloudImageTest extends BaseTestCase {
 
     FakeModel.instance().addVMSnapshot("srcVM", "srcVMSnap");
 
-    myProfile = VmwareTestUtils.createProfileFromProps(new CloudClientParametersImpl(Collections.emptyMap(), Collections.emptyList()));
+    myProfile = VmwareTestUtils.createProfileFromProps(new CloudClientParameters(Collections.emptyMap(), Collections.emptyList()));
     myImage = new VmwareCloudImage(myApiConnector, myImageDetails, myTaskExecutor, myIdxStorage, myProfile);
 
     myCloudClient = new VMWareCloudClient(myProfile, myApiConnector, new VmwareUpdateTaskManager(), createTempDir());

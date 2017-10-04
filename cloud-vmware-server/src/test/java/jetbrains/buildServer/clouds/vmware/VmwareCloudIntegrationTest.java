@@ -83,7 +83,7 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
     myIdxStorage = createTempDir();
 
     setInternalProperty("teamcity.vsphere.instance.status.update.delay.ms", "50");
-    myClientParameters = new CloudClientParametersImpl(
+    myClientParameters = new CloudClientParameters(
       Collections.emptyMap(),
                                                        CloudProfileUtil.collectionFromJson("[{sourceVmName:'image1', behaviour:'START_STOP'}," +
                                                                                            "{sourceVmName:'image2',snapshot:'snap*',folder:'cf',pool:'rp',maxInstances:3,behaviour:'ON_DEMAND_CLONE', " +
@@ -349,14 +349,14 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
   }
 
   private CloudClientParameters updateClientParameters(CloudClientParameters clientParameters,  final Collection<CloudImageParameters> cloudImageParameters) {
-    return new CloudClientParametersImpl(
+    return new CloudClientParameters(
       clientParameters.getParameters(),
                                                        cloudImageParameters);
   }
   private void updateClientParameters(Map<String, String> params) {
     final Map<String, String> parameters = new HashMap<>( myClientParameters.getParameters() );
     parameters.putAll(params);
-    myClientParameters = new CloudClientParametersImpl(
+    myClientParameters = new CloudClientParameters(
       parameters,
                                                        myClientParameters.getCloudImages());
   }
@@ -680,7 +680,7 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
     final int extraProfileCount = 5;
     final List<CloudClientParameters> profileParams = new ArrayList<CloudClientParameters>();
     for (int i=0; i< extraProfileCount; i++){
-      profileParams.add(new CloudClientParametersImpl(
+      profileParams.add(new CloudClientParameters(
         createMap(VMWareWebConstants.SERVER_URL, "http://localhost:8080",
                           VMWareWebConstants.USERNAME, "un",
                           VMWareWebConstants.PASSWORD, "pw"),
@@ -1181,11 +1181,11 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
 
   public void should_consider_profile_limit_on_reload(){
     final CloudClientParameters clientParameters2 =
-      new CloudClientParametersImpl(Collections.emptyMap(), CloudProfileUtil.collectionFromJson(
+      new CloudClientParameters(Collections.emptyMap(), CloudProfileUtil.collectionFromJson(
       "[{sourceVmName:'image2',snapshot:'snap*',folder:'cf',pool:'rp'," +
       "maxInstances:1,behaviour:'ON_DEMAND_CLONE',customizationSpec:'someCustomization'}]"));
     final CloudClientParameters clientParameters3 =
-      new CloudClientParametersImpl(Collections.emptyMap(), CloudProfileUtil.collectionFromJson(
+      new CloudClientParameters(Collections.emptyMap(), CloudProfileUtil.collectionFromJson(
       "[{'source-id':'image_template',sourceVmName:'image_template', snapshot:'" + VmwareConstants.CURRENT_STATE +
       "',folder:'cf',pool:'rp',maxInstances:1,behaviour:'FRESH_CLONE', customizationSpec: 'linux'}]"
     ));
@@ -1220,11 +1220,11 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
   }
 
   public void should_consider_profile_limit_on_reload_2(){
-    final CloudClientParameters clientParameters2 = new CloudClientParametersImpl(
+    final CloudClientParameters clientParameters2 = new CloudClientParameters(
       Collections.emptyMap(), CloudProfileUtil.collectionFromJson(
       "[{sourceVmName:'image2',snapshot:'snap*',folder:'cf',pool:'rp'," +
       "maxInstances:1,behaviour:'ON_DEMAND_CLONE',customizationSpec:'someCustomization'}]"));
-    final CloudClientParameters clientParameters3 = new CloudClientParametersImpl(
+    final CloudClientParameters clientParameters3 = new CloudClientParameters(
       Collections.emptyMap(), CloudProfileUtil.collectionFromJson(
       "[{'source-id':'image_template',sourceVmName:'image_template', snapshot:'" + VmwareConstants.CURRENT_STATE +
       "',folder:'cf',pool:'rp',maxInstances:1,behaviour:'FRESH_CLONE', customizationSpec: 'linux'}]"
