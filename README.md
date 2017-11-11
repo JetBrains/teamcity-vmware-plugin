@@ -1,7 +1,7 @@
 [![official JetBrains project](http://jb.gg/badges/official.svg)](https://confluence.jetbrains.com/display/ALL/JetBrains+on+GitHub)
 
 ### TeamCity vSphere cloud plugin
-#### Enables TeamCity integration with WMware vSphere cloud and allows users to automatically create/start/stop/delete virtual machines.
+#### Enables TeamCity integration with VMware vSphere cloud and allows users to automatically create/start/stop/delete virtual machines.
 
 Before you can start using integration, you need to create a Virtual Machine instance.
 TeamCity Build Agent must be installed and set to start automatically.
