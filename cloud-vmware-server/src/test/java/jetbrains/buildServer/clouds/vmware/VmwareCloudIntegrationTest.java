@@ -101,7 +101,7 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
     myTaskManager = new VmwareUpdateTaskManager(){
       @Override
       protected VmwarePooledUpdateInstanceTask createNewPooledTask(@NotNull final VMWareApiConnector connector, @NotNull final VMWareCloudClient client) {
-        return new VmwarePooledUpdateInstanceTask(connector, client, this, myStuckTime.get(), false){
+        return new VmwarePooledUpdateInstanceTask(connector, client, myStuckTime.get(), false){
           @Override
           public void run() {
             super.run();
