@@ -234,8 +234,8 @@ public class VmwarePooledUpdateInstanceTaskTest extends BaseTestCase {
   }
 
   public void concurrent_create_dispose() throws MalformedURLException {
-    final CloudClientParameters clientParameters2 = new CloudClientParametersImpl(
-      Collections.emptyMap(), CloudProfileUtil.collectionFromJson(
+    final CloudClientParameters clientParameters2 = new CloudClientParameters();
+    clientParameters2.setCloudImages(CloudImageParameters.collectionFromJson(
       "[{sourceVmName:'image2',snapshot:'snap*',folder:'cf',pool:'rp'," +
       "maxInstances:3,behaviour:'ON_DEMAND_CLONE',customizationSpec:'someCustomization'}]"));
 
@@ -285,8 +285,8 @@ public class VmwarePooledUpdateInstanceTaskTest extends BaseTestCase {
   }
 
   public void concurrent_create_run() throws MalformedURLException {
-    final CloudClientParameters clientParameters2 = new CloudClientParametersImpl(
-      Collections.emptyMap(), CloudProfileUtil.collectionFromJson(
+    final CloudClientParameters clientParameters2 = new CloudClientParameters();
+    clientParameters2.setCloudImages(CloudImageParameters.collectionFromJson(
       "[{sourceVmName:'image2',snapshot:'snap*',folder:'cf',pool:'rp'," +
       "maxInstances:3,behaviour:'ON_DEMAND_CLONE',customizationSpec:'someCustomization'}]"));
 
@@ -340,8 +340,8 @@ public class VmwarePooledUpdateInstanceTaskTest extends BaseTestCase {
   }
 
   public void concurrent_run_dispose() throws MalformedURLException {
-    final CloudClientParameters clientParameters2 = new CloudClientParametersImpl(
-      Collections.emptyMap(), CloudProfileUtil.collectionFromJson(
+    final CloudClientParameters clientParameters2 = new CloudClientParameters();
+    clientParameters2.setCloudImages(CloudImageParameters.collectionFromJson(
       "[{sourceVmName:'image2',snapshot:'snap*',folder:'cf',pool:'rp'," +
       "maxInstances:3,behaviour:'ON_DEMAND_CLONE',customizationSpec:'someCustomization'}]"));
 
