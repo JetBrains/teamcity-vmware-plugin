@@ -4,6 +4,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import jetbrains.buildServer.Used;
 import jetbrains.buildServer.clouds.base.tasks.UpdateInstancesTask;
@@ -13,6 +14,8 @@ import jetbrains.buildServer.clouds.vmware.VmwareCloudInstance;
 import jetbrains.buildServer.clouds.vmware.connector.VMWareApiConnector;
 import org.jetbrains.annotations.NotNull;
 
+import static jetbrains.buildServer.clouds.vmware.tasks.VmwareUpdateTaskManager.POOLED_TASKS_LOCK;
+
 /**
  * Created by sergeypak on 26/10/2016.
  */
@@ -20,30 +23,33 @@ public class VmwarePooledUpdateInstanceTask
   extends UpdateInstancesTask<VmwareCloudInstance, VmwareCloudImage, VMWareCloudClient> {
   private static final Logger LOG = Logger.getInstance(VmwarePooledUpdateInstanceTask.class.getName());
 
+  private static final int TO_BE_REMOVED = 1;
+  private static final int NOT_TO_BE_REMOVED = 2;
+
   private volatile List<VMWareCloudClient> myClients = new CopyOnWriteArrayList<>();
   private final List<VMWareCloudClient> myNewClients = new ArrayList<>();
   private volatile AtomicBoolean myAlreadyRunning = new AtomicBoolean(false);
-  private final PooledTaskObsoleteHandler myHandler;
+
+  // 0 - regular state
+  // 1 - to be removed (and nothing to be added)
+  // 2 - not to be removed (even if empty)
+  private final AtomicInteger mySpecialState = new AtomicInteger(0);
 
 
   public VmwarePooledUpdateInstanceTask(@NotNull final VMWareApiConnector connector,
-                                        @NotNull final VMWareCloudClient client,
-                                        @NotNull final PooledTaskObsoleteHandler obsoleteHandler) {
+                                        @NotNull final VMWareCloudClient client) {
     super(connector, client);
-    myHandler = obsoleteHandler;
   }
 
   @Used("tests")
   public VmwarePooledUpdateInstanceTask(@NotNull final VMWareApiConnector connector,
                                  @NotNull final VMWareCloudClient client,
-                                 @NotNull final PooledTaskObsoleteHandler obsoleteHandler,
                                  @Used("Tests")
                                  final long stuckTimeMillis,
                                  @Used("Tests")
                                  final boolean rethrowException
                                  ) {
     super(connector, client, stuckTimeMillis, rethrowException);
-    myHandler = obsoleteHandler;
   }
 
   public void run(){
@@ -53,9 +59,14 @@ public class VmwarePooledUpdateInstanceTask
   /**
    * Only run if the client is the top one in the list
    */
-  public void runIfNecessary(@NotNull final VMWareCloudClient client){
-    if (!myAlreadyRunning.compareAndSet(false, true))
+  public void runIfNecessary(@NotNull final VMWareCloudClient client) {
+    if (mySpecialState.get() != 0) {
       return;
+    }
+
+    if (!myAlreadyRunning.compareAndSet(false, true)) {
+      return;
+    }
     try {
       synchronized (this) {
         if (myNewClients.size() != 0) {
@@ -76,6 +87,18 @@ public class VmwarePooledUpdateInstanceTask
     }
   }
 
+  protected int getSpecialState(){
+    return mySpecialState.get();
+  }
+
+  public boolean isExhausted(){
+    return mySpecialState.get() == TO_BE_REMOVED;
+  }
+
+  public boolean setShouldKeep(){
+    return mySpecialState.compareAndSet(0, NOT_TO_BE_REMOVED);
+  }
+
   @NotNull
   @Override
   protected Collection<VmwareCloudImage> getImages() {
@@ -87,6 +110,7 @@ public class VmwarePooledUpdateInstanceTask
   public void addClient(@NotNull VMWareCloudClient client){
     synchronized (this) {
       myNewClients.add(client);
+      mySpecialState.set(0);
     }
   }
 
@@ -94,17 +118,18 @@ public class VmwarePooledUpdateInstanceTask
     synchronized (this) {
       myClients.remove(client);
       myNewClients.remove(client);
-      if (myClients.isEmpty() && myNewClients.isEmpty()){
-        myHandler.pooledTaskObsolete(this);
+      try {
+        POOLED_TASKS_LOCK.readLock().lock();
+        if (myClients.size() == 0 && myNewClients.size() == 0) {
+          mySpecialState.compareAndSet(0, TO_BE_REMOVED);
+        }
+      } finally {
+        POOLED_TASKS_LOCK.readLock().unlock();
       }
     }
   }
 
   public String getKey(){
     return myConnector.getKey();
-  }
-
-  public interface PooledTaskObsoleteHandler {
-    void pooledTaskObsolete(@NotNull VmwarePooledUpdateInstanceTask task);
   }
 }

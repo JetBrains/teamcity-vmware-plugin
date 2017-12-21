@@ -9,6 +9,7 @@ import java.net.MalformedURLException;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
@@ -24,6 +25,8 @@ import jetbrains.buildServer.clouds.vmware.stubs.FakeModel;
 import jetbrains.buildServer.clouds.vmware.tasks.VmwareUpdateInstanceTask;
 import jetbrains.buildServer.clouds.vmware.tasks.VmwarePooledUpdateInstanceTask;
 import jetbrains.buildServer.clouds.vmware.tasks.VmwareUpdateTaskManager;
+import jetbrains.buildServer.util.WaitFor;
+import jetbrains.buildServer.util.executors.ExecutorsFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.testng.annotations.AfterMethod;
@@ -41,7 +44,7 @@ public class VmwarePooledUpdateInstanceTaskTest extends BaseTestCase {
   protected static final String TEST_SERVER_UUID = "1234-5678-9012";
   private File myIdxStorage;
   private FakeApiConnector myFakeApiConnector;
-  private VmwareUpdateTaskManager myTaskManager;
+  private MyExposingVmwareUpdateTaskManager myTaskManager;
 
 
   @BeforeMethod
@@ -60,7 +63,7 @@ public class VmwarePooledUpdateInstanceTaskTest extends BaseTestCase {
     FakeModel.instance().getCustomizationSpecs().put("linux", new CustomizationSpec());
     myFakeApiConnector = new FakeApiConnector(TEST_SERVER_UUID, PROFILE_ID, null);
     setInternalProperty("teamcity.vsphere.instance.status.update.delay.ms", "250");
-    myTaskManager = new VmwareUpdateTaskManager();
+    myTaskManager = new MyExposingVmwareUpdateTaskManager();
   }
 
   public void check_called_once() throws MalformedURLException {
@@ -143,10 +146,10 @@ public class VmwarePooledUpdateInstanceTaskTest extends BaseTestCase {
     final AtomicBoolean hasRun = new AtomicBoolean(false);
     final AtomicReference<Collection<VmwareCloudImage>> images2process = new AtomicReference<>();
 
-    myTaskManager = new VmwareUpdateTaskManager(){
+    myTaskManager = new MyExposingVmwareUpdateTaskManager(){
       @Override
       protected VmwarePooledUpdateInstanceTask createNewPooledTask(@NotNull final VMWareApiConnector connector, @NotNull final VMWareCloudClient client) {
-        return new VmwarePooledUpdateInstanceTask(connector, client, this){
+        return new VmwarePooledUpdateInstanceTask(connector, client){
           @Override
           public void run() {
             final Collection<VmwareCloudImage> images = getImages();
@@ -230,6 +233,156 @@ public class VmwarePooledUpdateInstanceTaskTest extends BaseTestCase {
 
   }
 
+  public void concurrent_create_dispose() throws MalformedURLException {
+    final CloudClientParameters clientParameters2 = new CloudClientParametersImpl(
+      Collections.emptyMap(), CloudProfileUtil.collectionFromJson(
+      "[{sourceVmName:'image2',snapshot:'snap*',folder:'cf',pool:'rp'," +
+      "maxInstances:3,behaviour:'ON_DEMAND_CLONE',customizationSpec:'someCustomization'}]"));
+
+    final VMWareCloudClient client2 = new MyClient(clientParameters2, null);
+    myFakeApiConnector = new FakeApiConnector(TEST_SERVER_UUID, PROFILE_ID);
+
+    final VmwareUpdateInstanceTask[] tasks = new VmwareUpdateInstanceTask[2];
+
+
+    for (int i=0; i<1000; i++){
+      final int finalI = i;
+      Thread thread1 = new Thread(new Runnable() {
+        @Override
+        public void run() {
+          final VmwareUpdateInstanceTask updateTask = myTaskManager.createUpdateTask(myFakeApiConnector, client2);
+          tasks[finalI % 2] = updateTask;
+        }
+      });
+      Thread thread2 = new Thread(new Runnable() {
+        @Override
+        public void run() {
+          VmwareUpdateInstanceTask task = tasks[(finalI + 1) % 2];
+          if (task == null)
+            return;
+
+          task.clientDisposing(client2);
+        }
+      });
+      thread1.start();
+      thread2.start();
+      new WaitFor(1000) {
+        @Override
+        protected boolean condition() {
+          try {
+            thread1.join(100);
+            thread2.join(100);
+          } catch (InterruptedException e) {
+            fail("Can't join!");
+          }
+          return !thread1.isAlive() && !thread2.isAlive();
+        }
+      };
+      assertTrue("Blocked concurrent_create_dispose at i=" + i, !thread1.isAlive() && !thread2.isAlive());
+      assertTrue("Should cleanup tasks", myTaskManager.getPoolSize() < 2);
+    }
+
+  }
+
+  public void concurrent_create_run() throws MalformedURLException {
+    final CloudClientParameters clientParameters2 = new CloudClientParametersImpl(
+      Collections.emptyMap(), CloudProfileUtil.collectionFromJson(
+      "[{sourceVmName:'image2',snapshot:'snap*',folder:'cf',pool:'rp'," +
+      "maxInstances:3,behaviour:'ON_DEMAND_CLONE',customizationSpec:'someCustomization'}]"));
+
+    final VMWareCloudClient client2 = new MyClient(clientParameters2, null);
+    myFakeApiConnector = new FakeApiConnector(TEST_SERVER_UUID, PROFILE_ID);
+
+    final VmwareUpdateInstanceTask[] tasks = new VmwareUpdateInstanceTask[2];
+
+
+    for (int i=0; i<1000; i++){
+      final int finalI = i;
+      Thread thread1 = new Thread(new Runnable() {
+        @Override
+        public void run() {
+          final VmwareUpdateInstanceTask updateTask = myTaskManager.createUpdateTask(myFakeApiConnector, client2);
+          tasks[finalI % 2] = updateTask;
+        }
+      });
+      Thread thread2 = new Thread(new Runnable() {
+        @Override
+        public void run() {
+          VmwareUpdateInstanceTask task = tasks[(finalI + 1) % 2];
+          if (task == null)
+            return;
+
+          task.run();
+        }
+      });
+      thread1.start();
+      thread2.start();
+      new WaitFor(1000) {
+        @Override
+        protected boolean condition() {
+          try {
+            thread1.join(100);
+            thread2.join(100);
+          } catch (InterruptedException e) {
+            fail("Can't join!");
+          }
+          return !thread1.isAlive() && !thread2.isAlive();
+        }
+      };
+      assertTrue("Blocked concurrent_create_run at i=" + i, !thread1.isAlive() && !thread2.isAlive());
+      VmwareUpdateInstanceTask task = tasks[(finalI + 1) % 2];
+      if (task != null){
+        task.clientDisposing(client2);
+      }
+      assertTrue("Should cleanup tasks", myTaskManager.getPoolSize() < 2);
+    }
+
+  }
+
+  public void concurrent_run_dispose() throws MalformedURLException {
+    final CloudClientParameters clientParameters2 = new CloudClientParametersImpl(
+      Collections.emptyMap(), CloudProfileUtil.collectionFromJson(
+      "[{sourceVmName:'image2',snapshot:'snap*',folder:'cf',pool:'rp'," +
+      "maxInstances:3,behaviour:'ON_DEMAND_CLONE',customizationSpec:'someCustomization'}]"));
+
+    final VMWareCloudClient client2 = new MyClient(clientParameters2, null);
+    myFakeApiConnector = new FakeApiConnector(TEST_SERVER_UUID, PROFILE_ID);
+
+
+    for (int i=0; i<1000; i++){
+      final VmwareUpdateInstanceTask updateTask = myTaskManager.createUpdateTask(myFakeApiConnector, client2);
+      Thread thread1 = new Thread(new Runnable() {
+        @Override
+        public void run() {
+          updateTask.run();
+        }
+      });
+      Thread thread2 = new Thread(new Runnable() {
+        @Override
+        public void run() {
+          updateTask.clientDisposing(client2);
+        }
+      });
+      thread1.start();
+      thread2.start();
+      new WaitFor(1000) {
+        @Override
+        protected boolean condition() {
+          try {
+            thread1.join(100);
+            thread2.join(100);
+          } catch (InterruptedException e) {
+            fail("Can't join!");
+          }
+          return !thread1.isAlive() && !thread2.isAlive();
+        }
+      };
+      assertTrue("Blocked concurrent_run_dispose at i=" + i, !thread1.isAlive() && !thread2.isAlive());
+      assertTrue("Should cleanup tasks", myTaskManager.getPoolSize() < 2);
+    }
+
+  }
+
 
   private class MyClient extends VMWareCloudClient{
 
@@ -261,6 +414,23 @@ public class VmwarePooledUpdateInstanceTaskTest extends BaseTestCase {
     }
   }
 
+  private class MyExposingVmwareUpdateTaskManager extends VmwareUpdateTaskManager{
+
+    public int getPoolSize(){
+      return myUpdateTasks.size();
+    }
+
+    @Override
+    protected VmwarePooledUpdateInstanceTask createNewPooledTask(@NotNull final VMWareApiConnector connector, @NotNull final VMWareCloudClient client) {
+      return new VmwarePooledUpdateInstanceTask(connector, client){
+        @Override
+        public void addClient(@NotNull final VMWareCloudClient client) {
+          assertFalse("Shouldn't try to add client to task scheduled for cleanup", 1 == getSpecialState());
+          super.addClient(client);
+        }
+      };
+    }
+  }
 
   @AfterMethod
   @Override
