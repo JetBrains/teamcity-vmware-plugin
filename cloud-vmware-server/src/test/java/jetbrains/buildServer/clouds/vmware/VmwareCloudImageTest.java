@@ -1,14 +1,18 @@
 package jetbrains.buildServer.clouds.vmware;
 
+import com.intellij.util.WaitFor;
 import com.vmware.vim25.mo.Datacenter;
 import com.vmware.vim25.mo.Task;
 import java.io.File;
 import java.rmi.RemoteException;
-import java.util.*;
-
-import com.intellij.util.WaitFor;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 import jetbrains.buildServer.BaseTestCase;
-import jetbrains.buildServer.clouds.*;
+import jetbrains.buildServer.clouds.CloudImageParameters;
+import jetbrains.buildServer.clouds.CloudInstanceUserData;
+import jetbrains.buildServer.clouds.CloudProfile;
+import jetbrains.buildServer.clouds.InstanceStatus;
 import jetbrains.buildServer.clouds.base.connector.CloudAsyncTaskExecutor;
 import jetbrains.buildServer.clouds.base.tasks.UpdateInstancesTask;
 import jetbrains.buildServer.clouds.base.types.CloneBehaviour;
@@ -57,7 +61,7 @@ public class VmwareCloudImageTest extends BaseTestCase {
     params.put("pool", "rpId");
     params.put("behaviour", CloneBehaviour.FRESH_CLONE.toString());
     params.put("maxInstances", "5");
-    CloudImageParameters imageParameters = new CloudImageParametersImpl(params);
+    CloudImageParameters imageParameters = new CloudImageParametersImpl(params, VmwareCloudIntegrationTest.PROJECT_ID);
 
     myImageDetails = new VmwareCloudImageDetails(imageParameters);
 

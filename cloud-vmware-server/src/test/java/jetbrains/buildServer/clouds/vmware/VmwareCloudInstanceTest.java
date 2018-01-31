@@ -55,7 +55,7 @@ public class VmwareCloudInstanceTest extends BaseTestCase {
     imgParams.put("pool", "myPool");
     imgParams.put("behaviour", CloneBehaviour.FRESH_CLONE.toString());
     imgParams.put("maxInstances", "5");
-    CloudImageParameters imageParameters = new CloudImageParametersImpl(imgParams);
+    CloudImageParameters imageParameters = new CloudImageParametersImpl(imgParams, VmwareCloudIntegrationTest.PROJECT_ID);
     myImageDetails = new VmwareCloudImageDetails(imageParameters);
 
     final CloudClientParameters clientParameters = new CloudClientParametersImpl(createMap(), createSet(imageParameters));
