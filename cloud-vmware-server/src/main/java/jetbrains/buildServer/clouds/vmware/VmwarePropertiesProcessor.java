@@ -48,7 +48,7 @@ public class VmwarePropertiesProcessor implements PropertiesProcessor {
      myCloudManager.listAllProfiles().stream()
                    .filter(p->(VmwareConstants.TYPE.equals(p.getCloudCode())
                   && (currentProfileId == null || !currentProfileId.equals(p.getProfileId()))
-                  && (serverURL.equals(p.getParameters().getParameter(VMWareWebConstants.SERVER_URL))))
+                  && (serverURL.equals(p.getProfileProperties().get(VMWareWebConstants.SERVER_URL))))
       )
                    .forEach(p->
         myCloudManager

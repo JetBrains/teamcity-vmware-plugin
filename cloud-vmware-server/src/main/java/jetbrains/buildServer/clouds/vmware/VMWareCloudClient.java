@@ -59,7 +59,7 @@ public class VMWareCloudClient extends AbstractCloudClient<VmwareCloudInstance, 
     myTaskManager = taskManager;
     myIdxStorage = idxStorage;
     myProfile = profile;
-    final String limitStr = profile.getParameters().getParameter(VMWareWebConstants.PROFILE_INSTANCE_LIMIT);
+    final String limitStr = profile.getProfileProperties().get(VMWareWebConstants.PROFILE_INSTANCE_LIMIT);
     myProfileInstancesLimit = StringUtil.isEmpty(limitStr) ? null : Integer.valueOf(limitStr);
   }
 
