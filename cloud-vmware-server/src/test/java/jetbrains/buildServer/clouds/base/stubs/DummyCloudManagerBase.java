@@ -3,6 +3,7 @@ package jetbrains.buildServer.clouds.base.stubs;
 import java.util.Collection;
 import jetbrains.buildServer.clouds.CloudClientEx;
 import jetbrains.buildServer.clouds.CloudProfile;
+import jetbrains.buildServer.clouds.CloudProfileData;
 import jetbrains.buildServer.clouds.CloudType;
 import jetbrains.buildServer.clouds.server.CloudManagerBase;
 import jetbrains.buildServer.clouds.server.ProjectCloudIntegrationStatus;
@@ -34,10 +35,16 @@ public class DummyCloudManagerBase implements CloudManagerBase {
   }
 
   @Override
-  public void updateProfile(final String projectId, final CloudProfile cloudProfile) {
+  public void updateProfile(final String projectId, @NotNull final CloudProfile cloudProfile) {
     throw new UnsupportedOperationException("DummyCloudManagerBase.updateProfile");
 
     //
+  }
+
+  @NotNull
+  @Override
+  public CloudProfile updateProfile(@NotNull final String projectId, @NotNull final String profileId, @NotNull final CloudProfileData cloudProfileData) {
+    throw new UnsupportedOperationException("DummyCloudManagerBase.updateProfile");
   }
 
   @NotNull
@@ -122,5 +129,21 @@ public class DummyCloudManagerBase implements CloudManagerBase {
     throw new UnsupportedOperationException("DummyCloudManagerBase.getProjectIntegrationStatus");
 
     //return null;
+  }
+
+  @NotNull
+  @Override
+  public CloudProfile createProfile(@NotNull final String projectId, @NotNull final CloudProfileData profileData) {
+    throw new UnsupportedOperationException("DummyCloudManagerBase.createProfile");
+  }
+
+  @Override
+  public boolean removeProfile(@NotNull final String projectId, @NotNull final String profileId) {
+    throw new UnsupportedOperationException("DummyCloudManagerBase.removeProfile");
+  }
+
+  @Override
+  public void setProfileEnabled(@NotNull final String projectId, @NotNull final String profileId, final boolean enabled) {
+    throw new UnsupportedOperationException("DummyCloudManagerBase.setProfileEnabled");
   }
 }
