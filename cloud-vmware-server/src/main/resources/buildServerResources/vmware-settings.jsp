@@ -41,8 +41,8 @@
 
 <table class="runnerFormTable">
   <tr>
-    <th><label for="${webCons.serverUrl}">vCenter SDK URL: <l:star/></label>
-      <bs:help urlPrefix="https://pubs.vmware.com/vsphere-51/topic/com.vmware.vsphere.install.doc/" file="GUID-191D86C8-EEF4-4198-9C11-2E0F25D2AB89.html"/></th>
+    <th><label for="${webCons.serverUrl}">vCenter SDK URL:<l:star/></label><bs:help
+        urlPrefix="https://pubs.vmware.com/vsphere-51/topic/com.vmware.vsphere.install.doc/" file="GUID-191D86C8-EEF4-4198-9C11-2E0F25D2AB89.html"/></th>
     <td>
       <props:textProperty name="${webCons.serverUrl}" className="settings longField"/>
       <span id="error_${webCons.serverUrl}" class="error"></span>
@@ -50,7 +50,7 @@
   </tr>
 
   <tr>
-    <th><label for="${webCons.username}">Username: <l:star/></label></th>
+    <th><label for="${webCons.username}">Username:<l:star/></label></th>
     <td>
       <props:textProperty name="${webCons.username}" className="settings longField"/>
       <span id="error_${webCons.username}" class="error"></span>
@@ -58,7 +58,7 @@
   </tr>
 
   <tr>
-    <th><label for="secure:${webCons.password}">Password: <l:star/></label></th>
+    <th><label for="secure:${webCons.password}">Password:<l:star/></label></th>
     <td>
       <props:passwordProperty name="secure:${webCons.password}" className="settings longField"/>
       <span id="error_secure:${webCons.password}" class="error"></span>
@@ -116,7 +116,7 @@
     <table class="runnerFormTable paramsTable">
 
         <tr>
-            <th>Agent image:&nbsp;<l:star/></th>
+            <th>Agent image:<l:star/></th>
             <td>
                 <div>
                     <select name="_image" id="image" class="longField" data-id="sourceVmName" data-err-id="sourceVmName"></select>
@@ -135,7 +135,7 @@
               </td>
             </tr>
             <tr>
-                <th>Behavior:&nbsp;<l:star/><bs:help file="Setting+Up+TeamCity+for+VMWare+vSphere+and+vCenter#SettingUpTeamCityforVMWarevSphereandvCenter-Features"/></th>
+                <th>Behavior:<l:star/><bs:help file="Setting+Up+TeamCity+for+VMWare+vSphere+and+vCenter#SettingUpTeamCityforVMWarevSphereandvCenter-Features"/></th>
                 <td>
                     <input type="hidden" class="behaviour__value" data-id="behaviour" data-err-id="behaviour"/>
                     <div>
@@ -157,7 +157,7 @@
               </td>
             </tr>
             <tr class="hidden cloneOptionsRow"  id="tr_snapshot_name">
-                <th>Snapshot name:&nbsp;<l:star/></th>
+                <th>Snapshot name:<l:star/></th>
                 <td>
                     <select id="snapshot" class="longField" data-id="snapshot" data-err-id="snapshot"></select>
                     <div class="smallNoteAttention currentStateWarning hidden">&laquo;Current state&raquo; requires a full clone, it is a time- and disk-space-consuming operation</div>
@@ -167,7 +167,7 @@
 
 
             <tr class="hidden cloneOptionsRow">
-                <th>Folder for clones:&nbsp;<l:star/></th>
+                <th>Folder for clones:<l:star/></th>
                 <td>
                     <select id="cloneFolder" class="longField" data-id="folder" data-err-id="folder"></select>
                     <span class="error option-error option-error_folder"></span>
@@ -175,7 +175,7 @@
             </tr>
 
             <tr class="hidden cloneOptionsRow">
-                <th>Resource pool:&nbsp;<l:star/></th>
+                <th>Resource pool:<l:star/></th>
                 <td>
                     <select id="resourcePool" class="longField" data-id="pool" data-err-id="pool"></select>
                     <span class="error option-error option-error_pool"></span>
@@ -189,7 +189,7 @@
               </td>
             </tr>
             <tr class="hidden cloneOptionsRow">
-                <th>Max number of instances:&nbsp;<l:star/></th>
+                <th>Max number of instances:<l:star/></th>
                 <td>
                     <div>
                         <input type="text" id="maxInstances" value="" class="longField" data-id="maxInstances" data-err-id="maxInstances"/>
