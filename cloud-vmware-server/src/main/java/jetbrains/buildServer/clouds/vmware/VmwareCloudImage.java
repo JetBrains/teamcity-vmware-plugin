@@ -282,7 +282,7 @@ public class VmwareCloudImage extends AbstractCloudImage<VmwareCloudInstance, Vm
         instance.setStatus(InstanceStatus.RUNNING);
         instance.setStartDate(new Date());
         instance.updateErrors();
-        LOG.info("Instance started successfully");
+        LOG.info("Reconfiguration of '" +instance.getInstanceId() +"' is finished. Instance started successfully");
       }
     });
   }
