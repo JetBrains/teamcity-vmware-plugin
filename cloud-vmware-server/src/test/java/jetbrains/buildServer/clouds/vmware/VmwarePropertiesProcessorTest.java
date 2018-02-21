@@ -7,7 +7,7 @@ import jetbrains.buildServer.clouds.*;
 import jetbrains.buildServer.clouds.base.stubs.DummyCloudManagerBase;
 import jetbrains.buildServer.clouds.server.CloudManagerBase;
 import jetbrains.buildServer.clouds.server.impl.profile.CloudClientParametersImpl;
-import jetbrains.buildServer.clouds.server.impl.profile.CloudProfileUtil;
+import jetbrains.buildServer.clouds.server.impl.profile.CloudProfileImpl;
 import jetbrains.buildServer.clouds.vmware.stubs.FakeApiConnector;
 import jetbrains.buildServer.clouds.vmware.tasks.VmwareUpdateTaskManager;
 import jetbrains.buildServer.clouds.vmware.web.VMWareWebConstants;
@@ -90,13 +90,12 @@ public class VmwarePropertiesProcessorTest extends BaseTestCase {
   public void check_same_source_ids_new_profile() throws IOException {
     final CloudClientParameters cloudClientParameters = new CloudClientParametersImpl(
       Collections.singletonMap(VMWareWebConstants.SERVER_URL, "http://localhost:8080"),
-      CloudProfileUtil.collectionFromJson(
+      VmwareTestUtils.getImageParameters(PROJECT_ID,
         "[{sourceVmName:'image1', behaviour:'START_STOP'}," +
         "{sourceVmName:'image2',snapshot:'snap*',folder:'cf',pool:'rp',maxInstances:3,behaviour:'ON_DEMAND_CLONE', " +
         "customizationSpec:'someCustomization'}," +
         "{sourceVmName:'image_template', snapshot:'" + VmwareConstants.CURRENT_STATE +
-        "',folder:'cf',pool:'rp',maxInstances:3,behaviour:'FRESH_CLONE', customizationSpec: 'linux'}]",
-        PROJECT_ID));
+        "',folder:'cf',pool:'rp',maxInstances:3,behaviour:'FRESH_CLONE', customizationSpec: 'linux'}]"));
     final String profileId = "vmw-1";
     myProfiles.add(VmwareTestUtils.createProfileFromProps(PROJECT_ID, profileId, cloudClientParameters));
     myProperties.put(VMWareWebConstants.SERVER_URL, "http://localhost:8080");
@@ -113,32 +112,31 @@ public class VmwarePropertiesProcessorTest extends BaseTestCase {
     {
       final CloudClientParameters cloudClientParameters = new CloudClientParametersImpl(
         Collections.singletonMap(VMWareWebConstants.SERVER_URL, "http://localhost:8080"),
-        CloudProfileUtil.collectionFromJson(
+        VmwareTestUtils.getImageParameters(PROJECT_ID,
           "[{'source-id':'image1',sourceVmName:'image1', behaviour:'START_STOP'}," +
           "{'source-id':'image2',sourceVmName:'image2',snapshot:'snap*',folder:'cf',pool:'rp',maxInstances:3,behaviour:'ON_DEMAND_CLONE', " +
           "customizationSpec:'someCustomization'}," +
           "{'source-id':'image_template',sourceVmName:'image_template', snapshot:'" + VmwareConstants.CURRENT_STATE +
-          "',folder:'cf',pool:'rp',maxInstances:3,behaviour:'FRESH_CLONE', customizationSpec: 'linux'}]",
-          PROJECT_ID));
+          "',folder:'cf',pool:'rp',maxInstances:3,behaviour:'FRESH_CLONE', customizationSpec: 'linux'}]"));
       final String profileId = "vmw-1";
       myProfiles.add(VmwareTestUtils.createProfileFromProps(PROJECT_ID, profileId, cloudClientParameters));
 
       myClients.put(profileId, createClient(cloudClientParameters));
     }
     {
-      final CloudClientParameters cloudClientParameters = new CloudClientParametersImpl(
-        Collections.singletonMap(VMWareWebConstants.SERVER_URL, "http://localhost:8080"),
-        CloudProfileUtil.collectionFromJson(
-          "[{'source-id':'image3',sourceVmName:'image3', behaviour:'START_STOP'}," +
-          "{'source-id':'image4',sourceVmName:'image4',snapshot:'snap*',folder:'cf',pool:'rp',maxInstances:3,behaviour:'ON_DEMAND_CLONE', " +
-          "customizationSpec:'someCustomization'}," +
-          "{'source-id':'image_template2',sourceVmName:'image_template2', snapshot:'" + VmwareConstants.CURRENT_STATE +
-          "',folder:'cf',pool:'rp',maxInstances:3,behaviour:'FRESH_CLONE', customizationSpec: 'linux'}]",
-          PROJECT_ID));
       final String profileId = "vmw-2";
-      myProfiles.add(VmwareTestUtils.createProfileFromProps(PROJECT_ID, profileId, cloudClientParameters, "profile name 2"));
+      final CloudProfile profile = new CloudProfileImpl("profile name 2", PROJECT_ID, profileId, "Description", VmwareConstants.TYPE, null, true,
+                                                                Collections.singletonMap(VMWareWebConstants.SERVER_URL, "http://localhost:8080"),
+                                                                VmwareTestUtils.getImageParameters(PROJECT_ID,
+                                                                                                   "[{'source-id':'image3',sourceVmName:'image3', behaviour:'START_STOP'}," +
+                                                                                                   "{'source-id':'image4',sourceVmName:'image4',snapshot:'snap*',folder:'cf',pool:'rp',maxInstances:3,behaviour:'ON_DEMAND_CLONE', " +
+                                                                                                   "customizationSpec:'someCustomization'}," +
+                                                                                                   "{'source-id':'image_template2',sourceVmName:'image_template2', snapshot:'" +
+                                                                                                   VmwareConstants.CURRENT_STATE +
+                                                                                                   "',folder:'cf',pool:'rp',maxInstances:3,behaviour:'FRESH_CLONE', customizationSpec: 'linux'}]"));
+      myProfiles.add(profile);
 
-      myClients.put(profileId, createClient(cloudClientParameters));
+      myClients.put(profileId, createClient(profile.getParameters()));
     }
 
     myProperties.put(CloudConstants.PROFILE_ID, "vmw-2");
@@ -160,32 +158,28 @@ public class VmwarePropertiesProcessorTest extends BaseTestCase {
     {
       final CloudClientParameters cloudClientParameters = new CloudClientParametersImpl(
         Collections.singletonMap(VMWareWebConstants.SERVER_URL, "http://localhost:8081"),
-        CloudProfileUtil.collectionFromJson(
+        VmwareTestUtils.getImageParameters(PROJECT_ID,
           "[{'source-id':'image1',sourceVmName:'image1', behaviour:'START_STOP'}," +
           "{'source-id':'image2',sourceVmName:'image2',snapshot:'snap*',folder:'cf',pool:'rp',maxInstances:3,behaviour:'ON_DEMAND_CLONE', " +
           "customizationSpec:'someCustomization'}," +
           "{'source-id':'image_template',sourceVmName:'image_template', snapshot:'" + VmwareConstants.CURRENT_STATE +
-          "',folder:'cf',pool:'rp',maxInstances:3,behaviour:'FRESH_CLONE', customizationSpec: 'linux'}]",
-          PROJECT_ID));
+          "',folder:'cf',pool:'rp',maxInstances:3,behaviour:'FRESH_CLONE', customizationSpec: 'linux'}]"));
       final String profileId = "vmw-1";
       myProfiles.add(VmwareTestUtils.createProfileFromProps(PROJECT_ID, profileId, cloudClientParameters));
 
       myClients.put(profileId, createClient(cloudClientParameters));
     }
     {
-      final CloudClientParameters cloudClientParameters = new CloudClientParametersImpl(
-        Collections.singletonMap(VMWareWebConstants.SERVER_URL, "http://localhost:8082"),
-        CloudProfileUtil.collectionFromJson(
-          "[{'source-id':'image3',sourceVmName:'image3', behaviour:'START_STOP'}," +
-          "{'source-id':'image4',sourceVmName:'image4',snapshot:'snap*',folder:'cf',pool:'rp',maxInstances:3,behaviour:'ON_DEMAND_CLONE', " +
-          "customizationSpec:'someCustomization'}," +
-          "{'source-id':'image_template2',sourceVmName:'image_template2', snapshot:'" + VmwareConstants.CURRENT_STATE +
-          "',folder:'cf',pool:'rp',maxInstances:3,behaviour:'FRESH_CLONE', customizationSpec: 'linux'}]",
-          PROJECT_ID));
       final String profileId = "vmw-2";
-      myProfiles.add(VmwareTestUtils.createProfileFromProps(PROJECT_ID, profileId, cloudClientParameters, "profile name 2"));
+      final CloudProfile profile = new CloudProfileImpl("profile name 2", PROJECT_ID, profileId, "Description", VmwareConstants.TYPE, null, true, Collections.singletonMap(VMWareWebConstants.SERVER_URL, "http://localhost:8082"), VmwareTestUtils.getImageParameters(PROJECT_ID,
+                                                                                                                                                                                                                                                   "[{'source-id':'image3',sourceVmName:'image3', behaviour:'START_STOP'}," +
+                                                                                                                                                                                                                                                   "{'source-id':'image4',sourceVmName:'image4',snapshot:'snap*',folder:'cf',pool:'rp',maxInstances:3,behaviour:'ON_DEMAND_CLONE', " +
+                                                                                                                                                                                                                                                   "customizationSpec:'someCustomization'}," +
+                                                                                                                                                                                                                                                   "{'source-id':'image_template2',sourceVmName:'image_template2', snapshot:'" + VmwareConstants.CURRENT_STATE +
+                                                                                                                                                                                                                                                   "',folder:'cf',pool:'rp',maxInstances:3,behaviour:'FRESH_CLONE', customizationSpec: 'linux'}]"));
+      myProfiles.add(profile);
 
-      myClients.put(profileId, createClient(cloudClientParameters));
+      myClients.put(profileId, createClient(profile.getParameters()));
     }
     myProperties.put(VMWareWebConstants.SERVER_URL, "http://localhost:8081");
     myProperties.put(CloudImageParameters.SOURCE_IMAGES_JSON,

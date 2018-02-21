@@ -2,10 +2,7 @@ package jetbrains.buildServer.clouds.vmware;
 
 import com.intellij.util.WaitFor;
 import java.io.File;
-import java.util.Calendar;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 import jetbrains.buildServer.BaseTestCase;
 import jetbrains.buildServer.clouds.CloudClientParameters;
 import jetbrains.buildServer.clouds.CloudImageParameters;
@@ -14,6 +11,7 @@ import jetbrains.buildServer.clouds.InstanceStatus;
 import jetbrains.buildServer.clouds.base.connector.CloudAsyncTaskExecutor;
 import jetbrains.buildServer.clouds.base.types.CloneBehaviour;
 import jetbrains.buildServer.clouds.server.impl.profile.CloudClientParametersImpl;
+import jetbrains.buildServer.clouds.server.impl.profile.CloudImageDataImpl;
 import jetbrains.buildServer.clouds.server.impl.profile.CloudImageParametersImpl;
 import jetbrains.buildServer.clouds.vmware.connector.VMWareApiConnector;
 import jetbrains.buildServer.clouds.vmware.stubs.FakeApiConnector;
@@ -55,7 +53,7 @@ public class VmwareCloudInstanceTest extends BaseTestCase {
     imgParams.put("pool", "myPool");
     imgParams.put("behaviour", CloneBehaviour.FRESH_CLONE.toString());
     imgParams.put("maxInstances", "5");
-    CloudImageParameters imageParameters = new CloudImageParametersImpl(imgParams, VmwareCloudIntegrationTest.PROJECT_ID);
+    CloudImageParameters imageParameters = new CloudImageParametersImpl(new CloudImageDataImpl(imgParams), VmwareCloudIntegrationTest.PROJECT_ID, UUID.randomUUID().toString());
     myImageDetails = new VmwareCloudImageDetails(imageParameters);
 
     final CloudClientParameters clientParameters = new CloudClientParametersImpl(createMap(), createSet(imageParameters));

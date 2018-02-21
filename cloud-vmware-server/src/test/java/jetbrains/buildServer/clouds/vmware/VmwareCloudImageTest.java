@@ -8,6 +8,7 @@ import java.rmi.RemoteException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 import jetbrains.buildServer.BaseTestCase;
 import jetbrains.buildServer.clouds.CloudImageParameters;
 import jetbrains.buildServer.clouds.CloudInstanceUserData;
@@ -17,6 +18,7 @@ import jetbrains.buildServer.clouds.base.connector.CloudAsyncTaskExecutor;
 import jetbrains.buildServer.clouds.base.tasks.UpdateInstancesTask;
 import jetbrains.buildServer.clouds.base.types.CloneBehaviour;
 import jetbrains.buildServer.clouds.server.impl.profile.CloudClientParametersImpl;
+import jetbrains.buildServer.clouds.server.impl.profile.CloudImageDataImpl;
 import jetbrains.buildServer.clouds.server.impl.profile.CloudImageParametersImpl;
 import jetbrains.buildServer.clouds.vmware.connector.VMWareApiConnector;
 import jetbrains.buildServer.clouds.vmware.stubs.FakeApiConnector;
@@ -53,6 +55,9 @@ public class VmwareCloudImageTest extends BaseTestCase {
     myTaskExecutor = new CloudAsyncTaskExecutor("Test-vmware");
     myApiConnector = new FakeApiConnector(VmwareCloudIntegrationTest.TEST_SERVER_UUID, VmwareCloudIntegrationTest.PROFILE_ID);
     myIdxStorage = createTempDir();
+
+    myProfile = VmwareTestUtils.createProfileFromProps(new CloudClientParametersImpl(Collections.emptyMap(), Collections.emptyList()));
+
     Map<String, String> params = new HashMap<>();
     params.put("nickname", "imageNickname");
     params.put("sourceVmName", "srcVM");
@@ -61,7 +66,7 @@ public class VmwareCloudImageTest extends BaseTestCase {
     params.put("pool", "rpId");
     params.put("behaviour", CloneBehaviour.FRESH_CLONE.toString());
     params.put("maxInstances", "5");
-    CloudImageParameters imageParameters = new CloudImageParametersImpl(params, VmwareCloudIntegrationTest.PROJECT_ID);
+    CloudImageParameters imageParameters = new CloudImageParametersImpl(new CloudImageDataImpl(params), myProfile.getProjectId(), UUID.randomUUID().toString());
 
     myImageDetails = new VmwareCloudImageDetails(imageParameters);
 
@@ -72,7 +77,6 @@ public class VmwareCloudImageTest extends BaseTestCase {
 
     FakeModel.instance().addVMSnapshot("srcVM", "srcVMSnap");
 
-    myProfile = VmwareTestUtils.createProfileFromProps(new CloudClientParametersImpl(Collections.emptyMap(), Collections.emptyList()));
     myImage = new VmwareCloudImage(myApiConnector, myImageDetails, myTaskExecutor, myIdxStorage, myProfile);
 
     myCloudClient = new VMWareCloudClient(myProfile, myApiConnector, new VmwareUpdateTaskManager(), createTempDir());

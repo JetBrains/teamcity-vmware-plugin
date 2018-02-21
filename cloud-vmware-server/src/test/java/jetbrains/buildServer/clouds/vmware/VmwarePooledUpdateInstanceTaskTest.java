@@ -17,7 +17,6 @@ import jetbrains.buildServer.clouds.CloudClientParameters;
 import jetbrains.buildServer.clouds.CloudException;
 import jetbrains.buildServer.clouds.CloudProfile;
 import jetbrains.buildServer.clouds.server.impl.profile.CloudClientParametersImpl;
-import jetbrains.buildServer.clouds.server.impl.profile.CloudProfileUtil;
 import jetbrains.buildServer.clouds.vmware.connector.VMWareApiConnector;
 import jetbrains.buildServer.clouds.vmware.errors.VmwareCheckedCloudException;
 import jetbrains.buildServer.clouds.vmware.stubs.FakeApiConnector;
@@ -95,22 +94,20 @@ public class VmwarePooledUpdateInstanceTaskTest extends BaseTestCase {
       }
     };
 
-    final CloudClientParameters clientParameters1 = new CloudClientParametersImpl(
-      Collections.emptyMap(), CloudProfileUtil.collectionFromJson("[{sourceVmName:'image1', behaviour:'START_STOP'}]", PROJECT_ID));
+    final CloudClientParameters clientParameters1 = VmwareTestUtils.getClientParameters(PROJECT_ID, "[{sourceVmName:'image1', behaviour:'START_STOP'}]");
     final VMWareCloudClient client1 = new MyClient(clientParameters1, null);
 
 
     final CloudClientParameters clientParameters2 = new CloudClientParametersImpl(
-      Collections.emptyMap(), CloudProfileUtil.collectionFromJson(
+      Collections.emptyMap(), VmwareTestUtils.getImageParameters(PROJECT_ID,
       "[{sourceVmName:'image2',snapshot:'snap*',folder:'cf',pool:'rp'," +
-      "maxInstances:3,behaviour:'ON_DEMAND_CLONE',customizationSpec:'someCustomization'}]", PROJECT_ID));
+      "maxInstances:3,behaviour:'ON_DEMAND_CLONE',customizationSpec:'someCustomization'}]"));
     final VMWareCloudClient client2 = new MyClient(clientParameters2, null);
 
     final CloudClientParameters clientParameters3 = new CloudClientParametersImpl(
-      Collections.emptyMap(), CloudProfileUtil.collectionFromJson(
+      Collections.emptyMap(), VmwareTestUtils.getImageParameters(PROJECT_ID,
       "[{'source-id':'image_template',sourceVmName:'image_template', snapshot:'" + VmwareConstants.CURRENT_STATE +
-      "',folder:'cf',pool:'rp',maxInstances:3,behaviour:'FRESH_CLONE', customizationSpec: 'linux'}]",
-      PROJECT_ID));
+      "',folder:'cf',pool:'rp',maxInstances:3,behaviour:'FRESH_CLONE', customizationSpec: 'linux'}]"));
     final VMWareCloudClient client3 = new MyClient(clientParameters3, null);
 
     final VmwareUpdateInstanceTask task1 = myTaskManager.createUpdateTask(myFakeApiConnector, client1);
@@ -130,14 +127,14 @@ public class VmwarePooledUpdateInstanceTaskTest extends BaseTestCase {
 
   public void check_cleared_after_dispose(){
     final CloudClientParameters clientParameters1 = new CloudClientParametersImpl(
-      Collections.emptyMap(), CloudProfileUtil.collectionFromJson("[{sourceVmName:'image1', behaviour:'START_STOP'}]", PROJECT_ID));
+      Collections.emptyMap(), VmwareTestUtils.getImageParameters(PROJECT_ID,"[{sourceVmName:'image1', behaviour:'START_STOP'}]"));
     final VMWareCloudClient client1 = new MyClient(clientParameters1, null);
 
 
     final CloudClientParameters clientParameters2 = new CloudClientParametersImpl(
-      Collections.emptyMap(), CloudProfileUtil.collectionFromJson(
+      Collections.emptyMap(), VmwareTestUtils.getImageParameters(PROJECT_ID,
       "[{sourceVmName:'image2',snapshot:'snap*',folder:'cf',pool:'rp'," +
-      "maxInstances:3,behaviour:'ON_DEMAND_CLONE',customizationSpec:'someCustomization'}]", PROJECT_ID));
+      "maxInstances:3,behaviour:'ON_DEMAND_CLONE',customizationSpec:'someCustomization'}]"));
 
     final VMWareCloudClient client2 = new MyClient(clientParameters2, null);
 
@@ -204,14 +201,14 @@ public class VmwarePooledUpdateInstanceTaskTest extends BaseTestCase {
     };
 
     final CloudClientParameters clientParameters1 = new CloudClientParametersImpl(
-      Collections.emptyMap(), CloudProfileUtil.collectionFromJson("[{sourceVmName:'image1', behaviour:'START_STOP'}]", PROJECT_ID));
+      Collections.emptyMap(), VmwareTestUtils.getImageParameters(PROJECT_ID,"[{sourceVmName:'image1', behaviour:'START_STOP'}]"));
     final VMWareCloudClient client1 = new MyClient(clientParameters1, null);
 
 
     final CloudClientParameters clientParameters2 = new CloudClientParametersImpl(
-      Collections.emptyMap(), CloudProfileUtil.collectionFromJson(
+      Collections.emptyMap(), VmwareTestUtils.getImageParameters(PROJECT_ID,
       "[{sourceVmName:'image2',snapshot:'snap*',folder:'cf',pool:'rp'," +
-      "maxInstances:3,behaviour:'ON_DEMAND_CLONE',customizationSpec:'someCustomization'}]", PROJECT_ID));
+      "maxInstances:3,behaviour:'ON_DEMAND_CLONE',customizationSpec:'someCustomization'}]"));
 
     final VMWareCloudClient client2 = new MyClient(clientParameters2, null);
     final VmwareUpdateInstanceTask task1 = myTaskManager.createUpdateTask(myFakeApiConnector, client1);
@@ -234,9 +231,9 @@ public class VmwarePooledUpdateInstanceTaskTest extends BaseTestCase {
 
   public void concurrent_create_dispose() throws MalformedURLException {
     final CloudClientParameters clientParameters2 = new CloudClientParametersImpl(
-      Collections.emptyMap(), CloudProfileUtil.collectionFromJson(
+      Collections.emptyMap(), VmwareTestUtils.getImageParameters(PROJECT_ID,
       "[{sourceVmName:'image2',snapshot:'snap*',folder:'cf',pool:'rp'," +
-      "maxInstances:3,behaviour:'ON_DEMAND_CLONE',customizationSpec:'someCustomization'}]", PROJECT_ID));
+      "maxInstances:3,behaviour:'ON_DEMAND_CLONE',customizationSpec:'someCustomization'}]"));
 
     final VMWareCloudClient client2 = new MyClient(clientParameters2, null);
     myFakeApiConnector = new FakeApiConnector(TEST_SERVER_UUID, PROFILE_ID);
@@ -285,9 +282,9 @@ public class VmwarePooledUpdateInstanceTaskTest extends BaseTestCase {
 
   public void concurrent_create_run() throws MalformedURLException {
     final CloudClientParameters clientParameters2 = new CloudClientParametersImpl(
-      Collections.emptyMap(), CloudProfileUtil.collectionFromJson(
+      Collections.emptyMap(), VmwareTestUtils.getImageParameters(PROJECT_ID,
       "[{sourceVmName:'image2',snapshot:'snap*',folder:'cf',pool:'rp'," +
-      "maxInstances:3,behaviour:'ON_DEMAND_CLONE',customizationSpec:'someCustomization'}]", PROJECT_ID));
+      "maxInstances:3,behaviour:'ON_DEMAND_CLONE',customizationSpec:'someCustomization'}]"));
 
     final VMWareCloudClient client2 = new MyClient(clientParameters2, null);
     myFakeApiConnector = new FakeApiConnector(TEST_SERVER_UUID, PROFILE_ID);
@@ -340,9 +337,9 @@ public class VmwarePooledUpdateInstanceTaskTest extends BaseTestCase {
 
   public void concurrent_run_dispose() throws MalformedURLException {
     final CloudClientParameters clientParameters2 = new CloudClientParametersImpl(
-      Collections.emptyMap(), CloudProfileUtil.collectionFromJson(
+      Collections.emptyMap(), VmwareTestUtils.getImageParameters(PROJECT_ID,
       "[{sourceVmName:'image2',snapshot:'snap*',folder:'cf',pool:'rp'," +
-      "maxInstances:3,behaviour:'ON_DEMAND_CLONE',customizationSpec:'someCustomization'}]", PROJECT_ID));
+      "maxInstances:3,behaviour:'ON_DEMAND_CLONE',customizationSpec:'someCustomization'}]"));
 
     final VMWareCloudClient client2 = new MyClient(clientParameters2, null);
     myFakeApiConnector = new FakeApiConnector(TEST_SERVER_UUID, PROFILE_ID);
