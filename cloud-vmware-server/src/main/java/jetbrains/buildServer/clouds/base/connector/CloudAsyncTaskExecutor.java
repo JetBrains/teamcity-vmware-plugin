@@ -21,7 +21,9 @@ package jetbrains.buildServer.clouds.base.connector;
 import com.intellij.openapi.diagnostic.Logger;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.*;
+import jetbrains.buildServer.serverSide.TeamCityProperties;
 import jetbrains.buildServer.util.NamedThreadFactory;
 import jetbrains.buildServer.util.ThreadUtil;
 import jetbrains.buildServer.util.executors.ExecutorsFactory;
@@ -84,13 +86,17 @@ public class CloudAsyncTaskExecutor {
   }
 
   private void checkTasks() {
-    for (AsyncCloudTask task : myExecutingTasks.keySet()) {
+    long startTime = System.currentTimeMillis();
+    Set<AsyncCloudTask> tasks = myExecutingTasks.keySet();
+    int size = tasks.size();
+    for (AsyncCloudTask task : tasks) {
       try {
         processSingleTask(task);
       } catch (Throwable th) {
         LOG.warnAndDebugDetails("An error occurred during checking " + task, th);
       }
     }
+    LOG.debug("Check Tasks processed " + size + " tasks in " + (System.currentTimeMillis() - startTime) + " ms.");
   }
 
   private void processSingleTask(AsyncCloudTask task) {
