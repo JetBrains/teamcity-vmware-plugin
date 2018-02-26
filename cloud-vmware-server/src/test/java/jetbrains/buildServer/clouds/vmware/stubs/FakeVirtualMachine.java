@@ -268,7 +268,7 @@ public class FakeVirtualMachine extends VirtualMachine {
     };
   }
 
-  private static Task failureTask(){
+  public static Task failureTask(){
     return new Task(null, null) {
       @Override
       public TaskInfo getTaskInfo() throws RemoteException {
