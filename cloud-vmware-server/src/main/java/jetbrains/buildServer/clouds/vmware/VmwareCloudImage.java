@@ -272,19 +272,25 @@ public class VmwareCloudImage extends AbstractCloudImage<VmwareCloudInstance, Vm
 
   private synchronized void reconfigureVmTask(@NotNull final VmwareCloudInstance instance, @NotNull final CloudInstanceUserData cloudInstanceUserData) {
     myAsyncTaskExecutor.executeAsync(new VmwareTaskWrapper(new Callable<Task>() {
-      public Task call() throws Exception {
-        return myApiConnector.reconfigureInstance(instance, instance.getName(), cloudInstanceUserData);
-      }
-    },"Reconfigure " + instance.getName())
+                                       public Task call() throws Exception {
+                                         return myApiConnector.reconfigureInstance(instance, instance.getName(), cloudInstanceUserData);
+                                       }
+                                     }, "Reconfigure " + instance.getName())
       , new ImageStatusTaskWrapper(instance) {
-      @Override
-      public void onSuccess() {
-        instance.setStatus(InstanceStatus.RUNNING);
-        instance.setStartDate(new Date());
-        instance.updateErrors();
-        LOG.info("Instance started successfully");
-      }
-    });
+        @Override
+        public void onSuccess() {
+          instance.setStatus(InstanceStatus.RUNNING);
+          instance.setStartDate(new Date());
+          instance.updateErrors();
+          LOG.info("Reconfiguration of '" + instance.getInstanceId() + "' is finished. Instance started successfully");
+        }
+
+        @Override
+        public void onError(final Throwable th) {
+          LOG.warnAndDebugDetails("Can't reconfigure '" + instance.getInstanceId() +"'. Instance will be terminated", th);
+          terminateInstance(instance);
+        }
+      });
   }
 
 
