@@ -1,10 +1,7 @@
 package jetbrains.buildServer.clouds.base.stubs;
 
 import java.util.Collection;
-import jetbrains.buildServer.clouds.CloudClientEx;
-import jetbrains.buildServer.clouds.CloudProfile;
-import jetbrains.buildServer.clouds.CloudProfileData;
-import jetbrains.buildServer.clouds.CloudType;
+import jetbrains.buildServer.clouds.*;
 import jetbrains.buildServer.clouds.server.CloudManagerBase;
 import jetbrains.buildServer.clouds.server.ProjectCloudIntegrationStatus;
 import org.jetbrains.annotations.NotNull;
@@ -138,5 +135,11 @@ public class DummyCloudManagerBase implements CloudManagerBase {
   @Override
   public void setProfileEnabled(@NotNull final String projectId, @NotNull final String profileId, final boolean enabled) {
     throw new UnsupportedOperationException("DummyCloudManagerBase.setProfileEnabled");
+  }
+
+  @NotNull
+  @Override
+  public Collection<CloudImageParameters> listImagesByProject(@NotNull final String projectId) {
+    throw new UnsupportedOperationException("DummyCloudManagerBase.listImagesByProject");
   }
 }
