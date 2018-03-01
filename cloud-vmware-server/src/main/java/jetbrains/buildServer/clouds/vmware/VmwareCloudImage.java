@@ -274,6 +274,12 @@ public class VmwareCloudImage extends AbstractCloudImage<VmwareCloudInstance, Vm
         instance.updateErrors();
         LOG.info("Instance started successfully");
       }
+
+      @Override
+      public void onError(final Throwable th) {
+        LOG.warnAndDebugDetails("Can't reconfigure '" + instance.getInstanceId() +"'. Instance will be terminated", th);
+        terminateInstance(instance);
+      }
     });
   }
 
