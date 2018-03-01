@@ -41,11 +41,15 @@ public class CloudAsyncTaskExecutor {
   private final ConcurrentMap<AsyncCloudTask, TaskCallbackHandler> myExecutingTasks;
   private final Map<AsyncCloudTask, Long> myLongTasks = new HashMap<AsyncCloudTask, Long>();
   private final String myPrefix;
+  private final boolean myExecuteAllAsync;
 
   public CloudAsyncTaskExecutor(String prefix) {
     myPrefix = prefix;
     myExecutingTasks = new ConcurrentHashMap<AsyncCloudTask, TaskCallbackHandler>();
-    myExecutor = ExecutorsFactory.newFixedScheduledDaemonExecutor(prefix, 2);
+
+    int threadCount = TeamCityProperties.getInteger("teamcity.vmware.profile.async.threads", 2);
+    myExecuteAllAsync = threadCount > 2;
+    myExecutor = ExecutorsFactory.newFixedScheduledDaemonExecutor(prefix, threadCount);
     scheduleWithFixedDelay("Check for tasks", new Runnable() {
       public void run() {
         checkTasks();
@@ -58,8 +62,15 @@ public class CloudAsyncTaskExecutor {
   }
 
   public void executeAsync(final AsyncCloudTask operation, final TaskCallbackHandler callbackHandler) {
-    operation.executeOrGetResultAsync();
-    myExecutingTasks.put(operation, callbackHandler);
+    if (myExecuteAllAsync) {
+      submit(operation.getName(), ()->{
+        operation.executeOrGetResultAsync();
+        myExecutingTasks.put(operation, callbackHandler);
+      });
+    } else {
+      operation.executeOrGetResultAsync();
+      myExecutingTasks.put(operation, callbackHandler);
+    }
   }
 
   public ScheduledFuture<?> scheduleWithFixedDelay(@NotNull final String taskName, @NotNull final Runnable task, final long initialDelay, final long delay, final TimeUnit unit){
