@@ -21,8 +21,11 @@ package jetbrains.buildServer.clouds.base.connector;
 import com.intellij.openapi.diagnostic.Logger;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.*;
+import jetbrains.buildServer.serverSide.TeamCityProperties;
 import jetbrains.buildServer.util.NamedThreadFactory;
+import jetbrains.buildServer.util.ThreadUtil;
 import jetbrains.buildServer.util.executors.ExecutorsFactory;
 import org.jetbrains.annotations.NotNull;
 
@@ -39,10 +42,16 @@ public class CloudAsyncTaskExecutor {
   private final ScheduledExecutorService myExecutor;
   private final ConcurrentMap<AsyncCloudTask, TaskCallbackHandler> myExecutingTasks;
   private final Map<AsyncCloudTask, Long> myLongTasks = new HashMap<AsyncCloudTask, Long>();
+  private final String myPrefix;
+  private final boolean myExecuteAllAsync;
 
   public CloudAsyncTaskExecutor(String prefix) {
+    myPrefix = prefix;
     myExecutingTasks = new ConcurrentHashMap<AsyncCloudTask, TaskCallbackHandler>();
-    myExecutor = ExecutorsFactory.newFixedScheduledDaemonExecutor(prefix, 2);
+
+    int threadCount = TeamCityProperties.getInteger("teamcity.vmware.profile.async.threads", 2);
+    myExecuteAllAsync = threadCount > 2;
+    myExecutor = ExecutorsFactory.newFixedScheduledDaemonExecutor(prefix, threadCount);
     scheduleWithFixedDelay("Check for tasks", new Runnable() {
       public void run() {
         checkTasks();
@@ -55,8 +64,15 @@ public class CloudAsyncTaskExecutor {
   }
 
   public void executeAsync(final AsyncCloudTask operation, final TaskCallbackHandler callbackHandler) {
-    operation.executeOrGetResultAsync();
-    myExecutingTasks.put(operation, callbackHandler);
+    if (myExecuteAllAsync) {
+      submit(operation.getName(), ()->{
+        operation.executeOrGetResultAsync();
+        myExecutingTasks.put(operation, callbackHandler);
+      });
+    } else {
+      operation.executeOrGetResultAsync();
+      myExecutingTasks.put(operation, callbackHandler);
+    }
   }
 
   public ScheduledFuture<?> scheduleWithFixedDelay(@NotNull final String taskName, @NotNull final Runnable task, final long initialDelay, final long delay, final TimeUnit unit){
@@ -81,13 +97,17 @@ public class CloudAsyncTaskExecutor {
   }
 
   private void checkTasks() {
-    for (AsyncCloudTask task : myExecutingTasks.keySet()) {
+    long startTime = System.currentTimeMillis();
+    Set<AsyncCloudTask> tasks = myExecutingTasks.keySet();
+    int size = tasks.size();
+    for (AsyncCloudTask task : tasks) {
       try {
         processSingleTask(task);
       } catch (Throwable th) {
         LOG.warnAndDebugDetails("An error occurred during checking " + task, th);
       }
     }
+    LOG.debug("Check Tasks processed " + size + " tasks in " + (System.currentTimeMillis() - startTime) + " ms.");
   }
 
   private void processSingleTask(AsyncCloudTask task) {
@@ -124,10 +144,7 @@ public class CloudAsyncTaskExecutor {
   }
 
   public void dispose(){
-    myExecutor.shutdown();
-    try {
-      myExecutor.awaitTermination(30, TimeUnit.SECONDS);
-    } catch (InterruptedException e) {}
+    ThreadUtil.shutdownNowAndWait(myExecutor, myPrefix);
     myExecutingTasks.clear();
   }
 
