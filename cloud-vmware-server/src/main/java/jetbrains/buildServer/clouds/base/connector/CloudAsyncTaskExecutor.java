@@ -22,6 +22,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.*;
+import jetbrains.buildServer.serverSide.TeamCityProperties;
 import jetbrains.buildServer.util.NamedThreadFactory;
 import jetbrains.buildServer.util.ThreadUtil;
 import jetbrains.buildServer.util.executors.ExecutorsFactory;
