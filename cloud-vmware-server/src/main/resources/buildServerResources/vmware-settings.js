@@ -348,7 +348,7 @@ BS.Clouds.VMWareVSphere = BS.Clouds.VMWareVSphere || (function () {
         },
         addError: function (errorHTML, target) {
             (target || this.$fetchOptionsError)
-                .append($j('<div>').html(errorHTML));
+                .append($j('<div>').text(errorHTML));
         },
         addOptionError: function (errorKey, optionName) {
             var html;
