@@ -442,7 +442,7 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
   public void should_limit_new_instances_count(){
     int countStarted = 0;
     final VmwareCloudImage image_template = getImageByName("image_template");
-    while (myClient.canStartNewInstance(image_template)){
+    while (myClient.canStartNewInstanceWithDetails(image_template).isPositive()){
       final CloudInstanceUserData userData = createUserData(image_template + "_agent");
       myClient.startNewInstance(image_template, userData);
       countStarted++;
@@ -1013,13 +1013,13 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
   public void shouldConsiderProfileInstancesLimit(){
     updateClientParameters(createMap(VMWareWebConstants.PROFILE_INSTANCE_LIMIT, "1"));
     recreateClient();
-    assertTrue(myClient.canStartNewInstance(getImageByName("image2")));
-    assertTrue(myClient.canStartNewInstance(getImageByName("image1")));
-    assertTrue(myClient.canStartNewInstance(getImageByName("image_template")));
+    assertTrue(myClient.canStartNewInstanceWithDetails(getImageByName("image2")).isPositive());
+    assertTrue(myClient.canStartNewInstanceWithDetails(getImageByName("image1")).isPositive());
+    assertTrue(myClient.canStartNewInstanceWithDetails(getImageByName("image_template")).isPositive());
     startNewInstanceAndWait("image2");
-    assertFalse(myClient.canStartNewInstance(getImageByName("image2")));
-    assertFalse(myClient.canStartNewInstance(getImageByName("image1")));
-    assertFalse(myClient.canStartNewInstance(getImageByName("image_template")));
+    assertFalse(myClient.canStartNewInstanceWithDetails(getImageByName("image2")).isPositive());
+    assertFalse(myClient.canStartNewInstanceWithDetails(getImageByName("image1")).isPositive());
+    assertFalse(myClient.canStartNewInstanceWithDetails(getImageByName("image_template")).isPositive());
   }
 
   public void checkCustomization(){
@@ -1239,7 +1239,7 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
       }
     };
     try {
-      if (client3_1.isInitialized() && client3_1.canStartNewInstance(getImageByName("image_template"))) {
+      if (client3_1.isInitialized() && client3_1.canStartNewInstanceWithDetails(getImageByName("image_template")).isPositive()) {
         startNewInstanceAndWait(client3_1, "image_template");
         fail("Shouldn't start more of client3");
       }
@@ -1247,7 +1247,7 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
 
     }
     try {
-      if (client2_1.isInitialized() && client2_1.canStartNewInstance(getImageByName("image2"))) {
+      if (client2_1.isInitialized() && client2_1.canStartNewInstanceWithDetails(getImageByName("image2")).isPositive()) {
         startNewInstanceAndWait(client2_1, "image2");
         fail("Shouldn't start more of image2");
       }

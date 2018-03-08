@@ -26,10 +26,7 @@ import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicReference;
-import jetbrains.buildServer.clouds.CloudInstanceUserData;
-import jetbrains.buildServer.clouds.CloudProfile;
-import jetbrains.buildServer.clouds.InstanceStatus;
-import jetbrains.buildServer.clouds.QuotaException;
+import jetbrains.buildServer.clouds.*;
 import jetbrains.buildServer.clouds.base.AbstractCloudImage;
 import jetbrains.buildServer.clouds.base.connector.AbstractInstance;
 import jetbrains.buildServer.clouds.base.connector.CloudAsyncTaskExecutor;
@@ -334,18 +331,24 @@ public class VmwareCloudImage extends AbstractCloudImage<VmwareCloudInstance, Vm
     }
   }
 
-  public synchronized boolean canStartNewInstance() {
+  @NotNull
+  @Override
+  public CanStartNewInstanceResult canStartNewInstanceWithDetails() {
     if (getErrorInfo() != null){
       LOG.debug("Can't start new instance, if image is erroneous");
-      return false;
+      return CanStartNewInstanceResult.no("Image is erroneous.");
     }
 
+    final String sourceId = myImageDetails.getSourceId();
     if (myImageDetails.getBehaviour().isUseOriginal()) {
-      final VmwareCloudInstance myInstance = findInstanceById(myImageDetails.getSourceId());
+      final VmwareCloudInstance myInstance = findInstanceById(sourceId);
       if (myInstance == null) {
-        return false;
+        return CanStartNewInstanceResult.no("Can't find original instance by id " + sourceId);
       }
-      return myInstance.getStatus() == InstanceStatus.STOPPED;
+      if(myInstance.getStatus() == InstanceStatus.RUNNING){
+        return CanStartNewInstanceResult.no("Original instance with id " + sourceId + " is already running");
+      }
+      return CanStartNewInstanceResult.yes();
     }
 
     final boolean countStoppedVmsInLimit = TeamCityProperties.getBoolean(VmwareConstants.CONSIDER_STOPPED_VMS_LIMIT)
@@ -357,9 +360,10 @@ public class VmwareCloudImage extends AbstractCloudImage<VmwareCloudInstance, Vm
         consideredInstances.add(instance.getInstanceId());
     }
     final boolean canStartMore =  consideredInstances.size() < myImageDetails.getMaxInstances();
-    LOG.debug(String.format("[%s] Instances count: %d %s, can start more: %s", myImageDetails.getSourceId(),
-                           consideredInstances.size(), Arrays.toString(consideredInstances.toArray()), String.valueOf(canStartMore)));
-    return canStartMore;
+    final String message = String.format("[%s] Instances count: %d %s, can start more: %s", sourceId,
+                                         consideredInstances.size(), Arrays.toString(consideredInstances.toArray()), String.valueOf(canStartMore));
+    LOG.debug(message);
+    return CanStartNewInstanceResult.no(message);
   }
 
   @Override

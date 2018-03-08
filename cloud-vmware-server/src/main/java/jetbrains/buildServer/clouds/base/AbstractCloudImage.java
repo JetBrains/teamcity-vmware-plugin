@@ -22,6 +22,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import jetbrains.buildServer.clouds.CanStartNewInstanceResult;
 import jetbrains.buildServer.clouds.CloudErrorInfo;
 import jetbrains.buildServer.clouds.CloudImage;
 import jetbrains.buildServer.clouds.CloudInstanceUserData;
@@ -87,7 +88,12 @@ public abstract class AbstractCloudImage<T extends AbstractCloudInstance, G exte
     myInstances.put(instance.getInstanceId(), instance);
   }
 
-  public abstract boolean canStartNewInstance();
+  public boolean canStartNewInstance(){
+    return canStartNewInstanceWithDetails().isPositive();
+  }
+
+  @NotNull
+  public abstract CanStartNewInstanceResult canStartNewInstanceWithDetails();
 
   public abstract void terminateInstance(@NotNull final T instance);
 

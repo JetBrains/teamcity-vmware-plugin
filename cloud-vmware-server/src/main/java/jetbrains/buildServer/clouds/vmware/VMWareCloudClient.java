@@ -24,6 +24,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
+import jetbrains.buildServer.clouds.CanStartNewInstanceResult;
 import jetbrains.buildServer.clouds.CloudImage;
 import jetbrains.buildServer.clouds.CloudProfile;
 import jetbrains.buildServer.clouds.base.AbstractCloudClient;
@@ -86,18 +87,19 @@ public class VMWareCloudClient extends AbstractCloudClient<VmwareCloudInstance, 
     return new VmwareCloudImage(apiConnector, imageDetails, myAsyncTaskExecutor, myIdxStorage, myProfile);
   }
 
+  @NotNull
   @Override
-  public boolean canStartNewInstance(@NotNull final CloudImage baseImage) {
+  public CanStartNewInstanceResult canStartNewInstanceWithDetails(@NotNull final CloudImage baseImage) {
     if (myProfileInstancesLimit != null) {
       final AtomicLong count = new AtomicLong(0);
       myImageMap.forEach((s, img) -> {
         count.addAndGet(img.getInstances().stream().filter(i -> i.getStatus().isCanTerminate()).count());
       });
       if (count.get() >= myProfileInstancesLimit){
-        return false;
+        return CanStartNewInstanceResult.no("Profile instance limit exceeded.");
       }
     }
-    return super.canStartNewInstance(baseImage);
+    return super.canStartNewInstanceWithDetails(baseImage);
   }
 
   @NotNull

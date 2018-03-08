@@ -1,5 +1,6 @@
 package jetbrains.buildServer.clouds.base.stubs;
 
+import jetbrains.buildServer.clouds.CanStartNewInstanceResult;
 import jetbrains.buildServer.clouds.CloudInstanceUserData;
 import jetbrains.buildServer.clouds.base.AbstractCloudImage;
 import jetbrains.buildServer.clouds.base.connector.AbstractInstance;
@@ -14,11 +15,10 @@ public class DummyCloudImage extends AbstractCloudImage<DummyCloudInstance, Dumm
     super(name, name);
   }
 
+  @NotNull
   @Override
-  public boolean canStartNewInstance() {
-    throw new UnsupportedOperationException("DummyCloudImage.canStartNewInstance");
-
-    //return false;
+  public CanStartNewInstanceResult canStartNewInstanceWithDetails() {
+    throw new UnsupportedOperationException("DummyCloudImage.canStartNewInstanceWithDetails");
   }
 
   @Override
