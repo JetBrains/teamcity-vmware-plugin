@@ -363,7 +363,7 @@ public class VmwareCloudImage extends AbstractCloudImage<VmwareCloudInstance, Vm
     final String message = String.format("[%s] Instances count: %d %s, can start more: %s", sourceId,
                                          consideredInstances.size(), Arrays.toString(consideredInstances.toArray()), String.valueOf(canStartMore));
     LOG.debug(message);
-    return CanStartNewInstanceResult.no(message);
+    return canStartMore ? CanStartNewInstanceResult.yes() : CanStartNewInstanceResult.no(message);
   }
 
   @Override
