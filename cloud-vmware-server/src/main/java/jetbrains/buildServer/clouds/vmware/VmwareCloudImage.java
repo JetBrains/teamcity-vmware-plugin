@@ -345,10 +345,10 @@ public class VmwareCloudImage extends AbstractCloudImage<VmwareCloudInstance, Vm
       if (myInstance == null) {
         return CanStartNewInstanceResult.no("Can't find original instance by id " + sourceId);
       }
-      if(myInstance.getStatus() == InstanceStatus.RUNNING){
-        return CanStartNewInstanceResult.no("Original instance with id " + sourceId + " is already running");
+      if (myInstance.getStatus() == InstanceStatus.STOPPED) {
+        return CanStartNewInstanceResult.yes();
       }
-      return CanStartNewInstanceResult.yes();
+      return CanStartNewInstanceResult.no("Original instance with id " + sourceId + " is not being stopped");
     }
 
     final boolean countStoppedVmsInLimit = TeamCityProperties.getBoolean(VmwareConstants.CONSIDER_STOPPED_VMS_LIMIT)
