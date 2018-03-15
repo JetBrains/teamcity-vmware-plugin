@@ -333,7 +333,7 @@ public class VmwareCloudImage extends AbstractCloudImage<VmwareCloudInstance, Vm
 
   @NotNull
   @Override
-  public CanStartNewInstanceResult canStartNewInstanceWithDetails() {
+  public synchronized CanStartNewInstanceResult canStartNewInstanceWithDetails() {
     if (getErrorInfo() != null){
       LOG.debug("Can't start new instance, if image is erroneous");
       return CanStartNewInstanceResult.no("Image is erroneous.");
