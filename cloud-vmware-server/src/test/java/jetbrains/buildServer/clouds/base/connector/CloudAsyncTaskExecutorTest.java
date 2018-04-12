@@ -59,48 +59,30 @@ public class CloudAsyncTaskExecutorTest extends BaseTestCase {
       myException = exception;
       myStartDate = System.currentTimeMillis();
     }
-
     @Override
-    public Future<CloudTaskResult> executeOrGetResultAsync() {
-      return new FutureTask<CloudTaskResult>(new Runnable() {
-        @Override
-        public void run() {
+    public CloudTaskResult executeOrGetResult() {
+      try {
+        final long millis = myTaskTime - (System.currentTimeMillis() - myStartDate);
+        if (millis > 0) {
+          Thread.sleep(millis);
+        }
+        throwMyExceptionIfNecessary();
+      } catch (Exception e) {
+        return createErrorTaskResult(e);
+      }
+      return myResult;
+    }
 
+    private void throwMyExceptionIfNecessary() throws ExecutionException, InterruptedException {
+      if (myException != null) {
+        if (myException instanceof ExecutionException) {
+          throw (ExecutionException)myException;
+        } else if (myException instanceof InterruptedException) {
+          throw (InterruptedException)myException;
+        } else {
+          throw new RuntimeException(myException);
         }
-      }, myResult) {
-        @Override
-        public CloudTaskResult get() throws InterruptedException, ExecutionException {
-          final long millis = myTaskTime - (System.currentTimeMillis() - myStartDate);
-          if (millis > 0) {
-            Thread.sleep(millis);
-          }
-          throwMyExceptionIfNecessary();
-          return myResult;
-        }
-
-        @Override
-        public boolean isDone() {
-          final long millis = myTaskTime - (System.currentTimeMillis() - myStartDate);
-          try {
-            throwMyExceptionIfNecessary();
-          } catch (ExecutionException | InterruptedException e) {
-            e.printStackTrace();
-          }
-          return millis < 0;
-        }
-
-        private void throwMyExceptionIfNecessary() throws ExecutionException, InterruptedException {
-          if (myException != null) {
-            if (myException instanceof ExecutionException) {
-              throw (ExecutionException)myException;
-            } else if (myException instanceof InterruptedException) {
-              throw (InterruptedException)myException;
-            } else {
-              throw new RuntimeException(myException);
-            }
-          }
-        }
-      };
+      }
     }
 
     @NotNull
@@ -113,6 +95,21 @@ public class CloudAsyncTaskExecutorTest extends BaseTestCase {
     @Override
     public long getStartTime() {
       return myStartDate;
+    }
+
+    private CloudTaskResult createErrorTaskResult(Exception e){
+      return new CloudTaskResult(true, e.toString(), e);
+    }
+
+    @Override
+    public boolean isDone() {
+      final long millis = myTaskTime - (System.currentTimeMillis() - myStartDate);
+      try {
+        throwMyExceptionIfNecessary();
+      } catch (ExecutionException | InterruptedException e) {
+        e.printStackTrace();
+      }
+      return millis < 0;
     }
   }
 

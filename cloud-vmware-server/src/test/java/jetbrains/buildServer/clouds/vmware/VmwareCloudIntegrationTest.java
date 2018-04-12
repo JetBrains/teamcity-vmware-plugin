@@ -1285,6 +1285,12 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
     final VmwareCloudImage image = startedInstance.getImage();
     assertContains(image.getInstances(), startedInstance);
     myClient.terminateInstance(startedInstance);
+    new WaitFor(1000) {
+      @Override
+      protected boolean condition() {
+        return !image.getInstances().contains(startedInstance);
+      }
+    };
     assertNotContains(image.getInstances(), startedInstance);
   }
 
