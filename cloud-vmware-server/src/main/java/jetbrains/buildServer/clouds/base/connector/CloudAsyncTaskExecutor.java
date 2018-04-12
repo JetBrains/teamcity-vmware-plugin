@@ -50,7 +50,7 @@ public class CloudAsyncTaskExecutor {
     myExecutingTasks = new ConcurrentHashMap<AsyncCloudTask, TaskCallbackHandler>();
 
     int threadCount = TeamCityProperties.getInteger("teamcity.vmware.profile.async.threads", 2);
-    myExecuteAllAsync = threadCount > 2;
+    myExecuteAllAsync = threadCount > 1;
     myExecutor = ExecutorsFactory.newFixedScheduledDaemonExecutor(prefix, threadCount);
     scheduleWithFixedDelay("Check for tasks", new Runnable() {
       public void run() {
@@ -66,12 +66,12 @@ public class CloudAsyncTaskExecutor {
   public void executeAsync(final AsyncCloudTask operation, final TaskCallbackHandler callbackHandler) {
     if (myExecuteAllAsync) {
       submit(operation.getName(), ()->{
-        operation.executeOrGetResultAsync();
         myExecutingTasks.put(operation, callbackHandler);
+        operation.executeOrGetResult();
       });
     } else {
-      operation.executeOrGetResultAsync();
       myExecutingTasks.put(operation, callbackHandler);
+      operation.executeOrGetResult();
     }
   }
 
@@ -111,11 +111,10 @@ public class CloudAsyncTaskExecutor {
   }
 
   private void processSingleTask(AsyncCloudTask task) {
-    final Future<CloudTaskResult> future = task.executeOrGetResultAsync();
-    if (future.isDone()) {
+    if (task.isDone()) {
       final TaskCallbackHandler handler = myExecutingTasks.get(task);
       try {
-        final CloudTaskResult result = future.get();
+        final CloudTaskResult result = task.executeOrGetResult();
         handler.onComplete();
         if (result.isHasErrors()) {
           handler.onError(result.getThrowable());

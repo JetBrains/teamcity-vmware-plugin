@@ -31,14 +31,16 @@ public interface AsyncCloudTask {
 
   /**
    * Consecutive execution of this method will makes no effect. Only first call of this method starts the executing.
-   * All next calls just return the result's future
-   * @return result's future
+   * All next calls just return the result
+   * @return result
    */
-  Future<CloudTaskResult> executeOrGetResultAsync();
+  CloudTaskResult executeOrGetResult();
 
   @NotNull
   String getName();
 
   @Nullable
   long getStartTime();
+
+  boolean isDone();
 }
