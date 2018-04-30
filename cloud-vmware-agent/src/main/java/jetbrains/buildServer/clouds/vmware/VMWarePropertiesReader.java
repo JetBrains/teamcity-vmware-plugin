@@ -22,17 +22,17 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
+import java.io.File;
 import java.util.Collections;
 import java.util.HashMap;
-import jetbrains.buildServer.CommandLineExecutor;
-import jetbrains.buildServer.serverSide.TeamCityProperties;
-import jetbrains.buildServer.util.StringUtil;
-import java.io.File;
 import java.util.Map;
+import jetbrains.buildServer.CommandLineExecutor;
 import jetbrains.buildServer.ExecResult;
 import jetbrains.buildServer.agent.*;
 import jetbrains.buildServer.clouds.CloudInstanceUserData;
+import jetbrains.buildServer.serverSide.TeamCityProperties;
 import jetbrains.buildServer.util.EventDispatcher;
+import jetbrains.buildServer.util.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -117,7 +117,6 @@ public class VMWarePropertiesReader {
   }
 
   private String getPropertyValue(String propName){
-    final StringBuilder commandOutput = new StringBuilder();
     final GeneralCommandLine commandLine = new GeneralCommandLine();
     if (myVMWareRPCToolPath.contains(" ") && SystemInfo.isMac){
       commandLine.setExePath("/bin/sh");
@@ -131,18 +130,18 @@ public class VMWarePropertiesReader {
       final String param = String.format(specialCommand != null ? specialCommand : "info-get %s", propName);
       commandLine.addParameter(param);
     }
-    commandOutput.append("Will execute: ").append(commandLine.toString()).append("\n");
     final CommandLineExecutor executor = new CommandLineExecutor(commandLine);
     try {
       final int executionTimeoutSeconds = TeamCityProperties.getInteger("teamcity.vsphere.properties.readTimeout.sec", 60);
       final ExecResult result = executor.runProcess(executionTimeoutSeconds);
       if (result != null) {
         final String executionResult = StringUtil.trim(result.getStdout());
-        commandOutput.append("Execution result: ").append(executionResult).append('\n');
-        commandOutput.append("Execution errors: ").append(StringUtil.trim(result.getStderr())).append('\n');
-        commandOutput.append("Exit code:").append(result.getExitCode()).append('\n');
+        final StringBuilder commandOutput = new StringBuilder();
+        commandOutput.append("Stdout: ").append(executionResult).append('\n');
+        commandOutput.append("Stderr: ").append(StringUtil.trim(result.getStderr())).append('\n');
+        commandOutput.append("Exit code:").append(result.getExitCode());
         if (result.getExitCode() != 0){
-          LOG.warn("Got non-zero exit code for '" + commandLine.toString() + "'. Output:\n" + commandOutput.toString());
+          LOG.warn("Got non-zero exit code for '" + commandLine.toString() + "':\n" + commandOutput.toString());
         }
         return executionResult;
       } else {
