@@ -76,7 +76,7 @@
 
 <div class="buttonsWrapper">
   <span id="error_fetch_options" class="error"></span>
-  <div class="hidden options-loader"><i class="icon-refresh icon-spin"></i>&nbsp;Fetching parameter values from VMware vSphere...</div>
+  <div class="hidden options-loader"><i class="icon-refresh icon-spin ring-loader-inline"></i>&nbsp;Fetching parameter values from VMware vSphere...</div>
   <div>
     <forms:button id="vmwareFetchOptionsButton">Check connection / Fetch parameter values</forms:button>
   </div>
@@ -110,8 +110,8 @@
 <input type="hidden" name="prop:helperFieldId" id="helperFieldId">
 <bs:dialog dialogId="VMWareImageDialog" title="Add Image" closeCommand="BS.VMWareImageDialog.close()"
            dialogClass="VMWareImageDialog vmWareSphereOptions" titleId="VMWareImageDialogTitle"
-        ><div class="message-wrapper"><div class="fetchingServerOptions message message_hidden"><i class="icon-refresh icon-spin"></i>Fetching server options...</div>
-        <div class="fetchingSnapshots message message_hidden"><i class="icon-refresh icon-spin"></i>Fetching snapshots...</div>
+        ><div class="message-wrapper"><div class="fetchingServerOptions message message_hidden"><i class="icon-refresh icon-spin ring-loader-inline"></i>Fetching server options...</div>
+        <div class="fetchingSnapshots message message_hidden"><i class="icon-refresh icon-spin ring-loader-inline"></i>Fetching snapshots...</div>
     </div>
     <table class="runnerFormTable paramsTable">
 
