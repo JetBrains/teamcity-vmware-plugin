@@ -88,17 +88,6 @@ public class VmwareCloudImageTest extends BaseTestCase {
     myUpdateTask = new UpdateInstancesTask<VmwareCloudInstance, VmwareCloudImage, VMWareCloudClient>(myApiConnector, myCloudClient, 10*1000, false);
   }
 
-  public void check_clone_name_generation(){
-    for (int i=0; i<10; i++){
-      assertEquals(String.format("%s-%d", myImageDetails.getSourceId(), i + 1), myImage.generateNewVmName());
-    }
-    FileUtil.delete(myIdxStorage);
-    final String newName = myImage.generateNewVmName();
-    assertTrue(newName.startsWith(myImage.getName()));
-    final int i = Integer.parseInt(newName.substring(myImage.getName().length() + 1));
-    assertTrue(i > 100000);
-  }
-
   public void check_can_start_new_instance_limits() throws RemoteException, InterruptedException {
     final CloudInstanceUserData data = new CloudInstanceUserData("aaa", "bbbb", "localhost", 10000l, "profileDescr", Collections.<String, String>emptyMap());
     assertTrue(myImage.canStartNewInstance());
