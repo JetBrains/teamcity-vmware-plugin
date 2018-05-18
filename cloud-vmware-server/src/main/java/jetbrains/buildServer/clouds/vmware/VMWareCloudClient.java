@@ -124,6 +124,9 @@ public class VMWareCloudClient extends AbstractCloudClient<VmwareCloudInstance, 
         LOG.warn("An exception occurred while disposing client", e);
       }
     });
+    myImageMap.forEach((k, v)->{
+      v.storeIdx();
+    });
     super.dispose();
   }
 
