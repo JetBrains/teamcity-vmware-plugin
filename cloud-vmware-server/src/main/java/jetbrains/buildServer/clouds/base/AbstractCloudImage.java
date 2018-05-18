@@ -21,6 +21,7 @@ package jetbrains.buildServer.clouds.base;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import jetbrains.buildServer.clouds.CanStartNewInstanceResult;
 import jetbrains.buildServer.clouds.CloudErrorInfo;
@@ -111,10 +112,14 @@ public abstract class AbstractCloudImage<T extends AbstractCloudInstance, G exte
         final AbstractInstance realInstance = realInstances.get(instanceName);
         final T newInstance = createInstanceFromReal(realInstance);
         newInstance.setStatus(realInstance.getInstanceStatus());
-        myInstances.put(instanceName, newInstance);
+        addInstance(newInstance);
       }
     }
 
+  }
+
+  protected Set<String> getInstanceIds(){
+    return Collections.unmodifiableSet(myInstances.keySet());
   }
 
   public String toString() {

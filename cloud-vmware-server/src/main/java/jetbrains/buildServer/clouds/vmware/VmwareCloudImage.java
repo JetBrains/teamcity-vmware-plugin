@@ -25,6 +25,9 @@ import java.io.File;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.Callable;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import jetbrains.buildServer.clouds.*;
 import jetbrains.buildServer.clouds.base.AbstractCloudImage;
@@ -38,6 +41,7 @@ import jetbrains.buildServer.clouds.vmware.connector.VmwareTaskWrapper;
 import jetbrains.buildServer.clouds.vmware.errors.VmwareCheckedCloudException;
 import jetbrains.buildServer.serverSide.TeamCityProperties;
 import jetbrains.buildServer.util.FileUtil;
+import jetbrains.buildServer.util.IdentifiersGenerator;
 import jetbrains.buildServer.util.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -60,6 +64,8 @@ public class VmwareCloudImage extends AbstractCloudImage<VmwareCloudInstance, Vm
   private final AtomicReference<VmwareSourceState> myActualSourceState;
   private final File myIdxFile;
   private final CloudProfile myProfile;
+  private final AtomicInteger myIdxCounter = new AtomicInteger(0);
+  private final AtomicBoolean myIdxTouched = new AtomicBoolean(false);
 
   public VmwareCloudImage(@NotNull final VMWareApiConnector apiConnector,
                           @NotNull final VmwareCloudImageDetails imageDetails,
@@ -73,13 +79,23 @@ public class VmwareCloudImage extends AbstractCloudImage<VmwareCloudInstance, Vm
     myProfile = profile;
     myActualSourceState = new AtomicReference<>();
     myIdxFile = new File(idxStorage, imageDetails.getSourceId() + ".idx");
-    if (!myIdxFile.exists()){
-      try {
-        FileUtil.writeFileAndReportErrors(myIdxFile, "1");
-      } catch (IOException e) {
-        LOG.warn(String.format("Unable to write idx file '%s': %s", myIdxFile.getAbsolutePath(), e.toString()));
+    try {
+      if (!myIdxFile.exists()) {
+        myIdxCounter.set(1);
+        myIdxTouched.set(true);
+        storeIdx();
+      } else {
+        myIdxCounter.set(Integer.parseInt(FileUtil.readText(myIdxFile)));
       }
+    } catch (IOException e) {
+      LOG.warn(String.format("Unable to write idx file '%s': %s", myIdxFile.getAbsolutePath(), e.toString()));
+      Random r = new Random();
+      myIdxCounter.set(1000000 + r.nextInt(1000000));
     }
+
+    asyncTaskExecutor.scheduleWithFixedDelay("Store idx", ()->{
+      storeIdx();
+    }, 5000, 5000, TimeUnit.MILLISECONDS);
   }
 
   @NotNull
@@ -373,16 +389,11 @@ public class VmwareCloudImage extends AbstractCloudImage<VmwareCloudInstance, Vm
 
 
   protected String generateNewVmName() {
-    int nextIdx;
-    try {
-      nextIdx = Integer.parseInt(FileUtil.readText(myIdxFile));
-      FileUtil.writeFileAndReportErrors(myIdxFile, String.valueOf(nextIdx + 1));
-    } catch (Exception e) {
-      LOG.warn("Will generate random clone index. Reason: unable to read idx file: " + e.toString());
-      Random r = new Random();
-      nextIdx = 100000 + r.nextInt(100000);
-    }
-    final String newVmName = String.format("%s-%d", getId(), nextIdx);
+    String newVmName;
+    do {
+      newVmName = String.format("%s-%d", getId(), myIdxCounter.getAndIncrement());
+      myIdxTouched.set(true);
+    } while (getInstanceIds().contains(newVmName));
     LOG.info("Will create a new VM with name " + newVmName);
     return newVmName;
   }
@@ -430,6 +441,16 @@ public class VmwareCloudImage extends AbstractCloudImage<VmwareCloudInstance, Vm
 
   public CloudProfile getProfile() {
     return myProfile;
+  }
+
+  void storeIdx() {
+    if (myIdxTouched.compareAndSet(true, false)){
+      synchronized (myIdxFile) {
+        try {
+          FileUtil.writeFileAndReportErrors(myIdxFile, String.valueOf(myIdxCounter.get()));
+        } catch (IOException ignored) {}
+      }
+    }
   }
 
   private static class ImageStatusTaskWrapper extends TaskCallbackHandler {
