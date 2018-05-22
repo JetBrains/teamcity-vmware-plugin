@@ -24,6 +24,7 @@ import jetbrains.buildServer.clouds.vmware.stubs.FakeModel;
 import jetbrains.buildServer.clouds.vmware.stubs.FakeVirtualMachine;
 import jetbrains.buildServer.clouds.vmware.tasks.VmwareUpdateTaskManager;
 import jetbrains.buildServer.util.FileUtil;
+import jetbrains.buildServer.util.TestFor;
 import org.jetbrains.annotations.NotNull;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
@@ -76,20 +77,9 @@ public class VmwareCloudImageTest extends BaseTestCase {
     myProfile = VmwareTestUtils.createProfileFromProps(new CloudClientParametersImpl(Collections.emptyMap(), Collections.emptyList()));
     myImage = new VmwareCloudImage(myApiConnector, myImageDetails, myTaskExecutor, myIdxStorage, myProfile);
 
-    myCloudClient = new VMWareCloudClient(myProfile, myApiConnector, new VmwareUpdateTaskManager(), createTempDir());
+    myCloudClient = new VMWareCloudClient(myProfile, myApiConnector, new VmwareUpdateTaskManager(), myIdxStorage);
     myCloudClient.populateImagesData(Collections.singletonList(myImageDetails));
     myUpdateTask = new UpdateInstancesTask<VmwareCloudInstance, VmwareCloudImage, VMWareCloudClient>(myApiConnector, myCloudClient, 10*1000, false);
-  }
-
-  public void check_clone_name_generation(){
-    for (int i=0; i<10; i++){
-      assertEquals(String.format("%s-%d", myImageDetails.getSourceId(), i + 1), myImage.generateNewVmName());
-    }
-    FileUtil.delete(myIdxStorage);
-    final String newName = myImage.generateNewVmName();
-    assertTrue(newName.startsWith(myImage.getName()));
-    final int i = Integer.parseInt(newName.substring(myImage.getName().length() + 1));
-    assertTrue(i > 100000);
   }
 
   public void check_can_start_new_instance_limits() throws RemoteException, InterruptedException {
@@ -156,6 +146,63 @@ public class VmwareCloudImageTest extends BaseTestCase {
 
     assertTrue("Should have stopped if can't reconfigure", stopInstanceCalled.get());
   }
+
+  @TestFor(issues = "TW-54729")
+  public void check_name_generator_doesnt_use_disk() throws IOException, InterruptedException {
+    final Set<String> generatedNames = new HashSet<>();
+    Thread nameGenerator = new Thread(()->{
+      for (int i=0; i<10000; i++){
+        if (Thread.currentThread().isInterrupted())
+          break;
+        generatedNames.add(myImage.generateNewVmName());
+      }
+    });
+    nameGenerator.start();
+    new WaitFor(500){
+
+      @Override
+      protected boolean condition() {
+        return generatedNames.size() == 10000;
+      }
+    };
+    assertEquals(10000, generatedNames.size());
+    nameGenerator.join();
+    assertEquals("1", FileUtil.readText(new File(myIdxStorage, myImage.getImageDetails().getSourceId() + ".idx")));
+    myImage.storeIdx();
+    assertEquals("10001", FileUtil.readText(new File(myIdxStorage, myImage.getImageDetails().getSourceId() + ".idx")));
+  }
+
+  public void should_generate_unique_name() throws IOException {
+    VmwareCloudImage sameImage = new VmwareCloudImage(myApiConnector, myImageDetails, myTaskExecutor, myIdxStorage, myProfile){
+      @Override
+      protected Set<String> getInstanceIds() {
+        return createSet("imageNickname-1", "imageNickname-3");
+      }
+    };
+    assertEquals("1", FileUtil.readText(new File(myIdxStorage, myImage.getImageDetails().getSourceId() + ".idx")));
+    assertEquals("imageNickname-2", sameImage.generateNewVmName());
+    assertEquals("imageNickname-4", sameImage.generateNewVmName());
+
+  }
+
+  public void should_store_idx_on_dispose() throws IOException {
+    new WaitFor(500){
+
+      @Override
+      protected boolean condition() {
+        return myCloudClient.isInitialized();
+      }
+    };
+    VmwareCloudImage img = myCloudClient.getImages().iterator().next();
+    assertEquals("imageNickname-1", img.generateNewVmName());
+    File file = new File(myIdxStorage, img.getImageDetails().getSourceId() + ".idx");
+    System.out.println("File: " + file.getAbsolutePath());
+    assertEquals("1", FileUtil.readText(file));
+    myCloudClient.dispose();
+    assertEquals( "2", FileUtil.readText(file));
+  }
+
+
 
   @AfterMethod
   public void tearDown() throws Exception {
