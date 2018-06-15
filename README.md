@@ -7,7 +7,7 @@ Before you can start using integration, you need to create a Virtual Machine ins
 TeamCity Build Agent must be installed and set to start automatically.
 
 ##### Build instructions
-The plugin is bundled since TeamCity 10.0. The recent version is described in the [online TeamCity documentation](http://confluence.jetbrains.com/display/TCD10/Setting+Up+TeamCity+for+VMware+vSphere+and+vCenter).
+The plugin is bundled since TeamCity 10.0. The recent version is described in the [online TeamCity documentation](http://confluence.jetbrains.com/display/TCDL/Setting+Up+TeamCity+for+VMware+vSphere+and+vCenter).
 
 Currently, the plugin is not buildable standalone. If you'd like to customize your plugin, please use the 9.0.x branch.
 It's the branch the builds on teamcity.jetbrains.com are run against.
