@@ -963,8 +963,8 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
 
         public String waitForTaskInternal(boolean isForce) throws RemoteException, InterruptedException {
           if (waitForStatus(guestShutdownTimeout, checkInstanceStatusDelay) != InstanceStatus.STOPPED) {
-            myInfo.setState(TaskInfoState.error);
             if (isForce) {
+              myInfo.setState(TaskInfoState.error);
             } else {
               forceShutdown(vm);
               return waitForTaskInternal(true);
