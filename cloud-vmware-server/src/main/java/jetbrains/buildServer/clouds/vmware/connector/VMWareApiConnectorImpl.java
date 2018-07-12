@@ -79,7 +79,7 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
   private static final String SPEC_RESPOOL = "Resources";
 
 
-  private static final long SHUTDOWN_TIMEOUT = 60 * 1000;
+  private static final long GUEST_SHUTDOWN_TIMEOUT = 60 * 1000;
 
   private final URL myInstanceURL;
   private final String myUsername;
@@ -951,14 +951,24 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
       guestShutdown(instance, vm);
       final long shutdownStartTime = System.currentTimeMillis();
       return new Task(null, null){
+        private final long guestShutdownTimeout = getGuestShutdownTimeout();
+        private final long checkInstanceStatusDelay = getCheckInstanceStatusDelay();
         private final TaskInfo myInfo = new TaskInfo();
 
         {myInfo.setState(TaskInfoState.running);}
 
-        @Override
         public String waitForTask() throws RemoteException, InterruptedException {
-          if (waitForStatus(shutdownStartTime, 5000) != InstanceStatus.STOPPED) {
-            myInfo.setState(TaskInfoState.error);
+          return waitForTaskInternal(false);
+        }
+
+        public String waitForTaskInternal(boolean isForce) throws RemoteException, InterruptedException {
+          if (waitForStatus(guestShutdownTimeout, checkInstanceStatusDelay) != InstanceStatus.STOPPED) {
+            if (isForce) {
+              myInfo.setState(TaskInfoState.error);
+            } else {
+              forceShutdown(vm);
+              return waitForTaskInternal(true);
+            }
           } else {
             myInfo.setState(TaskInfoState.success);
           }
@@ -970,7 +980,7 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
           if (runningDelayInMillSecond >= (System.currentTimeMillis() -  shutdownStartTime)){
             return waitForTask();
           } else {
-            final InstanceStatus instanceStatus = waitForStatus(runningDelayInMillSecond, 5000);
+            final InstanceStatus instanceStatus = waitForStatus(runningDelayInMillSecond, checkInstanceStatusDelay);
             if (instanceStatus == InstanceStatus.STOPPED){
               myInfo.setState(TaskInfoState.success);
             }
@@ -981,7 +991,7 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
         @Override
         public TaskInfo getTaskInfo() throws RemoteException {
           try {
-            final InstanceStatus instanceStatus = waitForStatus(0, 5000);
+            final InstanceStatus instanceStatus = waitForStatus(0, checkInstanceStatusDelay);
             if (instanceStatus == InstanceStatus.STOPPED){
               myInfo.setState(TaskInfoState.success);
             }
@@ -996,7 +1006,7 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
           try {
             VirtualMachine vmCopy = findEntityByIdNameOld(instance.getInstanceId(), VirtualMachine.class).getFirst();
             final long startHere = System.currentTimeMillis();
-            while (getInstanceStatus(vmCopy) != InstanceStatus.STOPPED && (System.currentTimeMillis() - shutdownStartTime) < SHUTDOWN_TIMEOUT) {
+            while (getInstanceStatus(vmCopy) != InstanceStatus.STOPPED && (System.currentTimeMillis() - shutdownStartTime) < guestShutdownTimeout) {
               if ((System.currentTimeMillis() - startHere) >= maxWaitTime) {
                 break;
               }
@@ -1022,6 +1032,14 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
         throw new VmwareCheckedCloudException(e1);
       }
     }
+  }
+
+  private static long getCheckInstanceStatusDelay() {
+    return TeamCityProperties.getIntervalMilliseconds("teamcity.vmware.instance.status.check.delay", 5000);
+  }
+
+  private static long getGuestShutdownTimeout() {
+    return TeamCityProperties.getIntervalMilliseconds("teamcity.vmware.guest.shutdown.timeout", GUEST_SHUTDOWN_TIMEOUT);
   }
 
   private void guestShutdown(final VmwareCloudInstance instance, final VirtualMachine vm) throws RemoteException {

@@ -7,7 +7,10 @@ import java.util.*;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
+import jetbrains.buildServer.serverSide.TeamCityProperties;
 import org.jetbrains.annotations.NotNull;
+
+import static jetbrains.buildServer.clouds.vmware.stubs.FakeModel.FAKE_MODEL_THREAD_FACTORY;
 
 /**
  * @author Sergey.Pak
@@ -16,7 +19,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public class FakeVirtualMachine extends VirtualMachine {
 
-  private static final int GUEST_SHUTDOWN_TIMEOUT = 600;
+  private static final int GUEST_SHUTDOWN_SLEEP_INTERVAL = 600;
   private String myName;
   private VirtualMachineRuntimeInfo myRuntimeInfo;
   private GuestInfo myGuestInfo;
@@ -130,6 +133,7 @@ public class FakeVirtualMachine extends VirtualMachine {
   @Override
   public Task cloneVM_Task(final Folder folder, final String name, final VirtualMachineCloneSpec spec)
     throws RemoteException {
+    FakeModel.instance().publishEvent(getName(), "cloneVM_Task");
     final FakeVirtualMachine newVm = FakeModel.instance().addVM(name, false, spec);
     newVm.setParentFolder(folder.getName());
     final VirtualMachineConfigInfo oldConfig = newVm.myConfigInfoRef.get();
@@ -155,6 +159,7 @@ public class FakeVirtualMachine extends VirtualMachine {
 
   @Override
   public Task powerOffVM_Task() throws RemoteException {
+    FakeModel.instance().publishEvent(getName(), "powerOffVM_Task");
     if (!myIsStarted.get()){
       throw new RemoteException("Already stopped");
     }
@@ -164,6 +169,8 @@ public class FakeVirtualMachine extends VirtualMachine {
 
   @Override
   public Task powerOnVM_Task(final HostSystem host) throws RemoteException {
+    FakeModel.instance().publishEvent(getName(), "powerOnVM_Task");
+
     if (myIsStarted.get()){
       throw new RemoteException("Already started");
     }
@@ -189,12 +196,14 @@ public class FakeVirtualMachine extends VirtualMachine {
 
   @Override
   public Task destroy_Task() throws RemoteException {
+    FakeModel.instance().publishEvent(getName(), "destroy_Task");
     FakeModel.instance().removeVM(getName());
     return conditionalTask();
   }
 
   @Override
   public Task reconfigVM_Task(final VirtualMachineConfigSpec spec) throws RemoteException {
+    FakeModel.instance().publishEvent(getName(), "reconfigVM_Task");
     final OptionValue[] extraConfig = spec.getExtraConfig();
     for (OptionValue opt : extraConfig) {
       myCustomUserData.put(opt.getKey(), opt.getValue().toString());
@@ -204,13 +213,15 @@ public class FakeVirtualMachine extends VirtualMachine {
 
   @Override
   public void shutdownGuest() throws RemoteException {
+    FakeModel.instance().publishEvent(getName(), "shutdownGuest");
     if (myGuestInfo != null) {
-      try {
-        Thread.sleep(GUEST_SHUTDOWN_TIMEOUT);
-        updateVersion();
-        myIsStarted.set(false);
-      } catch (InterruptedException e) {
-      }
+      FAKE_MODEL_THREAD_FACTORY.newThread(() -> {
+        try {
+          Thread.sleep(TeamCityProperties.getIntervalMilliseconds("test.guest.shutdown.sleep.interval", GUEST_SHUTDOWN_SLEEP_INTERVAL));
+          updateVersion();
+          myIsStarted.set(false);
+        } catch (InterruptedException e) {}
+      }).start();
     } else {
       throw new RemoteException("no guest tools available");
     }

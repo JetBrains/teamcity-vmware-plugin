@@ -1,16 +1,19 @@
 package jetbrains.buildServer.clouds.vmware.stubs;
 
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Trinity;
 import com.vmware.vim25.CustomizationSpec;
 import com.vmware.vim25.OptionValue;
 import com.vmware.vim25.VirtualMachineCloneSpec;
 import com.vmware.vim25.VirtualMachineRelocateDiskMoveOptions;
 import com.vmware.vim25.mo.ResourcePool;
-import com.vmware.vim25.mo.VirtualMachine;
 import java.util.Collections;
-import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.ThreadFactory;
 
 /**
  * @author Sergey.Pak
@@ -19,6 +22,12 @@ import java.util.concurrent.ConcurrentMap;
  */
 public class FakeModel {
   private static final FakeModel myInstance = new FakeModel();
+  public static final ThreadFactory FAKE_MODEL_THREAD_FACTORY = r -> {
+    Thread th = new Thread(r);
+    th.setDaemon(true);
+    return th;
+  };
+
   public static FakeModel instance() {return myInstance;}
 
   private final ConcurrentMap<String, FakeFolder> myFolders = new ConcurrentHashMap<>();
@@ -26,6 +35,7 @@ public class FakeModel {
   private final ConcurrentMap<String, FakeVirtualMachine> myVms = new ConcurrentHashMap<String, FakeVirtualMachine>();
   private final ConcurrentMap<String, FakeDatacenter> myDatacenters = new ConcurrentHashMap<String, FakeDatacenter>();
   private final ConcurrentMap<String, CustomizationSpec> myCustomizationSpecs = new ConcurrentHashMap<>();
+  private final List<Trinity<String, String, Long>> myEvents = new CopyOnWriteArrayList<>();
 
   public Map<String, FakeFolder> getFolders() {
     return myFolders;
@@ -53,6 +63,10 @@ public class FakeModel {
 
   public ResourcePool getResourcePool(String name){
     return myResourcePools.get(name);
+  }
+
+  public List<Trinity<String, String, Long>> getEvents() {
+    return myEvents;
   }
 
   public FakeVirtualMachine getVirtualMachine(String name){
@@ -159,5 +173,10 @@ public class FakeModel {
     myFolders.clear();
     myVms.clear();
     myResourcePools.clear();
+    myEvents.clear();
+  }
+
+  public void publishEvent(String entityName, String actionName){
+    myEvents.add(Trinity.create(entityName, actionName, System.currentTimeMillis()));
   }
 }

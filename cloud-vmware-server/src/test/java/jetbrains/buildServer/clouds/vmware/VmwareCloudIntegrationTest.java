@@ -12,6 +12,7 @@ import java.rmi.RemoteException;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Lock;
@@ -79,6 +80,7 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
     myIdxStorage = createTempDir();
 
     setInternalProperty("teamcity.vsphere.instance.status.update.delay.ms", "50");
+    setInternalProperty("teamcity.vmware.instance.status.check.delay", "50");
     final String json = "[{sourceVmName:'image1', behaviour:'START_STOP'}," +
                         "{sourceVmName:'image2',snapshot:'snap*',folder:'cf',pool:'rp',maxInstances:3,behaviour:'ON_DEMAND_CLONE', " +
                         "customizationSpec:'someCustomization'}," +
@@ -313,6 +315,14 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
     assertEquals("success", powerOnTask.waitForTask());
     Thread.sleep(2000); // to ensure that version will change
     FakeModel.instance().getVirtualMachine("image1").shutdownGuest();
+    new WaitFor(1000){
+
+      @Override
+      protected boolean condition() {
+        return FakeModel.instance().getVirtualMachine("image1").getRuntime().getPowerState() == VirtualMachinePowerState.poweredOff;
+      }
+    }.assertCompleted("Must shutdown in time");
+
     final String updatedChangeVersion = FakeModel.instance().getVirtualMachine("image1").getConfig().getChangeVersion();
     assertNotSame(originalChangeVersion, updatedChangeVersion);
 
@@ -1284,6 +1294,44 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
     assertNotContains(image.getInstances(), startedInstance);
   }
 
+  @TestFor(issues = "TW-55838")
+  public void should_poweroff_when_instance_doesnt_stop_in_time() throws MalformedURLException {
+    setInternalProperty("teamcity.vmware.guest.shutdown.timeout", "1000");
+    final VmwareCloudInstance startedInstance = startNewInstanceAndWait("image_template");
+    final FakeVirtualMachine vm = FakeModel.instance().getVirtualMachine(startedInstance.getName());
+    final AtomicLong powerOffCalled = new AtomicLong();
+    final AtomicLong guestShutdownCalled = new AtomicLong();
+    assertNotNull(vm);
+    FakeModel.instance().getEvents().forEach(event->{
+      if (event.second.equals("powerOffVM_Task") && event.first.equals(startedInstance.getName())){
+        assertTrue(powerOffCalled.compareAndSet(0, event.third));
+      }
+      if (event.second.equals("shutdownGuest") && event.first.equals(startedInstance.getName())){
+        assertTrue(guestShutdownCalled.compareAndSet(0, event.third));
+      }
+    });
+    assertEquals(0, powerOffCalled.get() + guestShutdownCalled.get());
+    setInternalProperty("test.guest.shutdown.sleep.interval", "3000");
+    myClient.terminateInstance(startedInstance);
+    new WaitFor(2*1000){
+
+      @Override
+      protected boolean condition() {
+        return FakeModel.instance().getVirtualMachine(startedInstance.getName()) == null;
+      }
+    };
+    FakeModel.instance().getEvents().forEach(event->{
+      if (event.second.equals("powerOffVM_Task") && event.first.equals(startedInstance.getName())){
+        assertTrue(powerOffCalled.compareAndSet(0, event.third));
+      }
+      if (event.second.equals("shutdownGuest") && event.first.equals(startedInstance.getName())){
+        assertTrue(guestShutdownCalled.compareAndSet(0, event.third));
+      }
+    });
+    assertTrue(guestShutdownCalled.get() > 0);
+    long diff = powerOffCalled.get() - guestShutdownCalled.get();
+    assertTrue( diff > 0 && diff < 2000 );
+  }
   /*
   *
   *
@@ -1490,7 +1538,6 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
 
   @AfterMethod
   public void tearDown() throws Exception {
-    removeInternalProperty("teamcity.vsphere.instance.status.update.delay.ms");
     if (myClient != null) {
       myClient.dispose();
       myClient = null;

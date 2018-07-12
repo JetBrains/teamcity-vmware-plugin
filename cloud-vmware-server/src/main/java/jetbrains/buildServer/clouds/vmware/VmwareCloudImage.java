@@ -212,8 +212,9 @@ public class VmwareCloudImage extends AbstractCloudImage<VmwareCloudInstance, Vm
             }
           }
 
-          LOG.info("Should clone into " + instance.getName() + ": " + willClone);
-          if (willClone && myImageDetails.getMaxInstances() < getInstances().size()) {
+          final int instancesCount = getInstances().size();
+          LOG.info("Should clone into " + instance.getName() + ": " + willClone + ". Already have instances: " + instancesCount);
+          if (willClone && myImageDetails.getMaxInstances() < instancesCount) {
             LOG.info("Cannot clone - instances limit exceeded. Will try to clean up some old instances");
             cleanupOldInstances();
             // don't attempt to start so far
