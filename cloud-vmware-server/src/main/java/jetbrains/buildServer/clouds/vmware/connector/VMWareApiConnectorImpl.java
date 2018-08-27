@@ -1199,6 +1199,9 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
         if (myInstancesProvider != null) {
           final Collection<VmwareCloudInstance> instances = image.getInstances();
           for (VmwareCloudInstance instance : instances) {
+            if (!instance.isInPermanentStatus()) // instance is starting or stopping
+              continue;
+
             final VmwareSourceState vmSourceState = instance.getSourceState();
             if (!actualState.equals(vmSourceState)) {
               LOG.info("marking instance expired: " + actualState.getDiffMessage(vmSourceState));

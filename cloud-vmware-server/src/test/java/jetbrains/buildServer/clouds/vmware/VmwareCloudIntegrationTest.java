@@ -1332,6 +1332,78 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
     long diff = powerOffCalled.get() - guestShutdownCalled.get();
     assertTrue( diff > 0 && diff < 2000 );
   }
+
+  @TestFor(issues = "TW-56111")
+  public void dont_check_not_started_instances_for_expiration() throws MalformedURLException {
+    final Map<String, CloudInstance> instancesMarkedExpired = new HashMap<String, CloudInstance>();
+    final CloudInstancesProvider instancesProviderStub = new CloudInstancesProvider() {
+      public void iterateInstances(@NotNull final CloudInstancesProviderCallback callback) {
+        throw new UnsupportedOperationException(".iterateInstances");
+      }
+
+      public void iterateInstances(@NotNull final CloudInstancesProviderExtendedCallback callback) {
+        throw new UnsupportedOperationException(".iterateInstances");
+      }
+
+      public void iterateProfileInstances(@NotNull final CloudProfile profile, @NotNull final CloudInstancesProviderCallback callback) {
+        throw new UnsupportedOperationException(".iterateProfileInstances");
+      }
+
+      public void markInstanceExpired(@NotNull final CloudProfile profile, @NotNull final CloudInstance instance) {
+        instancesMarkedExpired.put(instance.getInstanceId(),instance );
+      }
+
+      public boolean isInstanceExpired(@NotNull final CloudProfile profile, @NotNull final CloudInstance instance) {
+        return instancesMarkedExpired.containsKey(instance.getInstanceId());
+      }
+    };
+    final CountDownLatch latch = new CountDownLatch(1);
+    myFakeApi = new FakeApiConnector(null, null, instancesProviderStub){
+      @Override
+      public Task reconfigureInstance(@NotNull final VmwareCloudInstance instance, @NotNull final String agentName, @NotNull final CloudInstanceUserData userData)
+        throws VmwareCheckedCloudException {
+        try {
+          latch.await();
+        } catch (InterruptedException e) {
+          fail("Should have waited");
+        }
+        return super.reconfigureInstance(instance, agentName, userData);
+      }
+    };
+    recreateClient(250);
+
+    final VmwareCloudInstance instance = startNewInstance("image2");
+    new WaitFor(1000) {
+      @Override
+      protected boolean condition() {
+        final FakeVirtualMachine vm = FakeModel.instance().getVirtualMachine(instance.getName());
+        return vm != null && vm.getRuntime().getPowerState() == VirtualMachinePowerState.poweredOn;
+      }
+    };
+    assertEquals(VirtualMachinePowerState.poweredOn, FakeModel.instance().getVirtualMachine(instance.getName()).getRuntime().getPowerState());
+
+    final FakeVirtualMachine image2 = FakeModel.instance().getVirtualMachine("image2");
+    final ManagedObjectReference mor = new ManagedObjectReference();
+    mor.setVal("vm-123456");
+    mor.setType("VirtualMachine");
+    image2.setMOR(mor);
+
+    myFakeApi.checkImage(getImageByName("image2"));
+
+    assertFalse(instancesProviderStub.isInstanceExpired(myProfile, instance));
+    latch.countDown();
+    new WaitFor(1000){
+
+      @Override
+      protected boolean condition() {
+        return instance.getStatus() == InstanceStatus.RUNNING;
+      }
+    };
+    myFakeApi.checkImage(getImageByName("image2"));
+    assertTrue(instancesProviderStub.isInstanceExpired(myProfile, instance));
+
+  }
+
   /*
   *
   *
@@ -1427,7 +1499,18 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
   private VmwareCloudInstance startNewInstanceAndCheck(String imageName, Map<String, String> parameters, boolean instanceShouldStart) {
     return startNewInstanceAndCheck(myClient, imageName, parameters, instanceShouldStart);
   }
-  private VmwareCloudInstance startNewInstanceAndCheck(VMWareCloudClient client, String imageName, Map<String, String> parameters, boolean instanceShouldStart) {
+  private VmwareCloudInstance startNewInstanceAndCheck(VMWareCloudClient client,
+                                                       String imageName,
+                                                       Map<String, String> parameters,
+                                                       boolean instanceShouldStart) {
+    return startNewInstanceAndCheck(client, imageName, parameters, instanceShouldStart, true);
+  }
+
+  private VmwareCloudInstance startNewInstanceAndCheck(VMWareCloudClient client,
+                                                       String imageName,
+                                                       Map<String, String> parameters,
+                                                       boolean instanceShouldStart,
+                                                       boolean waitForInstance2Start) {
     final CloudInstanceUserData userData = createUserData(imageName + "_agent", parameters);
     final VmwareCloudImage image = getImageByName(client, imageName);
     final Collection<VmwareCloudInstance> runningInstances = image
@@ -1439,6 +1522,9 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
     final VmwareCloudInstance vmwareCloudInstance = client.startNewInstance(image, userData);
     final boolean ready = vmwareCloudInstance.isReady();
     System.out.printf("Instance '%s'. Ready: %b%n", vmwareCloudInstance.getName(), ready);
+    if (!waitForInstance2Start)
+      return vmwareCloudInstance;
+
     final WaitFor waitFor = new WaitFor(2 * 1000) {
       @Override
       protected boolean condition() {
@@ -1469,6 +1555,10 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
       assertFalse(waitFor.isConditionRealized());
       return null;
     }
+  }
+
+  private VmwareCloudInstance startNewInstance(String imageName){
+    return startNewInstanceAndCheck(myClient, imageName, createMap(), true, false);
   }
 
   private static String getExtraConfigValue(final OptionValue[] extraConfig, final String key) {
