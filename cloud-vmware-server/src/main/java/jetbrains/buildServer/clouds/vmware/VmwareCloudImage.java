@@ -21,6 +21,7 @@ package jetbrains.buildServer.clouds.vmware;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.Function;
 import com.vmware.vim25.mo.Task;
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
@@ -87,10 +88,9 @@ public class VmwareCloudImage extends AbstractCloudImage<VmwareCloudInstance, Vm
       } else {
         myIdxCounter.set(Integer.parseInt(FileUtil.readText(myIdxFile)));
       }
-    } catch (IOException e) {
-      LOG.warn(String.format("Unable to write idx file '%s': %s", myIdxFile.getAbsolutePath(), e.toString()));
-      Random r = new Random();
-      myIdxCounter.set(1000000 + r.nextInt(1000000));
+    } catch (Exception e) {
+      LOG.warnAndDebugDetails(String.format("Unable to process idx file '%s'. Will reset the index for " + imageDetails.getSourceId(), myIdxFile.getAbsolutePath()), e);
+      myIdxCounter.set(1);
     }
 
     asyncTaskExecutor.scheduleWithFixedDelay("Store idx", ()->{
@@ -448,7 +448,7 @@ public class VmwareCloudImage extends AbstractCloudImage<VmwareCloudInstance, Vm
     if (myIdxTouched.compareAndSet(true, false)){
       synchronized (myIdxFile) {
         try {
-          FileUtil.writeFileAndReportErrors(myIdxFile, String.valueOf(myIdxCounter.get()));
+          FileUtil.writeViaTmpFile(myIdxFile, new ByteArrayInputStream(String.valueOf(myIdxCounter.get()).getBytes()), FileUtil.IOAction.DO_NOTHING);
         } catch (IOException ignored) {}
       }
     }

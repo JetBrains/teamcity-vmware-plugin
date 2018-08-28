@@ -207,6 +207,20 @@ public class VmwareCloudImageTest extends BaseTestCase {
     assertEquals( "2", FileUtil.readText(file));
   }
 
+  public void reset_idx_when_file_unreadable() throws IOException {
+    final File idxFile = new File(myIdxStorage, myImage.getImageDetails().getSourceId() + ".idx");
+    FileUtil.writeFileAndReportErrors(idxFile, "aaaaaaaaaasdasfdfsgfsgeaweewq");
+    VmwareCloudImage sameImage = new VmwareCloudImage(myApiConnector, myImageDetails, myTaskExecutor, myIdxStorage, myProfile){
+      @Override
+      protected Set<String> getInstanceIds() {
+        return createSet("imageNickname-1", "imageNickname-3");
+      }
+    };
+    assertEquals("imageNickname-2", sameImage.generateNewVmName());
+    assertEquals("imageNickname-4", sameImage.generateNewVmName());
+
+  }
+
   @AfterMethod
   public void tearDown() throws Exception {
     super.tearDown();
