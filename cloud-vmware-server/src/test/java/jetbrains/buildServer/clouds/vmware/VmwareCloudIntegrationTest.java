@@ -1404,6 +1404,51 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
 
   }
 
+  @TestFor(issues = "TW-56632")
+  public void should_poweroff_and_delete_when_instance_doesnt_stop_in_time(){
+    setInternalProperty("teamcity.vmware.guest.shutdown.timeout.seconds", "1");
+    final VmwareCloudInstance startedInstance = startNewInstanceAndWait("image_template");
+    final FakeVirtualMachine vm = FakeModel.instance().getVirtualMachine(startedInstance.getName());
+    final AtomicLong powerOffCalled = new AtomicLong();
+    final AtomicLong guestShutdownCalled = new AtomicLong();
+    final AtomicLong destroyCalled = new AtomicLong();
+    assertNotNull(vm);
+    FakeModel.instance().getEvents().forEach(event->{
+      if (event.second.equals("powerOffVM_Task") && event.first.equals(startedInstance.getName())){
+        assertTrue(powerOffCalled.compareAndSet(0, event.third));
+      }
+      if (event.second.equals("shutdownGuest") && event.first.equals(startedInstance.getName())){
+        assertTrue(guestShutdownCalled.compareAndSet(0, event.third));
+      }
+    });
+    assertEquals(0, powerOffCalled.get() + guestShutdownCalled.get());
+    setInternalProperty("test.guest.shutdown.sleep.interval", "3000");
+    myClient.terminateInstance(startedInstance);
+    new WaitFor(2*1000){
+
+      @Override
+      protected boolean condition() {
+        return FakeModel.instance().getVirtualMachine(startedInstance.getName()) == null;
+      }
+    };
+    assertTrue(FakeModel.instance().getVirtualMachine(startedInstance.getName()) == null);
+    FakeModel.instance().getEvents().forEach(event->{
+      if (event.second.equals("powerOffVM_Task") && event.first.equals(startedInstance.getName())){
+        assertTrue(powerOffCalled.compareAndSet(0, event.third));
+      }
+      if (event.second.equals("shutdownGuest") && event.first.equals(startedInstance.getName())){
+        assertTrue(guestShutdownCalled.compareAndSet(0, event.third));
+      }
+      if (event.second.equals("destroy_Task") && event.first.equals(startedInstance.getName())){
+        assertTrue(destroyCalled.compareAndSet(0, event.third));
+      }
+    });
+    assertTrue(guestShutdownCalled.get() > 0);
+    long diff = powerOffCalled.get() - guestShutdownCalled.get();
+    assertTrue( diff > 0 && diff < 2000 );
+    assertTrue( destroyCalled.get() > 0 );
+  }
+
   /*
   *
   *
