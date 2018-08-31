@@ -32,6 +32,7 @@ import java.net.UnknownHostException;
 import java.rmi.RemoteException;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import java.util.regex.Matcher;
@@ -953,7 +954,7 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
       return new Task(null, null){
         private final long guestShutdownTimeout = getGuestShutdownTimeout();
         private final long checkInstanceStatusDelay = getCheckInstanceStatusDelay();
-        private final TaskInfo myInfo = new TaskInfo();
+        private volatile TaskInfo myInfo = new TaskInfo();
 
         {myInfo.setState(TaskInfoState.running);}
 
@@ -962,12 +963,15 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
         }
 
         public String waitForTaskInternal(boolean isForce) throws RemoteException, InterruptedException {
-          if (waitForStatus(guestShutdownTimeout, checkInstanceStatusDelay) != InstanceStatus.STOPPED) {
+          final InstanceStatus status = waitForStatus(guestShutdownTimeout, checkInstanceStatusDelay);
+          if (status != InstanceStatus.STOPPED) {
             if (isForce) {
               myInfo.setState(TaskInfoState.error);
             } else {
-              forceShutdown(vm);
-              return waitForTaskInternal(true);
+              final Task task = forceShutdown(vm);
+              task.waitForTask();
+              myInfo = task.getTaskInfo();
+              //return waitForTaskInternal(true);
             }
           } else {
             myInfo.setState(TaskInfoState.success);

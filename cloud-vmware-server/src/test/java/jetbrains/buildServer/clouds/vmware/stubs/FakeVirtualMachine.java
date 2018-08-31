@@ -20,6 +20,7 @@ import static jetbrains.buildServer.clouds.vmware.stubs.FakeModel.FAKE_MODEL_THR
 public class FakeVirtualMachine extends VirtualMachine {
 
   private static final int GUEST_SHUTDOWN_SLEEP_INTERVAL = 600;
+  private static final int FORCE_SHUTDOWN_SLEEP_INTERVAL = 600;
   private String myName;
   private VirtualMachineRuntimeInfo myRuntimeInfo;
   private GuestInfo myGuestInfo;
@@ -163,8 +164,31 @@ public class FakeVirtualMachine extends VirtualMachine {
     if (!myIsStarted.get()){
       throw new RemoteException("Already stopped");
     }
-    myIsStarted.set(false);
-    return conditionalTask();
+    final TaskInfo taskInfo = new TaskInfo();
+
+    final Thread thread = FAKE_MODEL_THREAD_FACTORY.newThread(() -> {
+      try {
+        taskInfo.setState(TaskInfoState.running);
+        Thread.sleep(TeamCityProperties.getIntervalMilliseconds("test.force.shutdown.sleep.interval", FORCE_SHUTDOWN_SLEEP_INTERVAL));
+        updateVersion();
+        myIsStarted.set(false);
+        taskInfo.setState(TaskInfoState.success);
+      } catch (InterruptedException e) {
+      }
+    });
+    thread.start();
+    return new Task(null, null){
+      @Override
+      public TaskInfo getTaskInfo() throws InvalidProperty, RuntimeFault, RemoteException {
+        return taskInfo;
+      }
+
+      @Override
+      public String waitForTask() throws RuntimeFault, RemoteException, InterruptedException {
+        thread.join();
+        return taskInfo.getState().name();
+      }
+    };
   }
 
   @Override
@@ -217,7 +241,7 @@ public class FakeVirtualMachine extends VirtualMachine {
     if (myGuestInfo != null) {
       FAKE_MODEL_THREAD_FACTORY.newThread(() -> {
         try {
-          Thread.sleep(TeamCityProperties.getIntervalMilliseconds("test.guest.shutdown.sleep.interval", GUEST_SHUTDOWN_SLEEP_INTERVAL));
+            Thread.sleep(TeamCityProperties.getIntervalMilliseconds("test.guest.shutdown.sleep.interval", GUEST_SHUTDOWN_SLEEP_INTERVAL));
           updateVersion();
           myIsStarted.set(false);
         } catch (InterruptedException e) {}
