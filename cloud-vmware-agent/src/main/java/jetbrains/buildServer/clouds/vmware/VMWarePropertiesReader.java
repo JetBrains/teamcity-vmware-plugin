@@ -23,12 +23,15 @@ import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import java.io.File;
+import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import jetbrains.buildServer.CommandLineExecutor;
 import jetbrains.buildServer.ExecResult;
 import jetbrains.buildServer.agent.*;
+import jetbrains.buildServer.agent.impl.config.BuildAgentConfigurationImpl;
+import jetbrains.buildServer.agent.impl.config.BuildAgentConfigurationPersister;
 import jetbrains.buildServer.clouds.CloudInstanceUserData;
 import jetbrains.buildServer.serverSide.TeamCityProperties;
 import jetbrains.buildServer.util.EventDispatcher;
@@ -62,7 +65,8 @@ public class VMWarePropertiesReader {
 
 
   public VMWarePropertiesReader(final BuildAgentConfigurationEx agentConfiguration,
-                                @NotNull EventDispatcher<AgentLifeCycleListener> events) {
+                                @NotNull EventDispatcher<AgentLifeCycleListener> events,
+                                @NotNull final BuildAgentConfigurationPersister configurationPersister) {
     LOG.info("VSphere plugin initializing...");
     myAgentConfiguration = agentConfiguration;
     myVMWareRPCToolPath = getToolPath(myAgentConfiguration);
@@ -111,6 +115,15 @@ public class VMWarePropertiesReader {
               myAgentConfiguration.addConfigurationParameter(entry.getKey(), entry.getValue());
             }
           }
+        }
+        final File propertiesFile = ((BuildAgentConfigurationImpl)myAgentConfiguration).getPropertiesFile();
+        final HashMap<String, String> toUpdate = new HashMap<String, String>();
+        toUpdate.put("serverUrl", serverUrl);
+        toUpdate.put("name", instanceName);
+        try {
+          configurationPersister.updatePropertiesFile(propertiesFile, toUpdate);
+        } catch (IOException e) {
+          LOG.warn("Unable to update name and actual server URL ('"+serverUrl+"') in '" + propertiesFile.getAbsolutePath() + "'", e);
         }
       }
     });
