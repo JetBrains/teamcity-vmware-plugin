@@ -23,12 +23,16 @@ import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import java.io.File;
+import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import jetbrains.buildServer.CommandLineExecutor;
 import jetbrains.buildServer.ExecResult;
 import jetbrains.buildServer.agent.*;
+import jetbrains.buildServer.agent.impl.BuildAgentImpl;
+import jetbrains.buildServer.agent.impl.config.BuildAgentConfigurationImpl;
+import jetbrains.buildServer.agent.impl.config.BuildAgentConfigurationPersister;
 import jetbrains.buildServer.clouds.CloudInstanceUserData;
 import jetbrains.buildServer.serverSide.TeamCityProperties;
 import jetbrains.buildServer.util.EventDispatcher;
@@ -62,7 +66,9 @@ public class VMWarePropertiesReader {
 
 
   public VMWarePropertiesReader(final BuildAgentConfigurationEx agentConfiguration,
-                                @NotNull EventDispatcher<AgentLifeCycleListener> events) {
+                                @NotNull EventDispatcher<AgentLifeCycleListener> events,
+                                @NotNull final BuildAgentConfigurationPersister configurationPersister,
+                                @NotNull final BuildAgentImpl buildAgent) {
     LOG.info("VSphere plugin initializing...");
     myAgentConfiguration = agentConfiguration;
     myVMWareRPCToolPath = getToolPath(myAgentConfiguration);
@@ -71,7 +77,7 @@ public class VMWarePropertiesReader {
       return;
     } else {
       LOG.info("Detected vmware-tools or open-vm-tools. Found required vmware-rpctool at " + myVMWareRPCToolPath + ". " +
-          "Will attempt to authorize agent as VMWare cloud agent. ");
+               "Will attempt to authorize agent as VMWare cloud agent. ");
     }
     events.addListener(new AgentLifeCycleAdapter(){
       @Override
@@ -112,6 +118,19 @@ public class VMWarePropertiesReader {
             }
           }
         }
+        final File propertiesFile = ((BuildAgentConfigurationImpl)myAgentConfiguration).getPropertiesFile();
+        final HashMap<String, String> toUpdate = new HashMap<String, String>();
+        toUpdate.put("serverUrl", serverUrl);
+        toUpdate.put("name", instanceName);
+        buildAgent.runWithDisabledFileWatcher(new Runnable() {
+          public void run() {
+            try {
+              configurationPersister.updatePropertiesFile(propertiesFile, toUpdate);
+            } catch (IOException e) {
+              LOG.warn("Unable to update name and actual server URL ('" + serverUrl + "') in '" + propertiesFile.getAbsolutePath() + "'", e);
+            }
+          }
+        });
       }
     });
   }
