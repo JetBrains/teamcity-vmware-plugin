@@ -38,6 +38,7 @@ import jetbrains.buildServer.serverSide.ServerPaths;
 import jetbrains.buildServer.serverSide.TeamCityProperties;
 import jetbrains.buildServer.serverSide.impl.ServerSettingsImpl;
 import jetbrains.buildServer.util.TestFor;
+import jetbrains.buildServer.util.ThreadUtil;
 import jetbrains.buildServer.web.openapi.PluginDescriptor;
 import org.jetbrains.annotations.NotNull;
 import org.jmock.Expectations;
@@ -762,15 +763,19 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
       }
     };
 
-    final Future<?> future = Executors.newSingleThreadExecutor().submit(r);
-    future.get();
-    new WaitFor(500){
-      @Override
-      protected boolean condition() {
-        return future.isDone();
-      }
-    }.assertCompleted("Recreation of cloud profiles takes too long");
-
+    final ExecutorService executorService = Executors.newSingleThreadExecutor();
+    try {
+      final Future<?> future = executorService.submit(r);
+      future.get();
+      new WaitFor(500){
+        @Override
+        protected boolean condition() {
+          return future.isDone();
+        }
+      }.assertCompleted("Recreation of cloud profiles takes too long");
+    } finally {
+      ThreadUtil.shutdownGracefully(executorService, "test executor");
+    }
   }
 
   public void enforce_change_of_stuck_instance_status() throws RemoteException, ExecutionException, InterruptedException {
