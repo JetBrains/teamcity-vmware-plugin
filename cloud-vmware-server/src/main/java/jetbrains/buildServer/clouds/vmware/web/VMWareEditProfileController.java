@@ -21,6 +21,7 @@ package jetbrains.buildServer.clouds.vmware.web;
 import com.intellij.openapi.diagnostic.Logger;
 import java.net.URL;
 import java.util.*;
+import javax.net.ssl.SSLException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import jetbrains.buildServer.BuildProject;
@@ -37,6 +38,7 @@ import jetbrains.buildServer.serverSide.SBuildServer;
 import jetbrains.buildServer.serverSide.agentPools.AgentPool;
 import jetbrains.buildServer.serverSide.agentPools.AgentPoolManager;
 import jetbrains.buildServer.serverSide.agentPools.AgentPoolUtil;
+import jetbrains.buildServer.util.ssl.SSLTrustStoreProvider;
 import jetbrains.buildServer.web.openapi.*;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -57,21 +59,27 @@ public class VMWareEditProfileController extends BaseFormXmlController {
   @NotNull private final String myConfigHelperPath;
   @NotNull private final PluginDescriptor myPluginDescriptor;
   @NotNull private final AgentPoolManager myAgentPoolManager;
+  private SSLTrustStoreProvider mySslTrustStoreProvider;
 
   public VMWareEditProfileController(@NotNull final SBuildServer server,
                                      @NotNull final PluginDescriptor pluginDescriptor,
                                      @NotNull final WebControllerManager manager,
-                                     @NotNull final AgentPoolManager agentPoolManager) {
+                                     @NotNull final AgentPoolManager agentPoolManager,
+                                     @NotNull final SSLTrustStoreProvider sslTrustStoreProvider
+                                     ) {
     super(server);
     myHtmlPath = pluginDescriptor.getPluginResourcesPath("vmware-settings.html");
     myPluginDescriptor = pluginDescriptor;
     myAgentPoolManager = agentPoolManager;
+    mySslTrustStoreProvider = sslTrustStoreProvider;
     myJspPath = myPluginDescriptor.getPluginResourcesPath("vmware-settings.jsp");
     mySnapshotsPath = pluginDescriptor.getPluginResourcesPath("vmware-getsnapshotlist.html");
     myConfigHelperPath = pluginDescriptor.getPluginResourcesPath("vmware-config-helper.html");
     manager.registerController(myHtmlPath, this);
-    manager.registerController(pluginDescriptor.getPluginResourcesPath("vmware-getsnapshotlist.html"), new GetSnapshotsListController());
-    manager.registerController(pluginDescriptor.getPluginResourcesPath("vmware-config-helper.html"), new ConfigurationHelperController());
+    manager.registerController(pluginDescriptor.getPluginResourcesPath("vmware-getsnapshotlist.html"),
+                               new GetSnapshotsListController(mySslTrustStoreProvider));
+    manager.registerController(pluginDescriptor.getPluginResourcesPath("vmware-config-helper.html"),
+                               new ConfigurationHelperController(mySslTrustStoreProvider));
   }
 
   @Override
@@ -106,7 +114,8 @@ public class VMWareEditProfileController extends BaseFormXmlController {
     final String password = props.get(VMWareWebConstants.SECURE_PASSWORD);
 
     try {
-      final VMWareApiConnector myApiConnector = VmwareApiConnectorsPool.getOrCreateConnector(new URL(serverUrl), username, password, null, null, null);
+      final VMWareApiConnector myApiConnector = VmwareApiConnectorsPool.getOrCreateConnector(
+        new URL(serverUrl), username, password, null, null, null, mySslTrustStoreProvider);
       myApiConnector.test();
       xmlResponse.addContent(getVirtualMachinesAsElement(myApiConnector.getVirtualMachines(true)));
       xmlResponse.addContent(getFoldersAsElement(myApiConnector.getFolders()));
@@ -114,11 +123,20 @@ public class VMWareEditProfileController extends BaseFormXmlController {
       xmlResponse.addContent(getCustomizationSpecsAsElement(myApiConnector.getCustomizationSpecs()));
     } catch (Exception ex) {
       LOG.warnAndDebugDetails("Unable to get vCenter details: " + ex.toString(), ex);
-      errors.addError(
-        "errorFetchResults",
-        VmwareErrorMessages.getInstance().getFriendlyErrorMessage(
-          ex, "Please check the connection parameters. See the teamcity-clouds.log for details")
-      );
+      if (ex.getCause() != null && ex.getCause() instanceof SSLException){
+        errors.addError(
+          "errorFetchResultsSSL",
+          VmwareErrorMessages.getInstance().getFriendlyErrorMessage(
+            ex, "Please check the connection parameters. See the teamcity-clouds.log for details"
+          )
+        );
+      } else {
+        errors.addError(
+          "errorFetchResults",
+          VmwareErrorMessages.getInstance().getFriendlyErrorMessage(
+            ex, "Please check the connection parameters. See the teamcity-clouds.log for details")
+        );
+      }
       writeErrors(xmlResponse, errors);
     }
   }

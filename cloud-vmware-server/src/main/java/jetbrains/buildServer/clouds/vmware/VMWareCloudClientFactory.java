@@ -35,6 +35,7 @@ import jetbrains.buildServer.clouds.vmware.connector.VmwareApiConnectorsPool;
 import jetbrains.buildServer.clouds.vmware.tasks.VmwareUpdateTaskManager;
 import jetbrains.buildServer.clouds.vmware.web.VMWareWebConstants;
 import jetbrains.buildServer.serverSide.*;
+import jetbrains.buildServer.util.ssl.SSLTrustStoreProvider;
 import jetbrains.buildServer.web.openapi.PluginDescriptor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -51,6 +52,7 @@ public class VMWareCloudClientFactory extends AbstractCloudClientFactory<VmwareC
   @NotNull private final File myIdxStorage;
   @NotNull private final CloudManagerBase myCloudManager;
   @NotNull private final VmwareUpdateTaskManager myUpdateTaskManager;
+  @NotNull private final SSLTrustStoreProvider mySslTrustStoreProvider;
   @NotNull private final CloudInstancesProvider myInstancesProvider;
   @NotNull private final ServerSettings myServerSettings;
 
@@ -60,12 +62,15 @@ public class VMWareCloudClientFactory extends AbstractCloudClientFactory<VmwareC
                                   @NotNull final CloudInstancesProvider instancesProvider,
                                   @NotNull final CloudManagerBase cloudManager,
                                   @NotNull final ServerSettings serverSettings,
-                                  @NotNull final VmwareUpdateTaskManager updateTaskManager) {
+                                  @NotNull final VmwareUpdateTaskManager updateTaskManager,
+                                  @NotNull final SSLTrustStoreProvider sslTrustStoreProvider
+                                  ) {
     super(cloudRegistrar);
     myInstancesProvider = instancesProvider;
     myIdxStorage = new File(serverPaths.getPluginDataDirectory(), "vmwareIdx");
     myCloudManager = cloudManager;
     myUpdateTaskManager = updateTaskManager;
+    mySslTrustStoreProvider = sslTrustStoreProvider;
     if (!myIdxStorage.exists()){
       myIdxStorage.mkdirs();
     }
@@ -142,7 +147,7 @@ public class VMWareCloudClientFactory extends AbstractCloudClientFactory<VmwareC
 
   @NotNull
   public Map<String, String> getInitialParameterValues() {
-    return Collections.emptyMap();
+    return Collections.singletonMap(VMWareWebConstants.FORCE_TRUST_MANAGER, "true");
   }
 
   @NotNull
@@ -160,9 +165,12 @@ public class VMWareCloudClientFactory extends AbstractCloudClientFactory<VmwareC
     String serverUrl = params.getParameter(VMWareWebConstants.SERVER_URL);
     String username = params.getParameter(VMWareWebConstants.USERNAME);
     String password = params.getParameter(VMWareWebConstants.SECURE_PASSWORD);
+    boolean forceTrustManager = "true".equalsIgnoreCase(params.getParameter(VMWareWebConstants.FORCE_TRUST_MANAGER));
     if (serverUrl != null && username != null) {
       try {
-        return VmwareApiConnectorsPool.getOrCreateConnector(new URL(serverUrl), username, password, myServerSettings.getServerUUID(), state.getProfileId(), myInstancesProvider);
+        return VmwareApiConnectorsPool.getOrCreateConnector(
+          new URL(serverUrl), username, password, myServerSettings.getServerUUID(), state.getProfileId(),
+          myInstancesProvider, mySslTrustStoreProvider);
       } catch (MalformedURLException e) {
         LOG.warnAndDebugDetails(e.toString(), e);
         throw new CloudException("Unable to connect to vCenter: " + e.toString());

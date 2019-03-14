@@ -16,7 +16,6 @@ import jetbrains.buildServer.clouds.vmware.connector.beans.ResourcePoolBean;
 import jetbrains.buildServer.clouds.vmware.errors.VmwareCheckedCloudException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jmock.Expectations;
 import org.jmock.Mockery;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -37,7 +36,7 @@ public class VmwareApiConnectorTest extends BaseTestCase {
   }
 
   public void allow_same_vm_names() throws Exception {
-    final VMWareApiConnector connector = new VMWareApiConnectorImpl(new URL("http://localhost:9999"),"username","pwd",null, null, null){
+    final VMWareApiConnector connector = new VMWareApiConnectorImpl(new URL("http://localhost:9999"), "username", "pwd", null, null, null, null){
       @NotNull
       @Override
       public Collection<VmwareInstance> findAllVirtualMachines() {
@@ -63,7 +62,7 @@ public class VmwareApiConnectorTest extends BaseTestCase {
   }
 
   public void allow_same_respool_names() throws Exception{
-    final VMWareApiConnector connector = new VMWareApiConnectorImpl(new URL("http://localhost:9999"),"username","pwd",null, null, null){
+    final VMWareApiConnector connector = new VMWareApiConnectorImpl(new URL("http://localhost:9999"), "username", "pwd", null, null, null, null){
 
 
       private final Map<String, ManagedEntity> myEntitiesMap = new HashMap<>();

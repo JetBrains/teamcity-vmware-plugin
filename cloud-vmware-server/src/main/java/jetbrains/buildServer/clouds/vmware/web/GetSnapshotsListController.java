@@ -29,11 +29,10 @@ import jetbrains.buildServer.clouds.vmware.connector.VmwareApiConnectorsPool;
 import jetbrains.buildServer.clouds.vmware.errors.VmwareCheckedCloudException;
 import jetbrains.buildServer.clouds.vmware.VmwareConstants;
 import jetbrains.buildServer.clouds.vmware.connector.VMWareApiConnector;
-import jetbrains.buildServer.clouds.vmware.connector.VMWareApiConnectorImpl;
 import jetbrains.buildServer.controllers.BaseFormXmlController;
 import jetbrains.buildServer.controllers.BasePropertiesBean;
 import jetbrains.buildServer.controllers.admin.projects.PluginPropertiesUtil;
-import jetbrains.buildServer.serverSide.TeamCityProperties;
+import jetbrains.buildServer.util.ssl.SSLTrustStoreProvider;
 import org.jdom.Content;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -47,9 +46,11 @@ import org.springframework.web.servlet.ModelAndView;
 public class GetSnapshotsListController extends BaseFormXmlController {
 
   private static final Logger LOG = Logger.getInstance(GetSnapshotsListController.class.getName());
+  private SSLTrustStoreProvider myStoreProvider;
 
-  public GetSnapshotsListController() {
+  public GetSnapshotsListController(@NotNull final SSLTrustStoreProvider storeProvider) {
 
+    myStoreProvider = storeProvider;
   }
 
   @Override
@@ -68,7 +69,8 @@ public class GetSnapshotsListController extends BaseFormXmlController {
     final String password = props.get(VMWareWebConstants.SECURE_PASSWORD);
     final String imageName = props.get("image");
     try {
-      final VMWareApiConnector myApiConnector = VmwareApiConnectorsPool.getOrCreateConnector(new URL(serverUrl), username, password, null, null, null);
+      final VMWareApiConnector myApiConnector = VmwareApiConnectorsPool.getOrCreateConnector(
+        new URL(serverUrl), username, password, null, null, null, myStoreProvider);
       final Map<String, VirtualMachineSnapshotTree> snapshotList = myApiConnector.getSnapshotList(imageName);
       Element snapshots = new Element("Snapshots");
       snapshots.setAttribute("vmName", imageName);

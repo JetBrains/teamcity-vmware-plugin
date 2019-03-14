@@ -126,12 +126,16 @@ BS.Clouds.VMWareVSphere = BS.Clouds.VMWareVSphere || (function () {
 
                     return response;
                 }.bind(this))
-                .fail(function (errorText) {
-                    this.addError('Unable to fetch options: ' + errorText);
+                .fail(function (errors) {
+                    if (errors.length &&  errors[0].id === 'errorFetchResultsSSL') {
+                        this.addError('An SSL error occurred while connecting to vCenter (is server certificate uploaded to  "SSL / HTTPS Certificates" of the Root project?): <br/>' + errors.text());
+                    } else {
+                        this.addError('Unable to fetch options: ' + errors.text());
+                    }
                     this.fillOptions([], [], [], []);
                     this._displaySnapshotSelect([]);
                     BS.VMWareImageDialog.close();
-                    return errorText;
+                    return errors.text();
                 }.bind(this))
                 .always(function () {
                     $loader.addClass('hidden');
@@ -151,10 +155,10 @@ BS.Clouds.VMWareVSphere = BS.Clouds.VMWareVSphere || (function () {
                 }.bind(this),
                 onSuccess: function (response) {
                     var $response = $j(response.responseXML),
-                        $errors = $response.find('errors:eq(0) error');
+                        $error = $response.find('errors:eq(0) error');
 
-                    if ($errors.length) {
-                        this.fetchOptionsDeferred.reject($errors.text());
+                    if ($error.length) {
+                        this.fetchOptionsDeferred.reject($error);
                     } else {
                         this.fetchOptionsDeferred.resolve(response);
                     }
@@ -348,7 +352,7 @@ BS.Clouds.VMWareVSphere = BS.Clouds.VMWareVSphere || (function () {
         },
         addError: function (errorHTML, target) {
             (target || this.$fetchOptionsError)
-                .append($j('<div>').text(errorHTML));
+                .append($j('<div>').html(errorHTML));
         },
         addOptionError: function (errorKey, optionName) {
             var html;

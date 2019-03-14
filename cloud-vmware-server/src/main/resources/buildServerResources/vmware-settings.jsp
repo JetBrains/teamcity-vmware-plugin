@@ -44,6 +44,7 @@
     <th><label for="${webCons.serverUrl}">vCenter SDK URL:<l:star/></label><bs:help
         urlPrefix="https://pubs.vmware.com/vsphere-51/topic/com.vmware.vsphere.install.doc/" file="GUID-191D86C8-EEF4-4198-9C11-2E0F25D2AB89.html"/></th>
     <td>
+      <props:hiddenProperty name="${webCons.forceTrustManager}" />
       <props:textProperty name="${webCons.serverUrl}" className="settings longField"/>
       <span id="error_${webCons.serverUrl}" class="error"></span>
     </td>

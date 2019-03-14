@@ -9,6 +9,8 @@ import com.vmware.vim25.mo.Task;
 import java.io.File;
 import java.net.MalformedURLException;
 import java.rmi.RemoteException;
+import java.security.KeyStore;
+import java.security.KeyStoreException;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -733,19 +735,20 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
       allowing(cloudManagerBase).findProfileById(PROJECT_ID, PROFILE_ID); will(returnValue(myProfile));
     }});
 
+    final CloudInstancesProvider instancesProvider = new CloudInstancesProvider() {
+      public void iterateInstances(@NotNull final CloudInstancesProviderCallback callback) {}
+      public void iterateInstances(@NotNull final CloudInstancesProviderExtendedCallback callback) {}
+      public void iterateProfileInstances(@NotNull final CloudProfile profile,@NotNull final CloudInstancesProviderCallback callback) {}
+      public void markInstanceExpired(@NotNull final CloudProfile profile, @NotNull final CloudInstance instance) {}
+      public boolean isInstanceExpired(@NotNull final CloudProfile profile, @NotNull final CloudInstance instance) {return false;}
+    };
+
     final VMWareCloudClientFactory factory = new VMWareCloudClientFactory(cloudRegistrar, pd, new ServerPaths(myIdxStorage.getAbsolutePath()),
-                                                                          new CloudInstancesProvider() {
-                                                                            public void iterateInstances(@NotNull final CloudInstancesProviderCallback callback) {}
-                                                                            public void iterateInstances(@NotNull final CloudInstancesProviderExtendedCallback callback) {}
-                                                                            public void iterateProfileInstances(@NotNull final CloudProfile profile,
-                                                                                                                @NotNull final CloudInstancesProviderCallback callback) {}
-                                                                            public void markInstanceExpired(@NotNull final CloudProfile profile,
-                                                                                                            @NotNull final CloudInstance instance) {}
-                                                                            public boolean isInstanceExpired(@NotNull final CloudProfile profile,
-                                                                                                             @NotNull final CloudInstance instance) {return false;}
-                                                                          },
-                                                                          cloudManagerBase, new ServerSettingsImpl(),
-                                                                          myTaskManager){
+                                                                          instancesProvider, cloudManagerBase, new ServerSettingsImpl(), myTaskManager,
+                                                                          () -> {
+                                                                            try {return KeyStore.getInstance("pkcs12");}
+                                                                            catch (KeyStoreException e) {throw new RuntimeException(e);}
+                                                                          }){
 
       @NotNull
       @Override

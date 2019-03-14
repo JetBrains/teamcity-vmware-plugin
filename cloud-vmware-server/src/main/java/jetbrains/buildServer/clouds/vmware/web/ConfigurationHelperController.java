@@ -3,18 +3,17 @@ package jetbrains.buildServer.clouds.vmware.web;
 import com.intellij.openapi.diagnostic.Logger;
 import com.vmware.vim25.mo.Folder;
 import com.vmware.vim25.mo.ResourcePool;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Map;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import jetbrains.buildServer.clouds.vmware.connector.VMWareApiConnector;
 import jetbrains.buildServer.clouds.vmware.connector.VmwareApiConnectorsPool;
-import jetbrains.buildServer.clouds.vmware.errors.VmwareCheckedCloudException;
 import jetbrains.buildServer.controllers.BaseFormXmlController;
 import jetbrains.buildServer.controllers.BasePropertiesBean;
 import jetbrains.buildServer.controllers.admin.projects.PluginPropertiesUtil;
 import jetbrains.buildServer.util.StringUtil;
+import jetbrains.buildServer.util.ssl.SSLTrustStoreProvider;
 import org.jdom.Content;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -28,6 +27,11 @@ public class ConfigurationHelperController extends BaseFormXmlController {
   private static final Logger LOG = Logger.getInstance(ConfigurationHelperController.class.getName());
   private static final String RESPOOL_PRIVILEGE = "Resource.AssignVMToPool";
   private static final String FOLDER_PRIVILEGE = "VirtualMachine.Inventory.CreateFromExisting";
+  private final SSLTrustStoreProvider myStoreProvider;
+
+  public ConfigurationHelperController(@NotNull final SSLTrustStoreProvider storeProvider){
+    myStoreProvider = storeProvider;
+  }
 
 
   @Override
@@ -53,7 +57,8 @@ public class ConfigurationHelperController extends BaseFormXmlController {
 
       switch (fieldId) {
         case "respool": {
-          final VMWareApiConnector myApiConnector = VmwareApiConnectorsPool.getOrCreateConnector(new URL(serverUrl), username, password, null, null, null);
+          final VMWareApiConnector myApiConnector = VmwareApiConnectorsPool.getOrCreateConnector(
+            new URL(serverUrl), username, password, null, null, null, myStoreProvider);
           final Element canAddPoolElement = new Element("fieldValid");
           final boolean canAddVM2Pool = myApiConnector.hasPrivilegeOnResource(fieldValue, ResourcePool.class, RESPOOL_PRIVILEGE);
           canAddPoolElement.setText(String.valueOf(canAddVM2Pool));
@@ -66,7 +71,8 @@ public class ConfigurationHelperController extends BaseFormXmlController {
         }
         break;
         case "folder": {
-          final VMWareApiConnector myApiConnector = VmwareApiConnectorsPool.getOrCreateConnector(new URL(serverUrl), username, password, null, null, null);
+          final VMWareApiConnector myApiConnector = VmwareApiConnectorsPool.getOrCreateConnector(
+            new URL(serverUrl), username, password, null, null, null, myStoreProvider);
           final Element canAddPoolElement = new Element("fieldValid");
           final boolean canAddVM = myApiConnector.hasPrivilegeOnResource(fieldValue, Folder.class, FOLDER_PRIVILEGE);
           canAddPoolElement.setText(String.valueOf(canAddVM));

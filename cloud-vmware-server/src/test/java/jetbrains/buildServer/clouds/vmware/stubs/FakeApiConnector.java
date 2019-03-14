@@ -1,6 +1,5 @@
 package jetbrains.buildServer.clouds.vmware.stubs;
 
-import com.google.gson.internal.bind.ReflectiveTypeAdapterFactory;
 import com.vmware.vim25.CustomizationSpec;
 import com.vmware.vim25.mo.*;
 import java.net.MalformedURLException;
@@ -29,7 +28,7 @@ public class FakeApiConnector extends VMWareApiConnectorImpl {
   }
 
   public FakeApiConnector(@Nullable String serverUUID, @Nullable String profileId, @Nullable CloudInstancesProvider instancesProvider) throws MalformedURLException {
-    super(new URL("http://localhost:9999"), "", "", serverUUID, profileId, instancesProvider);
+    super(new URL("http://localhost:9999"), "", "", serverUUID, profileId, instancesProvider, null);
   }
 
   @Override

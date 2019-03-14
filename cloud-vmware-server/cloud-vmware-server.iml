@@ -10,9 +10,6 @@
     </facet>
     <facet type="web" name="cloud-vmware-server-web">
       <configuration>
-        <descriptors>
-          <deploymentDescriptor name="web.xml" url="file://$MODULE_DIR$/web/WEB-INF/web.xml" />
-        </descriptors>
         <webroots>
           <root url="file://$MODULE_DIR$/src/main/resources/buildServerResources" relative="/plugins/cloud-vmware" />
         </webroots>
@@ -51,15 +48,6 @@
         <SOURCES />
       </library>
     </orderEntry>
-    <orderEntry type="module-library">
-      <library>
-        <CLASSES>
-          <root url="jar://$MODULE_DIR$/../lib/yavijava-6.0.05-SNAPSHOT.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
     <orderEntry type="module" module-name="cloud-api" />
     <orderEntry type="module" module-name="common" />
     <orderEntry type="module" module-name="server-openapi" />
@@ -76,11 +64,20 @@
       <library name="yavijava - src + doc">
         <CLASSES />
         <JAVADOC>
-          <root url="jar://$MODULE_DIR$/../lib/yavijava-6.0.05-SNAPSHOT-javadoc.jar!/" />
+          <root url="jar://$MODULE_DIR$/../lib/yavijava-6.0.05-22-javadoc.jar!/" />
         </JAVADOC>
         <SOURCES>
-          <root url="jar://$MODULE_DIR$/../lib/yavijava-6.0.05-SNAPSHOT-sources.jar!/" />
+          <root url="jar://$MODULE_DIR$/../lib/yavijava-6.0.05-22-sources.jar!/" />
         </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/../lib/yavijava-6.0.05-22.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
       </library>
     </orderEntry>
   </component>

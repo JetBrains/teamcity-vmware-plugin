@@ -30,15 +30,17 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.UnknownHostException;
 import java.rmi.RemoteException;
+import java.security.KeyStore;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import javax.net.ssl.SSLException;
+import javax.net.ssl.SSLSocketFactory;
 import jetbrains.buildServer.Used;
 import jetbrains.buildServer.clouds.CloudException;
 import jetbrains.buildServer.clouds.CloudInstanceUserData;
@@ -50,9 +52,12 @@ import jetbrains.buildServer.clouds.vmware.*;
 import jetbrains.buildServer.clouds.vmware.connector.beans.FolderBean;
 import jetbrains.buildServer.clouds.vmware.connector.beans.ResourcePoolBean;
 import jetbrains.buildServer.clouds.vmware.errors.VmwareCheckedCloudException;
+import jetbrains.buildServer.clouds.vmware.errors.VmwareErrorMessages;
 import jetbrains.buildServer.serverSide.TeamCityProperties;
 import jetbrains.buildServer.serverSide.crypt.EncryptUtil;
 import jetbrains.buildServer.util.StringUtil;
+import jetbrains.buildServer.util.ssl.SSLContextUtil;
+import jetbrains.buildServer.util.ssl.SSLTrustStoreProvider;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -98,6 +103,7 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
   @Nullable private final String myProfileId;
   // we also create a separate connector for controller and which doesn't need this field
   @Nullable private final CloudInstancesProvider myInstancesProvider;
+  @Nullable private SSLTrustStoreProvider myTrustStoreProvider;
 
 
   public VMWareApiConnectorImpl(@NotNull final URL instanceURL,
@@ -105,13 +111,15 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
                                 @NotNull final String password,
                                 @Nullable final String serverUUID,
                                 @Nullable final String profileId,
-                                @Nullable final CloudInstancesProvider instancesProvider){
+                                @Nullable final CloudInstancesProvider instancesProvider,
+                                @Nullable final SSLTrustStoreProvider trustStoreProvider){
     myInstanceURL = instanceURL;
     myUsername = username;
     myPassword = password;
     myServerUUID = serverUUID;
     myProfileId = profileId;
     myInstancesProvider = instancesProvider;
+    myTrustStoreProvider = trustStoreProvider;
     myDomain = getTCServerDomain();
     if (myDomain == null){
       LOG.info("Unable to determine server domain. Linux guest hostname customization is disabled");
@@ -135,11 +143,37 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
 
     if (myServiceInstance == null){
       try {
-        myServiceInstance = new ServiceInstance(myInstanceURL, myUsername, myPassword, true, 10*1000, 30*1000);
+        SSLSocketFactory factory = null;
+        if(myTrustStoreProvider != null){
+          final KeyStore trustStore = myTrustStoreProvider.getTrustStore();
+          if (trustStore != null) {
+            factory = SSLContextUtil.createUserSSLContext(trustStore).getSocketFactory();
+          }
+        }
+        boolean forceCertificateCheck = TeamCityProperties.getBooleanOrTrue("teamcity.vmware.force.certificate.check");
+
+        if (forceCertificateCheck && factory != null){
+          myServiceInstance = new ServiceInstance(myInstanceURL,
+                                                  myUsername,
+                                                  myPassword,
+                                                  factory,
+                                                  10 * 1000,
+                                                  30 * 1000);
+        } else {
+          myServiceInstance = new ServiceInstance(myInstanceURL, myUsername, myPassword, true, 10 * 1000, 30 * 1000);
+        }
       } catch (MalformedURLException e) {
         throw new VmwareCheckedCloudException("Invalid server URL", e);
       } catch (RemoteException e) {
-        throw new VmwareCheckedCloudException(e);
+        if (e.getCause() != null) {
+          final String message = VmwareErrorMessages.getInstance().getFriendlyErrorMessage(e, "Unknown error");
+          if (e.getCause() instanceof SSLException){
+            throw new VmwareCheckedCloudException("An SSL error occurred while connecting to vCenter (is server certificate uploaded to \"SSL / HTTPS Certificates\" of the Root project?):" + message, e.getCause());
+          } else {
+            throw new VmwareCheckedCloudException(message, e.getCause());
+          }
+        } else
+          throw new VmwareCheckedCloudException(e);
       }
     }
     return myServiceInstance.getRootFolder();
