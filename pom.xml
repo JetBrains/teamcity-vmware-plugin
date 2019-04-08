@@ -12,8 +12,8 @@
   </properties>
   <pluginRepositories>
       <pluginRepository>
-          <id>JetBrains</id>
-          <url>http://repository.jetbrains.com/all</url>
+          <id>TeamCity</id>
+          <url>https://download.jetbrains.com/teamcity-repository/</url>
       </pluginRepository>
   </pluginRepositories>
   <build>
