@@ -22,6 +22,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import java.util.Map;
 import jetbrains.buildServer.clouds.InstanceStatus;
 import jetbrains.buildServer.clouds.base.AbstractCloudInstance;
+import jetbrains.buildServer.log.LogUtil;
 import jetbrains.buildServer.serverSide.AgentDescription;
 import org.jetbrains.annotations.NotNull;
 
@@ -88,8 +89,8 @@ public class VmwareCloudInstance extends AbstractCloudInstance<VmwareCloudImage>
   @Override
   public String toString() {
     return "VmwareCloudInstance{" +
-            "myInstanceName='" + getName() + "', " +
-            "myState='" + getStatus().getName() + "', " +
-            "myStatusUpdateTime='" + getStatusUpdateTime() + "'}";
+           "myInstanceName='" + getName() + "', " +
+           "myState='" + getStatus().getName() + "', " +
+           "myStatusUpdateTime='" + LogUtil.describe(getStatusUpdateTime()) + "'}";
   }
 }

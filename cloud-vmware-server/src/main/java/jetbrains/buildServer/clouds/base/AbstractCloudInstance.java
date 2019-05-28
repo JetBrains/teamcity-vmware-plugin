@@ -29,6 +29,7 @@ import jetbrains.buildServer.clouds.base.errors.CloudErrorMap;
 import jetbrains.buildServer.clouds.base.errors.TypedCloudErrorInfo;
 import jetbrains.buildServer.clouds.base.errors.UpdatableCloudErrorProvider;
 import jetbrains.buildServer.clouds.vmware.errors.VmwareErrorMessages;
+import jetbrains.buildServer.log.LogUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -124,7 +125,7 @@ public abstract class AbstractCloudInstance<T extends AbstractCloudImage> implem
   }
 
   public void setStartDate(@NotNull final Date startDate) {
-    LOG.debug(String.format("Setting start date to %s from %s", startDate.toString(), myStartDate.get().toString()));
+    LOG.debug(String.format("Setting start date to %s from %s", LogUtil.describe(startDate), LogUtil.describe(myStartDate.get())));
     myStartDate.set(startDate);
   }
 

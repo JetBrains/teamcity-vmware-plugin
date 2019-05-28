@@ -22,14 +22,12 @@ import com.vmware.vim25.LocalizedMethodFault;
 import com.vmware.vim25.TaskInfo;
 import com.vmware.vim25.TaskInfoState;
 import com.vmware.vim25.mo.Task;
-import java.rmi.RemoteException;
 import java.util.Date;
-import java.util.concurrent.*;
+import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
-
 import jetbrains.buildServer.clouds.base.connector.AsyncCloudTask;
 import jetbrains.buildServer.clouds.base.connector.CloudTaskResult;
+import jetbrains.buildServer.log.LogUtil;
 import jetbrains.buildServer.util.impl.Lazy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -109,7 +107,7 @@ public class VmwareTaskWrapper implements AsyncCloudTask {
   public String toString() {
     return "VmwareTaskWrapper{" +
            "TaskName='" + myTaskName + '\'' +
-           ",StartTime=" + new Date(myStartTime) +
+           ",StartTime=" + LogUtil.describe(new Date(myStartTime)) +
            '}';
   }
 }
