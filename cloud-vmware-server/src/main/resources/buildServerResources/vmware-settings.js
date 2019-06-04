@@ -487,10 +487,11 @@ BS.Clouds.VMWareVSphere = BS.Clouds.VMWareVSphere || (function () {
                 this.$cloneOptions.toggleClass('hidden', !this._isClone());
                 if (this._isClone()) {
                     this.fetchSnapshots();
-                    this._image.snapshot && this.fetchSnapshotsDeferred
-                        .then(function () {
+                    if (this._image.snapshot && this.fetchSnapshotsDeferred) {
+                        this.fetchSnapshotsDeferred.then(function () {
                             this.$snapshot.trigger('change', this._image.snapshot);
                         }.bind(this));
+                    }
                     !this._image.maxInstances && this.$maxInstances.trigger('change', this._image.maxInstances = 1);
                 }
 
