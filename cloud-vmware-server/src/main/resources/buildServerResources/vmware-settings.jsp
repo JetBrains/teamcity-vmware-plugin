@@ -142,12 +142,12 @@
                     <div>
                         <input type="radio" checked id="cloneBehaviour_FRESH_CLONE" name="cloneBehaviour" value="FRESH_CLONE" class="behaviour__switch behaviour__switch_radio"/>
                         <label for="cloneBehaviour_FRESH_CLONE">Clone the selected Virtual Machine or Template before starting</label>
-                        <div class="grayNote">The clone will be deleted after stopping</div>
+                        <div class="grayNote">The clones will be deleted after stopping</div>
                     </div>
                   <div>
                       <input type="radio" id="cloneBehaviour_ON_DEMAND_CLONE" name="cloneBehaviour" value="ON_DEMAND_CLONE" class="behaviour__switch"/>
                       <label for="cloneBehaviour_ON_DEMAND_CLONE">Clone the selected Virtual Machine or Template, preserve the clone after stopping</label>
-                      <div class="grayNote">The clone will reused</div>
+                      <div class="grayNote">The clones will be reused</div>
                   </div>
                   <div>
                     <input type="radio" id="cloneBehaviour_START_STOP" name="cloneBehaviour" value="START_STOP" class="behaviour__switch behaviour__switch_radio"/>
