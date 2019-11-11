@@ -7,7 +7,7 @@
     <teamcity-lib-path>${TeamCityDist}/webapps/ROOT/WEB-INF/lib/</teamcity-lib-path>
     <open-api-path>open-api</open-api-path>
     <teamcity-agent-lib-path>${TeamCityDist}/buildAgent/lib/</teamcity-agent-lib-path>
-    <yavijava-version>6.0.05-22</yavijava-version>
+    <yavijava-version>6.0.05-23</yavijava-version>
   </properties>
   <build>
     <plugins>
