@@ -90,11 +90,6 @@ public class VMWareCloudClientFactory extends AbstractCloudClientFactory<VmwareC
     final VMWareApiConnector apiConnector = createConnectorFromParams(state, params);
     final VMWareCloudClient vmWareCloudClient =
       new VMWareCloudClient(profile, apiConnector, myUpdateTaskManager, myIdxStorage);
-    try {
-      apiConnector.test();
-    } catch (CheckedCloudException e) {
-      vmWareCloudClient.updateErrors(TypedCloudErrorInfo.fromException(e));
-    }
     return vmWareCloudClient;
   }
 

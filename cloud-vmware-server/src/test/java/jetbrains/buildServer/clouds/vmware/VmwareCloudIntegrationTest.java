@@ -20,6 +20,8 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
+
+import com.vmware.vim25.mo.VirtualMachine;
 import jetbrains.buildServer.BaseTestCase;
 import jetbrains.buildServer.clouds.*;
 import jetbrains.buildServer.clouds.base.connector.AbstractInstance;
@@ -43,6 +45,7 @@ import jetbrains.buildServer.util.TestFor;
 import jetbrains.buildServer.util.ThreadUtil;
 import jetbrains.buildServer.web.openapi.PluginDescriptor;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jmock.Expectations;
 import org.jmock.Mockery;
 import org.testng.SkipException;
@@ -1443,6 +1446,69 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
     long diff = powerOffCalled.get() - guestShutdownCalled.get();
     assertTrue( diff > 0 && diff < 2000 );
     assertTrue( destroyCalled.get() > 0 );
+  }
+
+  @TestFor(issues = "TW-61456")
+  public void recover_if_cant_connect_on_start() throws MalformedURLException {
+    final AtomicBoolean failure = new AtomicBoolean(false);
+    final AtomicLong lastApiCallTime = new AtomicLong(0);
+    myFakeApi = new FakeApiConnector(TEST_SERVER_UUID, PROFILE_ID){
+      @Override
+      protected <T extends ManagedEntity> Collection<T> findAllEntitiesOld(final Class<T> instanceType) throws VmwareCheckedCloudException {
+        lastApiCallTime.set(System.currentTimeMillis());
+        if (failure.get()){
+          throw new VmwareCheckedCloudException("Cannot connect");
+        }
+        return super.findAllEntitiesOld(instanceType);
+      }
+
+      @Override
+      protected <T extends ManagedEntity> Map<String, T> findAllEntitiesAsMapOld(final Class<T> instanceType) throws VmwareCheckedCloudException {
+        lastApiCallTime.set(System.currentTimeMillis());
+        if (failure.get()){
+          throw new VmwareCheckedCloudException("Cannot connect");
+        }
+        return super.findAllEntitiesAsMapOld(instanceType);
+      }
+
+      @Override
+      protected <T extends ManagedEntity> Pair<T,Datacenter> findEntityByIdNameOld(final String name, final Class<T> instanceType) throws VmwareCheckedCloudException {
+        lastApiCallTime.set(System.currentTimeMillis());
+        if (failure.get()){
+          throw new VmwareCheckedCloudException("Cannot connect");
+        }
+        return super.findEntityByIdNameOld(name, instanceType);
+      }
+
+      @Override
+      protected Map<String, VirtualMachine> searchVMsByNames(@NotNull Collection<String> names, @Nullable Datacenter dc) throws VmwareCheckedCloudException {
+        lastApiCallTime.set(System.currentTimeMillis());
+        if (failure.get()){
+          throw new VmwareCheckedCloudException("Cannot connect");
+        }
+        return super.searchVMsByNames(names, dc);
+      }
+    };
+    failure.set(true);
+    recreateClient(250);
+    new WaitFor(1000){
+      @Override
+      protected boolean condition() {
+        return myClient.isInitialized();
+      }
+    };
+    myClient.getImages().forEach(img-> assertNotNull(img.getErrorInfo()));
+    failure.set(false);
+    new WaitFor(1000){
+      @Override
+      protected boolean condition() {
+        AtomicBoolean result = new AtomicBoolean(true);
+        myClient.getImages().forEach(img-> result.compareAndSet(true, img.getErrorInfo()==null));
+        return result.get();
+      }
+    };
+    myClient.getImages().forEach(img-> assertNull(img.getErrorInfo()));
+
   }
 
   /*
