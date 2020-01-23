@@ -437,7 +437,7 @@ public class VmwarePooledUpdateInstanceTaskTest extends BaseTestCase {
       return new VmwarePooledUpdateInstanceTask(connector, client){
         @Override
         public void addClient(@NotNull final VMWareCloudClient client) {
-          assertFalse("Shouldn't try to add client to task scheduled for cleanup", 1 == getSpecialState());
+          assertFalse("Shouldn't try to add client to task scheduled for clean-up", 1 == getSpecialState());
           super.addClient(client);
         }
       };
