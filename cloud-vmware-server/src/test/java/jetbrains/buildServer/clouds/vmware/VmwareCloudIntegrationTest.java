@@ -55,6 +55,7 @@ import jetbrains.buildServer.clouds.vmware.tasks.VmwarePooledUpdateInstanceTask;
 import jetbrains.buildServer.clouds.vmware.tasks.VmwareUpdateTaskManager;
 import jetbrains.buildServer.clouds.vmware.web.VMWareWebConstants;
 import jetbrains.buildServer.serverSide.ServerPaths;
+import jetbrains.buildServer.serverSide.ServerResponsibility;
 import jetbrains.buildServer.serverSide.TeamCityProperties;
 import jetbrains.buildServer.serverSide.impl.ServerSettingsImpl;
 import jetbrains.buildServer.util.TestFor;
@@ -741,8 +742,9 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
     };
 
     final CloudEventDispatcher dispatcher = new CloudEventDispatcher();
-    final CloudRegistryImpl cloudRegistrar = new CloudRegistryImpl(dispatcher);
     final Mockery m = new Mockery();
+    final ServerResponsibility serverResponsibility = m.mock(ServerResponsibility.class);
+    final CloudRegistryImpl cloudRegistrar = new CloudRegistryImpl(dispatcher, serverResponsibility);
     final CloudManagerBase cloudManagerBase = m.mock(CloudManagerBase.class);
 
     final PluginDescriptor pd = m.mock(PluginDescriptor.class);
@@ -752,6 +754,7 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
       allowing(state).getProfileId(); will(returnValue(PROFILE_ID));
       allowing(state).getProjectId(); will(returnValue(PROJECT_ID));
       allowing(cloudManagerBase).findProfileById(PROJECT_ID, PROFILE_ID); will(returnValue(myProfile));
+      allowing(serverResponsibility).canManageClouds(); will(returnValue(true));
     }});
 
     final CloudInstancesProvider instancesProvider = new CloudInstancesProvider() {
