@@ -116,19 +116,6 @@ public class VMWarePropertiesReader {
             }
           }
         }
-        final File propertiesFile = ((BuildAgentConfigurationImpl)myAgentConfiguration).getPropertiesFile();
-        final HashMap<String, String> toUpdate = new HashMap<String, String>();
-        toUpdate.put("serverUrl", serverUrl);
-        toUpdate.put("name", instanceName);
-        buildAgent.runWithDisabledFileWatcher(new Runnable() {
-          public void run() {
-            try {
-              configurationPersister.updatePropertiesFile(propertiesFile, toUpdate);
-            } catch (IOException e) {
-              LOG.warn("Unable to update name and actual server URL ('" + serverUrl + "') in '" + propertiesFile.getAbsolutePath() + "'", e);
-            }
-          }
-        });
       }
     });
   }
