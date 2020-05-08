@@ -64,9 +64,7 @@ public class VMWarePropertiesReader {
 
 
   public VMWarePropertiesReader(final BuildAgentConfigurationEx agentConfiguration,
-                                @NotNull EventDispatcher<AgentLifeCycleListener> events,
-                                @NotNull final BuildAgentConfigurationPersister configurationPersister,
-                                @NotNull final BuildAgentImpl buildAgent) {
+                                @NotNull EventDispatcher<AgentLifeCycleListener> events) {
     LOG.info("VSphere plugin initializing...");
     myAgentConfiguration = agentConfiguration;
     myVMWareRPCToolPath = getToolPath(myAgentConfiguration);
