@@ -30,7 +30,7 @@ import jetbrains.buildServer.clouds.base.errors.CloudErrorMap;
 import jetbrains.buildServer.clouds.base.errors.TypedCloudErrorInfo;
 import jetbrains.buildServer.clouds.base.errors.UpdatableCloudErrorProvider;
 import jetbrains.buildServer.clouds.base.tasks.UpdateInstancesTask;
-import jetbrains.buildServer.clouds.vmware.errors.VmwareErrorMessages;
+import jetbrains.buildServer.clouds.base.errors.SimpleErrorMessages;
 import jetbrains.buildServer.serverSide.AgentDescription;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -55,7 +55,7 @@ public abstract class AbstractCloudClient<G extends AbstractCloudInstance<T>, T 
     myParameters = params;
     myAsyncTaskExecutor = new CloudAsyncTaskExecutor("Async tasks for cloud " + params.getProfileDescription());
     myImageMap = new HashMap<String, T>();
-    myErrorProvider = new CloudErrorMap(VmwareErrorMessages.getInstance());
+    myErrorProvider = new CloudErrorMap(SimpleErrorMessages.getInstance());
     myApiConnector = apiConnector;
   }
 

@@ -30,7 +30,7 @@ import jetbrains.buildServer.clouds.base.connector.AbstractInstance;
 import jetbrains.buildServer.clouds.base.errors.CloudErrorMap;
 import jetbrains.buildServer.clouds.base.errors.TypedCloudErrorInfo;
 import jetbrains.buildServer.clouds.base.errors.UpdatableCloudErrorProvider;
-import jetbrains.buildServer.clouds.vmware.errors.VmwareErrorMessages;
+import jetbrains.buildServer.clouds.base.errors.SimpleErrorMessages;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,7 +40,7 @@ import org.jetbrains.annotations.Nullable;
  *         Time: 1:50 PM
  */
 public abstract class AbstractCloudImage<T extends AbstractCloudInstance, G extends CloudImageDetails> implements CloudImage, UpdatableCloudErrorProvider {
-  protected final UpdatableCloudErrorProvider myErrorProvider = new CloudErrorMap(VmwareErrorMessages.getInstance());
+  protected final UpdatableCloudErrorProvider myErrorProvider = new CloudErrorMap(SimpleErrorMessages.getInstance());
   private final Map<String, T> myInstances = new ConcurrentHashMap<String, T>();
   private final String myName;
   private final String myId;

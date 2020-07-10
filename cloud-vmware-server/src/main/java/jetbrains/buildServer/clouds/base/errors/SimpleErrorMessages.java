@@ -14,12 +14,9 @@
  * limitations under the License.
  */
 
-package jetbrains.buildServer.clouds.vmware.errors;
+package jetbrains.buildServer.clouds.base.errors;
 
 import java.net.UnknownHostException;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-import jetbrains.buildServer.clouds.base.errors.ErrorMessageUpdater;
 import jetbrains.buildServer.util.StringUtil;
 
 /**
@@ -27,11 +24,11 @@ import jetbrains.buildServer.util.StringUtil;
  *         Date: 11/12/2014
  *         Time: 5:03 PM
  */
-public class VmwareErrorMessages implements ErrorMessageUpdater {
+public class SimpleErrorMessages implements ErrorMessageUpdater {
 
-  private static final VmwareErrorMessages instance = new VmwareErrorMessages();
+  private static final SimpleErrorMessages instance = new SimpleErrorMessages();
 
-  public static VmwareErrorMessages getInstance() {
+  public static SimpleErrorMessages getInstance() {
     return instance;
   }
 

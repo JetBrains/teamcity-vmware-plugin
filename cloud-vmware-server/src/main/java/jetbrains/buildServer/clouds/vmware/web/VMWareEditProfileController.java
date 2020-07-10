@@ -27,7 +27,7 @@ import jetbrains.buildServer.clouds.vmware.VmwareConstants;
 import jetbrains.buildServer.clouds.vmware.connector.*;
 import jetbrains.buildServer.clouds.vmware.connector.beans.FolderBean;
 import jetbrains.buildServer.clouds.vmware.connector.beans.ResourcePoolBean;
-import jetbrains.buildServer.clouds.vmware.errors.VmwareErrorMessages;
+import jetbrains.buildServer.clouds.base.errors.SimpleErrorMessages;
 import jetbrains.buildServer.controllers.ActionErrors;
 import jetbrains.buildServer.controllers.BaseFormXmlController;
 import jetbrains.buildServer.controllers.BasePropertiesBean;
@@ -124,14 +124,14 @@ public class VMWareEditProfileController extends BaseFormXmlController {
       if (ex.getCause() != null && ex.getCause() instanceof SSLException){
         errors.addError(
           "errorFetchResultsSSL",
-          VmwareErrorMessages.getInstance().getFriendlyErrorMessage(
+          SimpleErrorMessages.getInstance().getFriendlyErrorMessage(
             ex, "Please check the connection parameters. See the teamcity-clouds.log for details"
           )
         );
       } else {
         errors.addError(
           "errorFetchResults",
-          VmwareErrorMessages.getInstance().getFriendlyErrorMessage(
+          SimpleErrorMessages.getInstance().getFriendlyErrorMessage(
             ex, "Please check the connection parameters. See the teamcity-clouds.log for details")
         );
       }

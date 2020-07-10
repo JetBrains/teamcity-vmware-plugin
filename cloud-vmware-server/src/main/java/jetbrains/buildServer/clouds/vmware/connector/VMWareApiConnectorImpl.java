@@ -50,7 +50,7 @@ import jetbrains.buildServer.clouds.vmware.*;
 import jetbrains.buildServer.clouds.vmware.connector.beans.FolderBean;
 import jetbrains.buildServer.clouds.vmware.connector.beans.ResourcePoolBean;
 import jetbrains.buildServer.clouds.vmware.errors.VmwareCheckedCloudException;
-import jetbrains.buildServer.clouds.vmware.errors.VmwareErrorMessages;
+import jetbrains.buildServer.clouds.base.errors.SimpleErrorMessages;
 import jetbrains.buildServer.serverSide.TeamCityProperties;
 import jetbrains.buildServer.serverSide.crypt.EncryptUtil;
 import jetbrains.buildServer.util.StringUtil;
@@ -164,7 +164,7 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
         throw new VmwareCheckedCloudException("Invalid server URL", e);
       } catch (RemoteException e) {
         if (e.getCause() != null) {
-          final String message = VmwareErrorMessages.getInstance().getFriendlyErrorMessage(e, "Unknown error");
+          final String message = SimpleErrorMessages.getInstance().getFriendlyErrorMessage(e, "Unknown error");
           if (e.getCause() instanceof SSLException){
             throw new VmwareCheckedCloudException("An SSL error occurred while connecting to vCenter (is server certificate uploaded to \"SSL / HTTPS Certificates\" of the Root project?):" + message, e.getCause());
           } else {

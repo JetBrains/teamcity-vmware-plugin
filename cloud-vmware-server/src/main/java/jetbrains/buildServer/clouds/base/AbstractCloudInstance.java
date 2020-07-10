@@ -26,7 +26,7 @@ import jetbrains.buildServer.clouds.InstanceStatus;
 import jetbrains.buildServer.clouds.base.errors.CloudErrorMap;
 import jetbrains.buildServer.clouds.base.errors.TypedCloudErrorInfo;
 import jetbrains.buildServer.clouds.base.errors.UpdatableCloudErrorProvider;
-import jetbrains.buildServer.clouds.vmware.errors.VmwareErrorMessages;
+import jetbrains.buildServer.clouds.base.errors.SimpleErrorMessages;
 import jetbrains.buildServer.log.LogUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -60,7 +60,7 @@ public abstract class AbstractCloudInstance<T extends AbstractCloudImage> implem
     myImage = image;
     myName = name;
     myInstanceId = instanceId;
-    myErrorProvider = new CloudErrorMap(VmwareErrorMessages.getInstance());
+    myErrorProvider = new CloudErrorMap(SimpleErrorMessages.getInstance());
   }
 
   public void setName(@NotNull final String name) {
