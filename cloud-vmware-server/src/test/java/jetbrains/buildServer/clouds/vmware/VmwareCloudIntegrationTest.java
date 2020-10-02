@@ -762,8 +762,8 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
 
       public void iterateProfileInstances(@NotNull final CloudProfile profile, @NotNull final CloudInstancesProviderExtendedCallback callback) {}
 
-      public void markInstanceExpired(@NotNull final CloudProfile profile, @NotNull final CloudInstance instance) {}
-      public boolean isInstanceExpired(@NotNull final CloudProfile profile, @NotNull final CloudInstance instance) {return false;}
+      public void markInstanceExpired(@NotNull final String profileId, @NotNull final String instanceId) {}
+      public boolean isInstanceExpired(@NotNull final String profileId, @NotNull final String instanceId) {return false;}
     };
 
     final VMWareCloudClientFactory factory = new VMWareCloudClientFactory(cloudRegistrar, pd, new ServerPaths(myIdxStorage.getAbsolutePath()),
@@ -902,7 +902,7 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
   }
 
   public void markInstanceExpiredWhenSnapshotNameChanges() throws MalformedURLException {
-    final Map<String, CloudInstance> instancesMarkedExpired = new HashMap<String, CloudInstance>();
+    final Set<String> instancesMarkedExpired = new HashSet<String>();
     final CloudInstancesProvider instancesProviderStub = new CloudInstancesProvider() {
       public void iterateInstances(@NotNull final CloudInstancesProviderExtendedCallback callback) {
         throw new UnsupportedOperationException(".iterateInstances");
@@ -916,12 +916,12 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
 
       }
 
-      public void markInstanceExpired(@NotNull final CloudProfile profile, @NotNull final CloudInstance instance) {
-        instancesMarkedExpired.put(instance.getInstanceId(),instance );
+      public void markInstanceExpired(@NotNull final String profileId, @NotNull final String instanceId) {
+        instancesMarkedExpired.add(instanceId);
       }
 
-      public boolean isInstanceExpired(@NotNull final CloudProfile profile, @NotNull final CloudInstance instance) {
-        return instancesMarkedExpired.containsKey(instance.getInstanceId());
+      public boolean isInstanceExpired(@NotNull final String profileId, @NotNull final String instanceId) {
+        return instancesMarkedExpired.contains(instanceId);
       }
     };
     myFakeApi = new FakeApiConnector(null, null, instancesProviderStub);
@@ -934,7 +934,7 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
   }
 
   public void mark_instance_expired_when_sourcevmid_changes() throws MalformedURLException {
-    final Map<String, CloudInstance> instancesMarkedExpired = new HashMap<String, CloudInstance>();
+    final Set<String> instancesMarkedExpired = new HashSet<String>();
     final CloudInstancesProvider instancesProviderStub = new CloudInstancesProvider() {
       public void iterateInstances(@NotNull final CloudInstancesProviderExtendedCallback callback) {
         throw new UnsupportedOperationException(".iterateInstances");
@@ -946,12 +946,12 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
 
       }
 
-      public void markInstanceExpired(@NotNull final CloudProfile profile, @NotNull final CloudInstance instance) {
-        instancesMarkedExpired.put(instance.getInstanceId(),instance );
+      public void markInstanceExpired(@NotNull final String profileId, @NotNull final String instanceId) {
+        instancesMarkedExpired.add(instanceId);
       }
 
-      public boolean isInstanceExpired(@NotNull final CloudProfile profile, @NotNull final CloudInstance instance) {
-        return instancesMarkedExpired.containsKey(instance.getInstanceId());
+      public boolean isInstanceExpired(@NotNull final String profileId, @NotNull final String instanceId) {
+        return instancesMarkedExpired.contains(instanceId);
       }
     };
     myFakeApi = new FakeApiConnector(null, null, instancesProviderStub);
@@ -971,7 +971,7 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
   }
 
   public void shouldnt_mark_expired_if_vmsourceid_is_absent() throws MalformedURLException {
-    final Map<String, CloudInstance> instancesMarkedExpired = new HashMap<String, CloudInstance>();
+    final Set<String> instancesMarkedExpired = new HashSet<String>();
     final CloudInstancesProvider instancesProviderStub = new CloudInstancesProvider() {
       @Override
       public void iterateInstances(@NotNull final CloudInstancesProviderExtendedCallback callback) {
@@ -983,12 +983,12 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
         throw new UnsupportedOperationException(".iterateProfileInstances");
       }
 
-      public void markInstanceExpired(@NotNull final CloudProfile profile, @NotNull final CloudInstance instance) {
-        instancesMarkedExpired.put(instance.getInstanceId(),instance );
+      public void markInstanceExpired(@NotNull final String profileId, @NotNull final String instanceId) {
+        instancesMarkedExpired.add(instanceId);
       }
 
-      public boolean isInstanceExpired(@NotNull final CloudProfile profile, @NotNull final CloudInstance instance) {
-        return instancesMarkedExpired.containsKey(instance.getInstanceId());
+      public boolean isInstanceExpired(@NotNull final String profileId, @NotNull final String instanceId) {
+        return instancesMarkedExpired.contains(instanceId);
       }
     };
     myFakeApi = new FakeApiConnector(null, null, instancesProviderStub);
@@ -1356,7 +1356,7 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
 
   @TestFor(issues = "TW-56111")
   public void dont_check_not_started_instances_for_expiration() throws MalformedURLException {
-    final Map<String, CloudInstance> instancesMarkedExpired = new HashMap<String, CloudInstance>();
+    final Set<String> instancesMarkedExpired = new HashSet<String>();
     final CloudInstancesProvider instancesProviderStub = new CloudInstancesProvider(){
 
       public void iterateInstances(@NotNull final CloudInstancesProviderExtendedCallback callback) {
@@ -1367,12 +1367,12 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
         throw new UnsupportedOperationException(".iterateProfileInstances");
       }
 
-      public void markInstanceExpired(@NotNull final CloudProfile profile, @NotNull final CloudInstance instance) {
-        instancesMarkedExpired.put(instance.getInstanceId(),instance );
+      public void markInstanceExpired(@NotNull final String profileId, @NotNull final String instanceId) {
+        instancesMarkedExpired.add(instanceId);
       }
 
-      public boolean isInstanceExpired(@NotNull final CloudProfile profile, @NotNull final CloudInstance instance) {
-        return instancesMarkedExpired.containsKey(instance.getInstanceId());
+      public boolean isInstanceExpired(@NotNull final String profileId, @NotNull final String instanceId) {
+        return instancesMarkedExpired.contains(instanceId);
       }
     };
     final CountDownLatch latch = new CountDownLatch(1);
