@@ -930,7 +930,7 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
     assertEquals(VirtualMachinePowerState.poweredOn, FakeModel.instance().getVirtualMachine(in.getName()).getRuntime().getPowerState());
     FakeModel.instance().addVMSnapshot("image2", "snap2");
     myFakeApi.checkImage(getImageByName("image2"));
-    assertTrue(instancesProviderStub.isInstanceExpired(myProfile, in));
+    assertTrue(instancesProviderStub.isInstanceExpired(myProfile.getProfileId(), in.getInstanceId()));
   }
 
   public void mark_instance_expired_when_sourcevmid_changes() throws MalformedURLException {
@@ -967,7 +967,7 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
     image2.setMOR(mor);
 
     myFakeApi.checkImage(getImageByName("image2"));
-    assertTrue(instancesProviderStub.isInstanceExpired(myProfile, in));
+    assertTrue(instancesProviderStub.isInstanceExpired(myProfile.getProfileId(), in.getInstanceId()));
   }
 
   public void shouldnt_mark_expired_if_vmsourceid_is_absent() throws MalformedURLException {
@@ -1038,7 +1038,7 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
 
 
     myFakeApi.checkImage(getImageByName("image2"));
-    assertFalse(instancesProviderStub.isInstanceExpired(myProfile, in));
+    assertFalse(instancesProviderStub.isInstanceExpired(myProfile.getProfileId(), in.getInstanceId()));
   }
 
   public void shouldConsiderProfileInstancesLimit(){
@@ -1408,7 +1408,7 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
 
     myFakeApi.checkImage(getImageByName("image2"));
 
-    assertFalse(instancesProviderStub.isInstanceExpired(myProfile, instance));
+    assertFalse(instancesProviderStub.isInstanceExpired(myProfile.getProfileId(), instance.getInstanceId()));
     latch.countDown();
     new WaitFor(1000){
 
@@ -1418,7 +1418,7 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
       }
     };
     myFakeApi.checkImage(getImageByName("image2"));
-    assertTrue(instancesProviderStub.isInstanceExpired(myProfile, instance));
+    assertTrue(instancesProviderStub.isInstanceExpired(myProfile.getProfileId(), instance.getInstanceId()));
 
   }
 

@@ -1241,7 +1241,7 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
             final VmwareSourceState vmSourceState = instance.getSourceState();
             if (!actualState.equals(vmSourceState)) {
               LOG.info("marking instance expired: " + actualState.getDiffMessage(vmSourceState));
-              myInstancesProvider.markInstanceExpired(image.getProfile(), instance);
+              myInstancesProvider.markInstanceExpired(image.getProfile().getProfileId(), instance.getInstanceId());
             }
           }
         } else {
