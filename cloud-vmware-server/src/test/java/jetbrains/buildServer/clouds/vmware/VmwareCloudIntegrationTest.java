@@ -104,6 +104,7 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
 
     setInternalProperty("teamcity.vsphere.instance.status.update.delay.ms", "50");
     setInternalProperty("teamcity.vmware.instance.status.check.delay", "50");
+    setInternalProperty("teamcity.vmware.profile.async.delay.millis", "20");
     final String json = "[{sourceVmName:'image1', behaviour:'START_STOP'}," +
                         "{sourceVmName:'image2',snapshot:'snap*',folder:'cf',pool:'rp',maxInstances:3,behaviour:'ON_DEMAND_CLONE', " +
                         "customizationSpec:'someCustomization'}," +
@@ -336,7 +337,7 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
     // start and stop Instance
     final Task powerOnTask = FakeModel.instance().getVirtualMachine("image1").powerOnVM_Task(null);
     assertEquals("success", powerOnTask.waitForTask());
-    Thread.sleep(2000); // to ensure that version will change
+    Thread.sleep(500); // to ensure that version will change
     FakeModel.instance().getVirtualMachine("image1").shutdownGuest();
     new WaitFor(1000){
 
@@ -527,16 +528,17 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
     assertTrue(checked);
   }
 
-  public void dont_exceed_max_instances_limit_fresh_clones() throws RemoteException {
-    final VmwareCloudInstance[] instances = new VmwareCloudInstance[]{startNewInstanceAndWait("image_template"),
-      startNewInstanceAndWait("image_template")};
+  public void dont_exceed_max_instances_limit_fresh_clones() throws RemoteException, InterruptedException {
+    VmwareCloudInstance vm1 = startNewInstanceAndWait("image_template");
+    VmwareCloudInstance vm2 = startNewInstanceAndWait("image_template");
     // shutdown all instances
-    for (VmwareCloudInstance instance : instances) {
+    for (VmwareCloudInstance instance : new VmwareCloudInstance[]{vm1, vm2}) {
       FakeModel.instance().getVirtualMachine(instance.getName()).powerOffVM_Task();
     }
     recreateClient();
     startNewInstanceAndWait("image_template");
 
+    Thread.sleep(500);
     // instance should not start
     startNewInstanceAndCheck("image_template", new HashMap<>(), false);
   }
@@ -586,7 +588,7 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
     startNewInstanceAndWait("image2");
     startNewInstanceAndWait("image2");
     startNewInstanceAndWait("image2");
-    Thread.sleep(5*1000);
+    Thread.sleep(1000);
     failure.set(true);
     final long problemStart = System.currentTimeMillis();
     new WaitFor(5*1000){

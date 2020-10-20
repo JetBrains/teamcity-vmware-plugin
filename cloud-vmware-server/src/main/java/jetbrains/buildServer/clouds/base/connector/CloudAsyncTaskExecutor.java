@@ -48,13 +48,14 @@ public class CloudAsyncTaskExecutor {
     myExecutingTasks = new ConcurrentHashMap<AsyncCloudTask, TaskCallbackHandler>();
 
     int threadCount = TeamCityProperties.getInteger("teamcity.vmware.profile.async.threads", 2);
+    int delay = TeamCityProperties.getInteger("teamcity.vmware.profile.async.delay.millis", 300);
     myExecuteAllAsync = threadCount > 1;
     myExecutor = ExecutorsFactory.newFixedScheduledDaemonExecutor(prefix, threadCount);
     scheduleWithFixedDelay("Check for tasks", new Runnable() {
       public void run() {
         checkTasks();
       }
-    }, 0, 300, TimeUnit.MILLISECONDS);
+    }, 0, delay, TimeUnit.MILLISECONDS);
   }
 
   public void executeAsync(final AsyncCloudTask operation) {

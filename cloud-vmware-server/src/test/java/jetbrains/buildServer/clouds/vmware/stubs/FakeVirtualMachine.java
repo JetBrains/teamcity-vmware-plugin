@@ -35,8 +35,8 @@ import static jetbrains.buildServer.clouds.vmware.stubs.FakeModel.FAKE_MODEL_THR
  */
 public class FakeVirtualMachine extends VirtualMachine {
 
-  private static final int GUEST_SHUTDOWN_SLEEP_INTERVAL = 600;
-  private static final int FORCE_SHUTDOWN_SLEEP_INTERVAL = 600;
+  private static final int GUEST_SHUTDOWN_SLEEP_INTERVAL = 200;
+  private static final int FORCE_SHUTDOWN_SLEEP_INTERVAL = 200;
   private String myName;
   private VirtualMachineRuntimeInfo myRuntimeInfo;
   private GuestInfo myGuestInfo;
@@ -160,7 +160,7 @@ public class FakeVirtualMachine extends VirtualMachine {
     new Thread(){
       @Override
       public void run() {
-        try {sleep(500);} catch (InterruptedException e) {}
+        try {sleep(100);} catch (InterruptedException e) {}
         latch.countDown();
         newVm.myConfigInfoRef.set(oldConfig);
 
