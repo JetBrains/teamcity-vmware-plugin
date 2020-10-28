@@ -44,6 +44,15 @@ public class VmwarePropertiesProcessor implements PropertiesProcessor {
   public Collection<InvalidProperty> process(final Map<String, String> properties) {
     List<InvalidProperty> list = new ArrayList<InvalidProperty>();
 
+    // Remove helper properties used in ConfigurationHelperController and GetSnapshotsListController
+    try {
+      properties.remove("helperFieldValue");
+      properties.remove("helperFieldId");
+      properties.remove("image");
+    } catch (UnsupportedOperationException ignored) {
+      // In case of unmodifiable map passed
+    }
+
     notEmpty(properties, VMWareWebConstants.SECURE_PASSWORD, list);
     notEmpty(properties, VMWareWebConstants.USERNAME, list);
     notEmpty(properties, VMWareWebConstants.SERVER_URL, list);
