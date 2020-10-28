@@ -26,7 +26,6 @@ public class VMWareWebConstants {
   public static final String SERVER_URL="vmware_server_url";
   public static final String USERNAME="vmware_username";
   public static final String PASSWORD="vmware_password";
-  public static final String FORCE_TRUST_MANAGER="force_trust_manager";
   public static final String PROFILE_INSTANCE_LIMIT="vmware_profile_instance_limit";
 
   public static final String SECURE_PASSWORD = "secure:"+PASSWORD;
@@ -42,10 +41,6 @@ public class VMWareWebConstants {
 
   public String getPassword() {
     return PASSWORD;
-  }
-
-  public String getForceTrustManager(){
-    return FORCE_TRUST_MANAGER;
   }
 
   public String getProfileInstanceLimit() {

@@ -140,7 +140,7 @@ public class VMWareCloudClientFactory extends AbstractCloudClientFactory<VmwareC
 
   @NotNull
   public Map<String, String> getInitialParameterValues() {
-    return Collections.singletonMap(VMWareWebConstants.FORCE_TRUST_MANAGER, "true");
+    return Collections.emptyMap();
   }
 
   @NotNull
@@ -158,7 +158,6 @@ public class VMWareCloudClientFactory extends AbstractCloudClientFactory<VmwareC
     String serverUrl = params.getParameter(VMWareWebConstants.SERVER_URL);
     String username = params.getParameter(VMWareWebConstants.USERNAME);
     String password = params.getParameter(VMWareWebConstants.SECURE_PASSWORD);
-    boolean forceTrustManager = "true".equalsIgnoreCase(params.getParameter(VMWareWebConstants.FORCE_TRUST_MANAGER));
     if (serverUrl != null && username != null) {
       try {
         return VmwareApiConnectorsPool.getOrCreateConnector(

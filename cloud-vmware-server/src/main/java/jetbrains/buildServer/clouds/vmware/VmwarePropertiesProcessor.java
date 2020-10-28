@@ -49,6 +49,7 @@ public class VmwarePropertiesProcessor implements PropertiesProcessor {
       properties.remove("helperFieldValue");
       properties.remove("helperFieldId");
       properties.remove("image");
+      properties.remove("force_trust_manager");
     } catch (UnsupportedOperationException ignored) {
       // In case of unmodifiable map passed
     }
