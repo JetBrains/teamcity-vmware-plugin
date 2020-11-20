@@ -81,12 +81,15 @@ public class VMWareEditProfileController extends BaseFormXmlController {
     myJspPath = myPluginDescriptor.getPluginResourcesPath("vmware-settings.jsp");
     mySnapshotsPath = pluginDescriptor.getPluginResourcesPath("vmware-getsnapshotlist.html");
     myConfigHelperPath = pluginDescriptor.getPluginResourcesPath("vmware-config-helper.html");
+
     authInterceptor.addPathBasedPermissionsChecker(myHtmlPath, new VmwareEditProfilePermissionChecker());
     manager.registerController(myHtmlPath, this);
-    manager.registerController(pluginDescriptor.getPluginResourcesPath("vmware-getsnapshotlist.html"),
-                               new GetSnapshotsListController(mySslTrustStoreProvider));
-    manager.registerController(pluginDescriptor.getPluginResourcesPath("vmware-config-helper.html"),
-                               new ConfigurationHelperController(mySslTrustStoreProvider));
+
+    authInterceptor.addPathBasedPermissionsChecker(mySnapshotsPath, new VmwareEditProfilePermissionChecker());
+    manager.registerController(mySnapshotsPath, new GetSnapshotsListController(mySslTrustStoreProvider));
+
+    authInterceptor.addPathBasedPermissionsChecker(mySnapshotsPath, new VmwareEditProfilePermissionChecker());
+    manager.registerController(myConfigHelperPath, new ConfigurationHelperController(mySslTrustStoreProvider));
   }
 
   @Override

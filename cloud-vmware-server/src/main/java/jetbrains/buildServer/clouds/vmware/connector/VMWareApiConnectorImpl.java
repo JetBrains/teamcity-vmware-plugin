@@ -177,7 +177,9 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
     return myServiceInstance.getRootFolder();
   }
 
-  private boolean isId(String idName, Class instanceType){
+  private boolean isId(@NotNull String idName, Class instanceType){
+    if (StringUtil.isEmpty(idName))
+      return false;
     if (instanceType == ResourcePool.class) {
       return RESPOOL_PATTERN.matcher(idName).matches();
     } else if (instanceType == Folder.class) {
@@ -215,6 +217,8 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
                                                             final @NotNull Class<T> instanceType,
                                                             final @Nullable Datacenter dc)
     throws RemoteException, VmwareCheckedCloudException {
+    if (StringUtil.isEmpty(idName))
+      return null;
     if (dc == null) {
       return (T)new InventoryNavigator(getRootFolder()).searchManagedEntity(instanceType.getSimpleName(), idName);
     } else {
@@ -700,7 +704,7 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
     return snapshotNames(rootSnapshotList);
   }
 
-  public Map<String, VirtualMachineSnapshotTree> getSnapshotList(final String vmName) throws VmwareCheckedCloudException {
+  public Map<String, VirtualMachineSnapshotTree> getSnapshotList(@NotNull final String vmName) throws VmwareCheckedCloudException {
     return getSnapshotList(findEntityByIdNameOld(vmName, VirtualMachine.class).getFirst());
   }
 

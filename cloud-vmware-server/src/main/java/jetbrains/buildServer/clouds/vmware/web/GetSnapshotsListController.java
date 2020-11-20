@@ -30,6 +30,7 @@ import jetbrains.buildServer.clouds.vmware.connector.VMWareApiConnector;
 import jetbrains.buildServer.controllers.BaseFormXmlController;
 import jetbrains.buildServer.controllers.BasePropertiesBean;
 import jetbrains.buildServer.controllers.admin.projects.PluginPropertiesUtil;
+import jetbrains.buildServer.util.StringUtil;
 import jetbrains.buildServer.util.ssl.SSLTrustStoreProvider;
 import org.jdom.Content;
 import org.jdom.Element;
@@ -62,10 +63,13 @@ public class GetSnapshotsListController extends BaseFormXmlController {
     PluginPropertiesUtil.bindPropertiesFromRequest(request, propsBean, true);
 
     final Map<String, String> props = propsBean.getProperties();
-    final String serverUrl = props.get(VMWareWebConstants.SERVER_URL);
-    final String username = props.get(VMWareWebConstants.USERNAME);
-    final String password = props.get(VMWareWebConstants.SECURE_PASSWORD);
-    final String imageName = props.get("image");
+    @NotNull final String serverUrl = props.get(VMWareWebConstants.SERVER_URL);
+    @NotNull final String username = props.get(VMWareWebConstants.USERNAME);
+    @NotNull final String password = props.get(VMWareWebConstants.SECURE_PASSWORD);
+    @NotNull final String imageName = props.get("image");
+    if (StringUtil.isEmpty(serverUrl) ||
+        StringUtil.isEmpty(imageName))
+      return;
     try {
       final VMWareApiConnector myApiConnector = VmwareApiConnectorsPool.getOrCreateConnector(
         new URL(serverUrl), username, password, null, null, null, myStoreProvider);
