@@ -88,7 +88,7 @@ public class VMWareEditProfileController extends BaseFormXmlController {
     authInterceptor.addPathBasedPermissionsChecker(mySnapshotsPath, new VmwareEditProfilePermissionChecker());
     manager.registerController(mySnapshotsPath, new GetSnapshotsListController(mySslTrustStoreProvider));
 
-    authInterceptor.addPathBasedPermissionsChecker(mySnapshotsPath, new VmwareEditProfilePermissionChecker());
+    authInterceptor.addPathBasedPermissionsChecker(myConfigHelperPath, new VmwareEditProfilePermissionChecker());
     manager.registerController(myConfigHelperPath, new ConfigurationHelperController(mySslTrustStoreProvider));
   }
 
