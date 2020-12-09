@@ -56,6 +56,7 @@ import jetbrains.buildServer.serverSide.crypt.EncryptUtil;
 import jetbrains.buildServer.util.StringUtil;
 import jetbrains.buildServer.util.ssl.SSLContextUtil;
 import jetbrains.buildServer.util.ssl.SSLTrustStoreProvider;
+import org.dom4j.io.SAXReader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
