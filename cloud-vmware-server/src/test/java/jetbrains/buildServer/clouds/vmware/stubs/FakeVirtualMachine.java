@@ -52,6 +52,7 @@ public class FakeVirtualMachine extends VirtualMachine {
   private CustomizationSpec myCustomizationSpec;
   private AtomicBoolean myGone = new AtomicBoolean(false);
   private volatile ManagedObjectReference selfMOR = null;
+  private static final Random RANDOM = new Random();
 
   public FakeVirtualMachine(final String name, final boolean isTemplate, final boolean isRunning) {
     super(null, createVMMor(name));
@@ -363,7 +364,7 @@ public class FakeVirtualMachine extends VirtualMachine {
   }
 
   private void updateVersion(){
-    myVersion = new Date().toString();
+    myVersion = new Date().toString() + " - " + RANDOM.nextLong();
   }
 
   @Override

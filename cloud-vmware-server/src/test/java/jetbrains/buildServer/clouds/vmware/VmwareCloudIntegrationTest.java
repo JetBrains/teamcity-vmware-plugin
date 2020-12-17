@@ -337,7 +337,7 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
     // start and stop Instance
     final Task powerOnTask = FakeModel.instance().getVirtualMachine("image1").powerOnVM_Task(null);
     assertEquals("success", powerOnTask.waitForTask());
-    Thread.sleep(500); // to ensure that version will change
+    Thread.sleep(100); // to ensure that version will change
     FakeModel.instance().getVirtualMachine("image1").shutdownGuest();
     new WaitFor(1000){
 
