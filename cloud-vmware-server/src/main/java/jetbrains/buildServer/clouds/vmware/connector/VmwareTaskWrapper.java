@@ -28,7 +28,6 @@ import jetbrains.buildServer.clouds.base.connector.CloudTaskResult;
 import jetbrains.buildServer.log.LogUtil;
 import jetbrains.buildServer.util.impl.Lazy;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Sergey.Pak
@@ -40,14 +39,13 @@ public class VmwareTaskWrapper implements AsyncCloudTask {
   private final Callable<Task> myVmwareTask;
   private final String myTaskName;
   private volatile long myStartTime;
-  private Lazy<CloudTaskResult> myResultLazy;
-  private AtomicBoolean myIsDone = new AtomicBoolean(false);
+  private final Lazy<CloudTaskResult> myResultLazy;
+  private final AtomicBoolean myIsDone = new AtomicBoolean(false);
 
   public VmwareTaskWrapper(@NotNull final Callable<Task> vmwareTask, String taskName){
     myVmwareTask = vmwareTask;
     myTaskName = taskName;
     myResultLazy = new Lazy<CloudTaskResult>() {
-      @Nullable
       @Override
       protected CloudTaskResult createValue() {
         try {

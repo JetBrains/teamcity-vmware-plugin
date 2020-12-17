@@ -17,8 +17,9 @@
 package jetbrains.buildServer.clouds.vmware.connector;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.vmware.vim25.*;
-import com.vmware.vim25.mo.Datacenter;
+import com.vmware.vim25.ManagedObjectReference;
+import com.vmware.vim25.OptionValue;
+import com.vmware.vim25.VirtualMachinePowerState;
 import com.vmware.vim25.mo.VirtualMachine;
 import java.util.*;
 import jetbrains.buildServer.Used;
@@ -26,7 +27,6 @@ import jetbrains.buildServer.clouds.InstanceStatus;
 import jetbrains.buildServer.clouds.base.connector.AbstractInstance;
 import jetbrains.buildServer.clouds.vmware.VmwareSourceState;
 import jetbrains.buildServer.util.StringUtil;
-import jetbrains.buildServer.util.impl.Lazy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,7 +41,7 @@ public class VmwareInstance extends AbstractInstance implements VmwareManagedEnt
   private final String myId;
   @NotNull private final OptionValue[] myExtraConfig;
   @NotNull private final VirtualMachinePowerState myPowerState;
-  @NotNull private final boolean myIsTemplate;
+  private final boolean myIsTemplate;
   @NotNull private final String myChangeVersion;
   @Nullable private final Calendar myBootTime;
   @Nullable private final String myIpAddress;
@@ -68,7 +68,7 @@ public class VmwareInstance extends AbstractInstance implements VmwareManagedEnt
                         @NotNull final String id,
                         @NotNull final OptionValue[] extraConfig,
                         @NotNull final VirtualMachinePowerState powerState,
-                        @NotNull final boolean isTemplate,
+                        final boolean isTemplate,
                         @NotNull final String changeVersion,
                         @Nullable final Calendar bootTime,
                         @Nullable final String ipAddress,
@@ -158,7 +158,7 @@ public class VmwareInstance extends AbstractInstance implements VmwareManagedEnt
     return myIsTemplate;
   }
 
-  @Nullable
+  @NotNull
   public String getChangeVersion() {
     return myChangeVersion;
   }
@@ -176,7 +176,7 @@ public class VmwareInstance extends AbstractInstance implements VmwareManagedEnt
     return myId;
   }
 
-  @Nullable
+  @NotNull
   public String getDatacenterId() {
     return myDatacenterId;
   }
@@ -224,5 +224,13 @@ public class VmwareInstance extends AbstractInstance implements VmwareManagedEnt
   @Override
   public int compareTo(@NotNull final VmwareInstance o) {
     return StringUtil.compare(StringUtil.toLowerCase(myName), StringUtil.toLowerCase(o.myName));
+  }
+
+  @Override
+  public String toString() {
+    return "VmwareInstance{" +
+           "myId='" + myId + '\'' +
+           ", myPowerState=" + myPowerState +
+           '}';
   }
 }

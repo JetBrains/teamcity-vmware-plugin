@@ -16,9 +16,7 @@
 
 package jetbrains.buildServer.clouds.base.connector;
 
-import java.util.concurrent.*;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Sergey.Pak
@@ -37,7 +35,6 @@ public interface AsyncCloudTask {
   @NotNull
   String getName();
 
-  @Nullable
   long getStartTime();
 
   boolean isDone();
