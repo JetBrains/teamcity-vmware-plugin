@@ -43,7 +43,7 @@ public class CloudAsyncTaskExecutor {
   private final String myPrefix;
   private final boolean myExecuteAllAsync;
 
-  public CloudAsyncTaskExecutor(String prefix) {
+  public CloudAsyncTaskExecutor(@NotNull String prefix) {
     myPrefix = prefix;
     myExecutingTasks = new ConcurrentHashMap<AsyncCloudTask, TaskCallbackHandler>();
 
@@ -58,11 +58,7 @@ public class CloudAsyncTaskExecutor {
     }, 0, delay, TimeUnit.MILLISECONDS);
   }
 
-  public void executeAsync(final AsyncCloudTask operation) {
-    executeAsync(operation, TaskCallbackHandler.DUMMY_HANDLER);
-  }
-
-  public void executeAsync(final AsyncCloudTask operation, final TaskCallbackHandler callbackHandler) {
+  public void executeAsync(@NotNull final AsyncCloudTask operation, @NotNull final TaskCallbackHandler callbackHandler) {
     if (myExecuteAllAsync) {
       submit(operation.getName(), ()->{
         myExecutingTasks.put(operation, callbackHandler);
@@ -82,7 +78,7 @@ public class CloudAsyncTaskExecutor {
     }, initialDelay, delay, unit);
   }
 
-  public Future<?> submit(final String taskName, final Runnable r){
+  public Future<?> submit(final String taskName, @NotNull final Runnable r){
     return myExecutor.submit(new Runnable() {
       public void run() {
         try {
@@ -109,7 +105,7 @@ public class CloudAsyncTaskExecutor {
     LOG.debug("Check Tasks processed " + size + " tasks in " + (System.currentTimeMillis() - startTime) + " ms.");
   }
 
-  private void processSingleTask(AsyncCloudTask task) {
+  private void processSingleTask(@NotNull AsyncCloudTask task) {
     if (task.isDone()) {
       final TaskCallbackHandler handler = myExecutingTasks.get(task);
       try {
