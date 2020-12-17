@@ -231,6 +231,7 @@ public class VmwareInstance extends AbstractInstance implements VmwareManagedEnt
     return "VmwareInstance{" +
            "myId='" + myId + '\'' +
            ", myPowerState=" + myPowerState +
+           ", myChangeVersion='" + myChangeVersion + '\'' +
            '}';
   }
 }

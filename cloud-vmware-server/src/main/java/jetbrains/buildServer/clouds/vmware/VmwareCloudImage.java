@@ -22,7 +22,10 @@ import com.vmware.vim25.mo.Task;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -40,7 +43,6 @@ import jetbrains.buildServer.clouds.vmware.connector.VmwareTaskWrapper;
 import jetbrains.buildServer.clouds.vmware.errors.VmwareCheckedCloudException;
 import jetbrains.buildServer.serverSide.TeamCityProperties;
 import jetbrains.buildServer.util.FileUtil;
-import jetbrains.buildServer.util.IdentifiersGenerator;
 import jetbrains.buildServer.util.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -112,14 +114,14 @@ public class VmwareCloudImage extends AbstractCloudImage<VmwareCloudInstance, Vm
 
         if (instance != null) {
           if (myImageDetails.useCurrentVersion()) {
-            if (imageVm.getChangeVersion() == null || !imageVm.getChangeVersion().equals(vmInstance.getChangeVersion())) {
+            if (!imageVm.getChangeVersion().equals(vmInstance.getChangeVersion())) {
               LOG.info(String.format("Change version for %s is outdated: '%s' vs '%s'", vmName, vmInstance.getChangeVersion(), imageVm.getChangeVersion()));
               deleteInstance(instance);
               return false;
             }
           } else {
             final VmwareSourceState vmSourceState = vmInstance.getVmSourceState();
-            if (!vmSourceState.equals(currentSourceState)){
+            if (!currentSourceState.equals(vmSourceState)){
               LOG.info(String.format("Source for VM %s has been changed: %s", vmName, currentSourceState.getDiffMessage(vmSourceState)));
               deleteInstance(instance);
               return false;
@@ -127,7 +129,7 @@ public class VmwareCloudImage extends AbstractCloudImage<VmwareCloudInstance, Vm
           }
         }
 
-        LOG.info("Will use existing VM with name " + vmName);
+        LOG.info("Will use existing VM " + vmInstance);
         candidate.set(instance);
         return true;
       }
