@@ -63,13 +63,13 @@
     <orderEntry type="module-library" scope="PROVIDED">
       <library name="yavijava - src + doc">
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/../lib/yavijava-6.0.05-25.jar!/" />
+          <root url="jar://$MODULE_DIR$/../lib/yavijava-6.0.05-27.jar!/" />
         </CLASSES>
         <JAVADOC>
-          <root url="jar://$MODULE_DIR$/../lib/yavijava-6.0.05-25-javadoc.jar!/" />
+          <root url="jar://$MODULE_DIR$/../lib/yavijava-6.0.05-27-javadoc.jar!/" />
         </JAVADOC>
         <SOURCES>
-          <root url="jar://$MODULE_DIR$/../lib/yavijava-6.0.05-25-sources.jar!/" />
+          <root url="jar://$MODULE_DIR$/../lib/yavijava-6.0.05-27-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>

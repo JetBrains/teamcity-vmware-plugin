@@ -17,6 +17,7 @@
 package jetbrains.buildServer.clouds.vmware;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.vmware.vim25.ws.XmlGen;
 import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -33,6 +34,7 @@ import jetbrains.buildServer.clouds.vmware.connector.VmwareApiConnectorsPool;
 import jetbrains.buildServer.clouds.vmware.tasks.VmwareUpdateTaskManager;
 import jetbrains.buildServer.clouds.vmware.web.VMWareWebConstants;
 import jetbrains.buildServer.serverSide.*;
+import jetbrains.buildServer.util.XmlUtil;
 import jetbrains.buildServer.util.ssl.SSLTrustStoreProvider;
 import jetbrains.buildServer.web.openapi.PluginDescriptor;
 import org.jetbrains.annotations.NotNull;
@@ -74,6 +76,14 @@ public class VMWareCloudClientFactory extends AbstractCloudClientFactory<VmwareC
     }
     myHtmlPath = pluginDescriptor.getPluginResourcesPath("vmware-settings.html");
     myServerSettings = serverSettings;
+
+    XmlGen.setXmlReaderSupplier(() -> {
+      try {
+        return XmlUtil.createXMLReader();
+      } catch (Exception ex) {
+        throw new RuntimeException(ex);
+      }
+    });
   }
 
   @NotNull

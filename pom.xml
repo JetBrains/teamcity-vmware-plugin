@@ -7,7 +7,7 @@
   <packaging>pom</packaging>
   <properties>
     <teamcity-version>SNAPSHOT</teamcity-version>
-    <yavijava-version>6.0.05-25</yavijava-version>
+    <yavijava-version>6.0.05-27</yavijava-version>
     <TeamCityDist></TeamCityDist>
   </properties>
   <pluginRepositories>
