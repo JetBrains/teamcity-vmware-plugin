@@ -1,12 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="CompilerConfiguration">
-    <option name="DEFAULT_COMPILER" value="Javac" />
     <excludeFromCompile>
       <directory url="file://$PROJECT_DIR$/../../BuildServer/.idea_artifacts/dist-teamcity-tomcat" includeSubdirectories="true" />
       <directory url="file://$TeamCityDistribution$" includeSubdirectories="true" />
     </excludeFromCompile>
-    <resourceExtensions />
     <wildcardResourcePatterns>
       <entry name="!?*.java" />
       <entry name="!?*.form" />
@@ -18,15 +16,20 @@
       <entry name="!?*.clj" />
     </wildcardResourcePatterns>
     <annotationProcessing>
-      <profile default="true" name="Default" enabled="false">
-        <processorPath useClasspath="true" />
-      </profile>
-      <profile default="false" name="Maven default annotation processors profile" enabled="true">
+      <profile name="Maven default annotation processors profile" enabled="true">
         <sourceOutputDir name="target/generated-sources/annotations" />
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
-        <processorPath useClasspath="true" />
+        <module name="cloud-vmware-server" />
+        <module name="cloud-vmware-common" />
+        <module name="cloud-vmware-agent" />
       </profile>
     </annotationProcessing>
+    <bytecodeTargetLevel>
+      <module name="cloud-vmware-agent" target="1.8" />
+      <module name="cloud-vmware-common" target="1.8" />
+      <module name="cloud-vmware-server" target="1.8" />
+      <module name="vmware-cloud" target="1.5" />
+    </bytecodeTargetLevel>
   </component>
 </project>
