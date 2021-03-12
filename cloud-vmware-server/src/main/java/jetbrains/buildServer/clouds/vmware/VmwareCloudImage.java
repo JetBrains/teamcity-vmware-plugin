@@ -37,6 +37,7 @@ import jetbrains.buildServer.clouds.base.connector.AbstractInstance;
 import jetbrains.buildServer.clouds.base.connector.CloudAsyncTaskExecutor;
 import jetbrains.buildServer.clouds.base.connector.TaskCallbackHandler;
 import jetbrains.buildServer.clouds.base.errors.TypedCloudErrorInfo;
+import jetbrains.buildServer.clouds.base.types.CloneBehaviour;
 import jetbrains.buildServer.clouds.vmware.connector.VMWareApiConnector;
 import jetbrains.buildServer.clouds.vmware.connector.VmwareInstance;
 import jetbrains.buildServer.clouds.vmware.connector.VmwareTaskWrapper;
@@ -432,6 +433,11 @@ public class VmwareCloudImage extends AbstractCloudImage<VmwareCloudInstance, Vm
         }
       }
     });
+  }
+
+  @Override
+  public boolean isStartStop() {
+    return myImageDetails.getBehaviour().isUseOriginal();
   }
 
   @Nullable
