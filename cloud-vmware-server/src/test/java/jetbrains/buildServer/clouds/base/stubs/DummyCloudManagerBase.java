@@ -170,4 +170,10 @@ public class DummyCloudManagerBase implements CloudManagerBase {
   public CloudImageParameters findImageByInternalId(@NotNull final String projectId, @NotNull final String imageInternalId) {
     throw new UnsupportedOperationException("DummyCloudManagerBase.findImageByInternalId");
   }
+
+  @Nullable
+  @Override
+  public CloudProfile findProfileByImageId(@NotNull String imageId) {
+    throw new UnsupportedOperationException("DummyCloudManagerBase.findProfileByImageId");
+  }
 }
