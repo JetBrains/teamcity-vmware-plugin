@@ -7,7 +7,7 @@
       </configuration>
     </facet>
   </component>
-  <component name="NewModuleRootManager" LANGUAGE_LEVEL="JDK_1_8" inherit-compiler-output="false">
+  <component name="NewModuleRootManager" LANGUAGE_LEVEL="JDK_1_8">
     <output url="file://$MODULE_DIR$/target/classes" />
     <output-test url="file://$MODULE_DIR$/../teamcity-vmware-plugin-agent/target/test-classes" />
     <content url="file://$MODULE_DIR$">
@@ -21,5 +21,20 @@
     <orderEntry type="module" module-name="agent" />
     <orderEntry type="module" module-name="cloud-shared" />
     <orderEntry type="module" module-name="common" />
+    <orderEntry type="module" module-name="agent-openapi" />
+    <orderEntry type="module" module-name="agent-upgrade" />
+    <orderEntry type="module" module-name="common-tools" />
+    <orderEntry type="module" module-name="common" />
+    <orderEntry type="module" module-name="runtime-util" />
+    <orderEntry type="module" module-name="server-logging" />
+    <orderEntry type="module" module-name="common-runtime" />
+    <orderEntry type="module" module-name="messages" />
+    <orderEntry type="module" module-name="agent-upgrade-common" />
+    <orderEntry type="module" module-name="plugin-model-common" />
+    <orderEntry type="module" module-name="agent-launcher-common" />
+    <orderEntry type="module" module-name="common-spring" />
+    <orderEntry type="library" name="Spring-Framework" level="project" />
+    <orderEntry type="library" name="JetLauncher API" level="project" />
+    <orderEntry type="library" name="annotations.jar" level="project" />
   </component>
 </module>
