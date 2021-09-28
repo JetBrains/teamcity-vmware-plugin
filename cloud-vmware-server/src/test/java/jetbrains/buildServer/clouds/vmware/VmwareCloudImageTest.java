@@ -22,6 +22,7 @@ import com.vmware.vim25.mo.Task;
 import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
+import java.nio.charset.StandardCharsets;
 import java.rmi.RemoteException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -49,6 +50,8 @@ import org.jetbrains.annotations.NotNull;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
+
+import static org.assertj.core.api.BDDAssertions.then;
 
 /**
  * @author Sergey.Pak
@@ -235,6 +238,16 @@ public class VmwareCloudImageTest extends BaseTestCase {
     assertEquals("imageNickname-2", sameImage.generateNewVmName());
     assertEquals("imageNickname-4", sameImage.generateNewVmName());
 
+  }
+
+  @TestFor(issues = "TW-73293")
+  public void check_name_generator() throws IOException {
+    FileUtil.writeFile(new File(myIdxStorage, myImage.getImageDetails().getSourceId() + ".idx"), "2", StandardCharsets.UTF_8);
+    final CloudInstanceUserData data = new CloudInstanceUserData("aaa", "bbbb", "localhost", 10000l, "profileDescr", Collections.<String, String>emptyMap());
+    VmwareCloudImage sameImage = new VmwareCloudImage(myApiConnector, myImageDetails, myTaskExecutor, myIdxStorage, myProfile);
+    VmwareCloudInstance i1 = sameImage.startNewInstance(data);
+    VmwareCloudInstance i2 = sameImage.startNewInstance(data);
+    then(sameImage.getInstances()).contains(i1, i2);
   }
 
   @AfterMethod
