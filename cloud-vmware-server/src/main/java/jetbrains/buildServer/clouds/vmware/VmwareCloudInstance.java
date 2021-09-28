@@ -50,10 +50,8 @@ public class VmwareCloudInstance extends AbstractCloudInstance<VmwareCloudImage>
   public VmwareCloudInstance(@NotNull final VmwareCloudImage image,
                              @NotNull final String instanceName,
                              @NotNull final VmwareSourceState sourceState) {
-    super(image);
+    super(image, instanceName, instanceName);
     mySourceState = sourceState;
-    setInstanceId(instanceName);
-    setName(instanceName);
     myIsReady = true;
   }
 

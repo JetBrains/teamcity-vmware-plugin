@@ -19,6 +19,7 @@ package jetbrains.buildServer.clouds.base;
 import com.intellij.openapi.diagnostic.Logger;
 import java.util.Date;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import jetbrains.buildServer.clouds.CloudErrorInfo;
 import jetbrains.buildServer.clouds.CloudInstance;
@@ -38,7 +39,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public abstract class AbstractCloudInstance<T extends AbstractCloudImage> implements CloudInstance, UpdatableCloudErrorProvider {
   private static final Logger LOG = Logger.getInstance(AbstractCloudInstance.class.getName());
-  private static final AtomicInteger STARTING_INSTANCE_IDX = new AtomicInteger(0);
+  private static final AtomicLong STARTING_INSTANCE_IDX = new AtomicLong(System.currentTimeMillis());
 
   private final UpdatableCloudErrorProvider myErrorProvider;
   private final AtomicReference<InstanceStatus> myStatus = new AtomicReference<>(InstanceStatus.UNKNOWN);
@@ -49,38 +50,39 @@ public abstract class AbstractCloudInstance<T extends AbstractCloudImage> implem
   private final AtomicReference<Date> myStatusUpdateTime = new AtomicReference<>(new Date());
   private final AtomicReference<String> myNetworkIdentify = new AtomicReference<String>();
 
-  private volatile String myName;
-  private volatile String myInstanceId;
+  private final AtomicReference<String> myNameRef = new AtomicReference<>();
+  private final AtomicReference<String> myInstanceIdRef = new AtomicReference<>();
 
   protected AbstractCloudInstance(@NotNull final T image) {
-    this(image, "Initializing...", String.format("%s-%d", image.getName(), STARTING_INSTANCE_IDX.incrementAndGet()));
+    this(image, "Initializing...", String.format("%s-temp-%d", image.getName(), STARTING_INSTANCE_IDX.incrementAndGet()));
   }
 
   protected AbstractCloudInstance(@NotNull final T image, @NotNull final String name, @NotNull final String instanceId) {
     myImage = image;
-    myName = name;
-    myInstanceId = instanceId;
+    myNameRef.set(name);
+    myInstanceIdRef.set(instanceId);
     myErrorProvider = new CloudErrorMap(SimpleErrorMessages.getInstance());
   }
 
   public void setName(@NotNull final String name) {
-    myName = name;
+    myNameRef.set(name);
   }
 
   public void setInstanceId(@NotNull final String instanceId) {
-    myImage.removeInstance(myInstanceId);
-    myInstanceId = instanceId;
+    final String oldInstanceId = myInstanceIdRef.get();
+    myInstanceIdRef.set(instanceId);
     myImage.addInstance(this);
+    myImage.removeInstance(oldInstanceId);
   }
 
   @NotNull
   public String getName() {
-    return myName;
+    return myNameRef.get();
   }
 
   @NotNull
   public String getInstanceId() {
-    return myInstanceId;
+    return myInstanceIdRef.get();
   }
 
 

@@ -247,6 +247,7 @@ public class VmwareCloudImage extends AbstractCloudImage<VmwareCloudInstance, Vm
         LOG.warnAndDebugDetails("Unexpected error while trying to start vSphere cloud instance", ex);
       }
     });
+    LOG.info(String.format("Instance '%s' is scheduled for start. Total instances count: %d", instanceCandidate.getInstanceId(), getInstances().size()));
 
     return instanceCandidate;
   }
@@ -377,9 +378,11 @@ public class VmwareCloudImage extends AbstractCloudImage<VmwareCloudInstance, Vm
         consideredInstances.add(instance.getInstanceId());
     }
     final boolean canStartMore =  consideredInstances.size() < myImageDetails.getMaxInstances();
-    final String message = String.format("[%s] Instances count: %d %s, can start more: %s", sourceId,
-                                         consideredInstances.size(), Arrays.toString(consideredInstances.toArray()), String.valueOf(canStartMore));
-    LOG.debug(message);
+    if (LOG.isDebugEnabled()) {
+      final String message = String.format("[%s] Instances count: %d %s, can start more: %s", sourceId,
+                                           consideredInstances.size(), Arrays.toString(consideredInstances.toArray()), String.valueOf(canStartMore));
+      LOG.debug(message);
+    }
     return canStartMore ? CanStartNewInstanceResult.yes() : CanStartNewInstanceResult.no("Image instance limit exceeded");
   }
 
