@@ -102,7 +102,9 @@ public class CloudAsyncTaskExecutor {
         LOG.warnAndDebugDetails("An error occurred during checking " + task, th);
       }
     }
-    LOG.debug("Check Tasks processed " + size + " tasks in " + (System.currentTimeMillis() - startTime) + " ms.");
+    if (size > 0) {
+      LOG.debug("Check Tasks processed " + size + " tasks in " + (System.currentTimeMillis() - startTime) + " ms.");
+    }
   }
 
   private void processSingleTask(@NotNull AsyncCloudTask task) {
@@ -117,7 +119,7 @@ public class CloudAsyncTaskExecutor {
           handler.onSuccess();
         }
       } catch (Exception e) {
-        LOG.warn(String.format("An error occurred while executing : '%s': %s", task.toString(), e.toString()));
+        LOG.warnAndDebugDetails("An error occurred while executing : '" + task + "'", e);
         handler.onError(e);
       }
       myExecutingTasks.remove(task);

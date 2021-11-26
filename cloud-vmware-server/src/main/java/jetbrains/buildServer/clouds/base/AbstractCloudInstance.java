@@ -125,7 +125,9 @@ public abstract class AbstractCloudInstance<T extends AbstractCloudImage> implem
   }
 
   public void setStartDate(@NotNull final Date startDate) {
-    LOG.debug(String.format("Setting start date to %s from %s", LogUtil.describe(startDate), LogUtil.describe(myStartDate.get())));
+    if (LOG.isDebugEnabled()) {
+      LOG.debug(String.format("Setting start date to %s from %s", LogUtil.describe(startDate), LogUtil.describe(myStartDate.get())));
+    }
     myStartDate.set(startDate);
   }
 

@@ -95,10 +95,9 @@ public class GetSnapshotsListController extends BaseFormXmlController {
       xmlResponse.addContent((Content) snapshots);
 
     } catch (VmwareCheckedCloudException e) {
-      LOG.warn("Unable to get snapshot list: " + e.toString());
-      LOG.debug("Unable to get snapshot list: " + e.toString(), e);
+      LOG.warnAndDebugDetails("Unable to get snapshot list", e);
     } catch (MalformedURLException e) {
-      LOG.warn("Unable to get snapshot list: " + e.toString());
+      LOG.warnAndDebugDetails("Unable to get snapshot list", e);
     }
 
   }

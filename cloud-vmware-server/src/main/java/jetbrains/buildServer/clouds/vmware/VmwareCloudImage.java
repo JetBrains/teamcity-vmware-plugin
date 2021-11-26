@@ -353,7 +353,6 @@ public class VmwareCloudImage extends AbstractCloudImage<VmwareCloudInstance, Vm
   @Override
   public synchronized CanStartNewInstanceResult canStartNewInstanceWithDetails() {
     if (getErrorInfo() != null){
-      LOG.debug("Can't start new instance, if image is erroneous");
       return CanStartNewInstanceResult.no("Image is erroneous.");
     }
 
@@ -379,9 +378,8 @@ public class VmwareCloudImage extends AbstractCloudImage<VmwareCloudInstance, Vm
     }
     final boolean canStartMore =  consideredInstances.size() < myImageDetails.getMaxInstances();
     if (LOG.isDebugEnabled()) {
-      final String message = String.format("[%s] Instances count: %d %s, can start more: %s", sourceId,
-                                           consideredInstances.size(), Arrays.toString(consideredInstances.toArray()), String.valueOf(canStartMore));
-      LOG.debug(message);
+      LOG.debug(String.format("[%s] Instances count: %d %s, can start more: %s", sourceId,
+                              consideredInstances.size(), Arrays.toString(consideredInstances.toArray()), String.valueOf(canStartMore)));
     }
     return canStartMore ? CanStartNewInstanceResult.yes() : CanStartNewInstanceResult.no("Image instance limit exceeded");
   }

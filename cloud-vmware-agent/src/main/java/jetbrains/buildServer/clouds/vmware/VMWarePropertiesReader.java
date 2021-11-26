@@ -143,11 +143,11 @@ public class VMWarePropertiesReader {
         commandOutput.append("Stderr: ").append(StringUtil.trim(result.getStderr())).append('\n');
         commandOutput.append("Exit code:").append(result.getExitCode());
         if (result.getExitCode() != 0){
-          LOG.debug("Got non-zero exit code for '" + commandLine.toString() + "':\n" + commandOutput.toString());
+          LOG.warn("Got non-zero exit code for '" + commandLine.toString() + "':\n" + commandOutput.toString());
         }
         return executionResult;
       } else {
-        LOG.debug("Didn't get response for " + commandLine.toString() + " in " + executionTimeoutSeconds + " seconds.\n" +
+        LOG.warn("Didn't get response for " + commandLine.toString() + " in " + executionTimeoutSeconds + " seconds.\n" +
                   "Consider setting agent property 'teamcity.guest.props.read.timeout.sec' to a higher value (default=5)");
       }
     } catch (ExecutionException e) {

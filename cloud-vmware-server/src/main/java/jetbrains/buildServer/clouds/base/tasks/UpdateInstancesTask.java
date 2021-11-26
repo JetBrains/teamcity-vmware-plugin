@@ -83,9 +83,11 @@ public class UpdateInstancesTask< G extends AbstractCloudInstance<T>,
       });
 
       final Map<T, Map<String, AbstractInstance>> groupedInstances = myConnector.fetchInstances(goodImages);
-      groupedInstances.forEach((img, instMap)->{
-        LOG.debug(String.format("Instances for [%s]:[%s]", img.getId(), String.join(",", instMap.keySet())));
-      });
+      if (LOG.isDebugEnabled()) {
+        groupedInstances.forEach((img, instMap) -> {
+          LOG.debug(String.format("Instances for [%s]:[%s]", img.getId(), String.join(",", instMap.keySet())));
+        });
+      }
 
       for (T image : goodImages) {
         Map<String, AbstractInstance> realInstances = groupedInstances.get(image);
@@ -133,7 +135,7 @@ public class UpdateInstancesTask< G extends AbstractCloudInstance<T>,
               cloudInstance.setNetworkIdentify(instance.getIpAddress());
             }
           } catch (Exception ex){
-            LOG.debug("Error processing VM " + cloudInstance.getName() + ": " + ex.toString());
+            LOG.warnAndDebugDetails("Error processing VM " + cloudInstance.getName(), ex);
           }
         }
         for (String instanceName : instancesToRemove) {
@@ -154,8 +156,10 @@ public class UpdateInstancesTask< G extends AbstractCloudInstance<T>,
       }
     } finally {
       //logging here:
-      for (InstanceStatus instanceStatus : instancesByStatus.keySet()) {
-        LOG.debug(String.format("Instances in '%s' status: %s", instanceStatus.getText(), Arrays.toString(instancesByStatus.get(instanceStatus).toArray())));
+      if (LOG.isDebugEnabled()) {
+        for (InstanceStatus instanceStatus : instancesByStatus.keySet()) {
+          LOG.debug(String.format("Instances in '%s' status: %s", instanceStatus.getText(), Arrays.toString(instancesByStatus.get(instanceStatus).toArray())));
+        }
       }
     }
   }

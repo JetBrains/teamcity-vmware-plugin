@@ -300,7 +300,7 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
               datacenterId
             );
           } catch (Exception ex) {
-            LOG.debug("Unable to process VM with name '" + vmName + "'. Not all properties are available");
+            LOG.warnAndDebugDetails("Unable to process VM with name '" + vmName + "'. Not all properties are available", ex);
             return null;
           }}).filter(Objects::nonNull);
       } catch (RemoteException e) {
@@ -309,17 +309,20 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
         return Stream.empty();
       }
     });
+    if (LOG.isDebugEnabled()) {
+      LOG.debug(
+        String.format("[%s]. All instances: [%s]"
+          , myProfileId, String.join(",", result
+            .stream()
+            .map(VmwareInstance::getName).collect(Collectors.toList())
+          )
+        )
+      );
+    }
     if (exceptionRef.get() != null){
+      LOG.warnAndDebugDetails("An exception occurred while processing findAllVirtualMachines", exceptionRef.get());
       throw exceptionRef.get();
     }
-    LOG.debug(
-      String.format("[%s]. All instances: [%s]"
-        , myProfileId, String.join(",", result
-          .stream()
-          .map(VmwareInstance::getName).collect(Collectors.toList())
-        )
-      )
-    );
     return result;
   }
 
@@ -536,7 +539,9 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
             imageInstancesMap = new HashMap<>();
             final String serverUUID = vmInstance.getServerUUID();
             if (StringUtil.isNotEmpty(serverUUID) && !serverUUID.equals(myServerUUID)) {
-              LOG.debug(String.format("Instance '%s' belongs to server with another UUID('%s'). Our UUID is '%s'", vmInstance.getName(), serverUUID, myServerUUID));
+              if (LOG.isDebugEnabled()) {
+                LOG.debug(String.format("Instance '%s' belongs to server with another UUID('%s'). Our UUID is '%s'", vmInstance.getName(), serverUUID, myServerUUID));
+              }
               continue;
             }
             result.put(image, imageInstancesMap);
@@ -544,7 +549,7 @@ public class VMWareApiConnectorImpl implements VMWareApiConnector {
           imageInstancesMap.put(vmInstance.getName(), (R)vmInstance);
         }
       } catch (Exception ex) {
-        LOG.debug("Unable to process VirtualMachine" + vmInstance.getId());
+        LOG.warnAndDebugDetails("Unable to process VirtualMachine" + vmInstance.getId(), ex);
       }
     }
 
