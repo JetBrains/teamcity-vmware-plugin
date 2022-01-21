@@ -483,4 +483,10 @@ public class VmwareCloudImage extends AbstractCloudImage<VmwareCloudInstance, Vm
         LOG.info("Updated actual vm source state name for " + myImageDetails.getSourceId() + " to " + state);
     }
   }
+
+  @Nullable
+  @Override
+  public String getProfileId() {
+    return myProfile.getProfileId();
+  }
 }
