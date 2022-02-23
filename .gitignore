@@ -13,7 +13,7 @@ buildNumber.properties
 ### JetBrains template
 ## Directory-based project format:
 # User-specific stuff:
-# .idea/workspace.xml
+.idea/workspace.xml
 # .idea/tasks.xml
 # .idea/dictionaries
 
@@ -26,7 +26,7 @@ buildNumber.properties
 
 # Gradle:
 # .idea/gradle.xml
-# .idea/libraries
+.idea/libraries/Maven*
 
 # Mongo Explorer plugin:
 # .idea/mongoSettings.xml
