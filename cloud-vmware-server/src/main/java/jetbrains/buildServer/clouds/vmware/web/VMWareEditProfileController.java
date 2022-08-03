@@ -30,10 +30,7 @@ import jetbrains.buildServer.clouds.vmware.connector.beans.ResourcePoolBean;
 import jetbrains.buildServer.clouds.base.errors.SimpleErrorMessages;
 import jetbrains.buildServer.controllers.*;
 import jetbrains.buildServer.controllers.admin.projects.PluginPropertiesUtil;
-import jetbrains.buildServer.serverSide.ProjectManager;
-import jetbrains.buildServer.serverSide.SBuildServer;
-import jetbrains.buildServer.serverSide.SProject;
-import jetbrains.buildServer.serverSide.SecurityContextEx;
+import jetbrains.buildServer.serverSide.*;
 import jetbrains.buildServer.serverSide.agentPools.AgentPool;
 import jetbrains.buildServer.serverSide.agentPools.AgentPoolManager;
 import jetbrains.buildServer.serverSide.agentPools.AgentPoolUtil;
@@ -123,32 +120,34 @@ public class VMWareEditProfileController extends BaseFormXmlController {
     final String username = props.get(VMWareWebConstants.USERNAME);
     final String password = props.get(VMWareWebConstants.SECURE_PASSWORD);
 
-    try {
-      final VMWareApiConnector myApiConnector = VmwareApiConnectorsPool.getOrCreateConnector(
-        new URL(serverUrl), username, password, null, null, null, mySslTrustStoreProvider);
-      myApiConnector.test();
-      xmlResponse.addContent(getVirtualMachinesAsElement(myApiConnector.getVirtualMachines(true)));
-      xmlResponse.addContent(getFoldersAsElement(myApiConnector.getFolders()));
-      xmlResponse.addContent(getResourcePoolsAsElement(myApiConnector.getResourcePools()));
-      xmlResponse.addContent(getCustomizationSpecsAsElement(myApiConnector.getCustomizationSpecs()));
-    } catch (Exception ex) {
-      LOG.warnAndDebugDetails("Unable to get vCenter details: " + ex.toString(), ex);
-      if (ex.getCause() != null && ex.getCause() instanceof SSLException){
-        errors.addError(
-          "errorFetchResultsSSL",
-          SimpleErrorMessages.getInstance().getFriendlyErrorMessage(
-            ex, "Please check the connection parameters. See the teamcity-clouds.log for details"
-          )
-        );
-      } else {
-        errors.addError(
-          "errorFetchResults",
-          SimpleErrorMessages.getInstance().getFriendlyErrorMessage(
-            ex, "Please check the connection parameters. See the teamcity-clouds.log for details")
-        );
+    IOGuard.allowNetworkCall(() -> {
+      try {
+        final VMWareApiConnector myApiConnector = VmwareApiConnectorsPool.getOrCreateConnector(
+          new URL(serverUrl), username, password, null, null, null, mySslTrustStoreProvider);
+        myApiConnector.test();
+        xmlResponse.addContent(getVirtualMachinesAsElement(myApiConnector.getVirtualMachines(true)));
+        xmlResponse.addContent(getFoldersAsElement(myApiConnector.getFolders()));
+        xmlResponse.addContent(getResourcePoolsAsElement(myApiConnector.getResourcePools()));
+        xmlResponse.addContent(getCustomizationSpecsAsElement(myApiConnector.getCustomizationSpecs()));
+      } catch (Exception ex) {
+        LOG.warnAndDebugDetails("Unable to get vCenter details: " + ex.toString(), ex);
+        if (ex.getCause() != null && ex.getCause() instanceof SSLException){
+          errors.addError(
+            "errorFetchResultsSSL",
+            SimpleErrorMessages.getInstance().getFriendlyErrorMessage(
+              ex, "Please check the connection parameters. See the teamcity-clouds.log for details"
+            )
+          );
+        } else {
+          errors.addError(
+            "errorFetchResults",
+            SimpleErrorMessages.getInstance().getFriendlyErrorMessage(
+              ex, "Please check the connection parameters. See the teamcity-clouds.log for details")
+          );
+        }
+        writeErrors(xmlResponse, errors);
       }
-      writeErrors(xmlResponse, errors);
-    }
+    });
   }
 
   private Element getVirtualMachinesAsElement(@NotNull final List<VmwareInstance> instances){

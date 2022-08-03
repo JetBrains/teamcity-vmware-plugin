@@ -30,6 +30,7 @@ import jetbrains.buildServer.clouds.vmware.connector.VMWareApiConnector;
 import jetbrains.buildServer.controllers.BaseFormXmlController;
 import jetbrains.buildServer.controllers.BasePropertiesBean;
 import jetbrains.buildServer.controllers.admin.projects.PluginPropertiesUtil;
+import jetbrains.buildServer.serverSide.IOGuard;
 import jetbrains.buildServer.util.StringUtil;
 import jetbrains.buildServer.util.ssl.SSLTrustStoreProvider;
 import org.jdom.Content;
@@ -73,7 +74,7 @@ public class GetSnapshotsListController extends BaseFormXmlController {
     try {
       final VMWareApiConnector myApiConnector = VmwareApiConnectorsPool.getOrCreateConnector(
         new URL(serverUrl), username, password, null, null, null, myStoreProvider);
-      final Map<String, VirtualMachineSnapshotTree> snapshotList = myApiConnector.getSnapshotList(imageName);
+      final Map<String, VirtualMachineSnapshotTree> snapshotList = IOGuard.allowNetworkCall(() -> myApiConnector.getSnapshotList(imageName));
       Element snapshots = new Element("Snapshots");
       snapshots.setAttribute("vmName", imageName);
       final Element currentVersion = new Element("Snapshot");

@@ -28,6 +28,7 @@ import jetbrains.buildServer.clouds.vmware.connector.VmwareApiConnectorsPool;
 import jetbrains.buildServer.controllers.BaseFormXmlController;
 import jetbrains.buildServer.controllers.BasePropertiesBean;
 import jetbrains.buildServer.controllers.admin.projects.PluginPropertiesUtil;
+import jetbrains.buildServer.serverSide.IOGuard;
 import jetbrains.buildServer.util.StringUtil;
 import jetbrains.buildServer.util.ssl.SSLTrustStoreProvider;
 import org.jdom.Content;
@@ -76,7 +77,8 @@ public class ConfigurationHelperController extends BaseFormXmlController {
           final VMWareApiConnector myApiConnector = VmwareApiConnectorsPool.getOrCreateConnector(
             new URL(serverUrl), username, password, null, null, null, myStoreProvider);
           final Element canAddPoolElement = new Element("fieldValid");
-          final boolean canAddVM2Pool = myApiConnector.hasPrivilegeOnResource(fieldValue, ResourcePool.class, RESPOOL_PRIVILEGE);
+          final boolean canAddVM2Pool =
+            IOGuard.allowNetworkCall(()->myApiConnector.hasPrivilegeOnResource(fieldValue, ResourcePool.class, RESPOOL_PRIVILEGE));
           canAddPoolElement.setText(String.valueOf(canAddVM2Pool));
           xmlResponse.addContent((Content)canAddPoolElement);
           if (!canAddVM2Pool) {
@@ -90,7 +92,8 @@ public class ConfigurationHelperController extends BaseFormXmlController {
           final VMWareApiConnector myApiConnector = VmwareApiConnectorsPool.getOrCreateConnector(
             new URL(serverUrl), username, password, null, null, null, myStoreProvider);
           final Element canAddPoolElement = new Element("fieldValid");
-          final boolean canAddVM = myApiConnector.hasPrivilegeOnResource(fieldValue, Folder.class, FOLDER_PRIVILEGE);
+          final boolean canAddVM =
+            IOGuard.allowNetworkCall(()->myApiConnector.hasPrivilegeOnResource(fieldValue, Folder.class, FOLDER_PRIVILEGE));
           canAddPoolElement.setText(String.valueOf(canAddVM));
           xmlResponse.addContent((Content)canAddPoolElement);
           if (!canAddVM) {
