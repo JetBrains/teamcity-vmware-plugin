@@ -84,12 +84,6 @@ public abstract class AbstractCloudClient<G extends AbstractCloudInstance<T>, T 
     instance.getImage().terminateInstance(instance);
   }
 
-  @Deprecated
-  public boolean canStartNewInstance(@NotNull final CloudImage baseImage) {
-    final T image = (T)baseImage;
-    return image.canStartNewInstance();
-  }
-
   @NotNull
   public CanStartNewInstanceResult canStartNewInstanceWithDetails(@NotNull final CloudImage baseImage) {
     final T image = (T)baseImage;
