@@ -108,6 +108,8 @@ public abstract class AbstractCloudClient<G extends AbstractCloudInstance<T>, T 
         try {
           updateInstancesTask.run();
           myAsyncTaskExecutor.scheduleWithFixedDelay("Update instances", updateInstancesTask, initialDelayMs, delayMs, TimeUnit.MILLISECONDS);
+        } catch (Throwable e) {
+          LOG.warnAndDebugDetails("Error while updating cloud instances for profile " + myParameters.getProfileDescription(), e);
         } finally {
           myIsInitialized = true;
           LOG.info("Cloud profile '" + myParameters.getProfileDescription() + "' initialized");
