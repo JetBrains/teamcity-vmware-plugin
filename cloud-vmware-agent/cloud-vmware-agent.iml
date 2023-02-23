@@ -21,5 +21,6 @@
     <orderEntry type="module" module-name="agent" />
     <orderEntry type="module" module-name="cloud-shared" />
     <orderEntry type="module" module-name="common" />
+    <orderEntry type="module" module-name="migration" />
   </component>
 </module>
