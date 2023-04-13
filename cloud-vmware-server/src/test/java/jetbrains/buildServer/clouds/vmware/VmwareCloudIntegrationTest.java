@@ -65,6 +65,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jmock.Expectations;
 import org.jmock.Mockery;
+import org.jmock.lib.concurrent.Synchroniser;
+import org.jmock.lib.legacy.ClassImposteriser;
 import org.testng.SkipException;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
@@ -744,7 +746,7 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
     };
 
     final CloudEventDispatcher dispatcher = new CloudEventDispatcher();
-    final Mockery m = new Mockery();
+    final Mockery m = createInstance();
     final ServerResponsibility serverResponsibility = m.mock(ServerResponsibility.class);
     final CloudRegistryImpl cloudRegistrar = new CloudRegistryImpl(dispatcher, serverResponsibility);
     final CloudManagerBase cloudManagerBase = m.mock(CloudManagerBase.class);
@@ -804,6 +806,17 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
     } finally {
       ThreadUtil.shutdownGracefully(executorService, "test executor");
     }
+  }
+
+  public static Mockery createInstance() {
+    final Synchroniser synchroniser = new Synchroniser();
+
+    return new Mockery() {{
+      setImposteriser(ClassImposteriser.INSTANCE);
+
+      //setThreadingPolicy(new SingleThreadedPolicyAvoidingFinaliseProblems());
+      setThreadingPolicy(synchroniser);
+    }};
   }
 
   public void enforce_change_of_stuck_instance_status() throws RemoteException, ExecutionException, InterruptedException {
