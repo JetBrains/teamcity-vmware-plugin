@@ -38,6 +38,7 @@ import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 
 import com.vmware.vim25.mo.VirtualMachine;
+import jetbrains.TCJMockUtils;
 import jetbrains.buildServer.BaseTestCase;
 import jetbrains.buildServer.clouds.*;
 import jetbrains.buildServer.clouds.base.connector.AbstractInstance;
@@ -744,7 +745,7 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
     };
 
     final CloudEventDispatcher dispatcher = new CloudEventDispatcher();
-    final Mockery m = new Mockery();
+    final Mockery m = TCJMockUtils.createInstance();
     final ServerResponsibility serverResponsibility = m.mock(ServerResponsibility.class);
     final CloudRegistryImpl cloudRegistrar = new CloudRegistryImpl(dispatcher, serverResponsibility);
     final CloudManagerBase cloudManagerBase = m.mock(CloudManagerBase.class);
