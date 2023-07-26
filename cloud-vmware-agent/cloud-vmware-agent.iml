@@ -19,7 +19,9 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="cloud-vmware-common" />
     <orderEntry type="module" module-name="agent" />
+    <orderEntry type="module" module-name="agent-core" />
     <orderEntry type="module" module-name="cloud-shared" />
+    <orderEntry type="module" module-name="cloud-shared-core" />
     <orderEntry type="module" module-name="common" />
     <orderEntry type="module" module-name="migration" />
   </component>

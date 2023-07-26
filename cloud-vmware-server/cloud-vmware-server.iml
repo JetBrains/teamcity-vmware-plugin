@@ -57,8 +57,11 @@
     <orderEntry type="module" module-name="common-impl" />
     <orderEntry type="module" module-name="cloud-vmware-common" />
     <orderEntry type="module" module-name="web" />
+    <orderEntry type="module" module-name="web-core" />
     <orderEntry type="module" module-name="cloud-shared" />
+    <orderEntry type="module" module-name="cloud-shared-core" />
     <orderEntry type="module" module-name="server" />
+    <orderEntry type="module" module-name="server-core" />
     <orderEntry type="library" name="gson" level="project" />
     <orderEntry type="module-library" scope="PROVIDED">
       <library name="yavijava - src + doc">
