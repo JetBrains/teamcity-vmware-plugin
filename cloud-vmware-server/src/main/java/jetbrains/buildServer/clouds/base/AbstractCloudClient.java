@@ -19,18 +19,18 @@ package jetbrains.buildServer.clouds.base;
 import com.intellij.openapi.diagnostic.Logger;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import jetbrains.buildServer.clouds.*;
 import jetbrains.buildServer.clouds.base.beans.CloudImageDetails;
 import jetbrains.buildServer.clouds.base.connector.CloudApiConnector;
 import jetbrains.buildServer.clouds.base.connector.CloudAsyncTaskExecutor;
 import jetbrains.buildServer.clouds.base.errors.CloudErrorMap;
+import jetbrains.buildServer.clouds.base.errors.SimpleErrorMessages;
 import jetbrains.buildServer.clouds.base.errors.TypedCloudErrorInfo;
 import jetbrains.buildServer.clouds.base.errors.UpdatableCloudErrorProvider;
 import jetbrains.buildServer.clouds.base.tasks.UpdateInstancesTask;
-import jetbrains.buildServer.clouds.base.errors.SimpleErrorMessages;
 import jetbrains.buildServer.serverSide.AgentDescription;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -54,7 +54,7 @@ public abstract class AbstractCloudClient<G extends AbstractCloudInstance<T>, T 
   public AbstractCloudClient(@NotNull final CloudClientParameters params, @NotNull final CloudApiConnector apiConnector) {
     myParameters = params;
     myAsyncTaskExecutor = new CloudAsyncTaskExecutor("Async tasks for cloud " + params.getProfileDescription());
-    myImageMap = new HashMap<String, T>();
+    myImageMap = new ConcurrentHashMap<>();
     myErrorProvider = new CloudErrorMap(SimpleErrorMessages.getInstance());
     myApiConnector = apiConnector;
   }
