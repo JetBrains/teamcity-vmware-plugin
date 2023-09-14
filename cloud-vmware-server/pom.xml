@@ -104,8 +104,8 @@
     <dependency>
       <groupId>org.projectlombok</groupId>
       <artifactId>lombok</artifactId>
-      <version>1.16.4</version>
-      <scope>compile</scope>
+      <version>1.18.2</version>
+      <scope>provided</scope>
     </dependency>
 
     <dependency>
@@ -116,14 +116,14 @@
     </dependency>
 
     <dependency>
-      <groupId>org.jetbrains.teamcity</groupId>
+      <groupId>org.jetbrains.teamcity.internal</groupId>
       <artifactId>server</artifactId>
       <scope>provided</scope>
       <version>${teamcity-version}</version>
     </dependency>
 
     <dependency>
-      <groupId>org.jetbrains.teamcity</groupId>
+      <groupId>org.jetbrains.teamcity.internal</groupId>
       <artifactId>web</artifactId>
       <scope>provided</scope>
       <version>${teamcity-version}</version>
@@ -134,6 +134,12 @@
       <artifactId>common-impl</artifactId>
       <scope>provided</scope>
       <version>${teamcity-version}</version>
+      <exclusions>
+        <exclusion>
+          <groupId>org.jetbrains.teamcity.jetps</groupId>
+          <artifactId>jetps</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
 
     <dependency>
@@ -141,6 +147,12 @@
       <artifactId>cloud-server</artifactId>
       <scope>provided</scope>
       <version>${teamcity-version}</version>
+      <exclusions>
+        <exclusion>
+          <groupId>org.jetbrains.teamcity.jetps</groupId>
+          <artifactId>jetps</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
 
     <dependency>

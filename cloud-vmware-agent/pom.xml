@@ -39,7 +39,7 @@
     </dependency>
 
     <dependency>
-      <groupId>org.jetbrains.teamcity</groupId>
+      <groupId>org.jetbrains.teamcity.internal</groupId>
       <artifactId>agent</artifactId>
       <version>${teamcity-version}</version>
       <scope>provided</scope>
