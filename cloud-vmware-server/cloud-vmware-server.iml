@@ -62,7 +62,6 @@
     <orderEntry type="module" module-name="cloud-shared-core" />
     <orderEntry type="module" module-name="server" />
     <orderEntry type="module" module-name="server-core" />
-    <orderEntry type="library" name="gson" level="project" />
     <orderEntry type="module-library" scope="PROVIDED">
       <library name="yavijava - src + doc">
         <CLASSES>
@@ -77,5 +76,6 @@
       </library>
     </orderEntry>
     <orderEntry type="module" module-name="migration" />
+    <orderEntry type="library" name="Maven: com.google.code.gson:gson:2.9.0" level="project" />
   </component>
 </module>
