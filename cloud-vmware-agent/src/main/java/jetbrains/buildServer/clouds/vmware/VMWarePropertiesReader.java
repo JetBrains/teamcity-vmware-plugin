@@ -21,16 +21,12 @@ import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import java.io.File;
-import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import jetbrains.buildServer.CommandLineExecutor;
 import jetbrains.buildServer.ExecResult;
 import jetbrains.buildServer.agent.*;
-import jetbrains.buildServer.agent.impl.BuildAgentImpl;
-import jetbrains.buildServer.agent.impl.config.BuildAgentConfigurationImpl;
-import jetbrains.buildServer.agent.impl.config.BuildAgentConfigurationPersister;
 import jetbrains.buildServer.clouds.CloudInstanceUserData;
 import jetbrains.buildServer.serverSide.TeamCityProperties;
 import jetbrains.buildServer.util.EventDispatcher;
@@ -68,6 +64,13 @@ public class VMWarePropertiesReader {
     LOG.info("VSphere plugin initializing...");
     myAgentConfiguration = agentConfiguration;
     myVMWareRPCToolPath = getToolPath(myAgentConfiguration);
+
+    if (!"true".equalsIgnoreCase(myAgentConfiguration.getInternalProperty("teamcity.agent.cloud.integration.enable", "true"))
+    ) {
+      LOG.warn("VMWare Virtual Machine metadata detection is disabled. Agent will not be able to update it's name if bundled as a VM image.");
+      return;
+    }
+
     if (myVMWareRPCToolPath == null) {
       LOG.info("Unable to locate " + VMWARE_RPCTOOL_NAME + ". Looks like not a VMWare VM or VWWare tools are not installed");
       return;
