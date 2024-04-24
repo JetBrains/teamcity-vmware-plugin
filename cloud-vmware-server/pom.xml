@@ -68,7 +68,7 @@
     </dependency>
 
     <dependency>
-      <groupId>com.toastcoders</groupId>
+      <groupId>org.jetbrains.teamcity.internal</groupId>
       <artifactId>yavijava</artifactId>
       <version>${yavijava-version}</version>
       <scope>compile</scope>

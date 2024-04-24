@@ -19,6 +19,10 @@
             <enabled>false</enabled>
           </snapshots>
         </repository>
+      <repository>
+        <id>teamcity-space</id>
+        <url>https://packages.jetbrains.team/maven/p/tc/maven</url>
+      </repository>
         <repository>
             <id>TeamCity</id>
             <url>https://download.jetbrains.com/teamcity-repository/</url>
