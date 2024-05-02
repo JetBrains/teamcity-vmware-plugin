@@ -20,14 +20,14 @@
     <dependency>
       <groupId>org.jetbrains.teamcity</groupId>
       <artifactId>server-api</artifactId>
-      <version>${teamcity-version}</version>
+      <version>${teamcity.version}</version>
       <scope>provided</scope>
     </dependency>
 
     <dependency>
       <groupId>org.jetbrains.teamcity</groupId>
       <artifactId>server-web-api</artifactId>
-      <version>${teamcity-version}</version>
+      <version>${teamcity.version}</version>
       <type>war</type>
       <scope>provided</scope>
     </dependency>
@@ -35,21 +35,21 @@
     <dependency>
       <groupId>org.jetbrains.teamcity</groupId>
       <artifactId>cloud-interface</artifactId>
-      <version>${teamcity-version}</version>
+      <version>${teamcity.version}</version>
       <scope>provided</scope>
     </dependency>
 
     <dependency>
       <groupId>org.jetbrains.teamcity</groupId>
       <artifactId>cloud-shared</artifactId>
-      <version>${teamcity-version}</version>
+      <version>${teamcity.version}</version>
       <scope>provided</scope>
     </dependency>
 
     <dependency>
       <groupId>org.jetbrains.teamcity</groupId>
       <artifactId>tests-support</artifactId>
-      <version>${teamcity-version}</version>
+      <version>${teamcity.version}</version>
       <scope>test</scope>
     </dependency>
 
@@ -119,21 +119,21 @@
       <groupId>org.jetbrains.teamcity.internal</groupId>
       <artifactId>server</artifactId>
       <scope>provided</scope>
-      <version>${teamcity-version}</version>
+      <version>${teamcity.version}</version>
     </dependency>
 
     <dependency>
       <groupId>org.jetbrains.teamcity.internal</groupId>
       <artifactId>web</artifactId>
       <scope>provided</scope>
-      <version>${teamcity-version}</version>
+      <version>${teamcity.version}</version>
     </dependency>
 
     <dependency>
       <groupId>org.jetbrains.teamcity</groupId>
       <artifactId>common-impl</artifactId>
       <scope>provided</scope>
-      <version>${teamcity-version}</version>
+      <version>${teamcity.version}</version>
       <exclusions>
         <exclusion>
           <groupId>org.jetbrains.teamcity.jetps</groupId>
