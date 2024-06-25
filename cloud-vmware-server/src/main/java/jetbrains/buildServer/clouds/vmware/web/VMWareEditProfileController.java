@@ -25,7 +25,7 @@ import jetbrains.buildServer.serverSide.auth.Permission;
 import jetbrains.buildServer.util.StringUtil;
 import jetbrains.buildServer.util.ssl.SSLTrustStoreProvider;
 import jetbrains.buildServer.web.openapi.*;
-import org.jdom.Element;
+import org.jdom2.Element;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.web.servlet.ModelAndView;
 
