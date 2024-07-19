@@ -61,6 +61,13 @@
     </dependency>
 
     <dependency>
+      <groupId>org.dom4j</groupId>
+      <artifactId>dom4j</artifactId>
+      <version>2.1.1</version>
+      <scope>compile</scope>
+    </dependency>
+
+    <dependency>
       <groupId>org.jetbrains.teamcity.internal</groupId>
       <artifactId>yavijava</artifactId>
       <version>${yavijava-version}</version>
