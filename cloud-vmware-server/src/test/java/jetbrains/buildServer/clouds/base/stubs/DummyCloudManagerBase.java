@@ -115,6 +115,12 @@ public class DummyCloudManagerBase implements CloudManagerBase {
 
   }
 
+  @Override
+  public void disposeClient(@NotNull String projectId, @NotNull String profileId) {
+    throw new UnsupportedOperationException("DummyCloudManagerBase.disposeClient");
+
+  }
+
   @Nullable
   @Override
   public ProjectCloudIntegrationStatus getProjectIntegrationStatus(final String projectId) {
