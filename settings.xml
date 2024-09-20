@@ -1,0 +1,19 @@
+<!-- see https://jetbrains.team/p/tc/documents/TeamCity-Knowledge-Base/a/TeamCity-maven-setup-for-developers -->
+<settings xmlns="http://maven.apache.org/SETTINGS/1.1.0"
+          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.1.0 http://maven.apache.org/xsd/settings-1.1.0.xsd">
+    <servers>
+        <server>
+            <id>teamcity-space</id>
+            <username>${SPACE_APP_CLIENTID}</username>
+            <password>${SPACE_APP_SECRET}</password>
+        </server>
+    </servers>
+    <mirrors>
+        <mirror>
+            <id>central-proxy</id>
+            <name>Local proxy of central repo</name>
+            <url>https://maven.labs.intellij.net/central-proxy</url>
+            <mirrorOf>central</mirrorOf>
+        </mirror>
+    </mirrors>
+</settings>
