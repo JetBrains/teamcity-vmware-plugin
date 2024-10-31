@@ -55,11 +55,12 @@ public class VMWareCloudClient extends AbstractCloudClient<VmwareCloudInstance, 
 
   @Nullable
   public VmwareCloudInstance findInstanceByAgent(@NotNull AgentDescription agentDescription) {
-    final String imageName = agentDescription.getAvailableParameters().get(VMWarePropertiesNames.IMAGE_NAME);
-    if (imageName != null) {
+    final String imageName = agentDescription.getAvailableParameterValue(VMWarePropertiesNames.IMAGE_NAME);
+    String instanceName = agentDescription.getAvailableParameterValue(VMWarePropertiesNames.INSTANCE_NAME);
+    if (imageName != null && instanceName != null) {
       final VmwareCloudImage cloudImage = findImageById(imageName);
       if (cloudImage != null) {
-        return cloudImage.findInstanceById(agentDescription.getAvailableParameters().get(VMWarePropertiesNames.INSTANCE_NAME));
+        return cloudImage.findInstanceById(instanceName);
       }
     }
     return null;
@@ -94,7 +95,7 @@ public class VMWareCloudClient extends AbstractCloudClient<VmwareCloudInstance, 
 
   @Nullable
   public String generateAgentName(@NotNull AgentDescription agentDescription) {
-    return agentDescription.getAvailableParameters().get(VMWarePropertiesNames.INSTANCE_NAME);
+    return agentDescription.getAvailableParameterValue(VMWarePropertiesNames.INSTANCE_NAME);
   }
 
   public void addDisposeHandler(@NotNull DisposeHandler disposeHandler){
