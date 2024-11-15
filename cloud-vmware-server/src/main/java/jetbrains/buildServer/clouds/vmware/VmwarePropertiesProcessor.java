@@ -4,10 +4,17 @@ package jetbrains.buildServer.clouds.vmware;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
-import java.util.*;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.stream.StreamSupport;
-import jetbrains.buildServer.clouds.CloudConstants;
+
 import jetbrains.buildServer.clouds.CloudImageParameters;
+import jetbrains.buildServer.clouds.CloudKeys;
 import jetbrains.buildServer.clouds.server.CloudManagerBase;
 import jetbrains.buildServer.clouds.vmware.web.VMWareWebConstants;
 import jetbrains.buildServer.serverSide.InvalidProperty;
@@ -54,7 +61,7 @@ public class VmwarePropertiesProcessor implements PropertiesProcessor {
 
     final String serverURL = properties.get(VMWareWebConstants.SERVER_URL);
 
-    final String currentProfileId = properties.get(CloudConstants.PROFILE_ID);
+    final String currentProfileId = properties.get(CloudKeys.PROFILE_ID);
     final Map<String, String> existingImages = new HashMap<>();
 
      myCloudManager.listAllProfiles().stream()
