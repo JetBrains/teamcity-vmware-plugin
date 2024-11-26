@@ -7,11 +7,12 @@ import com.vmware.vim25.ws.XmlGen;
 import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Map;
 import java.util.stream.Collectors;
 import jetbrains.buildServer.clouds.*;
 import jetbrains.buildServer.clouds.base.AbstractCloudClientFactory;
-import jetbrains.buildServer.clouds.base.errors.CheckedCloudException;
 import jetbrains.buildServer.clouds.base.errors.TypedCloudErrorInfo;
 import jetbrains.buildServer.clouds.server.CloudInstancesProvider;
 import jetbrains.buildServer.clouds.server.CloudManagerBase;
@@ -19,7 +20,10 @@ import jetbrains.buildServer.clouds.vmware.connector.VMWareApiConnector;
 import jetbrains.buildServer.clouds.vmware.connector.VmwareApiConnectorsPool;
 import jetbrains.buildServer.clouds.vmware.tasks.VmwareUpdateTaskManager;
 import jetbrains.buildServer.clouds.vmware.web.VMWareWebConstants;
-import jetbrains.buildServer.serverSide.*;
+import jetbrains.buildServer.serverSide.AgentDescription;
+import jetbrains.buildServer.serverSide.PropertiesProcessor;
+import jetbrains.buildServer.serverSide.ServerPaths;
+import jetbrains.buildServer.serverSide.ServerSettings;
 import jetbrains.buildServer.util.XmlUtil;
 import jetbrains.buildServer.util.ssl.SSLTrustStoreProvider;
 import jetbrains.buildServer.web.openapi.PluginDescriptor;
@@ -39,6 +43,7 @@ public class VMWareCloudClientFactory extends AbstractCloudClientFactory<VmwareC
   @NotNull private final CloudManagerBase myCloudManager;
   @NotNull private final VmwareUpdateTaskManager myUpdateTaskManager;
   @NotNull private final SSLTrustStoreProvider mySslTrustStoreProvider;
+  @NotNull private final PluginDescriptor myPluginDescriptor;
   @NotNull private final CloudInstancesProvider myInstancesProvider;
   @NotNull private final ServerSettings myServerSettings;
 
@@ -52,6 +57,7 @@ public class VMWareCloudClientFactory extends AbstractCloudClientFactory<VmwareC
                                   @NotNull final SSLTrustStoreProvider sslTrustStoreProvider
                                   ) {
     super(cloudRegistrar);
+    myPluginDescriptor = pluginDescriptor;
     myInstancesProvider = instancesProvider;
     myIdxStorage = new File(serverPaths.getPluginDataDirectory(), "vmwareIdx");
     myCloudManager = cloudManager;
@@ -102,6 +108,18 @@ public class VMWareCloudClientFactory extends AbstractCloudClientFactory<VmwareC
     );
     client.updateErrors(profileErrors);
     return client;
+  }
+
+  @NotNull
+  @Override
+  public String getTypeDescription() {
+    return "TeamCity agents running on virtual machines hosted within a private VMware vSphere cloud. The supported OS list depends on your individual cluster setup.";
+  }
+
+  @NotNull
+  @Override
+  public String getProfileIconUrl() {
+    return myPluginDescriptor.getPluginResourcesPath("icon.svg");
   }
 
   @Override
