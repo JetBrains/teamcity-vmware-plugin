@@ -13,6 +13,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.stream.StreamSupport;
 
+import com.intellij.openapi.diagnostic.Logger;
 import jetbrains.buildServer.clouds.CloudImageParameters;
 import jetbrains.buildServer.clouds.CloudKeys;
 import jetbrains.buildServer.clouds.server.CloudManagerBase;
@@ -27,6 +28,8 @@ import org.jetbrains.annotations.NotNull;
  */
 public class VmwarePropertiesProcessor implements PropertiesProcessor {
 
+  private static final Logger LOG = Logger.getInstance(VmwarePropertiesProcessor.class);
+
   @NotNull private final CloudManagerBase myCloudManager;
 
   public VmwarePropertiesProcessor(@NotNull final CloudManagerBase cloudManager){
@@ -35,7 +38,7 @@ public class VmwarePropertiesProcessor implements PropertiesProcessor {
 
   @NotNull
   public Collection<InvalidProperty> process(final Map<String, String> properties) {
-    List<InvalidProperty> list = new ArrayList<InvalidProperty>();
+    List<InvalidProperty> list = new ArrayList<>();
 
     // Remove helper properties used in ConfigurationHelperController and GetSnapshotsListController
     try {
@@ -56,7 +59,7 @@ public class VmwarePropertiesProcessor implements PropertiesProcessor {
         list.add(new InvalidProperty(VMWareWebConstants.PROFILE_INSTANCE_LIMIT, "Must be a positive integer or empty"));
       }
     }
-    if (list.size() > 0)
+    if (!list.isEmpty())
       return list;
 
     final String serverURL = properties.get(VMWareWebConstants.SERVER_URL);
@@ -64,18 +67,21 @@ public class VmwarePropertiesProcessor implements PropertiesProcessor {
     final String currentProfileId = properties.get(CloudKeys.PROFILE_ID);
     final Map<String, String> existingImages = new HashMap<>();
 
-     myCloudManager.listAllProfiles().stream()
-                   .filter(p->(VmwareConstants.TYPE.equals(p.getCloudCode())
-                  && (currentProfileId == null || !currentProfileId.equals(p.getProfileId()))
-                  && (serverURL.equals(p.getProfileProperties().get(VMWareWebConstants.SERVER_URL))))
-      )
-                   .forEach(p->
-        myCloudManager
-          .getClient(p.getProjectId(), p.getProfileId())
-          .getImages()
-          .stream()
-          .forEach(i->existingImages.put(i.getId().toUpperCase(), p.getProfileName()))
-      );
+    LOG.debug("Processing properties for " + currentProfileId + ", with server URL " + serverURL);
+
+    myCloudManager.listAllProfiles().stream()
+            .filter(p -> (VmwareConstants.TYPE.equals(p.getCloudCode())
+                    && (currentProfileId == null || !currentProfileId.equals(p.getProfileId()))
+                    && (serverURL.equals(p.getProfileProperties().get(VMWareWebConstants.SERVER_URL))))
+            )
+            .forEach(p -> {
+                      LOG.debug("Adding images from " + p.getProfileName() + " [id: " + p.getProfileId() + "]");
+                      myCloudManager
+                              .getClient(p.getProjectId(), p.getProfileId())
+                              .getImages()
+                              .forEach(i -> existingImages.put(i.getId().toUpperCase(), p.getProfileName()));
+                    }
+            );
 
     final String imagesData = properties.get(CloudImageParameters.SOURCE_IMAGES_JSON);
     if (StringUtil.isEmpty(imagesData))
