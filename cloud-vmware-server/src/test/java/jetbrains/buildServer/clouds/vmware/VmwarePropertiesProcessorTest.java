@@ -141,7 +141,7 @@ public class VmwarePropertiesProcessorTest extends BaseTestCase {
       myClients.put(profileId, createClient(profile.getParameters()));
     }
 
-    myProperties.put(CloudKeys.PROFILE_ID, "vmw-2");
+    myProperties.put(CloudConstants.PROFILE_ID, "vmw-2");
     myProperties.put(VMWareWebConstants.SERVER_URL, "http://localhost:8080");
     myProperties.put(CloudImageParameters.SOURCE_IMAGES_JSON,
                      "[{'source-id':'image2',sourceVmName:'image2',snapshot:'snap*',folder:'cf',pool:'rp',maxInstances:3,behaviour:'ON_DEMAND_CLONE', " +
