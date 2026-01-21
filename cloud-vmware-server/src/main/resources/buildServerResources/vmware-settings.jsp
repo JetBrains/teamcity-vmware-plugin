@@ -119,7 +119,7 @@
               </td>
             </tr>
             <tr>
-                <th>Behavior:<l:star/><bs:help file="Setting+Up+TeamCity+for+VMWare+vSphere+and+vCenter#SettingUpTeamCityforVMWarevSphereandvCenter-Features"/></th>
+                <th>Behavior:<l:star/><bs:help file="Setting+Up+TeamCity+for+VMware+vSphere+and+vCenter#Features"/></th>
                 <td>
                     <input type="hidden" class="behaviour__value" data-id="behaviour" data-err-id="behaviour"/>
                     <div>
