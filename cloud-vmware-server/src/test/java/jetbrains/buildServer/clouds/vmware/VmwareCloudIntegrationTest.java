@@ -43,8 +43,10 @@ import jetbrains.buildServer.clouds.vmware.tasks.VmwareUpdateTaskManager;
 import jetbrains.buildServer.clouds.vmware.web.VMWareWebConstants;
 import jetbrains.buildServer.serverSide.ServerPaths;
 import jetbrains.buildServer.serverSide.ServerResponsibility;
+import jetbrains.buildServer.serverSide.ServerResponsibilityImpl;
 import jetbrains.buildServer.serverSide.TeamCityProperties;
 import jetbrains.buildServer.serverSide.impl.ServerSettingsImpl;
+import jetbrains.buildServer.serverSide.impl.auth.SecurityContextImpl;
 import jetbrains.buildServer.util.TestFor;
 import jetbrains.buildServer.util.ThreadUtil;
 import jetbrains.buildServer.web.openapi.PluginDescriptor;
@@ -756,7 +758,7 @@ public class VmwareCloudIntegrationTest extends BaseTestCase {
     };
 
     final VMWareCloudClientFactory factory = new VMWareCloudClientFactory(cloudRegistrar, pd, new ServerPaths(myIdxStorage.getAbsolutePath()),
-                                                                          instancesProvider, cloudManagerBase, new ServerSettingsImpl(), myTaskManager,
+                                                                          instancesProvider, cloudManagerBase, new ServerSettingsImpl(new SecurityContextImpl(new ServerResponsibilityImpl())), myTaskManager,
                                                                           () -> {
                                                                             try {return KeyStore.getInstance("pkcs12");}
                                                                             catch (KeyStoreException e) {throw new RuntimeException(e);}
