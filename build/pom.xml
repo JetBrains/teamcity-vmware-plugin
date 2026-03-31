@@ -51,7 +51,7 @@
                 <replacements>
                     <replacement>
                         <token>@Plugin_Version@</token>
-                        <value>${env.BUILD_NUMBER}</value>
+                        <value>${PluginVersion}</value>
                     </replacement>
                 </replacements>                        
             </configuration>
