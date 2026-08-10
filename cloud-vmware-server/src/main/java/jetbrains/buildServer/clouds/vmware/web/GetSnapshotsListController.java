@@ -7,6 +7,7 @@ import com.vmware.vim25.VirtualMachineSnapshotTree;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Map;
+import java.util.function.Consumer;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import jetbrains.buildServer.clouds.vmware.connector.VmwareApiConnectorsPool;
@@ -33,19 +34,23 @@ public class GetSnapshotsListController extends BaseFormXmlController {
 
   private static final Logger LOG = Logger.getInstance(GetSnapshotsListController.class.getName());
   private SSLTrustStoreProvider myStoreProvider;
+  private final Consumer<HttpServletRequest> myCheckCanManageAgentClouds;
 
-  public GetSnapshotsListController(@NotNull final SSLTrustStoreProvider storeProvider) {
-
+  public GetSnapshotsListController(@NotNull final SSLTrustStoreProvider storeProvider,
+                                    @NotNull final Consumer<HttpServletRequest> checkCanManageAgentClouds) {
     myStoreProvider = storeProvider;
+    myCheckCanManageAgentClouds = checkCanManageAgentClouds;
   }
 
   @Override
   protected ModelAndView doGet(@NotNull final HttpServletRequest request, @NotNull final HttpServletResponse response) {
+    myCheckCanManageAgentClouds.accept(request);
     return null;
   }
 
   @Override
   protected void doPost(@NotNull final HttpServletRequest request, @NotNull final HttpServletResponse response, @NotNull final Element xmlResponse) {
+    myCheckCanManageAgentClouds.accept(request);
     final BasePropertiesBean propsBean = new BasePropertiesBean(null);
     PluginPropertiesUtil.bindPropertiesFromRequest(request, propsBean, true);
 

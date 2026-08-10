@@ -44,6 +44,7 @@ public class VMWareEditProfileController extends BaseFormXmlController {
   @NotNull private final String myConfigHelperPath;
   @NotNull private final PluginDescriptor myPluginDescriptor;
   @NotNull private final ProjectManager myProjectManager;
+  @NotNull private final SecurityContextEx mySecurityContext;
   @NotNull private final AgentPoolManager myAgentPoolManager;
   @NotNull private final SSLTrustStoreProvider mySslTrustStoreProvider;
 
@@ -51,7 +52,7 @@ public class VMWareEditProfileController extends BaseFormXmlController {
                                      @NotNull final PluginDescriptor pluginDescriptor,
                                      @NotNull final WebControllerManager manager,
                                      @NotNull final ProjectManager projectManager,
-                                     @NotNull final AuthorizationInterceptor authInterceptor,
+                                     @NotNull final SecurityContextEx securityContext,
                                      @NotNull final AgentPoolManager agentPoolManager,
                                      @NotNull final SSLTrustStoreProvider sslTrustStoreProvider
                                      ) {
@@ -59,24 +60,23 @@ public class VMWareEditProfileController extends BaseFormXmlController {
     myHtmlPath = pluginDescriptor.getPluginResourcesPath("vmware-settings.html");
     myPluginDescriptor = pluginDescriptor;
     myProjectManager = projectManager;
+    mySecurityContext = securityContext;
     myAgentPoolManager = agentPoolManager;
     mySslTrustStoreProvider = sslTrustStoreProvider;
     myJspPath = myPluginDescriptor.getPluginResourcesPath("vmware-settings.jsp");
     mySnapshotsPath = pluginDescriptor.getPluginResourcesPath("vmware-getsnapshotlist.html");
     myConfigHelperPath = pluginDescriptor.getPluginResourcesPath("vmware-config-helper.html");
 
-    authInterceptor.addPathBasedPermissionsChecker(myHtmlPath, new VmwareEditProfilePermissionChecker());
     manager.registerController(myHtmlPath, this);
 
-    authInterceptor.addPathBasedPermissionsChecker(mySnapshotsPath, new VmwareEditProfilePermissionChecker());
-    manager.registerController(mySnapshotsPath, new GetSnapshotsListController(mySslTrustStoreProvider));
+    manager.registerController(mySnapshotsPath, new GetSnapshotsListController(mySslTrustStoreProvider, this::checkCanManageAgentClouds));
 
-    authInterceptor.addPathBasedPermissionsChecker(myConfigHelperPath, new VmwareEditProfilePermissionChecker());
-    manager.registerController(myConfigHelperPath, new ConfigurationHelperController(mySslTrustStoreProvider));
+    manager.registerController(myConfigHelperPath, new ConfigurationHelperController(mySslTrustStoreProvider, this::checkCanManageAgentClouds));
   }
 
   @Override
   protected ModelAndView doGet(@NotNull final HttpServletRequest request, @NotNull final HttpServletResponse response) {
+    checkCanManageAgentClouds(request);
     final ModelAndView mv = new ModelAndView(myJspPath);
     final String projectId = request.getParameter("projectId");
     mv.getModel().put("refreshablePath", myHtmlPath);
@@ -96,6 +96,7 @@ public class VMWareEditProfileController extends BaseFormXmlController {
 
   @Override
   protected void doPost(@NotNull final HttpServletRequest request, @NotNull final HttpServletResponse response, @NotNull final Element xmlResponse) {
+    checkCanManageAgentClouds(request);
     final ActionErrors errors = new ActionErrors();
 
     final BasePropertiesBean propsBean = new BasePropertiesBean(null);
@@ -198,20 +199,15 @@ public class VMWareEditProfileController extends BaseFormXmlController {
     return sortedList;
   }
 
-  private class VmwareEditProfilePermissionChecker implements RequestPermissionsCheckerEx{
-
-    @Override
-    public void checkPermissions(@NotNull SecurityContextEx securityContext, @NotNull HttpServletRequest request)
-      throws AccessDeniedException{
-      String projectId = request.getParameter("projectId");
-      if (StringUtil.isEmpty(projectId)) {
-        throw new AccessDeniedException(securityContext.getAuthorityHolder(), "Missing projectId");
-      }
-      SProject project = myProjectManager.findProjectByExternalId(projectId);
-      if (project == null) {
-        throw new AccessDeniedException(securityContext.getAuthorityHolder(), "Invalid projectId");
-      }
-      securityContext.getAccessChecker().checkHasPermissionsForProject(project.getProjectId(), Permission.MANAGE_AGENT_CLOUDS);
+  private void checkCanManageAgentClouds(@NotNull final HttpServletRequest request) throws AccessDeniedException {
+    final String projectId = request.getParameter("projectId");
+    if (StringUtil.isEmpty(projectId)) {
+      throw new AccessDeniedException(mySecurityContext.getAuthorityHolder(), "Missing projectId");
     }
+    final SProject project = myProjectManager.findProjectByExternalId(projectId);
+    if (project == null) {
+      throw new AccessDeniedException(mySecurityContext.getAuthorityHolder(), "Invalid projectId");
+    }
+    mySecurityContext.getAccessChecker().checkHasPermissionsForProject(project.getProjectId(), Permission.MANAGE_AGENT_CLOUDS);
   }
 }

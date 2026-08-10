@@ -7,6 +7,7 @@ import com.vmware.vim25.mo.Folder;
 import com.vmware.vim25.mo.ResourcePool;
 import java.net.URL;
 import java.util.Map;
+import java.util.function.Consumer;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import jetbrains.buildServer.clouds.vmware.connector.VMWareApiConnector;
@@ -31,19 +32,24 @@ public class ConfigurationHelperController extends BaseFormXmlController {
   private static final String RESPOOL_PRIVILEGE = "Resource.AssignVMToPool";
   private static final String FOLDER_PRIVILEGE = "VirtualMachine.Inventory.CreateFromExisting";
   private final SSLTrustStoreProvider myStoreProvider;
+  private final Consumer<HttpServletRequest> myCheckCanManageAgentClouds;
 
-  public ConfigurationHelperController(@NotNull final SSLTrustStoreProvider storeProvider){
+  public ConfigurationHelperController(@NotNull final SSLTrustStoreProvider storeProvider,
+                                       @NotNull final Consumer<HttpServletRequest> checkCanManageAgentClouds){
     myStoreProvider = storeProvider;
+    myCheckCanManageAgentClouds = checkCanManageAgentClouds;
   }
 
 
   @Override
   protected ModelAndView doGet(@NotNull final HttpServletRequest request, @NotNull final HttpServletResponse response) {
+    myCheckCanManageAgentClouds.accept(request);
     return null;
   }
 
   @Override
   protected void doPost(@NotNull final HttpServletRequest request, @NotNull final HttpServletResponse response, @NotNull final Element xmlResponse) {
+    myCheckCanManageAgentClouds.accept(request);
     final BasePropertiesBean propsBean = new BasePropertiesBean(null);
     PluginPropertiesUtil.bindPropertiesFromRequest(request, propsBean, true);
 
