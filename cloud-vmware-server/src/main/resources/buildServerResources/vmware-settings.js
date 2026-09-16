@@ -112,7 +112,7 @@ BS.Clouds.VMWareVSphere = BS.Clouds.VMWareVSphere || (function () {
                 }.bind(this))
                 .fail(function (errors) {
                     if (errors.length &&  errors[0].id === 'errorFetchResultsSSL') {
-                        this.addError('An SSL error occurred while connecting to vCenter (is server certificate uploaded to  "SSL / HTTPS Certificates" of the Root project?): <br/>' + errors.text());
+                        this.addError('An SSL error occurred while connecting to vCenter. Please make sure that a server certificate is uploaded to "SSL / HTTPS Certificates" of the Root project. Error: ' + errors.text());
                     } else {
                         this.addError('Unable to fetch options: ' + errors.text());
                     }
@@ -771,7 +771,7 @@ BS.Clouds.VMWareVSphere = BS.Clouds.VMWareVSphere || (function () {
             noAccessPool: 'You do not have the privilege "Resource > Assign virtual machine to resource pool" on the selected host/resource pool.',
             noAccessFolder: 'You do not have the privilege "Create from existing virtual machine" on the selected Folder/Datacenter',
             unique: 'There is another source with the same name/nickname',
-            nonexistent: 'The %%elem%% &laquo;%%val%%&raquo; does not exist'
+            nonexistent: 'The %%elem%% %%val%% does not exist'
         },
         validateOptions: function (options) {
             var maxInstances = this._image.maxInstances,
