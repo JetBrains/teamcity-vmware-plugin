@@ -50,12 +50,12 @@ public class VMWarePropertiesReader {
                                              public <T> void onFailure(@NotNull Callable<T> callable, int retry, @NotNull Exception e) {
                                                RetrierEventListener.super.onFailure(callable, retry, e);
                                                if (!(e instanceof RpcToolException)) {
-                                                 throw new AbortRetriesException(e.getMessage());
+                                                 throw new AbortRetriesException(e);
                                                }
 
                                                // TW-82025
                                                if (!"No value found".equals(e.getMessage())) {
-                                                 throw new AbortRetriesException(e.getMessage());
+                                                 throw new AbortRetriesException(e);
                                                }
                                              }
                                            });
